@@ -20,6 +20,10 @@ def create_app(config=None):
     if config:
         app.config.update(config)
     
+    # Register blueprints
+    from src.routes.entities import entities_bp
+    app.register_blueprint(entities_bp)
+    
     # Health check endpoint
     @app.route('/health', methods=['GET'])
     def health():

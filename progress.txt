@@ -132,3 +132,36 @@ Started: 2026-02-13 18:12 AEDT
 - original_csv_row stored as Text for audit trail
 
 ---
+
+## 2026-02-13 19:12 - US-005: Create finance_journal_entries and finance_journal_lines models
+- Created src/models/journal_entry.py with FinanceJournalEntry model
+  - Fields: id, entity_id, entry_date, description, reference_number, status, created_by, created_at, updated_at
+  - JournalEntryStatus enum with Draft, Posted, Void values
+  - Foreign key to finance_entities with CASCADE delete
+  - Indexes on entity_id, entry_date, status, and (entity_id, reference_number)
+- Created src/models/journal_line.py with FinanceJournalLine model
+  - Fields: id, entry_id, account_code, debit_amount, credit_amount, description, entity_id, timestamps
+  - debit_amount and credit_amount use Numeric(15,2) for precision
+  - Foreign keys to both finance_journal_entries and finance_entities with CASCADE delete
+  - Indexes on entry_id, (entity_id, account_code), and entity_id
+  - Relationship with entry via back_populates for bidirectional access
+- Updated src/models/__init__.py to export new models and enums
+- Added Pydantic schemas to src/models/schemas.py
+  - JournalLineCreate with account_code validation and non-negative amount constraints
+  - JournalEntryCreate requiring minimum 2 lines (double-entry bookkeeping)
+  - JournalEntryUpdate and response schemas
+- Created Alembic migration 003_create_journal_entries_and_lines.py
+  - Creates finance_journal_entries table with all indexes
+  - Creates finance_journal_lines table with all indexes and foreign keys
+- Wrote 22 new tests covering enum, models, and Pydantic schemas
+- All 96 tests pass, mypy typecheck passes
+- Commit: 69ee81e
+
+**Learnings:**
+- Journal entries and lines form the core of double-entry bookkeeping
+- Lines have both entry_id and entity_id to support cross-entity queries (account balances per entity)
+- Minimum 2 lines required for a journal entry ensures balanced debits/credits
+- TYPE_CHECKING import pattern avoids circular imports when using forward references in relationships
+- Relationship cascade="all, delete-orphan" ensures lines are deleted when entry is deleted
+
+---
