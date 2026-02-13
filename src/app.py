@@ -22,7 +22,9 @@ def create_app(config=None):
     
     # Register blueprints
     from src.routes.entities import entities_bp
+    from src.routes.accounts import accounts_bp
     app.register_blueprint(entities_bp)
+    app.register_blueprint(accounts_bp)
     
     # Health check endpoint
     @app.route('/health', methods=['GET'])

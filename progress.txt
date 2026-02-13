@@ -20,6 +20,10 @@ Started: 2026-02-13 18:12 AEDT
 - Enums: Use native_enum=False for VARCHAR storage (cross-DB compatible)
 - Schemas: Pydantic 2.x with field_validator, model_config = {"from_attributes": True} for ORM compatibility
 - All models have to_dict() method for JSON serialization
+- Routes: Flask Blueprints in src/routes/, register in app.py with app.register_blueprint()
+- Services: Business logic in src/services/ with singleton instances (e.g., entity_service)
+- API responses: Use EntityResponse.model_validate(entity).model_dump() to convert ORM → JSON
+- Route testing: Mock get_db in routes module with patch('src.routes.MODULE.get_db', mock_get_db)
 
 ---
 
@@ -163,5 +167,41 @@ Started: 2026-02-13 18:12 AEDT
 - Minimum 2 lines required for a journal entry ensures balanced debits/credits
 - TYPE_CHECKING import pattern avoids circular imports when using forward references in relationships
 - Relationship cascade="all, delete-orphan" ensures lines are deleted when entry is deleted
+
+---
+
+## 2026-02-13 19:57 - US-006: Build entity CRUD endpoints
+- Created src/services/entity_service.py with EntityService class
+  - get_all() to retrieve all entities
+  - get_by_id() to retrieve entity by ID
+  - create() to create new entity with duplicate name validation
+  - update() to partially update entity fields
+  - Business logic layer separates concerns from routes
+- Created src/routes/entities.py with Flask Blueprint
+  - GET /api/finance/entities - list all entities
+  - POST /api/finance/entities - create new entity
+  - GET /api/finance/entities/<id> - get entity by ID
+  - PUT /api/finance/entities/<id> - update entity
+  - Proper HTTP status codes (200, 201, 400, 404, 500)
+  - Pydantic validation for request/response data
+- Updated src/app.py to register entities_bp blueprint
+- Wrote 14 comprehensive tests in tests/test_entities.py
+  - List entities (empty and with data)
+  - Create entity (success, with status, validation errors)
+  - Create all three MVP entities (DL Ventures, DL SG, DL AU)
+  - Get entity by ID (success and not found)
+  - Update entity (success, not found, partial update)
+  - All tests use in-memory SQLite with proper mocking
+- All 110 tests pass (96 existing + 14 new), mypy typecheck passes
+- Commit: aa06b60
+
+**Learnings:**
+- Flask blueprints allow modular route organization with url_prefix
+- Service layer pattern keeps business logic separate from HTTP handling
+- EntityService singleton instance provides clean service access
+- Pydantic model_validate() converts SQLAlchemy models to response schemas
+- model_dump() serializes Pydantic models to JSON-compatible dicts
+- Testing routes requires patching get_db in the routes module, not the service
+- The service receives db sessions as arguments, making it easy to test
 
 ---
