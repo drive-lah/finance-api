@@ -280,3 +280,36 @@ Started: 2026-02-13 18:12 AEDT
 - Service layer validation (validate_entity_exists) prevents FK constraint violations with better error messages
 
 ---
+
+## 2026-02-13 20:34 - US-009: Implement transaction fingerprinting utility
+- Created src/utils/fingerprint.py with generate_fingerprint() function
+  - Accepts bank_account_id (int), transaction_date (date or str), amount (float/Decimal/str), reference (Optional[str])
+  - Normalizes all inputs for consistent hashing: account_id to string, date to ISO format (YYYY-MM-DD), amount to 2 decimal places, reference lowercased/stripped
+  - Missing reference numbers treated as empty string
+  - Concatenates normalized values with pipe delimiter
+  - Returns 64-character SHA256 hex hash
+  - Deterministic: same inputs always produce same fingerprint
+- Updated src/utils/__init__.py to export generate_fingerprint
+- Wrote 17 comprehensive tests in tests/test_fingerprint.py covering:
+  - Fingerprint format validation (64 chars, hex)
+  - Consistency (same inputs → same hash)
+  - Uniqueness (different inputs → different hashes)
+  - Missing reference handling (None = empty string)
+  - Type normalization (date object vs string, float vs Decimal vs string)
+  - Amount precision (100.5 = 100.50 = 100.500)
+  - Edge cases: negative/zero amounts, reference whitespace/case, special characters, large amounts
+  - Real-world scenario validation
+- All 155 tests pass (138 existing + 17 new), mypy typecheck passes
+- Files changed: 4 files, 381 insertions
+- Commit: 43d3341
+
+**Learnings:**
+- SHA256 generates 64-character hex strings (32 bytes in hex representation)
+- Pipe delimiter (|) provides clear field separation in fingerprint input
+- Formatting amount with f"{amount:.2f}" ensures consistent 2 decimal place representation
+- hashlib.sha256() requires bytes input, so encode string with .encode('utf-8')
+- Type hints Union[float, Decimal, str] handle multiple input types gracefully
+- Testing edge cases (0.001 rounds to 0.00) validates normalization logic
+- Reference normalization (.strip().lower()) ensures case-insensitive duplicate detection
+
+---
