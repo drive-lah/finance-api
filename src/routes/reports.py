@@ -1,6 +1,7 @@
 """
 Reports Routes
 
+from src.utils.errors import NotFoundError, BadRequestError
 API endpoints for financial reports.
 """
 from datetime import date, datetime

@@ -4,11 +4,11 @@ Entity Routes
 REST API endpoints for managing finance entities.
 """
 from flask import Blueprint, jsonify, request
-from pydantic import ValidationError
 
 from src.database import get_db
 from src.services.entity_service import entity_service
 from src.models.schemas import EntityCreate, EntityUpdate, EntityResponse
+from src.utils.errors import NotFoundError, ConflictError
 
 
 # Create blueprint
@@ -26,17 +26,13 @@ def list_entities():
         200: List of entities
         500: Server error
     """
-    try:
-        db = next(get_db())
-        entities = entity_service.get_all(db)
-        
-        # Convert to response schemas
-        response_data = [EntityResponse.model_validate(entity) for entity in entities]
-        
-        return jsonify([entity.model_dump() for entity in response_data]), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    db = next(get_db())
+    entities = entity_service.get_all(db)
+    
+    # Convert to response schemas
+    response_data = [EntityResponse.model_validate(entity) for entity in entities]
+    
+    return jsonify([entity.model_dump() for entity in response_data]), 200
 
 
 @entities_bp.route('/entities', methods=['POST'])
@@ -59,26 +55,20 @@ def create_entity():
         400: Invalid request data or entity already exists
         500: Server error
     """
+    # Parse and validate request data (Pydantic will raise ValidationError on invalid data)
+    entity_data = EntityCreate.model_validate(request.json)
+    
+    # Create entity
+    db = next(get_db())
+    
     try:
-        # Parse and validate request data
-        try:
-            entity_data = EntityCreate.model_validate(request.json)
-        except ValidationError as e:
-            return jsonify({'error': 'Validation error', 'details': e.errors()}), 400
-        
-        # Create entity
-        db = next(get_db())
-        
-        try:
-            entity = entity_service.create(db, entity_data)
-            response = EntityResponse.model_validate(entity)
-            return jsonify(response.model_dump()), 201
-            
-        except ValueError as e:
-            return jsonify({'error': str(e)}), 400
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        entity = entity_service.create(db, entity_data)
+    except ValueError as e:
+        # Service layer raises ValueError for business logic errors (e.g., duplicate entity)
+        raise ConflictError(str(e))
+    
+    response = EntityResponse.model_validate(entity)
+    return jsonify(response.model_dump()), 201
 
 
 @entities_bp.route('/entities/<int:entity_id>', methods=['GET'])
@@ -93,18 +83,14 @@ def get_entity(entity_id: int):
         404: Entity not found
         500: Server error
     """
-    try:
-        db = next(get_db())
-        entity = entity_service.get_by_id(db, entity_id)
-        
-        if not entity:
-            return jsonify({'error': 'Entity not found'}), 404
-        
-        response = EntityResponse.model_validate(entity)
-        return jsonify(response.model_dump()), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    db = next(get_db())
+    entity = entity_service.get_by_id(db, entity_id)
+    
+    if not entity:
+        raise NotFoundError(f"Entity with ID {entity_id} not found")
+    
+    response = EntityResponse.model_validate(entity)
+    return jsonify(response.model_dump()), 200
 
 
 @entities_bp.route('/entities/<int:entity_id>', methods=['PUT'])
@@ -128,27 +114,20 @@ def update_entity(entity_id: int):
         404: Entity not found
         500: Server error
     """
+    # Parse and validate request data (Pydantic will raise ValidationError on invalid data)
+    entity_data = EntityUpdate.model_validate(request.json)
+    
+    # Update entity
+    db = next(get_db())
+    
     try:
-        # Parse and validate request data
-        try:
-            entity_data = EntityUpdate.model_validate(request.json)
-        except ValidationError as e:
-            return jsonify({'error': 'Validation error', 'details': e.errors()}), 400
-        
-        # Update entity
-        db = next(get_db())
-        
-        try:
-            entity = entity_service.update(db, entity_id, entity_data)
-            
-            if not entity:
-                return jsonify({'error': 'Entity not found'}), 404
-            
-            response = EntityResponse.model_validate(entity)
-            return jsonify(response.model_dump()), 200
-            
-        except ValueError as e:
-            return jsonify({'error': str(e)}), 400
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        entity = entity_service.update(db, entity_id, entity_data)
+    except ValueError as e:
+        # Service layer raises ValueError for business logic errors
+        raise ConflictError(str(e))
+    
+    if not entity:
+        raise NotFoundError(f"Entity with ID {entity_id} not found")
+    
+    response = EntityResponse.model_validate(entity)
+    return jsonify(response.model_dump()), 200

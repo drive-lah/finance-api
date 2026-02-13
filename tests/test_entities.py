@@ -236,7 +236,7 @@ class TestEntityEndpoints:
             headers={'Content-Type': 'application/json'}
         )
         
-        assert response.status_code == 400
+        assert response.status_code == 409
         json_data = response.get_json()
         assert 'error' in json_data
         assert 'already exists' in json_data['error'].lower()
@@ -295,7 +295,7 @@ class TestEntityEndpoints:
         assert response.status_code == 404
         json_data = response.get_json()
         assert 'error' in json_data
-        assert json_data['error'] == 'Entity not found'
+        assert 'not found' in json_data['error'].lower()
     
     def test_update_entity_success(self, client, sample_entities):
         """Test PUT /api/finance/entities/<id> with valid data"""
@@ -337,7 +337,7 @@ class TestEntityEndpoints:
         assert response.status_code == 404
         json_data = response.get_json()
         assert 'error' in json_data
-        assert json_data['error'] == 'Entity not found'
+        assert 'not found' in json_data['error'].lower()
     
     def test_update_entity_partial_update(self, client, sample_entities):
         """Test PUT /api/finance/entities/<id> with partial data"""

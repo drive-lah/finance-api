@@ -224,7 +224,7 @@ def test_create_bank_account_invalid_entity(client, db_session):
     
     with patch('src.routes.bank_accounts.get_db', mock_get_db(db_session)):
         response = client.post('/api/finance/bank-accounts', json=bank_account_data)
-        assert response.status_code == 400
+        assert response.status_code == 409
         data = response.json
         assert 'error' in data
         assert '9999' in data['error']
@@ -243,8 +243,9 @@ def test_create_bank_account_validation_errors(client, db_session):
         response = client.post('/api/finance/bank-accounts', json=bank_account_data)
         assert response.status_code == 400
         data = response.json
-        assert 'validation_errors' in data
-        errors = data['validation_errors']
+        assert 'error' in data
+        assert data['error'] == 'Validation error'
+        errors = data['details']
         assert len(errors) >= 3  # At least 3 missing fields
         
         # Check that field names are present
@@ -278,7 +279,8 @@ def test_create_bank_account_invalid_currency(client, db_session):
         response = client.post('/api/finance/bank-accounts', json=bank_account_data)
         assert response.status_code == 400
         data = response.json
-        assert 'validation_errors' in data
+        assert 'error' in data
+        assert data['error'] == 'Validation error'
 
 
 def test_get_bank_account_by_id_success(client, db_session):

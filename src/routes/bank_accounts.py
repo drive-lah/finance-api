@@ -1,10 +1,10 @@
 """Bank account routes."""
 from flask import Blueprint, request, jsonify
-from pydantic import ValidationError
 
 from src.database import get_db
 from src.services.bank_account_service import bank_account_service
 from src.models.schemas import BankAccountCreate, BankAccountResponse
+from src.utils.errors import NotFoundError, ConflictError
 
 bank_accounts_bp = Blueprint('bank_accounts', __name__, url_prefix='/api/finance/bank-accounts')
 
@@ -22,19 +22,13 @@ def list_bank_accounts():
         400: Invalid query parameters
         500: Server error
     """
-    try:
-        # Get optional entity_id filter
-        entity_id = request.args.get('entity_id', type=int)
-        
-        db = next(get_db())
-        try:
-            bank_accounts = bank_account_service.get_all(db, entity_id=entity_id)
-            response_data = [BankAccountResponse.model_validate(ba).model_dump() for ba in bank_accounts]
-            return jsonify(response_data), 200
-        finally:
-            db.close()
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    # Get optional entity_id filter
+    entity_id = request.args.get('entity_id', type=int)
+    
+    db = next(get_db())
+    bank_accounts = bank_account_service.get_all(db, entity_id=entity_id)
+    response_data = [BankAccountResponse.model_validate(ba).model_dump() for ba in bank_accounts]
+    return jsonify(response_data), 200
 
 
 @bank_accounts_bp.route('', methods=['POST'])
@@ -55,33 +49,19 @@ def create_bank_account():
         400: Validation error or invalid entity_id
         500: Server error
     """
+    # Parse and validate request data (Pydantic will raise ValidationError on invalid data)
+    data = request.get_json()
+    bank_account_data = BankAccountCreate(**data)
+    
+    db = next(get_db())
     try:
-        # Parse and validate request data
-        data = request.get_json()
-        bank_account_data = BankAccountCreate(**data)
-        
-        db = next(get_db())
-        try:
-            bank_account = bank_account_service.create(db, bank_account_data)
-            response_data = BankAccountResponse.model_validate(bank_account).model_dump()
-            return jsonify(response_data), 201
-        except ValueError as e:
-            # Entity validation error
-            return jsonify({"error": str(e)}), 400
-        finally:
-            db.close()
-    except ValidationError as e:
-        # Pydantic validation error
-        errors = []
-        for error in e.errors():
-            errors.append({
-                "field": ".".join(str(loc) for loc in error["loc"]),
-                "message": error["msg"],
-                "type": error["type"]
-            })
-        return jsonify({"validation_errors": errors}), 400
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        bank_account = bank_account_service.create(db, bank_account_data)
+    except ValueError as e:
+        # Service layer raises ValueError for business logic errors (e.g., invalid entity)
+        raise ConflictError(str(e))
+    
+    response_data = BankAccountResponse.model_validate(bank_account).model_dump()
+    return jsonify(response_data), 201
 
 
 @bank_accounts_bp.route('/<int:bank_account_id>', methods=['GET'])
@@ -97,16 +77,11 @@ def get_bank_account(bank_account_id: int):
         404: Bank account not found
         500: Server error
     """
-    try:
-        db = next(get_db())
-        try:
-            bank_account = bank_account_service.get_by_id(db, bank_account_id)
-            if not bank_account:
-                return jsonify({"error": "Bank account not found"}), 404
-            
-            response_data = BankAccountResponse.model_validate(bank_account).model_dump()
-            return jsonify(response_data), 200
-        finally:
-            db.close()
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    db = next(get_db())
+    bank_account = bank_account_service.get_by_id(db, bank_account_id)
+    
+    if not bank_account:
+        raise NotFoundError(f"Bank account with ID {bank_account_id} not found")
+    
+    response_data = BankAccountResponse.model_validate(bank_account).model_dump()
+    return jsonify(response_data), 200

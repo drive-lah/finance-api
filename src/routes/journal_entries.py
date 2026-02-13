@@ -4,7 +4,8 @@ Journal Entry Routes
 API endpoints for managing journal entries.
 """
 from flask import Blueprint, request, jsonify
-from pydantic import ValidationError
+
+from src.utils.errors import NotFoundError, BadRequestError, ConflictError
 
 from src.database import get_db
 from src.models.schemas import JournalEntryCreate, JournalEntryResponse
@@ -73,29 +74,29 @@ def create_journal_entry():
     Returns:
         JSON object with created journal entry (201 Created)
     """
+    # Parse and validate request data (Pydantic will raise ValidationError on invalid data)
+    data = request.get_json()
+    entry_data = JournalEntryCreate.model_validate(data)
+    
+    # Extract status if provided (default to Draft)
+    status = JournalEntryStatus.DRAFT
+    if 'status' in data:
+        status_str = data['status']
+        if isinstance(status_str, str):
+            try:
+                status = JournalEntryStatus[status_str.upper()]
+            except KeyError:
+                raise BadRequestError(
+                    f"Invalid status: {status_str}. Must be one of: Draft, Posted, Void"
+                )
+    
+    # Convert Pydantic model to dict for service
+    lines_data = [line.model_dump() for line in entry_data.lines]
+    
+    db = next(get_db())
+    
+    # Create journal entry
     try:
-        # Parse and validate request data
-        data = request.get_json()
-        entry_data = JournalEntryCreate.model_validate(data)
-        
-        # Extract status if provided (default to Draft)
-        status = JournalEntryStatus.DRAFT
-        if 'status' in data:
-            status_str = data['status']
-            if isinstance(status_str, str):
-                try:
-                    status = JournalEntryStatus[status_str.upper()]
-                except KeyError:
-                    return jsonify({
-                        "error": f"Invalid status: {status_str}. Must be one of: Draft, Posted, Void"
-                    }), 400
-        
-        # Convert Pydantic model to dict for service
-        lines_data = [line.model_dump() for line in entry_data.lines]
-        
-        db = next(get_db())
-        
-        # Create journal entry
         entry = journal_service.create(
             db=db,
             entity_id=entry_data.entity_id,
@@ -106,29 +107,13 @@ def create_journal_entry():
             created_by=entry_data.created_by,
             status=status
         )
-        
-        # Convert to response schema
-        response = JournalEntryResponse.model_validate(entry)
-        return jsonify(response.model_dump()), 201
-        
-    except ValidationError as e:
-        # Pydantic validation error
-        errors = []
-        for error in e.errors():
-            field = '.'.join(str(x) for x in error['loc'])
-            errors.append({
-                "field": field,
-                "message": error['msg'],
-                "type": error['type']
-            })
-        return jsonify({"error": "Validation failed", "details": errors}), 400
-        
     except ValueError as e:
-        # Business logic validation error
-        return jsonify({"error": str(e)}), 400
-        
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        # Service layer raises ValueError for business logic errors
+        raise BadRequestError(str(e))
+    
+    # Convert to response schema
+    response = JournalEntryResponse.model_validate(entry)
+    return jsonify(response.model_dump()), 201
 
 
 @journal_entries_bp.route('/<int:entry_id>', methods=['GET'])

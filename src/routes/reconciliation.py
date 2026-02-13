@@ -1,6 +1,7 @@
 """Reconciliation routes for matching transactions with journal entries."""
 from flask import Blueprint, jsonify, request
-from pydantic import ValidationError
+
+from src.utils.errors import NotFoundError, BadRequestError
 
 from src.database import get_db
 from src.services.reconciliation_service import reconciliation_service

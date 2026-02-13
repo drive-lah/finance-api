@@ -2,10 +2,17 @@
 Finance API - Main Application
 """
 import os
+import logging
 from flask import Flask, jsonify
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 
 def create_app(config=None):
@@ -19,6 +26,10 @@ def create_app(config=None):
     
     if config:
         app.config.update(config)
+    
+    # Register error handlers
+    from src.utils.errors import register_error_handlers
+    register_error_handlers(app)
     
     # Register blueprints
     from src.routes.entities import entities_bp

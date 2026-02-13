@@ -492,7 +492,7 @@ def test_create_journal_entry_validation_errors(client, mock_db):
         )
         
         assert response.status_code == 400
-        assert 'Validation failed' in response.json['error']
+        assert 'Validation error' in response.json['error']
 
 
 def test_get_journal_entry_by_id(client, mock_db):

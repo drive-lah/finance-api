@@ -206,7 +206,7 @@ def test_create_account_invalid_parent(client, mock_get_db, test_entity):
             "parent_code": "9999"  # Non-existent parent
         }
         response = client.post('/api/finance/accounts', json=account_data)
-        assert response.status_code == 400
+        assert response.status_code == 409
         data = response.get_json()
         assert 'error' in data
         assert 'not found' in data['error']
@@ -222,7 +222,7 @@ def test_create_account_duplicate_code(client, mock_get_db, test_accounts, test_
             "account_type": "Asset"
         }
         response = client.post('/api/finance/accounts', json=account_data)
-        assert response.status_code == 400
+        assert response.status_code == 409
         data = response.get_json()
         assert 'error' in data
         assert 'already exists' in data['error']
@@ -299,7 +299,7 @@ def test_update_account_invalid_parent(client, mock_get_db, test_accounts):
             "parent_code": "9999"  # Non-existent parent
         }
         response = client.put(f'/api/finance/accounts/{account.id}', json=update_data)
-        assert response.status_code == 400
+        assert response.status_code == 409
         data = response.get_json()
         assert 'error' in data
         assert 'not found' in data['error']
