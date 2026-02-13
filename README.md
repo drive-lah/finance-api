@@ -1031,9 +1031,6 @@ pytest --cov=src --cov-report=term-missing tests/
 This project uses full type hints with Pydantic and SQLAlchemy 2.x.
 
 ```bash
-# Install mypy (if not already installed)
-pip install mypy
-
 # Run type checking
 mypy src/
 
