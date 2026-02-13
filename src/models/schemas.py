@@ -222,6 +222,8 @@ class TransactionResponse(BaseModel):
     status: str
     import_batch_id: Optional[str]
     original_csv_row: Optional[str]
+    reconciled_journal_entry_id: Optional[int]
+    reconciled_at: Optional[datetime]
     created_at: datetime
     updated_at: datetime
     

@@ -70,6 +70,17 @@ class FinanceTransaction(Base):
         nullable=True,
         comment="Original CSV row data for audit purposes"
     )
+    reconciled_journal_entry_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("finance_journal_entries.id", ondelete="SET NULL"),
+        nullable=True,
+        comment="Journal entry this transaction is reconciled with"
+    )
+    reconciled_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime,
+        nullable=True,
+        comment="Timestamp when transaction was reconciled"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,
@@ -112,6 +123,8 @@ class FinanceTransaction(Base):
             "status": self.status.value,
             "import_batch_id": self.import_batch_id,
             "original_csv_row": self.original_csv_row,
+            "reconciled_journal_entry_id": self.reconciled_journal_entry_id,
+            "reconciled_at": self.reconciled_at.isoformat() if self.reconciled_at else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

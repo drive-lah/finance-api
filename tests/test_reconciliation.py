@@ -641,3 +641,230 @@ class TestReconciliationEndpoint:
             )
 
         assert response.status_code == 400
+
+    def test_confirm_reconciliation_success(self, client, mock_db):
+        """Test successful reconciliation confirmation."""
+        # Create test data
+        entity = FinanceEntity(name="Test Co", country="US", base_currency="USD")
+        mock_db.add(entity)
+        mock_db.commit()
+
+        bank_account = FinanceBankAccount(
+            entity_id=entity.id,
+            bank_name="Test Bank",
+            account_number="12345",
+            account_name="Operating",
+            currency="USD",
+        )
+        mock_db.add(bank_account)
+        mock_db.commit()
+
+        transaction = FinanceTransaction(
+            bank_account_id=bank_account.id,
+            transaction_date=date(2026, 2, 1),
+            description="Payment",
+            amount=Decimal("1000.00"),
+            reference_number="INV-123",
+            fingerprint="test-fingerprint-10",
+            status=TransactionStatus.PENDING,
+        )
+        mock_db.add(transaction)
+        mock_db.commit()
+        transaction_id = transaction.id
+
+        account = FinanceAccount(
+            entity_id=entity.id,
+            code="1100",
+            name="Cash",
+            account_type=AccountType.ASSET,
+            normal_balance=NormalBalance.DEBIT,
+        )
+        mock_db.add(account)
+        mock_db.commit()
+
+        entry = FinanceJournalEntry(
+            entity_id=entity.id,
+            entry_date=date(2026, 2, 1),
+            description="Payment received",
+            reference_number="INV-123",
+            status=JournalEntryStatus.POSTED,
+        )
+        mock_db.add(entry)
+        mock_db.commit()
+        entry_id = entry.id
+
+        line = FinanceJournalLine(
+            entry_id=entry.id,
+            entity_id=entity.id,
+            account_code="1100",
+            debit_amount=Decimal("1000.00"),
+            credit_amount=Decimal("0.00"),
+        )
+        mock_db.add(line)
+        mock_db.commit()
+
+        with patch("src.routes.reconciliation.get_db", mock_get_db(mock_db)):
+            response = client.post(
+                "/api/finance/reconciliation/confirm",
+                json={"transaction_id": transaction_id, "journal_entry_id": entry_id},
+            )
+
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data["id"] == transaction_id
+        assert data["status"] == "Reconciled"
+        assert data["reconciled_journal_entry_id"] == entry_id
+        assert data["reconciled_at"] is not None
+
+    def test_confirm_transaction_not_found(self, client, mock_db):
+        """Test error when transaction not found."""
+        with patch("src.routes.reconciliation.get_db", mock_get_db(mock_db)):
+            response = client.post(
+                "/api/finance/reconciliation/confirm",
+                json={"transaction_id": 99999, "journal_entry_id": 1},
+            )
+
+        assert response.status_code == 400
+        data = json.loads(response.data)
+        assert "not found" in data["error"]
+
+    def test_confirm_journal_entry_not_found(self, client, mock_db):
+        """Test error when journal entry not found."""
+        # Create test transaction
+        entity = FinanceEntity(name="Test Co", country="US", base_currency="USD")
+        mock_db.add(entity)
+        mock_db.commit()
+
+        bank_account = FinanceBankAccount(
+            entity_id=entity.id,
+            bank_name="Test Bank",
+            account_number="12345",
+            account_name="Operating",
+            currency="USD",
+        )
+        mock_db.add(bank_account)
+        mock_db.commit()
+
+        transaction = FinanceTransaction(
+            bank_account_id=bank_account.id,
+            transaction_date=date(2026, 2, 1),
+            description="Payment",
+            amount=Decimal("1000.00"),
+            reference_number="INV-123",
+            fingerprint="test-fingerprint-11",
+            status=TransactionStatus.PENDING,
+        )
+        mock_db.add(transaction)
+        mock_db.commit()
+        transaction_id = transaction.id
+
+        with patch("src.routes.reconciliation.get_db", mock_get_db(mock_db)):
+            response = client.post(
+                "/api/finance/reconciliation/confirm",
+                json={"transaction_id": transaction_id, "journal_entry_id": 99999},
+            )
+
+        assert response.status_code == 400
+        data = json.loads(response.data)
+        assert "not found" in data["error"]
+
+    def test_confirm_already_reconciled(self, client, mock_db):
+        """Test error when transaction already reconciled."""
+        # Create test data
+        entity = FinanceEntity(name="Test Co", country="US", base_currency="USD")
+        mock_db.add(entity)
+        mock_db.commit()
+
+        bank_account = FinanceBankAccount(
+            entity_id=entity.id,
+            bank_name="Test Bank",
+            account_number="12345",
+            account_name="Operating",
+            currency="USD",
+        )
+        mock_db.add(bank_account)
+        mock_db.commit()
+
+        # Create already reconciled transaction
+        from datetime import datetime, UTC
+
+        transaction = FinanceTransaction(
+            bank_account_id=bank_account.id,
+            transaction_date=date(2026, 2, 1),
+            description="Payment",
+            amount=Decimal("1000.00"),
+            reference_number="INV-123",
+            fingerprint="test-fingerprint-12",
+            status=TransactionStatus.RECONCILED,
+            reconciled_at=datetime.now(UTC),
+        )
+        mock_db.add(transaction)
+        mock_db.commit()
+        transaction_id = transaction.id
+
+        account = FinanceAccount(
+            entity_id=entity.id,
+            code="1100",
+            name="Cash",
+            account_type=AccountType.ASSET,
+            normal_balance=NormalBalance.DEBIT,
+        )
+        mock_db.add(account)
+        mock_db.commit()
+
+        entry = FinanceJournalEntry(
+            entity_id=entity.id,
+            entry_date=date(2026, 2, 1),
+            description="Payment received",
+            reference_number="INV-123",
+            status=JournalEntryStatus.POSTED,
+        )
+        mock_db.add(entry)
+        mock_db.commit()
+        entry_id = entry.id
+
+        with patch("src.routes.reconciliation.get_db", mock_get_db(mock_db)):
+            response = client.post(
+                "/api/finance/reconciliation/confirm",
+                json={"transaction_id": transaction_id, "journal_entry_id": entry_id},
+            )
+
+        assert response.status_code == 400
+        data = json.loads(response.data)
+        assert "already reconciled" in data["error"]
+
+    def test_confirm_missing_transaction_id(self, client, mock_db):
+        """Test error when transaction_id is missing."""
+        with patch("src.routes.reconciliation.get_db", mock_get_db(mock_db)):
+            response = client.post(
+                "/api/finance/reconciliation/confirm",
+                json={"journal_entry_id": 1},
+            )
+
+        assert response.status_code == 400
+        data = json.loads(response.data)
+        assert "transaction_id" in data["error"]
+
+    def test_confirm_missing_journal_entry_id(self, client, mock_db):
+        """Test error when journal_entry_id is missing."""
+        with patch("src.routes.reconciliation.get_db", mock_get_db(mock_db)):
+            response = client.post(
+                "/api/finance/reconciliation/confirm",
+                json={"transaction_id": 1},
+            )
+
+        assert response.status_code == 400
+        data = json.loads(response.data)
+        assert "journal_entry_id" in data["error"]
+
+    def test_confirm_not_json(self, client, mock_db):
+        """Test error when request is not JSON."""
+        with patch("src.routes.reconciliation.get_db", mock_get_db(mock_db)):
+            response = client.post(
+                "/api/finance/reconciliation/confirm",
+                data="not json",
+            )
+
+        assert response.status_code == 400
+        data = json.loads(response.data)
+        assert "JSON" in data["error"]

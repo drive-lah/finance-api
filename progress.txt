@@ -483,3 +483,44 @@ Started: 2026-02-13 18:12 AEDT
 - Reports should include both flat list and grouped data for flexibility
 - Total debits should always equal total credits in a valid trial balance
 ---
+
+## 2026-02-14 01:56 - US-014: Add transaction reconciliation matching endpoint
+- Created src/services/reconciliation_service.py with ReconciliationService class
+  - get_suggestions() method accepts bank_account_id and returns reconciliation suggestions
+  - Retrieves unreconciled transactions (status=PENDING) for the specified bank account
+  - Retrieves all posted journal entries with eagerly loaded lines (using joinedload)
+  - _find_matches() scores potential matches based on:
+    - Amount matching: +40 points (within $0.01 tolerance)
+    - Date matching: +30 points (within 3 days)
+    - Reference matching: +20 points (case-insensitive)
+  - Filters matches to only include confidence score >= 50%
+  - Returns transaction details with suggested matches sorted by confidence
+- Created src/routes/reconciliation.py with Flask Blueprint
+  - GET /api/finance/reconciliation/suggestions endpoint
+  - Required parameter: bank_account_id
+  - Returns JSON list of suggestions with transaction and matched entry details
+  - Proper error handling for missing bank_account_id
+- Registered reconciliation_bp blueprint in src/app.py
+- Wrote 10 comprehensive tests in tests/test_reconciliation.py covering:
+  - Amount match scoring (+40 points)
+  - Date match scoring (+30 points for dates within 3 days)
+  - Reference match scoring (+20 points, case-insensitive)
+  - Confidence threshold filtering (only >= 50% returned)
+  - Pending transactions only (excludes Reconciled/Matched)
+  - Posted entries only (excludes Draft/Void)
+  - Endpoint success and validation error cases
+  - All tests pass (10 new, 211 total)
+- mypy typecheck passes with no issues
+- Files changed: 5 files, 887 insertions
+- Commit: dc3149c
+
+**Learnings:**
+- SQLAlchemy joinedload() required to eagerly load journal entry lines (avoid empty collections)
+- Enum filtering uses enum instances (e.g., TransactionStatus.PENDING), not string literals
+- Enum values are stored as their .value in DB (e.g., "Pending"), but SQLAlchemy handles comparison
+- Decimal arithmetic requires explicit Decimal types to avoid float conversion in type checking
+- sum() with start=Decimal("0.00") ensures Decimal return type for type safety
+- Confidence scoring approach allows flexible matching criteria
+- 50% threshold ensures only meaningful matches are suggested
+- Case-insensitive reference matching uses .strip().lower() normalization
+---

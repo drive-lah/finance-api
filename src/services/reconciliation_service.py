@@ -1,5 +1,5 @@
 """Reconciliation service for matching bank transactions with journal entries."""
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime, UTC
 from decimal import Decimal
 from typing import Any, Optional
 from sqlalchemy.orm import Session, joinedload
@@ -68,6 +68,57 @@ class ReconciliationService:
             })
 
         return suggestions
+
+    def confirm(
+        self, db: Session, transaction_id: int, journal_entry_id: int
+    ) -> FinanceTransaction:
+        """
+        Confirm a transaction reconciliation with a journal entry.
+
+        Marks the transaction as Reconciled, links it to the journal entry,
+        and sets the reconciled_at timestamp.
+
+        Args:
+            db: Database session
+            transaction_id: ID of the transaction to reconcile
+            journal_entry_id: ID of the journal entry to link
+
+        Returns:
+            Updated transaction
+
+        Raises:
+            ValueError: If transaction or journal entry not found, or already reconciled
+        """
+        # Get the transaction
+        transaction = db.query(FinanceTransaction).filter(
+            FinanceTransaction.id == transaction_id
+        ).first()
+
+        if not transaction:
+            raise ValueError(f"Transaction with id {transaction_id} not found")
+
+        # Check if already reconciled
+        if transaction.status == TransactionStatus.RECONCILED:
+            raise ValueError(f"Transaction {transaction_id} is already reconciled")
+
+        # Get the journal entry
+        journal_entry = db.query(FinanceJournalEntry).filter(
+            FinanceJournalEntry.id == journal_entry_id
+        ).first()
+
+        if not journal_entry:
+            raise ValueError(f"Journal entry with id {journal_entry_id} not found")
+
+        # Update transaction
+        transaction.status = TransactionStatus.RECONCILED
+        transaction.reconciled_journal_entry_id = journal_entry_id
+        transaction.reconciled_at = datetime.now(UTC)
+
+        # Commit the transaction
+        db.commit()
+        db.refresh(transaction)
+
+        return transaction
 
     def _find_matches(
         self, transaction: FinanceTransaction, posted_entries: list[FinanceJournalEntry]
