@@ -25,10 +25,12 @@ def create_app(config=None):
     from src.routes.accounts import accounts_bp
     from src.routes.bank_accounts import bank_accounts_bp
     from src.routes.transactions import transactions_bp
+    from src.routes.journal_entries import journal_entries_bp
     app.register_blueprint(entities_bp)
     app.register_blueprint(accounts_bp)
     app.register_blueprint(bank_accounts_bp)
     app.register_blueprint(transactions_bp)
+    app.register_blueprint(journal_entries_bp)
     
     # Health check endpoint
     @app.route('/health', methods=['GET'])
