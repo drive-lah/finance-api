@@ -401,3 +401,42 @@ Started: 2026-02-13 18:12 AEDT
 - Journal entries can be created as Draft (editable) or Posted (affects balances)
 - Account code validation ensures all accounts exist before creating entry
 - Service layer validation provides better error messages than FK constraint violations
+
+## 2026-02-13 23:51 - US-012: Implement journal entry posting logic
+- Added posted_at and posting_user_id fields to FinanceJournalEntry model
+- Updated JournalEntryResponse Pydantic schema to include new fields
+- Created Alembic migration (fbf4905ce794) to add posted_at and posting_user_id columns
+- Implemented post_entry() method in JournalService with:
+  - Validation that entry is in Draft status
+  - Re-validation of balance (debits = credits)
+  - Status transition to Posted
+  - Timestamp setting (posted_at)
+  - Optional posting_user_id tracking
+  - Atomic transaction commit
+- Added POST /api/finance/journal-entries/:id/post endpoint in journal_entries routes
+- Endpoint accepts optional posting_user_id in request body
+- Returns 400 if entry not found, already posted, or doesn't balance
+- Returns 200 with updated entry on success
+- Wrote 7 comprehensive tests covering:
+  - Successful posting (with and without posting_user_id)
+  - Already posted error case
+  - Entry not found error case
+  - Unbalanced entry error case
+  - Atomic transaction verification
+  - Timestamp persistence verification
+- Fixed deprecation warning by using datetime.now(UTC) instead of datetime.utcnow()
+- All 193 tests pass (186 existing + 7 new)
+- mypy typecheck passes with no issues
+- Files changed: 6 files, 602 insertions
+- Commit: 1c99238
+
+**Learnings:**
+- Python 3.11+ requires importing UTC directly from datetime module: `from datetime import UTC`
+- datetime.now(UTC) is the modern replacement for deprecated datetime.utcnow()
+- Posting logic should re-validate balance even though it was validated at creation (data integrity)
+- Atomic status transitions use db.commit() within the service method after all validations pass
+- Optional request body parameters should check request.is_json before calling request.get_json()
+- posted_at timestamp enables audit trail for when entries were finalized
+- posting_user_id enables tracking who posted the entry (useful for compliance)
+- SQLAlchemy enum values stored as VARCHAR can be compared directly with enum instances
+- Migration naming convention: verb_description_table (e.g., add_posted_at_and_posting_user_to_journal_entries)
