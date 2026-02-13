@@ -440,3 +440,46 @@ Started: 2026-02-13 18:12 AEDT
 - posting_user_id enables tracking who posted the entry (useful for compliance)
 - SQLAlchemy enum values stored as VARCHAR can be compared directly with enum instances
 - Migration naming convention: verb_description_table (e.g., add_posted_at_and_posting_user_to_journal_entries)
+
+## 2026-02-14 00:52 - US-013: Build trial balance report endpoint
+- Created src/services/report_service.py with ReportService class
+  - get_trial_balance() method accepts entity_id and optional as_of_date
+  - Queries Posted journal lines up to as_of_date
+  - Joins with finance_journal_entries to filter by status and date
+  - Joins with finance_accounts to get account details (name, type)
+  - Groups by account_code and sums debit/credit amounts
+  - Calculates net balance (debit - credit) for each account
+  - Returns accounts grouped by AccountType (Asset, Liability, Equity, Revenue, Expense)
+  - Includes grand totals for total_debits and total_credits
+  - Uses SQLAlchemy func.sum() for aggregation
+- Created src/routes/reports.py with Flask Blueprint
+  - GET /api/finance/reports/trial-balance endpoint
+  - Required parameter: entity_id
+  - Optional parameter: as_of_date (YYYY-MM-DD format, defaults to today)
+  - Returns 400 for missing/invalid entity_id or invalid date format
+  - Returns JSON with entity_id, as_of_date, accounts (flat list), accounts_by_type (grouped), totals
+- Registered reports_bp blueprint in src/app.py
+- Wrote 8 comprehensive tests in tests/test_reports.py
+  - Empty trial balance (no journal entries)
+  - Trial balance with posted entries (multiple accounts, correct balances)
+  - Filters out Draft entries (only includes Posted)
+  - as_of_date filtering (excludes entries after cutoff date)
+  - Missing/invalid entity_id validation
+  - Invalid date format validation
+  - Multiple entries for same account (correct summation)
+  - Grouping by account type validation
+- All 201 tests pass (193 existing + 8 new)
+- mypy typecheck passes with no issues
+- Files changed: 5 files, 785 insertions
+- Commit: 23c5c88
+
+**Learnings:**
+- SQLAlchemy join with multiple conditions uses & operator within filter()
+- func.sum() from sqlalchemy returns Decimal or None, need to handle None with `or Decimal("0.00")`
+- Trial balance should only include Posted entries to reflect actual account balances
+- as_of_date filtering uses <= comparison on entry_date for inclusive cutoff
+- Grouping accounts by type improves readability for financial reports
+- Type annotations required for dict literals: dict[str, list[dict]]
+- Reports should include both flat list and grouped data for flexibility
+- Total debits should always equal total credits in a valid trial balance
+---
