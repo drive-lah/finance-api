@@ -96,5 +96,39 @@ Started: 2026-02-13 18:12 AEDT
 - Pydantic 2.x uses field_validator decorator (not validator) and model_config dict (not Config class)
 - Tests using in-memory SQLite are fast and reliable for model validation
 - Parent code is stored as string reference rather than FK for simpler hierarchical queries
+- Numeric types: Use Numeric(precision=15, scale=2) for monetary amounts
+- Fingerprint pattern: Use String(64) for SHA256 hashes (used for duplicate detection)
+- Date vs DateTime: Use Date for transaction dates, DateTime for timestamps
+
+---
+
+## 2026-02-13 18:52 - US-004: Create finance_bank_accounts and finance_transactions models
+- Created src/models/bank_account.py with FinanceBankAccount model
+  - Fields: id, entity_id, bank_name, account_number, account_name, currency, status, timestamps
+  - BankAccountStatus enum with ACTIVE, INACTIVE, CLOSED values
+  - Unique constraint on (entity_id, account_number)
+  - Foreign key to finance_entities with CASCADE delete
+- Created src/models/transaction.py with FinanceTransaction model
+  - Fields: id, bank_account_id, transaction_date, description, amount, reference_number, fingerprint, status, import_batch_id, original_csv_row, timestamps
+  - TransactionStatus enum with Pending, Matched, Reconciled values
+  - Unique index on fingerprint for duplicate detection
+  - Amount stored as Numeric(15,2) for precision
+- Updated src/models/__init__.py to export new models and enums
+- Added Pydantic schemas to src/models/schemas.py
+  - BankAccountCreate, BankAccountUpdate, BankAccountResponse
+  - TransactionCreate, TransactionResponse
+  - Currency validation with uppercase conversion
+- Created Alembic migration 002_create_bank_accounts_and_transactions.py
+  - Creates finance_bank_accounts table with all indexes
+  - Creates finance_transactions table with fingerprint unique index and other indexes
+- Wrote 24 new tests for bank account and transaction models/schemas
+- All 74 tests pass, mypy typecheck passes
+- Commit: afb0c61
+
+**Learnings:**
+- Fingerprint uniqueness is enforced at database level with unique index
+- Transaction amounts can be positive (credits) or negative (debits)
+- import_batch_id allows grouping transactions from same CSV import
+- original_csv_row stored as Text for audit trail
 
 ---
