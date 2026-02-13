@@ -156,3 +156,40 @@ def get_journal_entry(entry_id: int):
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@journal_entries_bp.route('/<int:entry_id>/post', methods=['POST'])
+def post_journal_entry(entry_id: int):
+    """
+    Post a journal entry, changing its status from Draft to Posted.
+    
+    Path Parameters:
+        entry_id (int): ID of the journal entry to post
+    
+    Request Body (optional):
+        JSON object with posting_user_id (optional)
+    
+    Returns:
+        JSON object with posted journal entry (200 OK)
+        or error if entry not found, already posted, or doesn't balance (400 Bad Request)
+    """
+    try:
+        # Get optional posting_user_id from request body
+        posting_user_id = None
+        if request.is_json:
+            data = request.get_json()
+            posting_user_id = data.get('posting_user_id')
+        
+        db = next(get_db())
+        entry = journal_service.post_entry(db, entry_id, posting_user_id)
+        
+        # Convert to response schema
+        response = JournalEntryResponse.model_validate(entry)
+        return jsonify(response.model_dump()), 200
+        
+    except ValueError as e:
+        # Business logic validation error (not found, already posted, doesn't balance)
+        return jsonify({"error": str(e)}), 400
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

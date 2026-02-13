@@ -570,3 +570,456 @@ def test_create_complex_journal_entry(client, mock_db):
         total_debits = sum(line['debit_amount'] for line in result['lines'])
         total_credits = sum(line['credit_amount'] for line in result['lines'])
         assert total_debits == total_credits == 1000.0
+
+
+def test_post_journal_entry_success(client, mock_db):
+    """Test successfully posting a journal entry"""
+    # Create entity and accounts
+    entity = FinanceEntity(
+        name="Test Company",
+        country="US",
+        base_currency="USD",
+        status=EntityStatus.ACTIVE
+    )
+    mock_db.add(entity)
+    mock_db.flush()
+    entity_id = entity.id
+    
+    cash_account = FinanceAccount(
+        entity_id=entity_id,
+        code="1000",
+        name="Cash",
+        account_type=AccountType.ASSET,
+        normal_balance=NormalBalance.DEBIT,
+        is_active=True
+    )
+    revenue_account = FinanceAccount(
+        entity_id=entity_id,
+        code="4000",
+        name="Revenue",
+        account_type=AccountType.REVENUE,
+        normal_balance=NormalBalance.CREDIT,
+        is_active=True
+    )
+    mock_db.add_all([cash_account, revenue_account])
+    mock_db.flush()
+    
+    # Create draft journal entry
+    entry = FinanceJournalEntry(
+        entity_id=entity_id,
+        entry_date=date(2024, 1, 15),
+        description="Test Entry",
+        status=JournalEntryStatus.DRAFT
+    )
+    mock_db.add(entry)
+    mock_db.flush()
+    entry_id = entry.id
+    
+    # Add lines
+    line1 = FinanceJournalLine(
+        entry_id=entry_id,
+        entity_id=entity_id,
+        account_code="1000",
+        debit_amount=Decimal("100.00"),
+        credit_amount=Decimal("0.00"),
+        description="Cash debit"
+    )
+    line2 = FinanceJournalLine(
+        entry_id=entry_id,
+        entity_id=entity_id,
+        account_code="4000",
+        debit_amount=Decimal("0.00"),
+        credit_amount=Decimal("100.00"),
+        description="Revenue credit"
+    )
+    mock_db.add_all([line1, line2])
+    mock_db.commit()
+    
+    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+        response = client.post(f'/api/finance/journal-entries/{entry_id}/post')
+        assert response.status_code == 200
+        result = response.json
+        assert result['status'] == 'Posted'
+        assert result['posted_at'] is not None
+        assert result['posting_user_id'] is None
+
+
+def test_post_journal_entry_with_user_id(client, mock_db):
+    """Test posting a journal entry with posting_user_id"""
+    # Create entity and accounts
+    entity = FinanceEntity(
+        name="Test Company",
+        country="US",
+        base_currency="USD",
+        status=EntityStatus.ACTIVE
+    )
+    mock_db.add(entity)
+    mock_db.flush()
+    entity_id = entity.id
+    
+    cash_account = FinanceAccount(
+        entity_id=entity_id,
+        code="1000",
+        name="Cash",
+        account_type=AccountType.ASSET,
+        normal_balance=NormalBalance.DEBIT,
+        is_active=True
+    )
+    revenue_account = FinanceAccount(
+        entity_id=entity_id,
+        code="4000",
+        name="Revenue",
+        account_type=AccountType.REVENUE,
+        normal_balance=NormalBalance.CREDIT,
+        is_active=True
+    )
+    mock_db.add_all([cash_account, revenue_account])
+    mock_db.flush()
+    
+    # Create draft journal entry
+    entry = FinanceJournalEntry(
+        entity_id=entity_id,
+        entry_date=date(2024, 1, 15),
+        description="Test Entry",
+        status=JournalEntryStatus.DRAFT
+    )
+    mock_db.add(entry)
+    mock_db.flush()
+    entry_id = entry.id
+    
+    # Add lines
+    line1 = FinanceJournalLine(
+        entry_id=entry_id,
+        entity_id=entity_id,
+        account_code="1000",
+        debit_amount=Decimal("100.00"),
+        credit_amount=Decimal("0.00"),
+        description="Cash debit"
+    )
+    line2 = FinanceJournalLine(
+        entry_id=entry_id,
+        entity_id=entity_id,
+        account_code="4000",
+        debit_amount=Decimal("0.00"),
+        credit_amount=Decimal("100.00"),
+        description="Revenue credit"
+    )
+    mock_db.add_all([line1, line2])
+    mock_db.commit()
+    
+    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+        data = {"posting_user_id": "user123"}
+        response = client.post(
+            f'/api/finance/journal-entries/{entry_id}/post',
+            data=json.dumps(data),
+            content_type='application/json'
+        )
+        assert response.status_code == 200
+        result = response.json
+        assert result['status'] == 'Posted'
+        assert result['posted_at'] is not None
+        assert result['posting_user_id'] == 'user123'
+
+
+def test_post_journal_entry_already_posted(client, mock_db):
+    """Test posting a journal entry that is already posted"""
+    # Create entity and accounts
+    entity = FinanceEntity(
+        name="Test Company",
+        country="US",
+        base_currency="USD",
+        status=EntityStatus.ACTIVE
+    )
+    mock_db.add(entity)
+    mock_db.flush()
+    entity_id = entity.id
+    
+    cash_account = FinanceAccount(
+        entity_id=entity_id,
+        code="1000",
+        name="Cash",
+        account_type=AccountType.ASSET,
+        normal_balance=NormalBalance.DEBIT,
+        is_active=True
+    )
+    revenue_account = FinanceAccount(
+        entity_id=entity_id,
+        code="4000",
+        name="Revenue",
+        account_type=AccountType.REVENUE,
+        normal_balance=NormalBalance.CREDIT,
+        is_active=True
+    )
+    mock_db.add_all([cash_account, revenue_account])
+    mock_db.flush()
+    
+    # Create already-posted journal entry
+    entry = FinanceJournalEntry(
+        entity_id=entity_id,
+        entry_date=date(2024, 1, 15),
+        description="Test Entry",
+        status=JournalEntryStatus.POSTED
+    )
+    mock_db.add(entry)
+    mock_db.flush()
+    entry_id = entry.id
+    
+    # Add lines
+    line1 = FinanceJournalLine(
+        entry_id=entry_id,
+        entity_id=entity_id,
+        account_code="1000",
+        debit_amount=Decimal("100.00"),
+        credit_amount=Decimal("0.00"),
+        description="Cash debit"
+    )
+    line2 = FinanceJournalLine(
+        entry_id=entry_id,
+        entity_id=entity_id,
+        account_code="4000",
+        debit_amount=Decimal("0.00"),
+        credit_amount=Decimal("100.00"),
+        description="Revenue credit"
+    )
+    mock_db.add_all([line1, line2])
+    mock_db.commit()
+    
+    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+        response = client.post(f'/api/finance/journal-entries/{entry_id}/post')
+        assert response.status_code == 400
+        assert "Only Draft entries can be posted" in response.json['error']
+
+
+def test_post_journal_entry_not_found(client, mock_db):
+    """Test posting a journal entry that doesn't exist"""
+    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+        response = client.post('/api/finance/journal-entries/999/post')
+        assert response.status_code == 400
+        assert "not found" in response.json['error']
+
+
+def test_post_journal_entry_unbalanced(client, mock_db):
+    """Test posting an unbalanced journal entry"""
+    # Create entity and accounts
+    entity = FinanceEntity(
+        name="Test Company",
+        country="US",
+        base_currency="USD",
+        status=EntityStatus.ACTIVE
+    )
+    mock_db.add(entity)
+    mock_db.flush()
+    entity_id = entity.id
+    
+    cash_account = FinanceAccount(
+        entity_id=entity_id,
+        code="1000",
+        name="Cash",
+        account_type=AccountType.ASSET,
+        normal_balance=NormalBalance.DEBIT,
+        is_active=True
+    )
+    revenue_account = FinanceAccount(
+        entity_id=entity_id,
+        code="4000",
+        name="Revenue",
+        account_type=AccountType.REVENUE,
+        normal_balance=NormalBalance.CREDIT,
+        is_active=True
+    )
+    mock_db.add_all([cash_account, revenue_account])
+    mock_db.flush()
+    
+    # Create draft journal entry
+    entry = FinanceJournalEntry(
+        entity_id=entity_id,
+        entry_date=date(2024, 1, 15),
+        description="Unbalanced Entry",
+        status=JournalEntryStatus.DRAFT
+    )
+    mock_db.add(entry)
+    mock_db.flush()
+    entry_id = entry.id
+    
+    # Add unbalanced lines (debits != credits)
+    line1 = FinanceJournalLine(
+        entry_id=entry_id,
+        entity_id=entity_id,
+        account_code="1000",
+        debit_amount=Decimal("100.00"),
+        credit_amount=Decimal("0.00"),
+        description="Cash debit"
+    )
+    line2 = FinanceJournalLine(
+        entry_id=entry_id,
+        entity_id=entity_id,
+        account_code="4000",
+        debit_amount=Decimal("0.00"),
+        credit_amount=Decimal("50.00"),  # Intentionally unbalanced
+        description="Revenue credit"
+    )
+    mock_db.add_all([line1, line2])
+    mock_db.commit()
+    
+    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+        response = client.post(f'/api/finance/journal-entries/{entry_id}/post')
+        assert response.status_code == 400
+        assert "does not balance" in response.json['error']
+
+
+def test_post_journal_entry_atomic(client, mock_db):
+    """Test that posting is atomic (all or nothing)"""
+    # Create entity and accounts
+    entity = FinanceEntity(
+        name="Test Company",
+        country="US",
+        base_currency="USD",
+        status=EntityStatus.ACTIVE
+    )
+    mock_db.add(entity)
+    mock_db.flush()
+    entity_id = entity.id
+    
+    cash_account = FinanceAccount(
+        entity_id=entity_id,
+        code="1000",
+        name="Cash",
+        account_type=AccountType.ASSET,
+        normal_balance=NormalBalance.DEBIT,
+        is_active=True
+    )
+    revenue_account = FinanceAccount(
+        entity_id=entity_id,
+        code="4000",
+        name="Revenue",
+        account_type=AccountType.REVENUE,
+        normal_balance=NormalBalance.CREDIT,
+        is_active=True
+    )
+    mock_db.add_all([cash_account, revenue_account])
+    mock_db.flush()
+    
+    # Create draft journal entry
+    entry = FinanceJournalEntry(
+        entity_id=entity_id,
+        entry_date=date(2024, 1, 15),
+        description="Test Entry",
+        status=JournalEntryStatus.DRAFT
+    )
+    mock_db.add(entry)
+    mock_db.flush()
+    entry_id = entry.id
+    
+    # Add lines
+    line1 = FinanceJournalLine(
+        entry_id=entry_id,
+        entity_id=entity_id,
+        account_code="1000",
+        debit_amount=Decimal("100.00"),
+        credit_amount=Decimal("0.00"),
+        description="Cash debit"
+    )
+    line2 = FinanceJournalLine(
+        entry_id=entry_id,
+        entity_id=entity_id,
+        account_code="4000",
+        debit_amount=Decimal("0.00"),
+        credit_amount=Decimal("100.00"),
+        description="Revenue credit"
+    )
+    mock_db.add_all([line1, line2])
+    mock_db.commit()
+    
+    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+        # Post the entry
+        response = client.post(f'/api/finance/journal-entries/{entry_id}/post')
+        assert response.status_code == 200
+        
+        # Verify the entry is in Posted status in the database
+        posted_entry = mock_db.query(FinanceJournalEntry).filter(
+            FinanceJournalEntry.id == entry_id
+        ).first()
+        assert posted_entry is not None
+        assert posted_entry.status == JournalEntryStatus.POSTED
+        assert posted_entry.posted_at is not None
+
+
+def test_verify_posted_entry_has_timestamp(client, mock_db):
+    """Test that posted entries have posted_at timestamp set"""
+    # Create entity and accounts
+    entity = FinanceEntity(
+        name="Test Company",
+        country="US",
+        base_currency="USD",
+        status=EntityStatus.ACTIVE
+    )
+    mock_db.add(entity)
+    mock_db.flush()
+    entity_id = entity.id
+    
+    cash_account = FinanceAccount(
+        entity_id=entity_id,
+        code="1000",
+        name="Cash",
+        account_type=AccountType.ASSET,
+        normal_balance=NormalBalance.DEBIT,
+        is_active=True
+    )
+    revenue_account = FinanceAccount(
+        entity_id=entity_id,
+        code="4000",
+        name="Revenue",
+        account_type=AccountType.REVENUE,
+        normal_balance=NormalBalance.CREDIT,
+        is_active=True
+    )
+    mock_db.add_all([cash_account, revenue_account])
+    mock_db.flush()
+    
+    # Create draft journal entry
+    entry = FinanceJournalEntry(
+        entity_id=entity_id,
+        entry_date=date(2024, 1, 15),
+        description="Test Entry",
+        status=JournalEntryStatus.DRAFT
+    )
+    mock_db.add(entry)
+    mock_db.flush()
+    entry_id = entry.id
+    
+    # Add lines
+    line1 = FinanceJournalLine(
+        entry_id=entry_id,
+        entity_id=entity_id,
+        account_code="1000",
+        debit_amount=Decimal("100.00"),
+        credit_amount=Decimal("0.00"),
+        description="Cash debit"
+    )
+    line2 = FinanceJournalLine(
+        entry_id=entry_id,
+        entity_id=entity_id,
+        account_code="4000",
+        debit_amount=Decimal("0.00"),
+        credit_amount=Decimal("100.00"),
+        description="Revenue credit"
+    )
+    mock_db.add_all([line1, line2])
+    mock_db.commit()
+    
+    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+        # Before posting, verify no posted_at timestamp
+        response = client.get(f'/api/finance/journal-entries/{entry_id}')
+        assert response.status_code == 200
+        assert response.json['posted_at'] is None
+        
+        # Post the entry
+        response = client.post(f'/api/finance/journal-entries/{entry_id}/post')
+        assert response.status_code == 200
+        assert response.json['posted_at'] is not None
+        
+        # Verify timestamp persists when retrieving the entry
+        response = client.get(f'/api/finance/journal-entries/{entry_id}')
+        assert response.status_code == 200
+        assert response.json['posted_at'] is not None
+        assert response.json['status'] == 'Posted'

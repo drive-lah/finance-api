@@ -62,6 +62,14 @@ class FinanceJournalEntry(Base):
         String(255),
         nullable=True
     )
+    posted_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime,
+        nullable=True
+    )
+    posting_user_id: Mapped[Optional[str]] = mapped_column(
+        String(255),
+        nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,
@@ -106,6 +114,8 @@ class FinanceJournalEntry(Base):
             "reference_number": self.reference_number,
             "status": self.status.value,
             "created_by": self.created_by,
+            "posted_at": self.posted_at.isoformat() if self.posted_at else None,
+            "posting_user_id": self.posting_user_id,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

@@ -294,6 +294,8 @@ class JournalEntryResponse(BaseModel):
     reference_number: Optional[str]
     status: str
     created_by: Optional[str]
+    posted_at: Optional[datetime]
+    posting_user_id: Optional[str]
     created_at: datetime
     updated_at: datetime
     lines: Optional[list[JournalLineResponse]] = None

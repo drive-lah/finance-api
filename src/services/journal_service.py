@@ -4,7 +4,7 @@ Journal Entry Service
 Business logic for managing journal entries and ensuring
 double-entry bookkeeping rules are enforced.
 """
-from datetime import date
+from datetime import date, datetime, UTC
 from decimal import Decimal
 from typing import Optional, Any
 from sqlalchemy.orm import Session, joinedload
@@ -215,6 +215,67 @@ class JournalService:
         result = self.get_by_id(db, entry.id)
         if result is None:
             raise ValueError(f"Failed to retrieve created entry with ID {entry.id}")
+        return result
+    
+    def post_entry(
+        self,
+        db: Session,
+        entry_id: int,
+        posting_user_id: Optional[str] = None
+    ) -> FinanceJournalEntry:
+        """
+        Post a journal entry, changing its status from Draft to Posted.
+        
+        Args:
+            db: Database session
+            entry_id: ID of the journal entry to post
+            posting_user_id: Optional user ID who is posting the entry
+            
+        Returns:
+            Posted journal entry
+            
+        Raises:
+            ValueError: If entry not found, already posted, or doesn't balance
+        """
+        # Retrieve the entry with lines
+        entry = self.get_by_id(db, entry_id)
+        
+        if entry is None:
+            raise ValueError(f"Journal entry with ID {entry_id} not found")
+        
+        # Validate entry is in Draft status
+        if entry.status != JournalEntryStatus.DRAFT:
+            raise ValueError(
+                f"Cannot post entry with status '{entry.status.value}'. "
+                f"Only Draft entries can be posted."
+            )
+        
+        # Re-validate balance (debits = credits)
+        total_debits = Decimal("0.00")
+        total_credits = Decimal("0.00")
+        
+        for line in entry.lines:
+            total_debits += line.debit_amount
+            total_credits += line.credit_amount
+        
+        if total_debits != total_credits:
+            raise ValueError(
+                f"Entry does not balance. Debits ({total_debits}) must equal credits ({total_credits})"
+            )
+        
+        # Update status to Posted and set timestamp
+        entry.status = JournalEntryStatus.POSTED
+        entry.posted_at = datetime.now(UTC)
+        entry.posting_user_id = posting_user_id
+        
+        # Commit the transaction (atomic)
+        db.commit()
+        db.refresh(entry)
+        
+        # Reload with lines
+        result = self.get_by_id(db, entry_id)
+        if result is None:
+            raise ValueError(f"Failed to retrieve posted entry with ID {entry_id}")
         return result
 
 
