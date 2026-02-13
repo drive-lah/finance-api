@@ -81,6 +81,16 @@ class FinanceTransaction(Base):
         nullable=True,
         comment="Timestamp when transaction was reconciled"
     )
+    source: Mapped[Optional[str]] = mapped_column(
+        String(50),
+        nullable=True,
+        comment="Source of the transaction (e.g., 'csv_import', 'stripe_automation')"
+    )
+    stripe_transaction_id: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="Stripe transaction ID for automated imports"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,
@@ -105,6 +115,8 @@ class FinanceTransaction(Base):
         Index('ix_finance_transactions_date', 'transaction_date'),
         # Index for batch queries
         Index('ix_finance_transactions_batch', 'import_batch_id'),
+        # Unique index for Stripe transaction IDs
+        Index('ix_finance_transactions_stripe_id', 'stripe_transaction_id', unique=True),
     )
     
     def __repr__(self) -> str:
@@ -125,6 +137,8 @@ class FinanceTransaction(Base):
             "original_csv_row": self.original_csv_row,
             "reconciled_journal_entry_id": self.reconciled_journal_entry_id,
             "reconciled_at": self.reconciled_at.isoformat() if self.reconciled_at else None,
+            "source": self.source,
+            "stripe_transaction_id": self.stripe_transaction_id,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

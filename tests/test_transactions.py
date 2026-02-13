@@ -469,3 +469,211 @@ def test_transaction_service_validate_bank_account_exists(mock_db, sample_bank_a
     """Test bank account validation."""
     assert transaction_service.validate_bank_account_exists(mock_db, sample_bank_account.id) is True
     assert transaction_service.validate_bank_account_exists(mock_db, 99999) is False
+
+
+# =============================================================================
+# Stripe Webhook Tests
+# =============================================================================
+
+
+def test_stripe_webhook_success(client, mock_db, sample_bank_account):
+    """Test creating transaction from Stripe webhook - success."""
+    data = {
+        "bank_account_id": sample_bank_account.id,
+        "stripe_transaction_id": "txn_abc123",
+        "transaction_date": "2024-02-14",
+        "description": "Stripe payment from customer",
+        "amount": 100.50,
+        "reference_number": "ref123"
+    }
+    
+    response = client.post('/api/finance/transactions/stripe', json=data)
+    
+    assert response.status_code == 201
+    result = response.get_json()
+    assert result['stripe_transaction_id'] == "txn_abc123"
+    assert result['source'] == 'stripe_automation'
+    assert result['status'] == 'Pending'
+    assert result['amount'] == 100.50
+    assert result['description'] == "Stripe payment from customer"
+    assert result['reference_number'] == "ref123"
+    assert 'fingerprint' in result
+    assert 'id' in result
+
+
+def test_stripe_webhook_without_reference(client, mock_db, sample_bank_account):
+    """Test creating Stripe transaction without reference number."""
+    data = {
+        "bank_account_id": sample_bank_account.id,
+        "stripe_transaction_id": "txn_xyz789",
+        "transaction_date": "2024-02-14",
+        "description": "Stripe payment",
+        "amount": 50.00
+    }
+    
+    response = client.post('/api/finance/transactions/stripe', json=data)
+    
+    assert response.status_code == 201
+    result = response.get_json()
+    assert result['stripe_transaction_id'] == "txn_xyz789"
+    assert result['source'] == 'stripe_automation'
+    assert result['reference_number'] is None
+
+
+def test_stripe_webhook_duplicate_stripe_id(client, mock_db, sample_bank_account):
+    """Test rejecting duplicate Stripe transaction ID."""
+    # Create first transaction
+    data = {
+        "bank_account_id": sample_bank_account.id,
+        "stripe_transaction_id": "txn_duplicate",
+        "transaction_date": "2024-02-14",
+        "description": "First payment",
+        "amount": 100.00
+    }
+    
+    response1 = client.post('/api/finance/transactions/stripe', json=data)
+    assert response1.status_code == 201
+    
+    # Try to create duplicate
+    data2 = {
+        "bank_account_id": sample_bank_account.id,
+        "stripe_transaction_id": "txn_duplicate",
+        "transaction_date": "2024-02-15",
+        "description": "Second payment",
+        "amount": 200.00
+    }
+    
+    response2 = client.post('/api/finance/transactions/stripe', json=data2)
+    assert response2.status_code == 409
+    result = response2.get_json()
+    assert "already exists" in result['error']
+
+
+def test_stripe_webhook_duplicate_fingerprint(client, mock_db, sample_bank_account):
+    """Test rejecting duplicate transaction fingerprint."""
+    # Create first transaction
+    data = {
+        "bank_account_id": sample_bank_account.id,
+        "stripe_transaction_id": "txn_first",
+        "transaction_date": "2024-02-14",
+        "description": "Payment",
+        "amount": 100.00,
+        "reference_number": "ref123"
+    }
+    
+    response1 = client.post('/api/finance/transactions/stripe', json=data)
+    assert response1.status_code == 201
+    
+    # Try to create transaction with same fingerprint (same bank account, date, amount, reference)
+    data2 = {
+        "bank_account_id": sample_bank_account.id,
+        "stripe_transaction_id": "txn_second",  # Different Stripe ID
+        "transaction_date": "2024-02-14",
+        "description": "Different description",
+        "amount": 100.00,
+        "reference_number": "ref123"
+    }
+    
+    response2 = client.post('/api/finance/transactions/stripe', json=data2)
+    assert response2.status_code == 409
+    result = response2.get_json()
+    assert "fingerprint" in result['error'].lower()
+
+
+def test_stripe_webhook_invalid_bank_account(client, mock_db):
+    """Test Stripe webhook with nonexistent bank account."""
+    data = {
+        "bank_account_id": 99999,
+        "stripe_transaction_id": "txn_invalid",
+        "transaction_date": "2024-02-14",
+        "description": "Payment",
+        "amount": 100.00
+    }
+    
+    response = client.post('/api/finance/transactions/stripe', json=data)
+    assert response.status_code == 400
+    result = response.get_json()
+    assert "not found" in result['error']
+
+
+def test_stripe_webhook_missing_required_fields(client, mock_db, sample_bank_account):
+    """Test Stripe webhook with missing required fields."""
+    # Missing stripe_transaction_id
+    data = {
+        "bank_account_id": sample_bank_account.id,
+        "transaction_date": "2024-02-14",
+        "description": "Payment",
+        "amount": 100.00
+    }
+    
+    response = client.post('/api/finance/transactions/stripe', json=data)
+    assert response.status_code == 400
+    result = response.get_json()
+    assert result['error'] == "Validation error"
+    assert 'stripe_transaction_id' in str(result['details'])
+
+
+def test_stripe_webhook_invalid_amount(client, mock_db, sample_bank_account):
+    """Test Stripe webhook with invalid amount."""
+    data = {
+        "bank_account_id": sample_bank_account.id,
+        "stripe_transaction_id": "txn_bad_amount",
+        "transaction_date": "2024-02-14",
+        "description": "Payment",
+        "amount": "not_a_number"
+    }
+    
+    response = client.post('/api/finance/transactions/stripe', json=data)
+    assert response.status_code == 400
+    result = response.get_json()
+    assert result['error'] == "Validation error"
+
+
+def test_stripe_webhook_invalid_date(client, mock_db, sample_bank_account):
+    """Test Stripe webhook with invalid date format."""
+    data = {
+        "bank_account_id": sample_bank_account.id,
+        "stripe_transaction_id": "txn_bad_date",
+        "transaction_date": "not-a-date",
+        "description": "Payment",
+        "amount": 100.00
+    }
+    
+    response = client.post('/api/finance/transactions/stripe', json=data)
+    assert response.status_code == 400
+    result = response.get_json()
+    assert result['error'] == "Validation error"
+
+
+def test_stripe_webhook_not_json(client, mock_db):
+    """Test Stripe webhook with non-JSON request."""
+    response = client.post(
+        '/api/finance/transactions/stripe',
+        data="not json",
+        content_type='text/plain'
+    )
+    
+    assert response.status_code == 400
+    result = response.get_json()
+    assert "application/json" in result['error']
+
+
+def test_stripe_service_create_from_stripe(mock_db, sample_bank_account):
+    """Test TransactionService.create_from_stripe method."""
+    transaction = transaction_service.create_from_stripe(
+        db=mock_db,
+        bank_account_id=sample_bank_account.id,
+        stripe_transaction_id="txn_service_test",
+        transaction_date=date(2024, 2, 14),
+        description="Service test",
+        amount=Decimal("75.50"),
+        reference_number="svc_ref"
+    )
+    
+    assert transaction.id is not None
+    assert transaction.stripe_transaction_id == "txn_service_test"
+    assert transaction.source == 'stripe_automation'
+    assert transaction.status == TransactionStatus.PENDING
+    assert transaction.amount == Decimal("75.50")
+    assert transaction.reference_number == "svc_ref"
+    assert len(transaction.fingerprint) == 64

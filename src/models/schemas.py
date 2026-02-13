@@ -208,6 +208,8 @@ class TransactionCreate(BaseModel):
     )
     import_batch_id: Optional[str] = Field(None, max_length=36, description="UUID of the import batch")
     original_csv_row: Optional[str] = Field(None, description="Original CSV row for audit")
+    source: Optional[str] = Field(None, max_length=50, description="Source of the transaction")
+    stripe_transaction_id: Optional[str] = Field(None, max_length=100, description="Stripe transaction ID")
 
 
 class TransactionResponse(BaseModel):
@@ -224,10 +226,22 @@ class TransactionResponse(BaseModel):
     original_csv_row: Optional[str]
     reconciled_journal_entry_id: Optional[int]
     reconciled_at: Optional[datetime]
+    source: Optional[str]
+    stripe_transaction_id: Optional[str]
     created_at: datetime
     updated_at: datetime
     
     model_config = {"from_attributes": True}
+
+
+class StripeTransactionCreate(BaseModel):
+    """Schema for creating a transaction from Stripe webhook."""
+    bank_account_id: int = Field(..., gt=0, description="ID of the bank account")
+    stripe_transaction_id: str = Field(..., min_length=1, max_length=100, description="Stripe transaction ID")
+    transaction_date: date_type = Field(..., description="Date of the transaction")
+    description: str = Field(..., min_length=1, max_length=500, description="Transaction description")
+    amount: float = Field(..., description="Transaction amount (positive for credit, negative for debit)")
+    reference_number: Optional[str] = Field(None, max_length=100, description="Reference or check number")
 
 
 # =============================================================================

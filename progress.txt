@@ -561,3 +561,57 @@ Started: 2026-02-13 18:12 AEDT
 - Migration foreign key constraint naming follows pattern: fk_{table}_{referenced_table}
 - Reconciliation tracking requires both timestamp (when) and foreign key (what) for audit trail
 ---
+
+## 2026-02-14 04:06 - US-016: Add comprehensive error handling and validation layer
+- Created src/utils/errors.py with custom exception classes:
+  - APIError base class with status_code and to_dict() method
+  - BadRequestError (400), NotFoundError (404), ConflictError (409), InternalServerError (500)
+  - handle_validation_error() function to convert Pydantic ValidationErrors to standardized format
+  - log_error() function with context logging (request method, path, remote_addr)
+  - register_error_handlers() function to register global Flask error handlers
+- Updated src/app.py:
+  - Added logging configuration (basicConfig with INFO level)
+  - Registered global error handlers with register_error_handlers()
+  - Error handlers catch: ValidationError, custom APIErrors, generic Exception, 404, 405
+- Updated all route files to use custom exceptions:
+  - src/routes/entities.py: Use NotFoundError, ConflictError instead of generic returns
+  - src/routes/accounts.py: Use BadRequestError, NotFoundError, ConflictError
+  - src/routes/bank_accounts.py: Use NotFoundError, ConflictError
+  - src/routes/transactions.py: Use BadRequestError for validation errors
+  - src/routes/journal_entries.py: Use BadRequestError for business logic errors
+  - Removed explicit ValidationError handling (global handler catches them now)
+  - Removed redundant try/except blocks (global handler provides consistent error responses)
+- Standardized error response format across all endpoints:
+  - {error: string, details: object} for all error responses
+  - Pydantic ValidationErrors return {error: "Validation error", details: [{field, message, type}]}
+  - 400 for validation/bad request, 404 for not found, 409 for conflicts, 500 for server errors
+- Added comprehensive logging:
+  - Client errors (4xx) logged at INFO level
+  - Server errors (5xx) logged at ERROR level with stack trace (exc_info=True)
+  - Request context automatically added to logs (method, path, remote_addr)
+- Wrote 24 comprehensive tests in tests/test_error_handling.py covering:
+  - Custom exception classes (APIError, BadRequestError, NotFoundError, ConflictError, InternalServerError)
+  - Pydantic ValidationError conversion (single/multiple fields, missing required)
+  - Error logging (client vs server errors, request context)
+  - Global Flask error handlers (ValidationError, custom exceptions, generic Exception, 404, 405)
+  - Debug mode behavior (error details shown in debug, hidden in production)
+  - Integration with actual routes
+- Updated all existing tests (242 total) to match new error handling behavior:
+  - Changed 400 → 409 for ConflictErrors (duplicate entities, invalid parents, etc.)
+  - Updated error message assertions to match new specific messages
+  - Changed validation_errors → details in response format
+  - All 242 tests pass
+- mypy typecheck passes with no issues
+- Files changed: 15 files, 713 insertions, 298 deletions
+- Commit: 8e7ca79
+
+**Learnings:**
+- Global error handlers in Flask provide consistent error responses across all endpoints
+- Custom exception classes make error handling explicit and type-safe
+- Pydantic ValidationErrors need special serialization (e.errors() returns dicts)
+- ConflictError (409) is more semantically correct than BadRequestError (400) for duplicates/conflicts
+- Logging with exc_info=True captures full stack trace for debugging
+- Flask request context can be accessed in error handlers to add request details to logs
+- DEBUG mode flag controls whether error details are exposed to clients
+- Removing explicit try/except blocks in routes simplifies code when global handlers are present
+---

@@ -155,6 +155,81 @@ class TransactionService:
             "import_batch_id": import_batch_id
         }
 
+    def create_from_stripe(
+        self,
+        db: Session,
+        bank_account_id: int,
+        stripe_transaction_id: str,
+        transaction_date: date,
+        description: str,
+        amount: Decimal,
+        reference_number: Optional[str] = None
+    ) -> FinanceTransaction:
+        """
+        Create a transaction from Stripe webhook data.
+        
+        Args:
+            db: Database session
+            bank_account_id: ID of the bank account
+            stripe_transaction_id: Stripe transaction ID
+            transaction_date: Date of the transaction
+            description: Transaction description
+            amount: Transaction amount
+            reference_number: Optional reference number
+            
+        Returns:
+            Created transaction
+            
+        Raises:
+            ValueError: If bank account doesn't exist or duplicate Stripe transaction ID
+        """
+        # Validate bank account exists
+        if not self.validate_bank_account_exists(db, bank_account_id):
+            raise ValueError(f"Bank account with id {bank_account_id} not found")
+        
+        # Check for duplicate Stripe transaction ID
+        existing_stripe = db.query(FinanceTransaction).filter(
+            FinanceTransaction.stripe_transaction_id == stripe_transaction_id
+        ).first()
+        
+        if existing_stripe:
+            raise ValueError(f"Transaction with Stripe ID {stripe_transaction_id} already exists")
+        
+        # Generate fingerprint
+        fingerprint = generate_fingerprint(
+            bank_account_id=bank_account_id,
+            transaction_date=transaction_date,
+            amount=amount,
+            reference=reference_number
+        )
+        
+        # Check for duplicate fingerprint
+        existing_fingerprint = db.query(FinanceTransaction).filter(
+            FinanceTransaction.fingerprint == fingerprint
+        ).first()
+        
+        if existing_fingerprint:
+            raise ValueError(f"Transaction with same fingerprint already exists (duplicate transaction)")
+        
+        # Create transaction
+        transaction = FinanceTransaction(
+            bank_account_id=bank_account_id,
+            transaction_date=transaction_date,
+            description=description,
+            amount=amount,
+            reference_number=reference_number,
+            fingerprint=fingerprint,
+            status=TransactionStatus.PENDING,
+            source='stripe_automation',
+            stripe_transaction_id=stripe_transaction_id
+        )
+        
+        db.add(transaction)
+        db.commit()
+        db.refresh(transaction)
+        
+        return transaction
+
 
 # Singleton instance
 transaction_service = TransactionService()
