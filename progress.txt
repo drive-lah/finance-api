@@ -313,3 +313,91 @@ Started: 2026-02-13 18:12 AEDT
 - Reference normalization (.strip().lower()) ensures case-insensitive duplicate detection
 
 ---
+
+## 2026-02-13 21:36 - US-010: Build CSV transaction import endpoint with duplicate detection
+- Created src/services/transaction_service.py with TransactionService class
+  - import_csv() method that parses CSV content and creates transactions
+  - Validates bank account existence before import
+  - Generates fingerprint for each transaction using existing utility
+  - Checks for duplicates via fingerprint matching
+  - Returns import summary: transactions_created, duplicates_skipped, errors, import_batch_id
+  - Handles CSV validation errors (missing fields, invalid dates, invalid amounts)
+  - Supports multiple date formats (YYYY-MM-DD and DD/MM/YYYY)
+  - Stores original CSV row as JSON string for audit trail
+  - get_all() and get_by_id() methods for retrieving transactions
+  - validate_bank_account_exists() helper method
+- Created src/routes/transactions.py with Flask Blueprint
+  - POST /api/finance/transactions/import - CSV file upload endpoint
+  - Accepts multipart/form-data with 'file' and 'bank_account_id'
+  - Optional import_batch_id parameter for custom batch identification
+  - Returns JSON with import statistics
+  - Proper error handling for missing file, invalid bank_account_id, and validation errors
+- Updated src/app.py to register transactions_bp blueprint
+- Wrote 15 comprehensive tests in tests/test_transactions.py
+  - CSV import success scenarios (basic, duplicate detection, alternate date format, missing references)
+  - Validation error handling (missing date, description, amount, invalid formats)
+  - Request validation (no file, missing/invalid bank_account_id, nonexistent bank account)
+  - Original CSV row storage verification
+  - Custom batch ID support
+  - Service layer methods (get_all, get_all_filtered, get_by_id, validate_bank_account_exists)
+  - All tests use shared in-memory SQLite session for consistency
+- All 170 tests pass (155 existing + 15 new), mypy typecheck passes
+- Files changed: 5 files, 734 insertions
+- Commit: 45d2540
+
+**Learnings:**
+- CSV parsing with csv.DictReader provides clean dict-based row access
+- Fingerprint-based duplicate detection prevents re-importing same transactions
+- original_csv_row stored as JSON string (using json.dumps) in Text column for audit
+- Multiple date format support (strptime with fallback) improves CSV compatibility
+- Import batch IDs enable grouping transactions from same import session
+- Test fixtures must share same database session (mock_db) to see changes made by routes
+- Capturing entity IDs before session operations prevents DetachedInstanceError
+- Empty/whitespace reference numbers treated as None for consistency
+- Row-level error tracking (with row numbers) helps users fix CSV issues
+- Service layer commit happens after all rows processed for transaction atomicity
+
+---
+
+## 2026-02-13 22:43 - US-011: Build journal entry CRUD endpoints with validation
+- Created src/services/journal_service.py with JournalService class
+  - get_all() with optional filtering by entity_id and status
+  - get_by_id() for retrieving specific journal entries with lines loaded
+  - validate_entity_exists() to check entity validity
+  - validate_accounts_exist() to ensure all account codes exist for the entity
+  - validate_balanced_entry() to enforce debits = credits rule
+  - create() with comprehensive validation (minimum 2 lines, balanced entry, valid accounts)
+  - Uses joinedload to efficiently load journal lines with entries
+  - Business logic ensures double-entry bookkeeping rules are enforced
+- Created src/routes/journal_entries.py with Flask Blueprint
+  - GET /api/finance/journal-entries - list all entries with optional filters (entity_id, status)
+  - POST /api/finance/journal-entries - create new entry (Draft or Posted)
+  - GET /api/finance/journal-entries/<id> - get entry by ID
+  - Proper error handling for ValidationError (Pydantic) and ValueError (business logic)
+  - Status filtering with case-insensitive enum parsing
+  - Returns 400 for validation errors with detailed error messages
+- Updated src/app.py to register journal_entries_bp blueprint
+- Wrote 16 comprehensive tests in tests/test_journal_entries.py
+  - List entries (empty, with data, filtered by entity/status)
+  - Invalid filters (status and entity_id validation)
+  - Create entry (success, with Posted status, validation errors)
+  - Balanced/unbalanced entry validation
+  - Invalid account code detection
+  - Minimum 2 lines requirement enforcement
+  - Invalid entity detection
+  - Get entry by ID (success and not found)
+  - Complex multi-line journal entry creation
+  - All tests use in-memory SQLite with proper mocking
+- All 186 tests pass (170 existing + 16 new), mypy typecheck passes
+- Files changed: 4 files, 954 insertions
+- Commit: 3e2be93
+
+**Learnings:**
+- Double-entry bookkeeping validation happens at service layer (debits = credits)
+- Decimal precision for monetary amounts is critical - use Decimal throughout validation
+- joinedload() efficiently loads related journal lines with entries (avoids N+1 queries)
+- Enum filtering requires case-insensitive parsing (JournalEntryStatus[status_str.upper()])
+- Type safety: Optional return types need null checks before returning from service methods
+- Journal entries can be created as Draft (editable) or Posted (affects balances)
+- Account code validation ensures all accounts exist before creating entry
+- Service layer validation provides better error messages than FK constraint violations
