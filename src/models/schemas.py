@@ -14,6 +14,7 @@ from src.models.entity import EntityStatus
 from src.models.account import AccountType, NormalBalance
 from src.models.bank_account import BankAccountStatus
 from src.models.transaction import TransactionStatus
+from src.models.journal_entry import JournalEntryStatus
 
 
 # =============================================================================
@@ -223,5 +224,78 @@ class TransactionResponse(BaseModel):
     original_csv_row: Optional[str]
     created_at: datetime
     updated_at: datetime
+    
+    model_config = {"from_attributes": True}
+
+
+# =============================================================================
+# Journal Entry Schemas
+# =============================================================================
+
+class JournalLineCreate(BaseModel):
+    """Schema for creating a journal line within a journal entry."""
+    account_code: str = Field(..., min_length=1, max_length=20, description="Account code")
+    debit_amount: float = Field(default=0.0, ge=0, description="Debit amount (must be >= 0)")
+    credit_amount: float = Field(default=0.0, ge=0, description="Credit amount (must be >= 0)")
+    description: Optional[str] = Field(None, max_length=500, description="Line description")
+    
+    @field_validator('account_code')
+    @classmethod
+    def validate_account_code(cls, v: str) -> str:
+        """Validate account code format."""
+        if not re.match(r'^[A-Za-z0-9\-\.]+$', v):
+            raise ValueError('Account code must be alphanumeric (letters, numbers, hyphens, dots)')
+        return v
+
+
+class JournalLineResponse(BaseModel):
+    """Schema for journal line response."""
+    id: int
+    entry_id: int
+    account_code: str
+    debit_amount: float
+    credit_amount: float
+    description: Optional[str]
+    entity_id: int
+    created_at: datetime
+    updated_at: datetime
+    
+    model_config = {"from_attributes": True}
+
+
+class JournalEntryCreate(BaseModel):
+    """Schema for creating a new journal entry."""
+    entity_id: int = Field(..., gt=0, description="ID of the owning entity")
+    entry_date: date_type = Field(..., description="Date of the journal entry")
+    description: str = Field(..., min_length=1, max_length=500, description="Entry description")
+    reference_number: Optional[str] = Field(None, max_length=100, description="Reference number")
+    created_by: Optional[str] = Field(None, max_length=255, description="User who created the entry")
+    lines: list[JournalLineCreate] = Field(
+        ...,
+        min_length=2,
+        description="Journal lines (minimum 2 for double-entry)"
+    )
+
+
+class JournalEntryUpdate(BaseModel):
+    """Schema for updating a journal entry (only Draft entries can be updated)."""
+    entry_date: Optional[date_type] = None
+    description: Optional[str] = Field(None, min_length=1, max_length=500)
+    reference_number: Optional[str] = Field(None, max_length=100)
+    status: Optional[JournalEntryStatus] = None
+
+
+class JournalEntryResponse(BaseModel):
+    """Schema for journal entry response."""
+    id: int
+    entity_id: int
+    entry_date: date_type
+    description: str
+    reference_number: Optional[str]
+    status: str
+    created_by: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+    lines: Optional[list[JournalLineResponse]] = None
     
     model_config = {"from_attributes": True}

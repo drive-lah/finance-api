@@ -7,6 +7,8 @@ from src.models.entity import FinanceEntity, EntityStatus
 from src.models.account import FinanceAccount, AccountType, NormalBalance
 from src.models.bank_account import FinanceBankAccount, BankAccountStatus
 from src.models.transaction import FinanceTransaction, TransactionStatus
+from src.models.journal_entry import FinanceJournalEntry, JournalEntryStatus
+from src.models.journal_line import FinanceJournalLine
 from src.models.schemas import (
     EntityCreate,
     EntityUpdate,
@@ -19,6 +21,11 @@ from src.models.schemas import (
     BankAccountResponse,
     TransactionCreate,
     TransactionResponse,
+    JournalEntryCreate,
+    JournalEntryUpdate,
+    JournalEntryResponse,
+    JournalLineCreate,
+    JournalLineResponse,
 )
 
 __all__ = [
@@ -35,6 +42,11 @@ __all__ = [
     # Transaction model and enum
     "FinanceTransaction",
     "TransactionStatus",
+    # Journal entry model and enum
+    "FinanceJournalEntry",
+    "JournalEntryStatus",
+    # Journal line model
+    "FinanceJournalLine",
     # Pydantic schemas
     "EntityCreate",
     "EntityUpdate",
@@ -47,4 +59,9 @@ __all__ = [
     "BankAccountResponse",
     "TransactionCreate",
     "TransactionResponse",
+    "JournalEntryCreate",
+    "JournalEntryUpdate",
+    "JournalEntryResponse",
+    "JournalLineCreate",
+    "JournalLineResponse",
 ]

@@ -22,10 +22,14 @@ from src.models import (
     FinanceAccount, AccountType, NormalBalance,
     FinanceBankAccount, BankAccountStatus,
     FinanceTransaction, TransactionStatus,
+    FinanceJournalEntry, JournalEntryStatus,
+    FinanceJournalLine,
     EntityCreate, EntityUpdate, EntityResponse,
     AccountCreate, AccountUpdate, AccountResponse,
     BankAccountCreate, BankAccountUpdate, BankAccountResponse,
     TransactionCreate, TransactionResponse,
+    JournalEntryCreate, JournalEntryUpdate, JournalEntryResponse,
+    JournalLineCreate, JournalLineResponse,
 )
 
 
@@ -928,4 +932,491 @@ class TestTransactionSchemas:
                 description="",
                 amount=100.00,
                 fingerprint="test",
+            )
+
+
+# =============================================================================
+# Journal Entry Status Enum Tests
+# =============================================================================
+
+class TestJournalEntryStatus:
+    """Tests for JournalEntryStatus enum."""
+    
+    def test_enum_values(self):
+        """Test that JournalEntryStatus has expected values."""
+        assert JournalEntryStatus.DRAFT.value == "Draft"
+        assert JournalEntryStatus.POSTED.value == "Posted"
+        assert JournalEntryStatus.VOID.value == "Void"
+    
+    def test_enum_members(self):
+        """Test that JournalEntryStatus has all expected members."""
+        members = list(JournalEntryStatus)
+        assert len(members) == 3
+        assert JournalEntryStatus.DRAFT in members
+        assert JournalEntryStatus.POSTED in members
+        assert JournalEntryStatus.VOID in members
+
+
+# =============================================================================
+# Journal Entry Model Tests
+# =============================================================================
+
+class TestFinanceJournalEntryModel:
+    """Tests for FinanceJournalEntry SQLAlchemy model."""
+    
+    def test_create_journal_entry(self, test_session):
+        """Test creating a journal entry in the database."""
+        from datetime import date
+        
+        # First create an entity
+        entity = FinanceEntity(
+            name="Test Company JE",
+            country="AU",
+            base_currency="AUD",
+        )
+        test_session.add(entity)
+        test_session.flush()
+        
+        # Create journal entry
+        entry = FinanceJournalEntry(
+            entity_id=entity.id,
+            entry_date=date(2026, 2, 13),
+            description="Test Journal Entry",
+            reference_number="JE-001",
+            status=JournalEntryStatus.DRAFT,
+            created_by="test_user",
+        )
+        test_session.add(entry)
+        test_session.commit()
+        
+        # Verify
+        assert entry.id is not None
+        assert entry.entity_id == entity.id
+        assert entry.entry_date == date(2026, 2, 13)
+        assert entry.description == "Test Journal Entry"
+        assert entry.reference_number == "JE-001"
+        assert entry.status == JournalEntryStatus.DRAFT
+        assert entry.created_by == "test_user"
+        assert entry.created_at is not None
+    
+    def test_journal_entry_default_status(self, test_session):
+        """Test that default status is DRAFT."""
+        from datetime import date
+        
+        entity = FinanceEntity(
+            name="Test Company JE Default",
+            country="AU",
+            base_currency="AUD",
+        )
+        test_session.add(entity)
+        test_session.flush()
+        
+        entry = FinanceJournalEntry(
+            entity_id=entity.id,
+            entry_date=date(2026, 2, 13),
+            description="Entry with default status",
+        )
+        test_session.add(entry)
+        test_session.commit()
+        
+        assert entry.status == JournalEntryStatus.DRAFT
+    
+    def test_journal_entry_to_dict(self, test_session):
+        """Test to_dict method."""
+        from datetime import date
+        
+        entity = FinanceEntity(
+            name="Test Company JE Dict",
+            country="SG",
+            base_currency="SGD",
+        )
+        test_session.add(entity)
+        test_session.flush()
+        
+        entry = FinanceJournalEntry(
+            entity_id=entity.id,
+            entry_date=date(2026, 2, 13),
+            description="Dict test entry",
+            reference_number="JE-DICT",
+            created_by="admin",
+        )
+        test_session.add(entry)
+        test_session.commit()
+        
+        result = entry.to_dict()
+        assert result["id"] == entry.id
+        assert result["entity_id"] == entity.id
+        assert result["entry_date"] == "2026-02-13"
+        assert result["description"] == "Dict test entry"
+        assert result["reference_number"] == "JE-DICT"
+        assert result["status"] == "Draft"
+        assert result["created_by"] == "admin"
+        assert "created_at" in result
+        assert "updated_at" in result
+    
+    def test_journal_entry_repr(self, test_session):
+        """Test __repr__ method."""
+        from datetime import date
+        
+        entity = FinanceEntity(
+            name="Test Company JE Repr",
+            country="AU",
+            base_currency="AUD",
+        )
+        test_session.add(entity)
+        test_session.flush()
+        
+        entry = FinanceJournalEntry(
+            entity_id=entity.id,
+            entry_date=date(2026, 2, 13),
+            description="Repr test",
+        )
+        test_session.add(entry)
+        test_session.commit()
+        
+        repr_str = repr(entry)
+        assert "FinanceJournalEntry" in repr_str
+        assert str(entry.id) in repr_str
+        assert "Draft" in repr_str
+
+
+# =============================================================================
+# Journal Line Model Tests
+# =============================================================================
+
+class TestFinanceJournalLineModel:
+    """Tests for FinanceJournalLine SQLAlchemy model."""
+    
+    def test_create_journal_line(self, test_session):
+        """Test creating a journal line in the database."""
+        from datetime import date
+        from decimal import Decimal
+        
+        # Create entity
+        entity = FinanceEntity(
+            name="Test Company JL",
+            country="AU",
+            base_currency="AUD",
+        )
+        test_session.add(entity)
+        test_session.flush()
+        
+        # Create journal entry
+        entry = FinanceJournalEntry(
+            entity_id=entity.id,
+            entry_date=date(2026, 2, 13),
+            description="Test Entry for Lines",
+        )
+        test_session.add(entry)
+        test_session.flush()
+        
+        # Create journal line
+        line = FinanceJournalLine(
+            entry_id=entry.id,
+            account_code="1000",
+            debit_amount=Decimal("1000.00"),
+            credit_amount=Decimal("0.00"),
+            description="Debit line",
+            entity_id=entity.id,
+        )
+        test_session.add(line)
+        test_session.commit()
+        
+        # Verify
+        assert line.id is not None
+        assert line.entry_id == entry.id
+        assert line.account_code == "1000"
+        assert line.debit_amount == Decimal("1000.00")
+        assert line.credit_amount == Decimal("0.00")
+        assert line.description == "Debit line"
+        assert line.entity_id == entity.id
+    
+    def test_journal_line_decimal_precision(self, test_session):
+        """Test that amounts maintain decimal precision."""
+        from datetime import date
+        from decimal import Decimal
+        
+        entity = FinanceEntity(
+            name="Test Company JL Decimal",
+            country="AU",
+            base_currency="AUD",
+        )
+        test_session.add(entity)
+        test_session.flush()
+        
+        entry = FinanceJournalEntry(
+            entity_id=entity.id,
+            entry_date=date(2026, 2, 13),
+            description="Decimal test",
+        )
+        test_session.add(entry)
+        test_session.flush()
+        
+        line = FinanceJournalLine(
+            entry_id=entry.id,
+            account_code="2000",
+            debit_amount=Decimal("0.00"),
+            credit_amount=Decimal("12345.67"),
+            entity_id=entity.id,
+        )
+        test_session.add(line)
+        test_session.commit()
+        
+        assert line.credit_amount == Decimal("12345.67")
+    
+    def test_journal_line_to_dict(self, test_session):
+        """Test to_dict method."""
+        from datetime import date
+        from decimal import Decimal
+        
+        entity = FinanceEntity(
+            name="Test Company JL Dict",
+            country="SG",
+            base_currency="SGD",
+        )
+        test_session.add(entity)
+        test_session.flush()
+        
+        entry = FinanceJournalEntry(
+            entity_id=entity.id,
+            entry_date=date(2026, 2, 13),
+            description="Dict test entry",
+        )
+        test_session.add(entry)
+        test_session.flush()
+        
+        line = FinanceJournalLine(
+            entry_id=entry.id,
+            account_code="3000",
+            debit_amount=Decimal("500.50"),
+            credit_amount=Decimal("0.00"),
+            description="Test line description",
+            entity_id=entity.id,
+        )
+        test_session.add(line)
+        test_session.commit()
+        
+        result = line.to_dict()
+        assert result["id"] == line.id
+        assert result["entry_id"] == entry.id
+        assert result["account_code"] == "3000"
+        assert result["debit_amount"] == 500.50
+        assert result["credit_amount"] == 0.0
+        assert result["description"] == "Test line description"
+        assert result["entity_id"] == entity.id
+        assert "created_at" in result
+    
+    def test_journal_entry_lines_relationship(self, test_session):
+        """Test the relationship between entry and lines."""
+        from datetime import date
+        from decimal import Decimal
+        
+        entity = FinanceEntity(
+            name="Test Company JL Rel",
+            country="AU",
+            base_currency="AUD",
+        )
+        test_session.add(entity)
+        test_session.flush()
+        
+        entry = FinanceJournalEntry(
+            entity_id=entity.id,
+            entry_date=date(2026, 2, 13),
+            description="Relationship test",
+        )
+        test_session.add(entry)
+        test_session.flush()
+        
+        # Create two lines (debit and credit)
+        debit_line = FinanceJournalLine(
+            entry_id=entry.id,
+            account_code="1000",
+            debit_amount=Decimal("1000.00"),
+            credit_amount=Decimal("0.00"),
+            entity_id=entity.id,
+        )
+        credit_line = FinanceJournalLine(
+            entry_id=entry.id,
+            account_code="2000",
+            debit_amount=Decimal("0.00"),
+            credit_amount=Decimal("1000.00"),
+            entity_id=entity.id,
+        )
+        test_session.add_all([debit_line, credit_line])
+        test_session.commit()
+        
+        # Refresh and check relationship
+        test_session.refresh(entry)
+        assert len(entry.lines) == 2
+        
+        # Check back reference
+        assert debit_line.entry == entry
+        assert credit_line.entry == entry
+    
+    def test_journal_line_repr(self, test_session):
+        """Test __repr__ method."""
+        from datetime import date
+        from decimal import Decimal
+        
+        entity = FinanceEntity(
+            name="Test Company JL Repr",
+            country="AU",
+            base_currency="AUD",
+        )
+        test_session.add(entity)
+        test_session.flush()
+        
+        entry = FinanceJournalEntry(
+            entity_id=entity.id,
+            entry_date=date(2026, 2, 13),
+            description="Repr test",
+        )
+        test_session.add(entry)
+        test_session.flush()
+        
+        line = FinanceJournalLine(
+            entry_id=entry.id,
+            account_code="1000",
+            debit_amount=Decimal("100.00"),
+            credit_amount=Decimal("0.00"),
+            entity_id=entity.id,
+        )
+        test_session.add(line)
+        test_session.commit()
+        
+        repr_str = repr(line)
+        assert "FinanceJournalLine" in repr_str
+        assert "1000" in repr_str
+
+
+# =============================================================================
+# Journal Entry Pydantic Schema Tests
+# =============================================================================
+
+class TestJournalEntrySchemas:
+    """Tests for JournalEntry Pydantic schemas."""
+    
+    def test_journal_entry_create_valid(self):
+        """Test valid journal entry creation schema."""
+        from datetime import date
+        
+        data = JournalEntryCreate(
+            entity_id=1,
+            entry_date=date(2026, 2, 13),
+            description="Record sale",
+            reference_number="JE-001",
+            created_by="admin",
+            lines=[
+                JournalLineCreate(account_code="1000", debit_amount=500.00),
+                JournalLineCreate(account_code="4000", credit_amount=500.00),
+            ],
+        )
+        assert data.entity_id == 1
+        assert data.entry_date == date(2026, 2, 13)
+        assert data.description == "Record sale"
+        assert data.reference_number == "JE-001"
+        assert data.created_by == "admin"
+        assert len(data.lines) == 2
+    
+    def test_journal_entry_create_minimum_two_lines(self):
+        """Test that at least 2 lines are required."""
+        from datetime import date
+        
+        with pytest.raises(ValidationError) as exc:
+            JournalEntryCreate(
+                entity_id=1,
+                entry_date=date(2026, 2, 13),
+                description="Invalid entry",
+                lines=[
+                    JournalLineCreate(account_code="1000", debit_amount=100.00),
+                ],
+            )
+        assert "lines" in str(exc.value).lower()
+    
+    def test_journal_entry_create_invalid_entity_id(self):
+        """Test validation fails for non-positive entity_id."""
+        from datetime import date
+        
+        with pytest.raises(ValidationError):
+            JournalEntryCreate(
+                entity_id=0,
+                entry_date=date(2026, 2, 13),
+                description="Invalid",
+                lines=[
+                    JournalLineCreate(account_code="1000", debit_amount=100.00),
+                    JournalLineCreate(account_code="2000", credit_amount=100.00),
+                ],
+            )
+    
+    def test_journal_entry_update_partial(self):
+        """Test partial update schema."""
+        from datetime import date
+        
+        data = JournalEntryUpdate(description="Updated description")
+        assert data.description == "Updated description"
+        assert data.entry_date is None
+        assert data.status is None
+    
+    def test_journal_entry_update_status(self):
+        """Test updating status via schema."""
+        data = JournalEntryUpdate(status=JournalEntryStatus.POSTED)
+        assert data.status == JournalEntryStatus.POSTED
+
+
+class TestJournalLineSchemas:
+    """Tests for JournalLine Pydantic schemas."""
+    
+    def test_journal_line_create_valid_debit(self):
+        """Test valid journal line creation with debit."""
+        data = JournalLineCreate(
+            account_code="1000",
+            debit_amount=1500.00,
+            credit_amount=0.00,
+            description="Cash receipt",
+        )
+        assert data.account_code == "1000"
+        assert data.debit_amount == 1500.00
+        assert data.credit_amount == 0.00
+        assert data.description == "Cash receipt"
+    
+    def test_journal_line_create_valid_credit(self):
+        """Test valid journal line creation with credit."""
+        data = JournalLineCreate(
+            account_code="4000",
+            debit_amount=0.00,
+            credit_amount=1500.00,
+        )
+        assert data.account_code == "4000"
+        assert data.debit_amount == 0.00
+        assert data.credit_amount == 1500.00
+    
+    def test_journal_line_create_default_amounts(self):
+        """Test default amounts are zero."""
+        data = JournalLineCreate(account_code="1000")
+        assert data.debit_amount == 0.0
+        assert data.credit_amount == 0.0
+    
+    def test_journal_line_create_invalid_account_code(self):
+        """Test validation fails for invalid account code."""
+        with pytest.raises(ValidationError) as exc:
+            JournalLineCreate(
+                account_code="invalid code!",  # Contains space and special char
+                debit_amount=100.00,
+            )
+        assert "account_code" in str(exc.value).lower()
+    
+    def test_journal_line_create_negative_debit(self):
+        """Test validation fails for negative debit amount."""
+        with pytest.raises(ValidationError):
+            JournalLineCreate(
+                account_code="1000",
+                debit_amount=-100.00,
+            )
+    
+    def test_journal_line_create_negative_credit(self):
+        """Test validation fails for negative credit amount."""
+        with pytest.raises(ValidationError):
+            JournalLineCreate(
+                account_code="1000",
+                credit_amount=-100.00,
             )
