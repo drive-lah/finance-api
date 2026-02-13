@@ -524,3 +524,40 @@ Started: 2026-02-13 18:12 AEDT
 - 50% threshold ensures only meaningful matches are suggested
 - Case-insensitive reference matching uses .strip().lower() normalization
 ---
+
+## 2026-02-14 03:04 - US-015: Add reconciliation confirmation endpoint
+- Added reconciled_journal_entry_id and reconciled_at fields to FinanceTransaction model
+- Updated TransactionResponse Pydantic schema to include new reconciliation fields
+- Created Alembic migration (71d03f096d8c) to add reconciliation tracking columns
+- Implemented confirm() method in ReconciliationService with:
+  - Transaction and journal entry existence validation
+  - Already reconciled status checking
+  - Status transition to Reconciled
+  - Reconciliation timestamp setting (reconciled_at using datetime.now(UTC))
+  - Foreign key link to journal entry (reconciled_journal_entry_id)
+  - Atomic transaction commit
+- Added POST /api/finance/reconciliation/confirm endpoint in reconciliation routes
+- Endpoint accepts transaction_id and journal_entry_id in JSON body
+- Returns 400 for missing/invalid IDs, already reconciled transactions, or not found records
+- Returns 200 with updated transaction on success
+- Wrote 7 comprehensive tests covering:
+  - Successful reconciliation confirmation (with reconciled_at timestamp and linked entry_id)
+  - Transaction not found error case
+  - Journal entry not found error case
+  - Already reconciled transaction error case
+  - Missing transaction_id validation
+  - Missing journal_entry_id validation
+  - Non-JSON request validation
+- All 218 tests pass (211 existing + 7 new)
+- mypy typecheck passes with no issues
+- Files changed: 7 files, 429 insertions
+- Commit: c4fdd6f
+
+**Learnings:**
+- Foreign key with ondelete='SET NULL' allows journal entries to be deleted without breaking reconciled transactions
+- datetime.now(UTC) is the proper way to generate UTC timestamps in Python 3.11+ (replaces deprecated utcnow())
+- Reconciliation is atomic - all validation happens before any database changes
+- Status transition from PENDING → RECONCILED should check current status to prevent double-reconciliation
+- Migration foreign key constraint naming follows pattern: fk_{table}_{referenced_table}
+- Reconciliation tracking requires both timestamp (when) and foreign key (what) for audit trail
+---
