@@ -205,3 +205,78 @@ Started: 2026-02-13 18:12 AEDT
 - The service receives db sessions as arguments, making it easy to test
 
 ---
+
+## 2026-02-13 20:07 - US-007: Build chart of accounts CRUD endpoints
+- Created src/services/account_service.py with AccountService class
+  - get_all() with filtering by entity_id and account_type
+  - get_by_id() and get_by_code() for account lookups
+  - validate_parent() to check parent_code exists before creating child accounts
+  - create() with hierarchy validation and duplicate code prevention
+  - update() with parent_code validation on updates
+  - Business logic ensures parent accounts exist before allowing children
+- Created src/routes/accounts.py with Flask Blueprint
+  - GET /api/finance/accounts - list all accounts (hierarchical order by code)
+  - GET /api/finance/accounts?type=Asset - filter by account type
+  - GET /api/finance/accounts?entity_id=1 - filter by entity
+  - POST /api/finance/accounts - create account with hierarchy validation
+  - GET /api/finance/accounts/<id> - get account by ID
+  - PUT /api/finance/accounts/<id> - update account
+  - Clean error handling for ValidationError (serializes properly to JSON)
+  - Returns 400 for invalid parent_code or duplicate codes
+- Updated src/app.py to register accounts_bp blueprint
+- Wrote 17 comprehensive tests in tests/test_accounts.py
+  - List accounts (empty, with data, filtered by type/entity)
+  - Invalid filters (type and entity_id validation)
+  - Create account (success, with parent, invalid parent, duplicate code, validation errors)
+  - Get account by ID (success and not found)
+  - Update account (success, not found, invalid parent)
+  - Parent-child relationship visibility in responses
+  - All tests use in-memory SQLite with proper mocking
+- All 127 tests pass (110 existing + 17 new), mypy typecheck passes
+- Commit: 786bdf2
+
+**Learnings:**
+- Hierarchical ordering by code (e.g., 1000, 1100, 1110) naturally sorts parent before children
+- Parent validation at service layer prevents orphaned child accounts
+- Pydantic ValidationError needs special handling - e.errors() must be serialized properly
+- Error response pattern: serialize ValidationError.errors() into JSON-safe dict structure
+- Account codes are unique per entity (enforced by unique constraint on entity_id + code)
+- Query parameter filtering allows flexible account retrieval (by type or entity)
+
+---
+
+## 2026-02-13 20:15 - US-008: Build bank account endpoints
+- Created src/services/bank_account_service.py with BankAccountService class
+  - get_all() with optional filtering by entity_id
+  - get_by_id() for retrieving specific bank accounts
+  - validate_entity_exists() to check entity_id validity before creating bank accounts
+  - create() with entity validation and raises ValueError if entity doesn't exist
+  - update() for modifying existing bank accounts
+  - Business logic ensures bank accounts are always linked to valid entities
+- Created src/routes/bank_accounts.py with Flask Blueprint
+  - GET /api/finance/bank-accounts - list all bank accounts (ordered by bank_name, account_name)
+  - GET /api/finance/bank-accounts?entity_id=X - filter bank accounts by entity
+  - POST /api/finance/bank-accounts - create new bank account
+  - GET /api/finance/bank-accounts/<id> - get bank account by ID
+  - Entity validation returns 400 error if entity_id doesn't exist
+  - Proper error handling for ValidationError and ValueError
+- Updated src/app.py to register bank_accounts_bp blueprint
+- Wrote 11 comprehensive tests in tests/test_bank_accounts.py
+  - List bank accounts (empty, with data, filtered by entity)
+  - Create bank account (success, with explicit status, invalid entity, validation errors)
+  - Invalid currency code validation
+  - Get bank account by ID (success and not found)
+  - Create all MVP bank accounts (OCBC, DBS, Wise, NAB)
+  - All tests use in-memory SQLite with proper mocking
+- All 138 tests pass (127 existing + 11 new), mypy typecheck passes
+- Files changed: 4 files, 585 insertions
+- Commit: 6f364cd
+
+**Learnings:**
+- Enum values in responses are lowercase (e.g., "active", "inactive") because that's what's stored in DB
+- Entity IDs must be captured before session closes to avoid DetachedInstanceError in tests
+- Route filtering with query parameters (?entity_id=X) uses request.args.get('entity_id', type=int)
+- Bank account ordering by (bank_name, account_name) provides consistent, readable list ordering
+- Service layer validation (validate_entity_exists) prevents FK constraint violations with better error messages
+
+---
