@@ -1,0 +1,66 @@
+# Progress Log
+Run: 100dcf60-04d4-4df7-93ed-08e7b467ef89
+Task: Build the Drive Lah Finance API - a new Python Flask microservice for financial management
+Started: 2026-02-13 18:12 AEDT
+
+## Codebase Patterns
+- Python 3.14 with Flask 2.x application factory pattern
+- Virtual environment at ./venv (excluded from git)
+- Tests using pytest with pytest-flask plugin
+- Configuration via .env file (template at .env.example)
+- Project structure: src/ for source code with subdirectories (routes, services, models, utils)
+- Requirements managed via requirements.txt
+- Database: SQLAlchemy 2.x ORM with PostgreSQL
+- Validation: Pydantic 2.x
+- Database sessions: Use `get_db()` generator or `db_session()` context manager from src/database.py
+- Migrations: Alembic in migrations/ directory, run with `alembic upgrade head`
+- DB config supports both DATABASE_URL or individual DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD
+- Connection pooling enabled by default with QueuePool (configurable via env vars)
+
+---
+
+## 2026-02-13 18:12 - US-001: Initialize Flask project with proper structure
+- Created directory structure: src/routes, src/services, src/models, src/utils, tests
+- Set up requirements.txt with Flask 2.x, SQLAlchemy 2.x, Pydantic 2.x, psycopg2-binary
+- Created app.py with Flask application factory pattern
+- Added health check endpoint (/health) and API base route (/api/finance)
+- Created .env.example documenting required environment variables (DATABASE_URL, PORT, DEBUG)
+- Set up .gitignore for Python projects
+- Created README.md with setup instructions
+- Added pytest configuration (pytest.ini)
+- Wrote 6 tests for app initialization (all passing)
+- Files changed: 13 files (268 insertions)
+- Commit: ffbdad1
+
+**Learnings:**
+- Flask app factory pattern allows for flexible configuration and easier testing
+- Application runs on port 8081 as specified
+- Health check endpoints are useful for deployment monitoring
+- Test client from Flask makes it easy to test endpoints without running server
+
+---
+
+## 2026-02-13 18:22 - US-002: Set up database connection and migration framework
+- Created src/database.py with SQLAlchemy engine, session management, and connection pooling
+- Implemented get_db() generator function that yields sessions with auto-commit/rollback
+- Implemented db_session() context manager as alternative pattern
+- Configured connection pooling with QueuePool (configurable pool size, overflow, timeout, recycle)
+- Initialized Alembic with migrations/ directory structure
+- Updated migrations/env.py to use our database configuration and model metadata
+- Updated .env.example with individual DB_* variables (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD)
+- Added connection pool configuration options (DB_POOL_SIZE, etc.)
+- Updated README.md with comprehensive database migration commands section
+- Documented all environment variables in README with table format
+- Wrote 16 tests for database module covering URL construction, engine creation, session management, and connection testing
+- All tests pass (22 total including existing app tests)
+- mypy typecheck passes
+- Commit: a25fb23
+
+**Learnings:**
+- SQLAlchemy 2.x uses declarative_base() from sqlalchemy.orm (not sqlalchemy.ext.declarative)
+- Connection pooling with pool_pre_ping=True verifies connections before checkout
+- Alembic env.py can dynamically set sqlalchemy.url via config.set_main_option()
+- Tests can mock database URL to use SQLite for fast in-memory testing
+- reset_engine() is useful for test isolation
+
+---
