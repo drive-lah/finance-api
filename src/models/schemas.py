@@ -6,11 +6,14 @@ outgoing API responses.
 """
 from datetime import datetime
 from typing import Optional
+from datetime import date as date_type
 from pydantic import BaseModel, Field, field_validator
 import re
 
 from src.models.entity import EntityStatus
 from src.models.account import AccountType, NormalBalance
+from src.models.bank_account import BankAccountStatus
+from src.models.transaction import TransactionStatus
 
 
 # =============================================================================
@@ -122,6 +125,102 @@ class AccountResponse(BaseModel):
     normal_balance: str
     parent_code: Optional[str]
     is_active: bool
+    created_at: datetime
+    updated_at: datetime
+    
+    model_config = {"from_attributes": True}
+
+
+# =============================================================================
+# Bank Account Schemas
+# =============================================================================
+
+class BankAccountCreate(BaseModel):
+    """Schema for creating a new bank account."""
+    entity_id: int = Field(..., gt=0, description="ID of the owning entity")
+    bank_name: str = Field(..., min_length=1, max_length=255, description="Name of the bank")
+    account_number: str = Field(..., min_length=1, max_length=50, description="Bank account number")
+    account_name: str = Field(..., min_length=1, max_length=255, description="Account holder name")
+    currency: str = Field(..., min_length=3, max_length=3, description="ISO 4217 currency code")
+    status: Optional[BankAccountStatus] = Field(
+        default=BankAccountStatus.ACTIVE,
+        description="Bank account status"
+    )
+    
+    @field_validator('currency')
+    @classmethod
+    def validate_currency(cls, v: str) -> str:
+        """Validate currency code is uppercase letters."""
+        if not re.match(r'^[A-Z]{3}$', v.upper()):
+            raise ValueError('Currency must be a 3-letter ISO 4217 code')
+        return v.upper()
+
+
+class BankAccountUpdate(BaseModel):
+    """Schema for updating an existing bank account."""
+    bank_name: Optional[str] = Field(None, min_length=1, max_length=255)
+    account_number: Optional[str] = Field(None, min_length=1, max_length=50)
+    account_name: Optional[str] = Field(None, min_length=1, max_length=255)
+    currency: Optional[str] = Field(None, min_length=3, max_length=3)
+    status: Optional[BankAccountStatus] = None
+    
+    @field_validator('currency')
+    @classmethod
+    def validate_currency(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        if not re.match(r'^[A-Z]{3}$', v.upper()):
+            raise ValueError('Currency must be a 3-letter ISO 4217 code')
+        return v.upper()
+
+
+class BankAccountResponse(BaseModel):
+    """Schema for bank account response."""
+    id: int
+    entity_id: int
+    bank_name: str
+    account_number: str
+    account_name: str
+    currency: str
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    
+    model_config = {"from_attributes": True}
+
+
+# =============================================================================
+# Transaction Schemas
+# =============================================================================
+
+class TransactionCreate(BaseModel):
+    """Schema for creating a new transaction (typically via import)."""
+    bank_account_id: int = Field(..., gt=0, description="ID of the bank account")
+    transaction_date: date_type = Field(..., description="Date of the transaction")
+    description: str = Field(..., min_length=1, max_length=500, description="Transaction description")
+    amount: float = Field(..., description="Transaction amount (positive for credit, negative for debit)")
+    reference_number: Optional[str] = Field(None, max_length=100, description="Reference or check number")
+    fingerprint: str = Field(..., min_length=1, max_length=64, description="SHA256 hash for duplicate detection")
+    status: Optional[TransactionStatus] = Field(
+        default=TransactionStatus.PENDING,
+        description="Transaction status"
+    )
+    import_batch_id: Optional[str] = Field(None, max_length=36, description="UUID of the import batch")
+    original_csv_row: Optional[str] = Field(None, description="Original CSV row for audit")
+
+
+class TransactionResponse(BaseModel):
+    """Schema for transaction response."""
+    id: int
+    bank_account_id: int
+    transaction_date: date_type
+    description: str
+    amount: float
+    reference_number: Optional[str]
+    fingerprint: str
+    status: str
+    import_batch_id: Optional[str]
+    original_csv_row: Optional[str]
     created_at: datetime
     updated_at: datetime
     

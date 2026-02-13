@@ -5,6 +5,8 @@ Exports all SQLAlchemy models and Pydantic schemas for the finance API.
 """
 from src.models.entity import FinanceEntity, EntityStatus
 from src.models.account import FinanceAccount, AccountType, NormalBalance
+from src.models.bank_account import FinanceBankAccount, BankAccountStatus
+from src.models.transaction import FinanceTransaction, TransactionStatus
 from src.models.schemas import (
     EntityCreate,
     EntityUpdate,
@@ -12,6 +14,11 @@ from src.models.schemas import (
     AccountCreate,
     AccountUpdate,
     AccountResponse,
+    BankAccountCreate,
+    BankAccountUpdate,
+    BankAccountResponse,
+    TransactionCreate,
+    TransactionResponse,
 )
 
 __all__ = [
@@ -22,6 +29,12 @@ __all__ = [
     "FinanceAccount",
     "AccountType",
     "NormalBalance",
+    # Bank account model and enum
+    "FinanceBankAccount",
+    "BankAccountStatus",
+    # Transaction model and enum
+    "FinanceTransaction",
+    "TransactionStatus",
     # Pydantic schemas
     "EntityCreate",
     "EntityUpdate",
@@ -29,4 +42,9 @@ __all__ = [
     "AccountCreate",
     "AccountUpdate",
     "AccountResponse",
+    "BankAccountCreate",
+    "BankAccountUpdate",
+    "BankAccountResponse",
+    "TransactionCreate",
+    "TransactionResponse",
 ]
