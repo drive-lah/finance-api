@@ -16,6 +16,10 @@ Started: 2026-02-13 18:12 AEDT
 - Migrations: Alembic in migrations/ directory, run with `alembic upgrade head`
 - DB config supports both DATABASE_URL or individual DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD
 - Connection pooling enabled by default with QueuePool (configurable via env vars)
+- Models: SQLAlchemy 2.x style with Mapped[] type hints, Base imported from src/database
+- Enums: Use native_enum=False for VARCHAR storage (cross-DB compatible)
+- Schemas: Pydantic 2.x with field_validator, model_config = {"from_attributes": True} for ORM compatibility
+- All models have to_dict() method for JSON serialization
 
 ---
 
@@ -62,5 +66,35 @@ Started: 2026-02-13 18:12 AEDT
 - Alembic env.py can dynamically set sqlalchemy.url via config.set_main_option()
 - Tests can mock database URL to use SQLite for fast in-memory testing
 - reset_engine() is useful for test isolation
+
+---
+
+## 2026-02-13 18:32 - US-003: Create finance_entities and finance_accounts models
+- Created src/models/entity.py with FinanceEntity SQLAlchemy model
+  - Fields: id, name, country (ISO 3166-1), base_currency (ISO 4217), status, created_at, updated_at
+  - EntityStatus enum with ACTIVE, INACTIVE, SUSPENDED values
+- Created src/models/account.py with FinanceAccount SQLAlchemy model
+  - Fields: id, entity_id (FK), code, name, account_type, normal_balance, parent_code, is_active, timestamps
+  - AccountType enum with Asset, Liability, Equity, Revenue, Expense
+  - NormalBalance enum with Debit, Credit
+  - Static method get_normal_balance_for_type() to derive normal balance from account type
+  - Unique constraint on (entity_id, code) for account codes unique per entity
+  - Index on (entity_id, parent_code) for hierarchy lookups
+- Created src/models/schemas.py with Pydantic validation schemas
+  - EntityCreate, EntityUpdate, EntityResponse for entities
+  - AccountCreate, AccountUpdate, AccountResponse for accounts
+  - Validation for ISO country codes, currency codes, alphanumeric account codes
+- Updated migrations/env.py to import models for autogenerate
+- Created Alembic migration 001_create_entities_and_accounts.py
+- Wrote 28 tests covering enums, models, and Pydantic schemas
+- All 50 tests pass, mypy typecheck passes
+- Commit: 221deb1
+
+**Learnings:**
+- SQLAlchemy 2.x Mapped[] type hints work well for declarative models
+- Use native_enum=False with SQLEnum for cross-database compatibility (stores as VARCHAR)
+- Pydantic 2.x uses field_validator decorator (not validator) and model_config dict (not Config class)
+- Tests using in-memory SQLite are fast and reliable for model validation
+- Parent code is stored as string reference rather than FK for simpler hierarchical queries
 
 ---
