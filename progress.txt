@@ -615,3 +615,47 @@ Started: 2026-02-13 18:12 AEDT
 - DEBUG mode flag controls whether error details are exposed to clients
 - Removing explicit try/except blocks in routes simplifies code when global handlers are present
 ---
+
+## 2026-02-14 05:17 - US-017: Add Stripe webhook integration endpoint
+- Added source field to FinanceTransaction model (String(50), nullable)
+- Added stripe_transaction_id field to FinanceTransaction model (String(100), nullable)
+- Added unique index ix_finance_transactions_stripe_id for Stripe transaction IDs
+- Updated to_dict() method to include source and stripe_transaction_id fields
+- Updated TransactionCreate and TransactionResponse Pydantic schemas with new fields
+- Created StripeTransactionCreate schema for webhook validation
+- Created Alembic migration (2834411f7be2) to add source and stripe_transaction_id columns
+- Implemented create_from_stripe() method in TransactionService:
+  - Validates bank account exists
+  - Checks for duplicate Stripe transaction ID (raises ValueError)
+  - Generates fingerprint and checks for duplicates
+  - Sets source='stripe_automation' automatically
+  - Creates transaction with all required fields
+- Added POST /api/finance/transactions/stripe endpoint in transactions routes:
+  - Accepts JSON payload with bank_account_id, stripe_transaction_id, transaction_date, description, amount, optional reference_number
+  - Validates all fields using StripeTransactionCreate Pydantic schema
+  - Returns 201 Created on success with transaction details
+  - Returns 400 Bad Request for validation errors (missing fields, invalid bank account)
+  - Returns 409 Conflict for duplicate Stripe transaction ID or fingerprint
+  - Proper error handling with ConflictError for duplicates, BadRequestError for validation
+- Wrote 10 comprehensive tests covering:
+  - Successful webhook creation (with and without reference number)
+  - Duplicate Stripe transaction ID rejection
+  - Duplicate fingerprint rejection
+  - Invalid bank account validation
+  - Missing required fields validation
+  - Invalid amount/date format validation
+  - Non-JSON request validation
+  - Service layer create_from_stripe() method testing
+- All 252 tests pass (242 existing + 10 new)
+- mypy typecheck passes with no issues
+- Files changed: 7 files, 463 insertions
+- Commit: e9b2e88
+
+**Learnings:**
+- ConflictError (409) is appropriate for duplicate resource errors
+- Stripe transaction ID uniqueness enforced at database level with unique index
+- source field enables tracking transaction origin (csv_import, stripe_automation, etc.)
+- Service layer can differentiate between different duplicate types (Stripe ID vs fingerprint)
+- Pydantic schema validation happens automatically in routes (raises ValidationError if invalid)
+- Converting Decimal to string before passing to Decimal() constructor ensures type safety
+---
