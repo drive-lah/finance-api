@@ -1,0 +1,195 @@
+Code,Name,Category,Sub-Category,Account Type,Normal Balance,Description
+,,,,,,
+,ASSETS,,,,,,
+,,,,,,
+,Cash - Payment Platforms (group-level),,,,,,
+1100,Clearing Account,Assets,Cash - Payment Platform,Asset,Debit,Cash held in payment processor clearing account before settlement to bank. Entity dimension determines which payment processor (e.g. SG Stripe or AU Stripe).
+1101,Platform Account,Assets,Cash - Payment Platform,Asset,Debit,Cash balance held within the payment processor platform account (e.g. Stripe Connect balance). Entity dimension determines which platform account.
+1150,Wise Account,Assets,Cash - Payment Platform,Asset,Debit,Cash held in Wise multi-currency wallet. Each entity has one Wise account. Entity dimension determines which wallet.
+,,,,,,
+,Receivables (group-level),,,,,,
+1200,Trade Receivables,Assets,Receivables,Asset,Debit,Amounts owed to the company from customers and business partners in the normal course of operations (e.g. outstanding invoices to guests or hosts).
+1220,Other Receivables,Assets,Receivables,Asset,Debit,Non-trade amounts owed to the company such as staff advances and other miscellaneous receivables not related to core business operations.
+,,,,,,
+,Other Current Assets (group-level),,,,,,
+1300,Prepayments,Assets,Other Current Assets,Asset,Debit,Payments made in advance for goods or services not yet received (e.g. prepaid rent or prepaid insurance premiums covering future periods).
+1310,Customer Deposits,Assets,Other Current Assets,Asset,Debit,Refundable deposits paid by the company to third parties (e.g. office rental deposits or security deposits).
+1320,Loans to Others,Assets,Other Current Assets,Asset,Debit,Short-term loans extended to individuals or entities outside the group. Tracks principal amounts outstanding.
+1330,Currency Exchange,Assets,Other Current Assets,Asset,Debit,Temporary clearing account for foreign currency conversion transactions. Should net to zero after conversions are completed.
+1350,GST Receivable (Input Tax),Assets,Other Current Assets,Asset,Debit,"GST/VAT paid on business purchases that is reclaimable from the tax authority (IRAS for Singapore, ATO for Australia). Offset against GST Payable when filing returns."
+,,,,,,
+,Fixed Assets (group-level),,,,,,
+1500,Computer & Peripherals,Assets,Fixed Assets,Asset,Debit,"Laptops, desktops, monitors, and peripheral equipment purchased for business use. Capitalised at cost and depreciated over useful life."
+1510,Hardware Devices,Assets,Fixed Assets,Asset,Debit,"In-car GPS/telematics devices purchased for installation in host vehicles. Includes devices in stock and installed. Capitalised at cost, depreciated over useful life."
+1520,Motor Vehicles,Assets,Fixed Assets,Asset,Debit,Motor vehicles owned by the company (e.g. RMS fleet vehicles). Capitalised at purchase cost and depreciated over useful life.
+1530,Furniture & Fixtures,Assets,Fixed Assets,Asset,Debit,"Office desks, chairs, shelving, and other fixtures. Capitalised at cost and depreciated over useful life."
+,,,,,,
+,Accumulated Depreciation (group-level),,,,,,
+1600,Accum Depr - Computer & Peripherals,Assets,Accumulated Depreciation,Asset,Credit,Cumulative depreciation charged against Computer & Peripherals (1500). Contra-asset that reduces the net book value on the balance sheet.
+1610,Accum Depr - Hardware Devices,Assets,Accumulated Depreciation,Asset,Credit,Cumulative depreciation charged against Hardware Devices (1510). Contra-asset that reduces the net book value on the balance sheet.
+1620,Accum Depr - Motor Vehicles,Assets,Accumulated Depreciation,Asset,Credit,Cumulative depreciation charged against Motor Vehicles (1520). Contra-asset that reduces the net book value on the balance sheet.
+1630,Accum Depr - Furniture & Fixtures,Assets,Accumulated Depreciation,Asset,Credit,Cumulative depreciation charged against Furniture & Fixtures (1530). Contra-asset that reduces the net book value on the balance sheet.
+,,,,,,
+,Intangible Assets (group-level),,,,,,
+1700,Brand,Assets,Intangible Assets,Asset,Debit,"Capitalised costs related to brand development, trademark registration, and brand identity. Amortised over useful life."
+1710,Technology Development,Assets,Intangible Assets,Asset,Debit,"Capitalised software development costs (platform, mobile app, internal tools). Amortised over useful life once the asset is available for use."
+,,,,,,
+,Accumulated Amortisation (group-level),,,,,,
+1800,Accum Amort - Brand,Assets,Accumulated Amortisation,Asset,Credit,Cumulative amortisation charged against Brand (1700). Contra-asset that reduces the net book value on the balance sheet.
+1810,Accum Amort - Technology Development,Assets,Accumulated Amortisation,Asset,Credit,Cumulative amortisation charged against Technology Development (1710). Contra-asset that reduces the net book value on the balance sheet.
+,,,,,,
+,Other Non-Current Assets (group-level),,,,,,
+1900,Allowance for Doubtful Accounts,Assets,Other Non-Current,Asset,Credit,Provision for receivables that may not be collected (bad debt reserve). Contra-asset that reduces the net receivables on the balance sheet.
+,,,,,,
+,LIABILITIES,,,,,,
+,,,,,,
+,Trade Payables (group-level),,,,,,
+2000,Trade & Other Payables,Liabilities,Trade Payables,Liability,Credit,Amounts owed to suppliers and vendors for goods and services received in the normal course of business (e.g. workshop invoices or software vendor bills).
+2010,Other Payables,Liabilities,Trade Payables,Liability,Credit,Non-trade amounts owed such as statutory payments due or miscellaneous liabilities not related to regular supplier invoices.
+,,,,,,
+,Platform Liabilities (group-level),,,,,,
+2100,Deferred Trip Revenue,Liabilities,Platform Liabilities,Liability,Credit,"Trip booking payments collected from guests but not yet earned (trip hasn't started or completed). Recognised as revenue (4000-4003) when trip is fulfilled, or refunded (5052) if cancelled."
+2110,Customer Deposits Held,Liabilities,Platform Liabilities,Liability,Credit,"Security or verification deposits collected from guests and held until the trip is completed. Returned to guest after trip, or applied against damage/incidental charges."
+2120,Host Payables,Liabilities,Platform Liabilities,Liability,Credit,Amounts owed to car owners (hosts) for their earnings share from completed trips. Settled via periodic payouts from the payment platform.
+,,,,,,
+,Accruals (group-level),,,,,,
+2200,Accrued Expenses,Liabilities,Accruals,Liability,Credit,"Expenses that have been incurred but not yet invoiced or paid (e.g. electricity used in January, bill arrives February; salary for last week of month paid next month). Ensures expenses are recorded in the correct period."
+2210,Deferred Income,Liabilities,Accruals,Liability,Credit,"Cash received for services not yet delivered (e.g. annual device subscription paid upfront). Revenue is recognised monthly as service is delivered, reducing this liability over time."
+,,,,,,
+,Payroll Liabilities (group-level),,,,,,
+2300,CPF Payable (SG),Liabilities,Payroll,Liability,Credit,"Singapore Central Provident Fund contributions withheld from employees (employee share) plus employer's contribution, owed to the CPF Board. Settled monthly."
+2301,PAYG Withholding Payable (AU),Liabilities,Payroll,Liability,Credit,Australian Pay As You Go tax withheld from employee wages on behalf of the ATO. Settled quarterly via Business Activity Statement (BAS).
+2302,Superannuation Payable (AU),Liabilities,Payroll,Liability,Credit,Australian employer superannuation guarantee contributions owed to employee super funds. Currently 11.5% of ordinary time earnings. Settled quarterly.
+2303,Employee Claims Payable,Liabilities,Payroll,Liability,Credit,"Approved employee expense reimbursement claims awaiting payment. When approved, the expense is recorded (6010-6014) and this liability is created. Cleared when payment is made."
+2304,Salaries Payable,Liabilities,Payroll,Liability,Credit,Staff salaries that have been earned/accrued but not yet paid (e.g. month-end accrual before payday). Cleared on pay date.
+,,,,,,
+,Other Liabilities (group-level),,,,,,
+2400,Loans from Others,Liabilities,Other Liabilities,Liability,Credit,Loans received from external parties (individuals or institutions). Tracks principal amounts outstanding.
+2500,GST Payable (Output Tax),Liabilities,Tax,Liability,Credit,"GST/VAT collected on sales that is owed to the tax authority (IRAS for Singapore, ATO for Australia). Net of GST Receivable (1350) determines amount payable/refundable on GST return."
+,,,,,,
+,EQUITY,,,,,,
+,,,,,,
+3000,Share Capital,Equity,Equity,Equity,Credit,Total capital invested by shareholders in exchange for ownership shares. Represents the par value of issued shares plus any share premium.
+3100,Retained Earnings,Equity,Equity,Equity,Credit,Cumulative net profits (or losses) from all prior periods that have not been distributed as dividends. Automatically updated at year-end close.
+3200,Opening Balance Equity,Equity,Equity,Equity,Credit,Temporary account used during system migration to capture opening balances from the legacy system (QuickBooks). Should be zero after migration is complete.
+3300,Suspense Account,Equity,Equity,Equity,Credit,Temporary holding account for transactions that cannot be immediately classified. All items should be investigated and reclassified to proper accounts promptly.
+,,,,,,
+,REVENUE,,,,,,
+,,,,,,
+4000,GBV - P2P,Revenue,Trip Revenue,Revenue,Credit,"Gross Booking Value from peer-to-peer short-term car rentals (non-managed). This is the total amount charged to the guest, before deducting host payouts and platform fees."
+4001,GBV - P2P RMS,Revenue,Trip Revenue,Revenue,Credit,"Gross Booking Value from short-term rentals on cars managed under the Rental Management Service. Higher platform margin than P2P due to management fee (approx 10% extra)."
+4002,GBV - Flex+,Revenue,Trip Revenue,Revenue,Credit,"Gross Booking Value from long-term car rentals (Flex+ product, non-managed). Typically monthly or multi-month bookings."
+4003,GBV - Flex+ RMS,Revenue,Trip Revenue,Revenue,Credit,Gross Booking Value from long-term rentals on RMS-managed cars. Combines long-term rental revenue with rental management service margin.
+4010,Subscription Revenue - Device,Revenue,Subscription,Revenue,Credit,Monthly or annual fees charged to hosts for the in-car telematics/GPS device subscription. Recognised as service is delivered.
+4011,Subscription Revenue - Insurance,Revenue,Subscription,Revenue,Credit,Fees charged to hosts for optional insurance subscription products. Recognised as the insurance coverage period elapses.
+4020,Incidentals Revenue - Tolls,Revenue,Incidentals,Revenue,Credit,Toll charges billed to guests or recovered from hosts for tolls incurred during a trip. Drive Lah may retain a margin.
+4021,Incidentals Revenue - Damage,Revenue,Incidentals,Revenue,Credit,Damage fees charged to guests for vehicle damage during a trip. Separate from insurance recovery (4030) which comes from insurers.
+4022,Incidentals Revenue - Cleaning,Revenue,Incidentals,Revenue,Credit,Cleaning fees charged to guests when a vehicle is returned in an unacceptable condition. Paid to cleaning provider via 5022.
+4023,Incidentals Revenue - Fuel,Revenue,Incidentals,Revenue,Credit,Fuel charges billed when a guest returns a vehicle with less fuel than at pickup. Host or guest is charged; guest may be refunded.
+4024,Incidentals Revenue - Excess Mileage,Revenue,Incidentals,Revenue,Credit,Charges for kilometres driven beyond the included allowance in a booking. Billed to guest and partially passed through to host.
+4025,Incidentals Revenue - Other,Revenue,Incidentals,Revenue,Credit,Catch-all for incidental charges that do not fall into the specific categories above (e.g. late return fees charged to guests).
+4030,Insurance Recoveries,Revenue,Insurance,Revenue,Credit,Claim proceeds received from insurance companies for damage to vehicles. Separate from damage charged to guests (4021). Recorded as revenue when claim is approved and received.
+,,,,,,
+,COST OF SALES,,,,,,
+,,,,,,
+5000,Host Payouts - P2P,Cost of Sales,Host Payouts,Cost of Sales,Debit,"Host's earnings share from P2P short-term bookings. Typically ~60% of GBV. This is the largest single cost component, paid to the car owner after trip completion."
+5001,Host Payouts - P2P RMS,Cost of Sales,Host Payouts,Cost of Sales,Debit,"Host's earnings share from P2P RMS bookings. Typically ~50% of GBV (lower than P2P regular due to 10% management fee). Paid to car owner after trip completion."
+5002,Host Payouts - Flex+,Cost of Sales,Host Payouts,Cost of Sales,Debit,Host's earnings share from Flex+ long-term bookings. Paid monthly to the car owner based on the long-term rental agreement terms.
+5003,Host Payouts - Flex+ RMS,Cost of Sales,Host Payouts,Cost of Sales,Debit,Host's earnings share from Flex+ RMS bookings. Lower payout percentage than Flex+ regular due to the management fee component.
+5010,Payment Processing Fees,Cost of Sales,Payment Processing,Cost of Sales,Debit,"Fees charged by payment processors (e.g. Stripe) for processing guest payments, host payouts, and refunds. Typically 2-3% of transaction value."
+5020,Incidentals Payout - Tolls,Cost of Sales,Incidentals Payouts,Cost of Sales,Debit,Toll charges reimbursed to hosts or paid to toll operators. The difference between toll revenue (4020) and this payout is the platform margin.
+5021,Incidentals Payout - Damage (Host),Cost of Sales,Incidentals Payouts,Cost of Sales,Debit,Compensation paid to hosts for vehicle damage caused by guests during a trip. Separate from workshop (5032) and insurance excess (5036) costs.
+5022,Incidentals Payout - Cleaning,Cost of Sales,Incidentals Payouts,Cost of Sales,Debit,Payments to hosts or cleaning service providers for vehicle cleaning after a trip. Funded by cleaning charges to guests (4022).
+5023,Incidentals Payout - Fuel,Cost of Sales,Incidentals Payouts,Cost of Sales,Debit,Fuel cost refunds paid to guests who filled fuel that the host should have provided. Recovered from host charges.
+5024,Incidentals Payout - Excess Mileage,Cost of Sales,Incidentals Payouts,Cost of Sales,Debit,Excess mileage compensation paid to hosts for additional wear on their vehicle. Funded by excess mileage charges to guests (4024).
+5025,Incidentals Payout - Other,Cost of Sales,Incidentals Payouts,Cost of Sales,Debit,Catch-all for miscellaneous incidental payouts to hosts or third parties not covered by specific incidental categories.
+5030,Cost of Device Subscriptions,Cost of Sales,Subscription Costs,Cost of Sales,Debit,"Direct costs of providing the device subscription product: hardware purchase cost, SIM/data connectivity, and device maintenance. Matched against device subscription revenue (4010)."
+5031,Cost of Insurance - Subscription Premium,Cost of Sales,Insurance Costs,Cost of Sales,Debit,Insurance premiums paid to the insurer for providing the host insurance subscription product. Matched against insurance subscription revenue (4011).
+5032,Incidentals Payout - Workshop,Cost of Sales,Incidentals Payouts,Cost of Sales,Debit,Payments to workshops and repair centres for vehicle damage repairs. Part of the total damage cost alongside host compensation (5021) and assessor fees (5034).
+5033,Incidentals Payout - Towing,Cost of Sales,Incidentals Payouts,Cost of Sales,Debit,Payments to towing companies for vehicle recovery after breakdowns or accidents. May be partially recovered through insurance claims (4030).
+5034,Incidentals Payout - Assessor,Cost of Sales,Incidentals Payouts,Cost of Sales,Debit,Fees paid to damage assessors for inspecting and reporting on vehicle damage. Required for insurance claims and dispute resolution.
+5035,Cost of Insurance - Trip Premium,Cost of Sales,Insurance Costs,Cost of Sales,Debit,Insurance premium paid per trip to provide coverage for all bookings. This is a cost of doing business that applies across P2P/RMS/Flex+ equally.
+5036,Cost of Insurance - Excess/Deductible,Cost of Sales,Insurance Costs,Cost of Sales,Debit,Insurance excess (deductible) amount paid to the insurer when making a damage claim. The portion of the claim the company must bear before insurance covers the rest.
+5040,Host Payouts - Superhost,Cost of Sales,Host Programs,Cost of Sales,Debit,Bonus payments to hosts who achieve Superhost status based on ratings and performance metrics. An incentive program cost.
+5041,Host Payouts - Sticker,Cost of Sales,Host Programs,Cost of Sales,Debit,Payments to hosts who display Drive Lah branding stickers on their vehicles. A marketing-related host incentive.
+5042,Host Payouts - Misc,Cost of Sales,Host Programs,Cost of Sales,Debit,Miscellaneous payments to hosts that do not fit into specific payout categories (e.g. goodwill payments or ad-hoc compensations).
+5043,Host Payouts - Downtime,Cost of Sales,Host Programs,Cost of Sales,Debit,Compensation paid to hosts when their vehicle is unavailable due to platform-related issues (e.g. repairs from guest damage or operational holds).
+5044,Host Payouts - Late Return,Cost of Sales,Host Programs,Cost of Sales,Debit,Compensation paid to hosts when a guest returns the vehicle late and the host incurs inconvenience or lost booking opportunity.
+5050,Monthly Discounts,Cost of Sales,Discounts & Refunds,Cost of Sales,Debit,"Promotional discounts applied to trip bookings (e.g. first-trip discounts, seasonal promotions, loyalty discounts). Reduces effective revenue."
+5051,Chargebacks,Cost of Sales,Discounts & Refunds,Cost of Sales,Debit,Payment chargebacks initiated by guests through their bank or credit card company. Includes the chargeback amount plus any processor fees.
+5052,Refunds - Trip,Cost of Sales,Discounts & Refunds,Cost of Sales,Debit,"Trip booking refunds issued to guests for cancellations, service issues, or disputes. Reduces effective revenue from GBV."
+5053,Refunds - Incidentals,Cost of Sales,Discounts & Refunds,Cost of Sales,Debit,Refunds of incidental charges (tolls/damage/cleaning/fuel/mileage) issued to guests after dispute resolution or reassessment.
+5054,Refunds - Device Subscription,Cost of Sales,Discounts & Refunds,Cost of Sales,Debit,Refunds of device subscription fees to hosts (e.g. for cancellations or service issues with the device).
+5055,Refunds - Insurance Subscription,Cost of Sales,Discounts & Refunds,Cost of Sales,Debit,Refunds of insurance subscription fees to hosts (e.g. for cancellations or policy changes).
+5060,Parking - RMS Fleet,Cost of Sales,Operations,Cost of Sales,Debit,Parking costs for RMS-managed fleet vehicles including monthly parking subscriptions and ad-hoc parking charges.
+5061,On-Ground Team - Salary,Cost of Sales,Operations,Cost of Sales,Debit,"Salaries for the on-ground operations team who perform device installations, vehicle relocations, cleaning coordination, workshop runs, and customer handovers."
+5062,On-Ground Team - Expenses,Cost of Sales,Operations,Cost of Sales,Debit,"Out-of-pocket expenses incurred by the on-ground team including fuel/mileage reimbursement, parking during tasks, and incidental costs while on the job."
+5063,Customer Support - Salary,Cost of Sales,Operations,Cost of Sales,Debit,"Salaries for the customer support team handling guest and host enquiries, trip issues, and dispute resolution."
+5066,Warehousing Costs,Cost of Sales,Operations,Cost of Sales,Debit,Rent and operating costs for the warehouse used to store devices and fleet equipment before deployment.
+5064,Cost of Device - Installation,Cost of Sales,Device Costs,Cost of Sales,Debit,"Labour and material costs for installing in-car devices in host vehicles. Includes technician time, wiring, and mounting hardware."
+5065,Cost of Device - Courier/Shipping,Cost of Sales,Device Costs,Cost of Sales,Debit,Courier and shipping costs to deliver devices to hosts or installation locations when on-site installation is not possible.
+,,,,,,
+,OPERATING EXPENSES,,,,,,
+,,,,,,
+6000,Salaries & Wages,Operating Expenses,Payroll,Expense,Debit,"Gross salaries and wages for corporate/admin staff (tech, product, finance, management). Excludes on-ground team (5061) and customer support (5063) which are COS."
+6001,Employer CPF (SG),Operating Expenses,Payroll,Expense,Debit,"Singapore employer's Central Provident Fund contribution (currently 17% for employees under 55). Statutory cost on top of gross salary, paid to CPF Board monthly."
+6002,Employer Superannuation (AU),Operating Expenses,Payroll,Expense,Debit,"Australian employer superannuation guarantee contribution (currently 11.5%). Statutory cost on top of gross salary, paid to employee's super fund quarterly."
+6003,Directors Salary,Operating Expenses,Payroll,Expense,Debit,"Remuneration paid to company directors. Tracked separately from staff salaries for disclosure requirements and corporate governance reporting."
+6010,Employee Claims - Travel,Operating Expenses,Employee Claims,Expense,Debit,"Reimbursements for employee travel expenses (flights, accommodation, transport) incurred for business purposes. Claimed via expense report, held in 2303 until paid."
+6011,Employee Claims - Meals,Operating Expenses,Employee Claims,Expense,Debit,Reimbursements for employee meal expenses incurred during business travel or client meetings. Subject to company expense policy limits.
+6012,Employee Claims - Transport,Operating Expenses,Employee Claims,Expense,Debit,"Reimbursements for local transport expenses (taxi, ride-share, public transport) incurred for business purposes."
+6013,Employee Claims - Office Supplies,Operating Expenses,Employee Claims,Expense,Debit,Reimbursements for office supplies purchased by employees on behalf of the company (e.g. stationery or small equipment).
+6014,Employee Claims - Other,Operating Expenses,Employee Claims,Expense,Debit,Catch-all for employee expense reimbursements that do not fit into specific claim categories above.
+6100,Marketing - Digital Advertising,Operating Expenses,Marketing,Expense,Debit,"Spend on digital advertising channels to acquire new guests and hosts (e.g. Google Ads, Facebook Ads, Instagram, TikTok). The primary customer acquisition cost."
+6101,Marketing - Branding,Operating Expenses,Marketing,Expense,Debit,"Branding and brand awareness spend including brand campaigns, PR activities, and brand refresh projects. Not direct acquisition."
+6102,Marketing - Partnerships,Operating Expenses,Marketing,Expense,Debit,"Costs related to marketing partnerships, co-marketing arrangements, and affiliate programs with external partners."
+6103,Marketing - Asset Creation,Operating Expenses,Marketing,Expense,Debit,"Production costs for marketing creative assets: photography, videography, graphic design, and copywriting."
+6104,Marketing - Agency Fees,Operating Expenses,Marketing,Expense,Debit,Fees paid to external marketing agencies for campaign management and marketing strategy services.
+6200,HR - Recruitment,Operating Expenses,HR,Expense,Debit,"Recruitment costs including agency fees, job board advertising, background checks, and hiring-related expenses."
+6300,Office Rent,Operating Expenses,Office & Facilities,Expense,Debit,Monthly office rental payments. Includes base rent and any common area maintenance charges.
+6310,Office Equipment,Operating Expenses,Office & Facilities,Expense,Debit,"Small office equipment purchases below the capitalisation threshold (e.g. keyboards, headsets, cables). Items above threshold go to 1500."
+6400,Travel - Tickets,Operating Expenses,Travel & Entertainment,Expense,Debit,"Business travel flight and rail tickets for staff. Distinct from employee claims (6010) as these may be booked centrally by the company."
+6401,Travel - Meals,Operating Expenses,Travel & Entertainment,Expense,Debit,Company-paid meals during business travel or team events. Distinct from employee claims (6011) as these may be company-card purchases.
+6402,Entertainment,Operating Expenses,Travel & Entertainment,Expense,Debit,"Client entertainment, team social events, and team-building activities."
+6500,Accounting & Bookkeeping Fees,Operating Expenses,Professional Fees,Expense,Debit,"Fees paid to external accountants, bookkeepers, and audit firms for financial reporting, tax preparation, and compliance services."
+6501,Legal Fees,Operating Expenses,Professional Fees,Expense,Debit,"Fees paid to law firms and legal advisors for corporate legal matters, contract review, disputes, and regulatory compliance."
+6502,Fines & Penalties,Operating Expenses,Professional Fees,Expense,Debit,"Regulatory fines, late payment penalties, and other punitive charges from government bodies or business partners."
+6600,Bank Fees,Operating Expenses,Banking,Expense,Debit,"Bank account maintenance fees, transaction fees, wire transfer charges, and other banking service costs."
+6700,Technology - Infrastructure,Operating Expenses,Technology,Expense,Debit,"Cloud hosting costs (AWS, GCP, etc.), server infrastructure, CDN, database hosting, and DevOps tooling."
+6701,Technology - Software Subscriptions,Operating Expenses,Technology,Expense,Debit,"SaaS subscriptions for business tools (e.g. Slack, Jira, GitHub, analytics platforms, CRM). Monthly or annual licence fees."
+,,,,,,
+,DEPRECIATION & AMORTISATION,,,,,,
+,,,,,,
+7300,Depreciation - Computer & Equipment,Other Expense,Depreciation,Expense,Debit,Periodic depreciation expense charged to P&L for Computer & Peripherals (1500). The other side of the entry goes to Accum Depr (1600).
+7301,Depreciation - In-Car Devices,Other Expense,Depreciation,Expense,Debit,Periodic depreciation expense charged to P&L for Hardware Devices (1510). The other side of the entry goes to Accum Depr (1610).
+7400,Amortisation - Technology Development,Other Expense,Amortisation,Expense,Debit,Periodic amortisation expense charged to P&L for capitalised Technology Development (1710). The other side of the entry goes to Accum Amort (1810).
+7401,Amortisation - Brand,Other Expense,Amortisation,Expense,Debit,Periodic amortisation expense charged to P&L for capitalised Brand assets (1700). The other side of the entry goes to Accum Amort (1800).
+,,,,,,
+,OTHER INCOME,,,,,,
+,,,,,,
+7000,Other Income - Grants,Other Income,Other Income,Revenue,Credit,"Government grants received (e.g. Enterprise Singapore grants, Startup SG, Australian government innovation grants). Recognised when grant conditions are met."
+7001,Other Income - Cash Rebate,Other Income,Other Income,Revenue,Credit,"Cash rebates received from vendors, banks, or service providers (e.g. corporate card cashback, volume rebates from suppliers)."
+7002,Other Income - Interest,Other Income,Other Income,Revenue,Credit,Interest earned on bank savings accounts and term deposits. Non-operating income.
+,,,,,,
+,FOREIGN EXCHANGE,,,,,,
+,,,,,,
+7100,Foreign Exchange Gains/Losses,Other Expense,FX,Expense,Varies,"Realised and unrealised gains or losses from foreign currency transactions and balance sheet translation (e.g. AUD to SGD conversion). Debit for losses, credit for gains."
+,,,,,,
+,INTERCOMPANY,,,,,,
+,,,,,,
+8000,IC - Due from AU (SG books),Intercompany,IC Receivable,Asset,Debit,Amount owed to DL SG by DL AU. Recorded in SG entity books. Eliminates with 8110 (AU's corresponding payable) on group consolidation.
+8001,IC - Due from Ventures (SG books),Intercompany,IC Receivable,Asset,Debit,Amount owed to DL SG by DL Ventures. Recorded in SG entity books. Eliminates with 8120 (Ventures' corresponding payable) on group consolidation.
+8010,IC - Due from SG (AU books),Intercompany,IC Receivable,Asset,Debit,Amount owed to DL AU by DL SG. Recorded in AU entity books. Eliminates with 8100 (SG's corresponding payable) on group consolidation.
+8011,IC - Due from Ventures (AU books),Intercompany,IC Receivable,Asset,Debit,Amount owed to DL AU by DL Ventures. Recorded in AU entity books. Eliminates with 8121 (Ventures' corresponding payable) on group consolidation.
+8020,IC - Due from SG (Ventures books),Intercompany,IC Receivable,Asset,Debit,Amount owed to DL Ventures by DL SG. Recorded in Ventures entity books. Eliminates with 8101 (SG's corresponding payable) on group consolidation.
+8021,IC - Due from AU (Ventures books),Intercompany,IC Receivable,Asset,Debit,Amount owed to DL Ventures by DL AU. Recorded in Ventures entity books. Eliminates with 8111 (AU's corresponding payable) on group consolidation.
+8100,IC - Due to AU (SG books),Intercompany,IC Payable,Liability,Credit,Amount owed by DL SG to DL AU. Recorded in SG entity books. Eliminates with 8010 (AU's corresponding receivable) on group consolidation.
+8101,IC - Due to Ventures (SG books),Intercompany,IC Payable,Liability,Credit,Amount owed by DL SG to DL Ventures. Recorded in SG entity books. Eliminates with 8020 (Ventures' corresponding receivable) on group consolidation.
+8110,IC - Due to SG (AU books),Intercompany,IC Payable,Liability,Credit,Amount owed by DL AU to DL SG. Recorded in AU entity books. Eliminates with 8000 (SG's corresponding receivable) on group consolidation.
+8111,IC - Due to Ventures (AU books),Intercompany,IC Payable,Liability,Credit,Amount owed by DL AU to DL Ventures. Recorded in AU entity books. Eliminates with 8001 (SG's corresponding receivable) on group consolidation.
+8120,IC - Due to SG (Ventures books),Intercompany,IC Payable,Liability,Credit,Amount owed by DL Ventures to DL SG. Recorded in Ventures entity books. Eliminates with 8020 (SG's corresponding receivable) on group consolidation.
+8121,IC - Due to AU (Ventures books),Intercompany,IC Payable,Liability,Credit,Amount owed by DL Ventures to DL AU. Recorded in Ventures entity books. Eliminates with 8021 (AU's corresponding receivable) on group consolidation.
+,,,,,,
+,TAX,,,,,,
+,,,,,,
+9000,Income Tax Expense,Tax,Tax,Expense,Debit,"Corporate income tax expense for the period (17% for Singapore, 25% for Australia). Calculated on taxable profit after all allowable deductions."
