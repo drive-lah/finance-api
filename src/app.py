@@ -2,9 +2,13 @@
 Finance API - Main Application
 """
 import os
+import sys
 import logging
 from flask import Flask, jsonify
 from dotenv import load_dotenv
+
+# Ensure project root is on sys.path for absolute imports (e.g. from src.xxx)
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 load_dotenv()
 
