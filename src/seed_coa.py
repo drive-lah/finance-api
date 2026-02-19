@@ -14,6 +14,9 @@ import sys
 # Ensure project root is on sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from src.database import get_session_factory, get_engine, Base
 from src.models.entity import FinanceEntity, EntityStatus
 from src.models.account import FinanceAccount, AccountType, NormalBalance, AccountStatus
