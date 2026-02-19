@@ -9,7 +9,7 @@ from typing import Optional
 import enum
 
 from sqlalchemy import (
-    String, DateTime, Integer, ForeignKey, Enum as SQLEnum,
+    String, DateTime, Integer, Boolean, ForeignKey, Enum as SQLEnum,
     Index, Text, Numeric
 )
 from sqlalchemy.orm import Mapped, mapped_column
@@ -129,6 +129,11 @@ class FinanceCategorizationRule(Base):
         comment="Contra account in the other entity for IC transfers"
     )
 
+    gst_override: Mapped[Optional[bool]] = mapped_column(
+        Boolean, nullable=True,
+        comment="Override account GST setting. null=use account default, true=force GST, false=force no GST"
+    )
+
     status: Mapped[RuleStatus] = mapped_column(
         SQLEnum(RuleStatus, name="rule_status", native_enum=False),
         nullable=False,
@@ -180,6 +185,7 @@ class FinanceCategorizationRule(Base):
             "tag_ids": self.tag_ids,
             "target_entity_id": self.target_entity_id,
             "target_contra_account_code": self.target_contra_account_code,
+            "gst_override": self.gst_override,
             "status": self.status.value,
             "description": self.description,
             "created_at": self.created_at.isoformat() if self.created_at else None,

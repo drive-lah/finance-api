@@ -7,7 +7,7 @@ Represents companies/organizations that have financial records
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import String, DateTime, Enum as SQLEnum
+from sqlalchemy import String, DateTime, Enum as SQLEnum, Numeric
 from sqlalchemy.orm import Mapped, mapped_column
 import enum
 
@@ -34,6 +34,10 @@ class FinanceEntity(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     country: Mapped[str] = mapped_column(String(2), nullable=False)  # ISO 3166-1 alpha-2
     base_currency: Mapped[str] = mapped_column(String(3), nullable=False)  # ISO 4217
+    gst_rate: Mapped[Optional[float]] = mapped_column(
+        Numeric(precision=5, scale=4), nullable=True,
+        comment="GST rate for this entity (e.g., 0.09 for SG 9%, 0.10 for AU 10%)"
+    )
     status: Mapped[EntityStatus] = mapped_column(
         SQLEnum(EntityStatus, name="entity_status", native_enum=False),
         default=EntityStatus.ACTIVE,
@@ -61,6 +65,7 @@ class FinanceEntity(Base):
             "name": self.name,
             "country": self.country,
             "base_currency": self.base_currency,
+            "gst_rate": float(self.gst_rate) if self.gst_rate is not None else None,
             "status": self.status.value,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,

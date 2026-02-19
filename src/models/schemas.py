@@ -27,8 +27,9 @@ class EntityCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255, description="Company name")
     country: str = Field(..., min_length=2, max_length=2, description="ISO 3166-1 alpha-2 country code")
     base_currency: str = Field(..., min_length=3, max_length=3, description="ISO 4217 currency code")
+    gst_rate: Optional[float] = Field(default=None, description="GST rate (e.g., 0.09 for 9%)")
     status: Optional[EntityStatus] = Field(default=EntityStatus.ACTIVE, description="Entity status")
-    
+
     @field_validator('country')
     @classmethod
     def validate_country(cls, v: str) -> str:
@@ -51,8 +52,9 @@ class EntityUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     country: Optional[str] = Field(None, min_length=2, max_length=2)
     base_currency: Optional[str] = Field(None, min_length=3, max_length=3)
+    gst_rate: Optional[float] = None
     status: Optional[EntityStatus] = None
-    
+
     @field_validator('country')
     @classmethod
     def validate_country(cls, v: Optional[str]) -> Optional[str]:
@@ -78,6 +80,7 @@ class EntityResponse(BaseModel):
     name: str
     country: str
     base_currency: str
+    gst_rate: Optional[float] = None
     status: str
     created_at: datetime
     updated_at: datetime
@@ -101,6 +104,7 @@ class AccountCreate(BaseModel):
     sub_category: Optional[str] = Field(None, max_length=100, description="Account sub-category")
     description: Optional[str] = Field(None, description="Detailed description of the account")
     is_bank_account: Optional[bool] = Field(default=False, description="Whether this is a bank account")
+    gst_applicable: Optional[bool] = Field(default=False, description="Whether this account is subject to GST")
     status: Optional[AccountStatus] = Field(default=AccountStatus.ACTIVE, description="Account status")
 
     @field_validator('code')
@@ -120,6 +124,7 @@ class AccountUpdate(BaseModel):
     status: Optional[AccountStatus] = None
     description: Optional[str] = None
     sub_category: Optional[str] = Field(None, max_length=100)
+    gst_applicable: Optional[bool] = None
 
 
 class AccountResponse(BaseModel):
@@ -135,6 +140,7 @@ class AccountResponse(BaseModel):
     sub_category: Optional[str]
     description: Optional[str]
     is_bank_account: bool
+    gst_applicable: bool
     status: str
     created_at: datetime
     updated_at: datetime
@@ -409,6 +415,9 @@ class RuleCreate(BaseModel):
     target_entity_id: Optional[int] = Field(None, gt=0, description="Target entity for IC transfers")
     target_contra_account_code: Optional[str] = Field(None, max_length=20, description="Contra account in target entity")
 
+    # GST
+    gst_override: Optional[bool] = Field(default=None, description="Override account GST. null=default, true=force GST, false=force no GST")
+
     status: Optional[RuleStatus] = Field(default=RuleStatus.ACTIVE, description="Rule status")
     description: Optional[str] = Field(None, description="Rule description")
 
@@ -436,6 +445,8 @@ class RuleUpdate(BaseModel):
     target_entity_id: Optional[int] = Field(None, gt=0)
     target_contra_account_code: Optional[str] = Field(None, max_length=20)
 
+    gst_override: Optional[bool] = None
+
     status: Optional[RuleStatus] = None
     description: Optional[str] = None
 
@@ -459,6 +470,7 @@ class RuleResponse(BaseModel):
     tag_ids: Optional[str] = None
     target_entity_id: Optional[int] = None
     target_contra_account_code: Optional[str] = None
+    gst_override: Optional[bool] = None
     status: str
     description: Optional[str] = None
     created_at: datetime
@@ -504,3 +516,4 @@ class ManualCategorizeRequest(BaseModel):
     counterparty_type: Optional[str] = Field(None, max_length=50, description="Counterparty type")
     tag_ids: Optional[list[int]] = Field(None, description="Tag IDs to apply")
     description: Optional[str] = Field(None, max_length=500, description="JE description override")
+    gst_override: Optional[bool] = Field(default=None, description="Override GST. null=default, true=force GST, false=force no GST")

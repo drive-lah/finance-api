@@ -104,6 +104,7 @@ class RuleService:
             tag_ids=tag_ids_json,
             target_entity_id=rule_data.target_entity_id,
             target_contra_account_code=rule_data.target_contra_account_code,
+            gst_override=rule_data.gst_override,
             status=rule_data.status if rule_data.status is not None else RuleStatus.ACTIVE,
             description=rule_data.description,
         )

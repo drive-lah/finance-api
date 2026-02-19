@@ -121,6 +121,7 @@ class AccountService:
             sub_category=account_data.sub_category,
             description=account_data.description,
             is_bank_account=is_bank_account,
+            gst_applicable=account_data.gst_applicable if account_data.gst_applicable is not None else False,
             status=status,
         )
 

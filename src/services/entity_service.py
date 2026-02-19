@@ -66,6 +66,7 @@ class EntityService:
             name=entity_data.name,
             country=entity_data.country,
             base_currency=entity_data.base_currency,
+            gst_rate=entity_data.gst_rate,
             status=entity_data.status if entity_data.status else EntityStatus.ACTIVE
         )
         
@@ -108,7 +109,9 @@ class EntityService:
             entity.base_currency = entity_data.base_currency
         if entity_data.status is not None:
             entity.status = entity_data.status
-        
+        if entity_data.gst_rate is not None:
+            entity.gst_rate = entity_data.gst_rate
+
         try:
             db.commit()
             db.refresh(entity)

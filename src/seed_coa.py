@@ -44,9 +44,9 @@ NORMAL_BALANCE_MAP = {
 
 # Entity definitions
 ENTITIES = [
-    {"name": "DL Ventures", "country": "SG", "base_currency": "SGD"},
-    {"name": "DL SG", "country": "SG", "base_currency": "SGD"},
-    {"name": "DL AU", "country": "AU", "base_currency": "AUD"},
+    {"name": "DL Ventures", "country": "SG", "base_currency": "SGD", "gst_rate": 0.09},
+    {"name": "DL SG", "country": "SG", "base_currency": "SGD", "gst_rate": 0.09},
+    {"name": "DL AU", "country": "AU", "base_currency": "AUD", "gst_rate": 0.10},
 ]
 
 
@@ -73,6 +73,7 @@ def seed() -> None:
                     name=entity_data["name"],
                     country=entity_data["country"],
                     base_currency=entity_data["base_currency"],
+                    gst_rate=entity_data.get("gst_rate"),
                     status=EntityStatus.ACTIVE,
                 )
                 db.add(entity)
@@ -130,6 +131,10 @@ def seed() -> None:
                     skipped += 1
                     continue
 
+                # Parse gst_applicable if present in CSV, default to False
+                gst_applicable_str = row.get('GST Applicable', '').strip().lower()
+                gst_applicable = gst_applicable_str in ('true', 'yes', '1')
+
                 account = FinanceAccount(
                     entity_id=None,  # Group-level
                     code=code,
@@ -140,6 +145,7 @@ def seed() -> None:
                     sub_category=sub_category,
                     description=description,
                     is_bank_account=False,
+                    gst_applicable=gst_applicable,
                     status=AccountStatus.ACTIVE,
                 )
                 db.add(account)

@@ -69,6 +69,7 @@ def manual_categorize():
             counterparty_type=manual_request.counterparty_type,
             tag_ids=manual_request.tag_ids,
             description=manual_request.description,
+            gst_override=manual_request.gst_override,
         )
     except ValueError as e:
         raise BadRequestError(str(e))

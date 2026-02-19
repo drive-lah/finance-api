@@ -28,6 +28,10 @@ from src.services.journal_service import journal_service
 
 logger = logging.getLogger(__name__)
 
+# GST account codes
+GST_INPUT_TAX_CODE = "1350"   # Input Tax (paid on purchases)
+GST_OUTPUT_TAX_CODE = "2500"  # Output Tax (collected on sales)
+
 
 class CategorizationService:
     """
@@ -251,7 +255,8 @@ class CategorizationService:
         else:
             journal_entry = self._create_simple_entry(
                 db, transaction, entity_id, bank_coa_code, contra_code,
-                amount, abs_amount, source="categorization_engine"
+                amount, abs_amount, source="categorization_engine",
+                rule=rule,
             )
 
         # Update transaction
@@ -277,6 +282,45 @@ class CategorizationService:
             "error": None,
         }
 
+    def _should_apply_gst(
+        self,
+        db: Session,
+        contra_code: str,
+        rule: Optional[FinanceCategorizationRule],
+        entity_id: int,
+        gst_override: Optional[bool] = None,
+    ) -> bool:
+        """Determine if GST should be applied.
+
+        Priority: explicit gst_override param > rule.gst_override > account.gst_applicable
+        """
+        # 1. Check explicit override (from manual categorization)
+        if gst_override is not None:
+            return gst_override
+
+        # 2. Check rule override
+        if rule is not None and rule.gst_override is not None:
+            return rule.gst_override
+
+        # 3. Check contra account's gst_applicable
+        account = db.query(FinanceAccount).filter(
+            FinanceAccount.code == contra_code
+        ).first()
+        if account and account.gst_applicable:
+            return True
+
+        return False
+
+    def _get_gst_rate(self, db: Session, entity_id: int) -> float:
+        """Get GST rate from entity."""
+        from src.models.entity import FinanceEntity
+        entity = db.query(FinanceEntity).filter(
+            FinanceEntity.id == entity_id
+        ).first()
+        if entity and entity.gst_rate:
+            return float(entity.gst_rate)
+        return 0.0
+
     def _create_simple_entry(
         self,
         db: Session,
@@ -288,47 +332,108 @@ class CategorizationService:
         abs_amount: float,
         source: str = "categorization_engine",
         description_override: Optional[str] = None,
+        rule: Optional[FinanceCategorizationRule] = None,
+        gst_override: Optional[bool] = None,
     ) -> Any:
         """
         Create a simple journal entry for a transaction.
 
         Positive amount (money in): Debit bank account, Credit contra account
         Negative amount (money out): Debit contra account, Credit bank account
+
+        If GST applies, creates a 3-line entry splitting GST from the amount.
         """
         je_description = description_override or transaction.description or "Categorized transaction"
 
-        if amount >= 0:
-            # Money in: Debit bank, Credit contra
-            lines = [
-                {
-                    "account_code": bank_coa_code,
-                    "debit_amount": abs_amount,
-                    "credit_amount": 0.0,
-                    "description": je_description,
-                },
-                {
-                    "account_code": contra_code,
-                    "debit_amount": 0.0,
-                    "credit_amount": abs_amount,
-                    "description": je_description,
-                },
-            ]
+        # Determine if GST applies
+        apply_gst = self._should_apply_gst(db, contra_code, rule, entity_id, gst_override)
+        gst_rate = 0.0
+        if apply_gst:
+            gst_rate = self._get_gst_rate(db, entity_id)
+
+        if apply_gst and gst_rate > 0:
+            # Transaction amount is GST-inclusive
+            ex_gst_amount = round(abs_amount / (1 + gst_rate), 2)
+            gst_amount = round(abs_amount - ex_gst_amount, 2)
+
+            if amount < 0:
+                # Money out: Debit contra (ex-GST) + Debit GST Receivable + Credit bank
+                lines = [
+                    {
+                        "account_code": contra_code,
+                        "debit_amount": ex_gst_amount,
+                        "credit_amount": 0.0,
+                        "description": je_description,
+                    },
+                    {
+                        "account_code": GST_INPUT_TAX_CODE,
+                        "debit_amount": gst_amount,
+                        "credit_amount": 0.0,
+                        "description": je_description,
+                    },
+                    {
+                        "account_code": bank_coa_code,
+                        "debit_amount": 0.0,
+                        "credit_amount": abs_amount,
+                        "description": je_description,
+                    },
+                ]
+            else:
+                # Money in: Debit bank + Credit contra (ex-GST) + Credit GST Payable
+                lines = [
+                    {
+                        "account_code": bank_coa_code,
+                        "debit_amount": abs_amount,
+                        "credit_amount": 0.0,
+                        "description": je_description,
+                    },
+                    {
+                        "account_code": contra_code,
+                        "debit_amount": 0.0,
+                        "credit_amount": ex_gst_amount,
+                        "description": je_description,
+                    },
+                    {
+                        "account_code": GST_OUTPUT_TAX_CODE,
+                        "debit_amount": 0.0,
+                        "credit_amount": gst_amount,
+                        "description": je_description,
+                    },
+                ]
         else:
-            # Money out: Debit contra, Credit bank
-            lines = [
-                {
-                    "account_code": contra_code,
-                    "debit_amount": abs_amount,
-                    "credit_amount": 0.0,
-                    "description": je_description,
-                },
-                {
-                    "account_code": bank_coa_code,
-                    "debit_amount": 0.0,
-                    "credit_amount": abs_amount,
-                    "description": je_description,
-                },
-            ]
+            # No GST: standard 2-line entry
+            if amount >= 0:
+                # Money in: Debit bank, Credit contra
+                lines = [
+                    {
+                        "account_code": bank_coa_code,
+                        "debit_amount": abs_amount,
+                        "credit_amount": 0.0,
+                        "description": je_description,
+                    },
+                    {
+                        "account_code": contra_code,
+                        "debit_amount": 0.0,
+                        "credit_amount": abs_amount,
+                        "description": je_description,
+                    },
+                ]
+            else:
+                # Money out: Debit contra, Credit bank
+                lines = [
+                    {
+                        "account_code": contra_code,
+                        "debit_amount": abs_amount,
+                        "credit_amount": 0.0,
+                        "description": je_description,
+                    },
+                    {
+                        "account_code": bank_coa_code,
+                        "debit_amount": 0.0,
+                        "credit_amount": abs_amount,
+                        "description": je_description,
+                    },
+                ]
 
         entry = journal_service.create(
             db=db,
@@ -460,6 +565,7 @@ class CategorizationService:
         counterparty_type: Optional[str] = None,
         tag_ids: Optional[list[int]] = None,
         description: Optional[str] = None,
+        gst_override: Optional[bool] = None,
     ) -> dict[str, Any]:
         """
         Manually categorize a single transaction.
@@ -532,6 +638,7 @@ class CategorizationService:
             abs_amount=abs_amount,
             source="manual",
             description_override=description,
+            gst_override=gst_override,
         )
 
         # Update transaction

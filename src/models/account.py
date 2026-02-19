@@ -85,6 +85,10 @@ class FinanceAccount(Base):
     sub_category: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     is_bank_account: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    gst_applicable: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False,
+        comment="Whether this account is subject to GST"
+    )
     status: Mapped[AccountStatus] = mapped_column(
         SQLEnum(AccountStatus, name="account_status", native_enum=False),
         nullable=False,
@@ -129,6 +133,7 @@ class FinanceAccount(Base):
             "sub_category": self.sub_category,
             "description": self.description,
             "is_bank_account": self.is_bank_account,
+            "gst_applicable": self.gst_applicable,
             "status": self.status.value,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
