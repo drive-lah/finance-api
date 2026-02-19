@@ -217,6 +217,12 @@ class TransactionCreate(BaseModel):
     )
     import_batch_id: Optional[str] = Field(None, max_length=36, description="UUID of the import batch")
     original_csv_row: Optional[str] = Field(None, description="Original CSV row for audit")
+    counterparty_name: Optional[str] = Field(None, max_length=255, description="Name of counterparty")
+    counterparty_type: Optional[str] = Field(None, max_length=50, description="Type: vendor, employee, host, guest, bank, other")
+    counterparty_id: Optional[int] = Field(None, description="FK to vendor/employee table")
+    value_date: Optional[date_type] = Field(None, description="Date funds actually settled")
+    transaction_type: Optional[str] = Field(None, max_length=50, description="Bank classification (TRANSFER, CARD, etc.)")
+    running_balance: Optional[float] = Field(None, description="Running balance after transaction")
     source: Optional[str] = Field(None, max_length=50, description="Source of the transaction")
     stripe_transaction_id: Optional[str] = Field(None, max_length=100, description="Stripe transaction ID")
 
@@ -233,6 +239,12 @@ class TransactionResponse(BaseModel):
     status: str
     import_batch_id: Optional[str]
     original_csv_row: Optional[str]
+    counterparty_name: Optional[str]
+    counterparty_type: Optional[str]
+    counterparty_id: Optional[int]
+    value_date: Optional[date_type]
+    transaction_type: Optional[str]
+    running_balance: Optional[float]
     reconciled_journal_entry_id: Optional[int]
     reconciled_at: Optional[datetime]
     source: Optional[str]

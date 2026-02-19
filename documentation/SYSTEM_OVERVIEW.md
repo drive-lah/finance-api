@@ -143,6 +143,23 @@ Upload bank statement CSVs to import transactions. Each transaction gets a finge
 4. Supports multiple date formats (YYYY-MM-DD, DD/MM/YYYY)
 5. Original CSV row stored for audit trail
 
+**Standardized Transaction Fields:**
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| transaction_date | Yes | Date of the transaction |
+| description | Yes | Bank's transaction description/narrative |
+| amount | Yes | Positive = money in, negative = money out |
+| reference_number | No | Bank reference / cheque number |
+| counterparty_name | No | Who the money went to/came from |
+| counterparty_type | No | Type: vendor, employee, host, guest, bank, other |
+| counterparty_id | No | FK to vendor/employee (populated when those tables exist) |
+| value_date | No | Date funds actually settled (can differ from transaction_date) |
+| transaction_type | No | Bank's classification (TRANSFER, CARD, DIRECT_DEBIT) |
+| running_balance | No | Running balance after transaction (for reconciliation) |
+
+**Counterparty linking:** Transactions track who the money went to/came from. The `counterparty_type` identifies the category (vendor, employee, host, guest, bank, other) and `counterparty_id` will link to the vendor/employee record once those tables are built.
+
 **API Endpoints:**
 
 | Method | Path | Description |
@@ -150,6 +167,10 @@ Upload bank statement CSVs to import transactions. Each transaction gets a finge
 | POST | `/api/finance/transactions/import` | Upload CSV (multipart/form-data) |
 | GET | `/api/finance/transactions` | List transactions |
 | GET | `/api/finance/transactions/:id` | Get transaction by ID |
+
+**Next Steps:**
+- Column mapping UI for different bank CSV formats
+- Auto-detect counterparty from transaction description using categorization rules
 
 ---
 
@@ -356,6 +377,45 @@ finance_employees
 
 ---
 
+### 3.7 Accounting Basis: Cash vs Accrual
+
+**Status: Partially Built**
+
+The system operates on **accrual basis** accounting. This means revenue is recognised when earned (not when cash is received) and expenses are recognised when incurred (not when paid).
+
+**Two distinct paths handle this:**
+
+| Path | Source | Basis | Examples |
+|------|--------|-------|----------|
+| **Cash path** | Bank transactions (CSV upload, Stripe) | Cash | Money actually moved in/out of bank |
+| **Accrual path** | Invoices, prepayments, revenue recognition | Accrual | Economic event happened, cash may not have moved |
+
+**How they connect:**
+
+When an accrual is created (e.g., invoice approved), a payable liability is recorded. When cash moves (bank transaction), the payable is cleared. No double-counting occurs because the accrual creates the expense + payable, and the cash payment clears the payable + bank.
+
+```
+ACCRUAL (invoice received):
+  Debit  6700 Technology Infrastructure    $1,200
+  Credit 2000 Trade & Other Payables       $1,200
+
+CASH (bank payment):
+  Debit  2000 Trade & Other Payables       $1,200
+  Credit 1000 Bank                         $1,200
+```
+
+**What's built:**
+- Cash path: CSV upload, fingerprinting, journal entry creation
+- Accrual path: Manual journal entries for accruals
+
+**What's next:**
+- Categorization engine (automates cash path)
+- Invoice/AP system (automates accrual path)
+- Prepayment scheduling (auto-spread payments over periods)
+- Revenue recognition (Stripe-specific, to be defined)
+
+---
+
 ## 4. Money Flows
 
 ### 4.1 Trip Lifecycle (P2P Example)
@@ -549,21 +609,34 @@ TAX (9xxx)
 | Entity Management | Done | Done | Done | Ready |
 | Chart of Accounts (v2) | Done | Done | Done | Ready |
 | Bank Account Management | Done | Done | Done | Ready |
-| CSV Transaction Import | Done | Done | Done | Ready |
+| CSV Transaction Import (with counterparty) | Done | Done | Done | Ready |
+| Transaction Counterparty Tracking | Done | — | — | Ready |
 | Journal Entry CRUD | Done | Done | Done | Ready |
 | Journal Posting | Done | Done | Done | Ready |
 | Trial Balance Report | Done | Done | Done | Ready |
 | Reconciliation Suggestions | Done | Done | Done | Ready |
 | Reconciliation Confirmation | Done | Done | Done | Ready |
 | Stripe Webhook (basic) | Done | — | — | Partial |
+| Cash vs Accrual Framework | Defined | — | — | Documented |
 | **Categorization Engine** | — | — | — | **Next** |
-| **Invoice / AP** | — | — | — | Planned |
+| **Invoice / AP (Accrual)** | — | — | — | Planned |
+| **Prepayment Scheduling** | — | — | — | Planned |
 | **Stripe Full Integration** | — | — | — | Later |
 | **Vendor Management** | — | — | — | Planned |
 | **Employee Management** | — | — | — | Planned |
 | **P&L Report** | — | — | — | Planned |
 | **Balance Sheet Report** | — | — | — | Planned |
 | **Business Line Margin Report** | — | — | — | Planned |
+
+### Build Order
+
+1. **Categorization Engine** — automates the cash path (bank transactions → journal entries)
+2. **Vendor Management** — needed for invoice/AP and categorization rule linking
+3. **Employee Management** — needed for expense claims
+4. **Invoice / AP** — automates the accrual path (invoices → journal entries → payment matching)
+5. **Prepayment Scheduling** — auto-spread payments over future periods
+6. **Stripe Full Integration** — automate Stripe transaction ingestion and categorization
+7. **Financial Reports** — P&L, balance sheet, business line margins
 
 ---
 

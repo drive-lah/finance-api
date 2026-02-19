@@ -81,6 +81,36 @@ class FinanceTransaction(Base):
         nullable=True,
         comment="Timestamp when transaction was reconciled"
     )
+    counterparty_name: Mapped[Optional[str]] = mapped_column(
+        String(255),
+        nullable=True,
+        comment="Name of the counterparty (who the money went to/came from)"
+    )
+    counterparty_type: Mapped[Optional[str]] = mapped_column(
+        String(50),
+        nullable=True,
+        comment="Type of counterparty: vendor, employee, host, guest, bank, other"
+    )
+    counterparty_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        nullable=True,
+        comment="FK to vendor/employee table (populated when those tables exist)"
+    )
+    value_date: Mapped[Optional[date]] = mapped_column(
+        Date,
+        nullable=True,
+        comment="Date funds actually settled (can differ from transaction_date)"
+    )
+    transaction_type: Mapped[Optional[str]] = mapped_column(
+        String(50),
+        nullable=True,
+        comment="Bank's own classification (e.g., TRANSFER, CARD, DIRECT_DEBIT)"
+    )
+    running_balance: Mapped[Optional[float]] = mapped_column(
+        Numeric(precision=15, scale=2),
+        nullable=True,
+        comment="Running balance after this transaction (from bank statement)"
+    )
     source: Mapped[Optional[str]] = mapped_column(
         String(50),
         nullable=True,
@@ -137,6 +167,12 @@ class FinanceTransaction(Base):
             "original_csv_row": self.original_csv_row,
             "reconciled_journal_entry_id": self.reconciled_journal_entry_id,
             "reconciled_at": self.reconciled_at.isoformat() if self.reconciled_at else None,
+            "counterparty_name": self.counterparty_name,
+            "counterparty_type": self.counterparty_type,
+            "counterparty_id": self.counterparty_id,
+            "value_date": self.value_date.isoformat() if self.value_date else None,
+            "transaction_type": self.transaction_type,
+            "running_balance": float(self.running_balance) if self.running_balance is not None else None,
             "source": self.source,
             "stripe_transaction_id": self.stripe_transaction_id,
             "created_at": self.created_at.isoformat() if self.created_at else None,
