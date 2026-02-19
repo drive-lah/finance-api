@@ -15,6 +15,7 @@ from src.models.account import AccountType, NormalBalance, AccountStatus
 from src.models.bank_account import BankAccountStatus
 from src.models.transaction import TransactionStatus
 from src.models.journal_entry import JournalEntryStatus
+from src.models.categorization_rule import RuleType, RuleStatus
 
 
 # =============================================================================
@@ -152,11 +153,12 @@ class BankAccountCreate(BaseModel):
     account_number: str = Field(..., min_length=1, max_length=50, description="Bank account number")
     account_name: str = Field(..., min_length=1, max_length=255, description="Account holder name")
     currency: str = Field(..., min_length=3, max_length=3, description="ISO 4217 currency code")
+    coa_account_code: Optional[str] = Field(None, max_length=20, description="COA account code this bank account maps to")
     status: Optional[BankAccountStatus] = Field(
         default=BankAccountStatus.ACTIVE,
         description="Bank account status"
     )
-    
+
     @field_validator('currency')
     @classmethod
     def validate_currency(cls, v: str) -> str:
@@ -172,8 +174,9 @@ class BankAccountUpdate(BaseModel):
     account_number: Optional[str] = Field(None, min_length=1, max_length=50)
     account_name: Optional[str] = Field(None, min_length=1, max_length=255)
     currency: Optional[str] = Field(None, min_length=3, max_length=3)
+    coa_account_code: Optional[str] = Field(None, max_length=20, description="COA account code this bank account maps to")
     status: Optional[BankAccountStatus] = None
-    
+
     @field_validator('currency')
     @classmethod
     def validate_currency(cls, v: Optional[str]) -> Optional[str]:
@@ -192,10 +195,11 @@ class BankAccountResponse(BaseModel):
     account_number: str
     account_name: str
     currency: str
+    coa_account_code: Optional[str] = None
     status: str
     created_at: datetime
     updated_at: datetime
-    
+
     model_config = {"from_attributes": True}
 
 
@@ -340,5 +344,163 @@ class JournalEntryResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     lines: Optional[list[JournalLineResponse]] = None
-    
+
     model_config = {"from_attributes": True}
+
+
+# =============================================================================
+# Tag Schemas
+# =============================================================================
+
+class TagCreate(BaseModel):
+    """Schema for creating a new tag."""
+    name: str = Field(..., min_length=1, max_length=100, description="Tag name")
+    color: Optional[str] = Field(None, max_length=7, description="Hex color code (e.g., #FF5733)")
+    description: Optional[str] = Field(None, max_length=255, description="Tag description")
+
+
+class TagUpdate(BaseModel):
+    """Schema for updating an existing tag."""
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    color: Optional[str] = Field(None, max_length=7)
+    description: Optional[str] = Field(None, max_length=255)
+
+
+class TagResponse(BaseModel):
+    """Schema for tag response."""
+    id: int
+    name: str
+    color: Optional[str] = None
+    description: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# =============================================================================
+# Categorization Rule Schemas
+# =============================================================================
+
+class RuleCreate(BaseModel):
+    """Schema for creating a new categorization rule."""
+    name: str = Field(..., min_length=1, max_length=255, description="Human-readable rule name")
+    entity_id: Optional[int] = Field(None, gt=0, description="Entity ID (null = applies to all)")
+    priority: Optional[int] = Field(default=100, ge=1, description="Lower number = higher priority")
+    rule_type: RuleType = Field(..., description="Rule type: simple, intra_bank, intercompany")
+
+    # Match criteria
+    match_description_pattern: Optional[str] = Field(None, max_length=500, description="Regex or keyword pattern")
+    match_amount_min: Optional[float] = Field(None, description="Minimum amount (inclusive)")
+    match_amount_max: Optional[float] = Field(None, description="Maximum amount (inclusive)")
+    match_bank_account_id: Optional[int] = Field(None, gt=0, description="Specific bank account")
+    match_currency: Optional[str] = Field(None, max_length=3, description="ISO 4217 currency code")
+    match_transaction_type: Optional[str] = Field(None, max_length=50, description="Bank classification")
+
+    # Action
+    contra_account_code: str = Field(..., min_length=1, max_length=20, description="Contra account code")
+    counterparty_name: Optional[str] = Field(None, max_length=255, description="Counterparty name to set")
+    counterparty_type: Optional[str] = Field(None, max_length=50, description="Counterparty type")
+
+    # Tags
+    tag_ids: Optional[list[int]] = Field(None, description="List of tag IDs to apply")
+
+    # Intercompany
+    target_entity_id: Optional[int] = Field(None, gt=0, description="Target entity for IC transfers")
+    target_contra_account_code: Optional[str] = Field(None, max_length=20, description="Contra account in target entity")
+
+    status: Optional[RuleStatus] = Field(default=RuleStatus.ACTIVE, description="Rule status")
+    description: Optional[str] = Field(None, description="Rule description")
+
+
+class RuleUpdate(BaseModel):
+    """Schema for updating an existing categorization rule."""
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    entity_id: Optional[int] = Field(None, gt=0)
+    priority: Optional[int] = Field(None, ge=1)
+    rule_type: Optional[RuleType] = None
+
+    match_description_pattern: Optional[str] = Field(None, max_length=500)
+    match_amount_min: Optional[float] = None
+    match_amount_max: Optional[float] = None
+    match_bank_account_id: Optional[int] = Field(None, gt=0)
+    match_currency: Optional[str] = Field(None, max_length=3)
+    match_transaction_type: Optional[str] = Field(None, max_length=50)
+
+    contra_account_code: Optional[str] = Field(None, min_length=1, max_length=20)
+    counterparty_name: Optional[str] = Field(None, max_length=255)
+    counterparty_type: Optional[str] = Field(None, max_length=50)
+
+    tag_ids: Optional[list[int]] = None
+
+    target_entity_id: Optional[int] = Field(None, gt=0)
+    target_contra_account_code: Optional[str] = Field(None, max_length=20)
+
+    status: Optional[RuleStatus] = None
+    description: Optional[str] = None
+
+
+class RuleResponse(BaseModel):
+    """Schema for categorization rule response."""
+    id: int
+    name: str
+    entity_id: Optional[int] = None
+    priority: int
+    rule_type: str
+    match_description_pattern: Optional[str] = None
+    match_amount_min: Optional[float] = None
+    match_amount_max: Optional[float] = None
+    match_bank_account_id: Optional[int] = None
+    match_currency: Optional[str] = None
+    match_transaction_type: Optional[str] = None
+    contra_account_code: str
+    counterparty_name: Optional[str] = None
+    counterparty_type: Optional[str] = None
+    tag_ids: Optional[str] = None
+    target_entity_id: Optional[int] = None
+    target_contra_account_code: Optional[str] = None
+    status: str
+    description: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# =============================================================================
+# Categorization Engine Schemas
+# =============================================================================
+
+class CategorizationRunRequest(BaseModel):
+    """Schema for running the categorization engine."""
+    entity_id: Optional[int] = Field(None, gt=0, description="Process only this entity (null = all)")
+    bank_account_id: Optional[int] = Field(None, gt=0, description="Process only this bank account")
+    limit: Optional[int] = Field(default=100, gt=0, le=1000, description="Max transactions to process")
+
+
+class CategorizationResultItem(BaseModel):
+    """Result for a single categorized transaction."""
+    transaction_id: int
+    status: str
+    rule_name: Optional[str] = None
+    journal_entry_id: Optional[int] = None
+    error: Optional[str] = None
+
+
+class CategorizationRunResponse(BaseModel):
+    """Schema for categorization engine run response."""
+    total_processed: int
+    categorized: int
+    uncategorized: int
+    errors: int
+    results: list[CategorizationResultItem]
+
+
+class ManualCategorizeRequest(BaseModel):
+    """Schema for manually categorizing a single transaction."""
+    transaction_id: int = Field(..., gt=0, description="Transaction to categorize")
+    contra_account_code: str = Field(..., min_length=1, max_length=20, description="Contra account code")
+    counterparty_name: Optional[str] = Field(None, max_length=255, description="Counterparty name")
+    counterparty_type: Optional[str] = Field(None, max_length=50, description="Counterparty type")
+    tag_ids: Optional[list[int]] = Field(None, description="Tag IDs to apply")
+    description: Optional[str] = Field(None, max_length=500, description="JE description override")

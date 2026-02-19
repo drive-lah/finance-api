@@ -4,7 +4,7 @@ Finance Bank Account Model
 Represents bank accounts linked to entities for tracking
 imported transactions and reconciliation.
 """
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional
 import enum
 
@@ -40,6 +40,11 @@ class FinanceBankAccount(Base):
     account_number: Mapped[str] = mapped_column(String(50), nullable=False)
     account_name: Mapped[str] = mapped_column(String(255), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), nullable=False)  # ISO 4217
+    coa_account_code: Mapped[Optional[str]] = mapped_column(
+        String(20),
+        nullable=True,
+        comment="COA account code this bank account maps to (e.g., 1000 for OCBC Current)"
+    )
     status: Mapped[BankAccountStatus] = mapped_column(
         SQLEnum(BankAccountStatus, name="bank_account_status", native_enum=False),
         default=BankAccountStatus.ACTIVE,
@@ -77,6 +82,7 @@ class FinanceBankAccount(Base):
             "account_number": self.account_number,
             "account_name": self.account_name,
             "currency": self.currency,
+            "coa_account_code": self.coa_account_code,
             "status": self.status.value,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,

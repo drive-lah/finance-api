@@ -9,6 +9,12 @@ from src.models.bank_account import FinanceBankAccount, BankAccountStatus
 from src.models.transaction import FinanceTransaction, TransactionStatus
 from src.models.journal_entry import FinanceJournalEntry, JournalEntryStatus
 from src.models.journal_line import FinanceJournalLine
+from src.models.tag import FinanceTag, FinanceTransactionTag
+from src.models.categorization_rule import (
+    FinanceCategorizationRule,
+    RuleType,
+    RuleStatus,
+)
 from src.models.schemas import (
     EntityCreate,
     EntityUpdate,
@@ -26,6 +32,15 @@ from src.models.schemas import (
     JournalEntryResponse,
     JournalLineCreate,
     JournalLineResponse,
+    TagCreate,
+    TagUpdate,
+    TagResponse,
+    RuleCreate,
+    RuleUpdate,
+    RuleResponse,
+    CategorizationRunRequest,
+    CategorizationRunResponse,
+    ManualCategorizeRequest,
 )
 
 __all__ = [
@@ -48,6 +63,13 @@ __all__ = [
     "JournalEntryStatus",
     # Journal line model
     "FinanceJournalLine",
+    # Tag models and enums
+    "FinanceTag",
+    "FinanceTransactionTag",
+    # Categorization rule model and enums
+    "FinanceCategorizationRule",
+    "RuleType",
+    "RuleStatus",
     # Pydantic schemas
     "EntityCreate",
     "EntityUpdate",
@@ -65,4 +87,13 @@ __all__ = [
     "JournalEntryResponse",
     "JournalLineCreate",
     "JournalLineResponse",
+    "TagCreate",
+    "TagUpdate",
+    "TagResponse",
+    "RuleCreate",
+    "RuleUpdate",
+    "RuleResponse",
+    "CategorizationRunRequest",
+    "CategorizationRunResponse",
+    "ManualCategorizeRequest",
 ]

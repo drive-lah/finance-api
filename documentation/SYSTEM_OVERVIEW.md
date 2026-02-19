@@ -182,60 +182,143 @@ Upload bank statement CSVs to import transactions. Each transaction gets a finge
 
 ### 3.3 Categorization Engine
 
-**Status: To Be Built**
+**Status: Built** (310 tests passing)
 
-The categorization engine automatically converts bank transactions into journal entries by applying configurable rules.
+The categorization engine automatically converts bank transactions into journal entries by applying configurable rules. It is the core of the finance system — without it, every bank transaction would need manual journal entry creation.
 
-**Flow:**
-1. Bank transactions uploaded → status: Pending
-2. Categorization engine runs rules against each Pending transaction
-3. Matching rule determines the contra account(s)
-4. System auto-creates and posts journal entry (debit bank account, credit contra account or vice versa)
-5. Transaction marked as Reconciled, linked to the journal entry
-6. Unmatched transactions flagged for manual categorization
+**How it works:**
+
+```
+Bank CSV uploaded
+       ↓
+Transactions created (status: Pending)
+       ↓
+POST /api/finance/categorization/run
+       ↓
+Engine loads active rules (ordered by priority)
+       ↓
+For each Pending transaction:
+  ├── Match against rules (AND logic on all non-null criteria)
+  ├── First matching rule wins
+  ├── IF MATCHED:
+  │   ├── Create journal entry (debit/credit based on amount sign)
+  │   ├── Update transaction counterparty (name, type)
+  │   ├── Apply tags from rule
+  │   └── Set status → Reconciled, link to JE
+  └── IF NO MATCH:
+      └── Leave as Pending (manual review queue)
+```
 
 **Rule Types:**
 
-| Type | Description | Example |
+| Type | What it does | Example |
 |------|-------------|---------|
-| **Simple Category** | Description pattern → contra account | "AWS" → 6700 Technology Infrastructure |
-| **Intra-Bank Transfer** | Same entity, different banks | OCBC debit + Wise credit = one JE, both transactions reconciled |
-| **Intercompany Transfer** | Different entities | SG sends to AU → two JEs (one per entity) using 8xxx accounts |
-| **Amount-Based** | Amount range triggers specific handling | Amounts > $50,000 → flag for review |
+| **Simple** | Description/amount pattern → contra account | "AWS" → Debit 6700 Tech Infrastructure, Credit bank |
+| **Intra-Bank** | Same entity, different bank accounts | OCBC → Wise transfer = one JE |
+| **Intercompany** | Different entities | SG → AU transfer = two paired JEs with shared intercompany_group_id |
 
-**Rule Configuration:**
-- Each rule has: name, priority, match criteria (description pattern, amount range, bank account), contra account code, rule type
-- Rules evaluated in priority order, first match wins
-- Fallback: no match → "Uncategorized" queue for manual review
+**Rule Match Criteria (AND logic — all non-null must match):**
 
-**Intercompany Transaction Linking:**
+| Criterion | Description |
+|-----------|-------------|
+| `match_description_pattern` | Regex or keyword match against transaction description (case-insensitive) |
+| `match_amount_min` / `match_amount_max` | Amount range filter (uses absolute value) |
+| `match_bank_account_id` | Restrict rule to a specific bank account |
+| `match_currency` | Match specific currency (SGD, AUD, etc.) |
+| `match_transaction_type` | Match bank's classification (TRANSFER, CARD, etc.) |
+| `entity_id` | Restrict rule to a specific entity (null = all entities) |
 
-When the categorization engine detects an intercompany transfer (e.g., "Transfer to DL AU" on SG bank):
-1. Creates **two journal entries** — one per entity (SG and AU)
-2. Both JEs share the same `intercompany_group_id` (UUID) for linking
-3. SG transaction is reconciled to the SG JE immediately
-4. When AU CSV is uploaded later, the AU transaction auto-matches to the existing AU JE via the intercompany group
+**Rule Actions (what happens when matched):**
 
-Journal entries also track their `source` (manual, categorization_engine, invoice, stripe) for audit trail.
+| Action | Description |
+|--------|-------------|
+| `contra_account_code` | The other side of the journal entry (bank side is auto-determined from bank account's `coa_account_code`) |
+| `counterparty_name` | Set on the transaction (e.g., "AWS", "Stripe") |
+| `counterparty_type` | Set on the transaction (vendor, employee, host, guest, bank, other) |
+| `tag_ids` | JSON array of tag IDs to apply to the transaction |
+| `target_entity_id` + `target_contra_account_code` | For intercompany rules — the other entity and its contra account |
 
-**Categorization Data Model (Planned):**
+**Amount sign determines debit/credit direction:**
+- **Positive amount** (money IN to bank): Debit bank account, Credit contra account
+- **Negative amount** (money OUT of bank): Debit contra account, Credit bank account
+
+**Bank Account Linking:**
+Each bank account has a `coa_account_code` field that maps it to the COA (e.g., OCBC Current → 1000). This is required for the engine to know which COA account to use for the bank side of journal entries.
+
+**Tags:**
+Tags provide flexible labeling beyond the COA for reporting and filtering. Tags are many-to-many with transactions.
+
+```
+finance_tags: id, name, color (#hex), description
+finance_transaction_tags: transaction_id, tag_id (unique together)
+```
+
+**Intercompany Handling:**
+When an intercompany rule matches:
+1. Creates **two journal entries** — one per entity
+2. Both JEs share the same `intercompany_group_id` (UUID)
+3. Source transaction is reconciled to the source JE
+4. When the other entity's bank CSV is uploaded, that transaction auto-matches the existing target JE
+
+**Manual Categorization:**
+For unmatched transactions, users can manually categorize via `POST /api/finance/categorization/manual` specifying the contra account, counterparty, and tags.
+
+**API Endpoints:**
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/finance/categorization/run` | Run engine on Pending transactions |
+| POST | `/api/finance/categorization/manual` | Manually categorize a single transaction |
+| GET | `/api/finance/categorization/rules` | List rules (filter by entity_id, status) |
+| POST | `/api/finance/categorization/rules` | Create rule |
+| GET | `/api/finance/categorization/rules/:id` | Get rule |
+| PUT | `/api/finance/categorization/rules/:id` | Update rule |
+| DELETE | `/api/finance/categorization/rules/:id` | Delete rule |
+| GET | `/api/finance/tags` | List all tags |
+| POST | `/api/finance/tags` | Create tag |
+| PUT | `/api/finance/tags/:id` | Update tag |
+| DELETE | `/api/finance/tags/:id` | Delete tag (fails if in use) |
+
+**Data Model:**
 
 ```
 finance_categorization_rules
 ├── id
-├── entity_id (nullable - null applies to all entities)
-├── name
-├── priority (integer - lower = higher priority)
+├── name (human-readable rule name)
+├── entity_id (nullable — null applies to all entities)
+├── priority (integer — lower = higher priority, default 100)
 ├── rule_type (simple | intra_bank | intercompany)
 ├── match_description_pattern (regex or keyword)
 ├── match_amount_min (nullable)
 ├── match_amount_max (nullable)
-├── match_bank_account_id (nullable - restrict to specific bank)
+├── match_bank_account_id (nullable — restrict to specific bank)
+├── match_currency (nullable — match specific currency)
+├── match_transaction_type (nullable — match bank classification)
 ├── contra_account_code (the other side of the journal entry)
-├── status (active | inactive)
+├── counterparty_name (nullable — set on transaction when matched)
+├── counterparty_type (nullable — vendor, employee, host, etc.)
+├── tag_ids (JSON array of tag IDs to apply)
+├── target_entity_id (nullable — for intercompany rules)
+├── target_contra_account_code (nullable — for intercompany rules)
+├── status (Active | Inactive)
+├── description (what this rule does)
 ├── created_at
 ├── updated_at
 ```
+
+**Example Rules:**
+
+| Rule | Priority | Pattern | Contra Account | Counterparty |
+|------|----------|---------|---------------|-------------|
+| AWS Payment | 10 | `AWS` | 6700 Tech Infrastructure | AWS (vendor) |
+| Stripe Payout | 20 | `STRIPE PAYOUT` | 2120 Host Payables | Stripe (vendor) |
+| Office Rent | 30 | `LANDLORD CORP` | 6300 Office Rent | Landlord Corp (vendor) |
+| Transfer to AU | 40 | `TRANSFER.*DL AU` | 8000 IC Due from AU | DL AU (bank) |
+
+**Next Steps:**
+- Populate `coa_account_code` on existing bank accounts
+- Create categorization rules for known transaction patterns
+- Consider scheduled job to run the engine periodically
 
 ---
 
@@ -634,7 +717,9 @@ TAX (9xxx)
 | Reconciliation Confirmation | Done | Done | Done | Ready |
 | Stripe Webhook (basic) | Done | — | — | Partial |
 | Cash vs Accrual Framework | Defined | — | — | Documented |
-| **Categorization Engine** | — | — | — | **Next** |
+| Categorization Engine | Done | — | — | Ready |
+| Tags System | Done | — | — | Ready |
+| Categorization Rules CRUD | Done | — | — | Ready |
 | **Invoice / AP (Accrual)** | — | — | — | Planned |
 | **Prepayment Scheduling** | — | — | — | Planned |
 | **Stripe Full Integration** | — | — | — | Later |
