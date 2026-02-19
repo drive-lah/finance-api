@@ -44,6 +44,12 @@ class FinanceTransaction(Base):
         nullable=False
     )
     transaction_date: Mapped[date] = mapped_column(Date, nullable=False)
+    currency: Mapped[str] = mapped_column(
+        String(3),
+        nullable=False,
+        server_default="SGD",
+        comment="ISO 4217 currency code of the transaction (from bank statement)"
+    )
     description: Mapped[str] = mapped_column(String(500), nullable=False)
     amount: Mapped[float] = mapped_column(
         Numeric(precision=15, scale=2),
@@ -158,6 +164,7 @@ class FinanceTransaction(Base):
             "id": self.id,
             "bank_account_id": self.bank_account_id,
             "transaction_date": self.transaction_date.isoformat() if self.transaction_date else None,
+            "currency": self.currency,
             "description": self.description,
             "amount": float(self.amount) if self.amount is not None else None,
             "reference_number": self.reference_number,

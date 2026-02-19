@@ -168,6 +168,12 @@ Upload bank statement CSVs to import transactions. Each transaction gets a finge
 | GET | `/api/finance/transactions` | List transactions |
 | GET | `/api/finance/transactions/:id` | Get transaction by ID |
 
+**Currency Handling:**
+- Each transaction stores its `currency` (ISO 4217 from bank statement)
+- No exchange rate conversion at transaction level
+- Conversion to group reporting currency (USD) happens at report time using standardized period rates
+- Exchange rate table will be built with consolidated reporting module
+
 **Next Steps:**
 - Column mapping UI for different bank CSV formats
 - Auto-detect counterparty from transaction description using categorization rules
@@ -201,6 +207,16 @@ The categorization engine automatically converts bank transactions into journal 
 - Each rule has: name, priority, match criteria (description pattern, amount range, bank account), contra account code, rule type
 - Rules evaluated in priority order, first match wins
 - Fallback: no match → "Uncategorized" queue for manual review
+
+**Intercompany Transaction Linking:**
+
+When the categorization engine detects an intercompany transfer (e.g., "Transfer to DL AU" on SG bank):
+1. Creates **two journal entries** — one per entity (SG and AU)
+2. Both JEs share the same `intercompany_group_id` (UUID) for linking
+3. SG transaction is reconciled to the SG JE immediately
+4. When AU CSV is uploaded later, the AU transaction auto-matches to the existing AU JE via the intercompany group
+
+Journal entries also track their `source` (manual, categorization_engine, invoice, stripe) for audit trail.
 
 **Categorization Data Model (Planned):**
 

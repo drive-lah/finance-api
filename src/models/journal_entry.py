@@ -70,6 +70,16 @@ class FinanceJournalEntry(Base):
         String(255),
         nullable=True
     )
+    intercompany_group_id: Mapped[Optional[str]] = mapped_column(
+        String(36),
+        nullable=True,
+        comment="Shared UUID linking paired intercompany journal entries across entities"
+    )
+    source: Mapped[Optional[str]] = mapped_column(
+        String(50),
+        nullable=True,
+        comment="How this JE was created: manual, categorization_engine, invoice, stripe"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,
@@ -116,6 +126,8 @@ class FinanceJournalEntry(Base):
             "created_by": self.created_by,
             "posted_at": self.posted_at.isoformat() if self.posted_at else None,
             "posting_user_id": self.posting_user_id,
+            "intercompany_group_id": self.intercompany_group_id,
+            "source": self.source,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

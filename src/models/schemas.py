@@ -207,6 +207,7 @@ class TransactionCreate(BaseModel):
     """Schema for creating a new transaction (typically via import)."""
     bank_account_id: int = Field(..., gt=0, description="ID of the bank account")
     transaction_date: date_type = Field(..., description="Date of the transaction")
+    currency: Optional[str] = Field(default="SGD", min_length=3, max_length=3, description="ISO 4217 currency code")
     description: str = Field(..., min_length=1, max_length=500, description="Transaction description")
     amount: float = Field(..., description="Transaction amount (positive for credit, negative for debit)")
     reference_number: Optional[str] = Field(None, max_length=100, description="Reference or check number")
@@ -232,6 +233,7 @@ class TransactionResponse(BaseModel):
     id: int
     bank_account_id: int
     transaction_date: date_type
+    currency: str
     description: str
     amount: float
     reference_number: Optional[str]
@@ -333,6 +335,8 @@ class JournalEntryResponse(BaseModel):
     created_by: Optional[str]
     posted_at: Optional[datetime]
     posting_user_id: Optional[str]
+    intercompany_group_id: Optional[str]
+    source: Optional[str]
     created_at: datetime
     updated_at: datetime
     lines: Optional[list[JournalLineResponse]] = None
