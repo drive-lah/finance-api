@@ -2,10 +2,7 @@ Code,Name,Category,Sub-Category,Account Type,Normal Balance,Description
 ,,,,,,
 ,ASSETS,,,,,,
 ,,,,,,
-,Cash - Payment Platforms (group-level),,,,,,
-1100,Clearing Account,Assets,Cash - Payment Platform,Asset,Debit,Cash held in payment processor clearing account before settlement to bank. Entity dimension determines which payment processor (e.g. SG Stripe or AU Stripe).
-1101,Platform Account,Assets,Cash - Payment Platform,Asset,Debit,Cash balance held within the payment processor platform account (e.g. Stripe Connect balance). Entity dimension determines which platform account.
-1150,Wise Account,Assets,Cash - Payment Platform,Asset,Debit,Cash held in Wise multi-currency wallet. Each entity has one Wise account. Entity dimension determines which wallet.
+,"Bank Accounts (1000-1199 — auto-created per entity when bank accounts are added)",,,,,,
 ,,,,,,
 ,Receivables (group-level),,,,,,
 1200,Trade Receivables,Assets,Receivables,Asset,Debit,Amounts owed to the company from customers and business partners in the normal course of operations (e.g. outstanding invoices to guests or hosts).

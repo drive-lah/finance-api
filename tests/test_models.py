@@ -322,31 +322,67 @@ class TestFinanceAccountModel:
         assert FinanceAccount.get_normal_balance_for_type(AccountType.EQUITY) == NormalBalance.CREDIT
         assert FinanceAccount.get_normal_balance_for_type(AccountType.REVENUE) == NormalBalance.CREDIT
     
-    def test_account_unique_code_globally(self, test_session, sample_entity):
-        """Test that account codes must be globally unique."""
+    def test_account_unique_code_per_entity(self, test_session, sample_entity):
+        """Test that account codes must be unique within the same entity_id."""
+        entity_id = sample_entity.id
+
         account1 = FinanceAccount(
-            entity_id=None,
+            entity_id=entity_id,
             code="1000",
-            name="Cash",
+            name="Bank A",
             account_type=AccountType.ASSET,
             normal_balance=NormalBalance.DEBIT,
             category="Assets",
+            is_bank_account=True,
         )
         test_session.add(account1)
         test_session.commit()
 
         account2 = FinanceAccount(
-            entity_id=None,
-            code="1000",  # Same code - should fail
-            name="Another Cash",
+            entity_id=entity_id,
+            code="1000",  # Same code, same entity - should fail
+            name="Bank B",
             account_type=AccountType.ASSET,
             normal_balance=NormalBalance.DEBIT,
             category="Assets",
+            is_bank_account=True,
         )
         test_session.add(account2)
 
         with pytest.raises(Exception):  # IntegrityError
             test_session.commit()
+
+    def test_account_same_code_different_entities(self, test_session, sample_entity):
+        """Test that same code is allowed across different entities (for bank accounts)."""
+        entity2 = FinanceEntity(
+            name="Entity 2", country="AU", base_currency="AUD",
+        )
+        test_session.add(entity2)
+        test_session.commit()
+
+        account1 = FinanceAccount(
+            entity_id=sample_entity.id,
+            code="1000",
+            name="SG Bank",
+            account_type=AccountType.ASSET,
+            normal_balance=NormalBalance.DEBIT,
+            category="Assets",
+            is_bank_account=True,
+        )
+        account2 = FinanceAccount(
+            entity_id=entity2.id,
+            code="1000",  # Same code, different entity - should succeed
+            name="AU Bank",
+            account_type=AccountType.ASSET,
+            normal_balance=NormalBalance.DEBIT,
+            category="Assets",
+            is_bank_account=True,
+        )
+        test_session.add_all([account1, account2])
+        test_session.commit()  # Should not raise
+
+        assert account1.id is not None
+        assert account2.id is not None
 
 
 # =============================================================================

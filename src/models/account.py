@@ -108,12 +108,13 @@ class FinanceAccount(Base):
 
     # Table indexes
     __table_args__ = (
-        # Unique constraint: code must be globally unique
-        Index('ix_finance_accounts_code', 'code', unique=True),
+        # Unique constraint: (entity_id, code) — allows same code across entities for bank accounts
+        # Group-level accounts have entity_id=NULL, entity-specific bank accounts have entity_id set
+        Index('ix_finance_accounts_entity_code', 'entity_id', 'code', unique=True),
+        # Index for code lookups (non-unique, for group-level account queries)
+        Index('ix_finance_accounts_code', 'code'),
         # Index for parent lookups
         Index('ix_finance_accounts_parent_code', 'parent_code'),
-        # Index for entity-specific lookups (bank accounts)
-        Index('ix_finance_accounts_entity_id', 'entity_id'),
     )
 
     def __repr__(self) -> str:
