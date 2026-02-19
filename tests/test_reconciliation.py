@@ -88,11 +88,12 @@ class TestReconciliationService:
 
         # Create account
         account = FinanceAccount(
-            entity_id=entity.id,
+            entity_id=None,
             code="1100",
             name="Cash",
             account_type=AccountType.ASSET,
             normal_balance=NormalBalance.DEBIT,
+            category="Assets",
         )
         mock_db.add(account)
         mock_db.commit()
@@ -172,11 +173,12 @@ class TestReconciliationService:
 
         # Create account
         account = FinanceAccount(
-            entity_id=entity.id,
+            entity_id=None,
             code="1100",
             name="Cash",
             account_type=AccountType.ASSET,
             normal_balance=NormalBalance.DEBIT,
+            category="Assets",
         )
         mock_db.add(account)
         mock_db.commit()
@@ -245,11 +247,12 @@ class TestReconciliationService:
 
         # Create account
         account = FinanceAccount(
-            entity_id=entity.id,
+            entity_id=None,
             code="1100",
             name="Cash",
             account_type=AccountType.ASSET,
             normal_balance=NormalBalance.DEBIT,
+            category="Assets",
         )
         mock_db.add(account)
         mock_db.commit()
@@ -319,11 +322,12 @@ class TestReconciliationService:
 
         # Create account
         account = FinanceAccount(
-            entity_id=entity.id,
+            entity_id=None,
             code="1100",
             name="Cash",
             account_type=AccountType.ASSET,
             normal_balance=NormalBalance.DEBIT,
+            category="Assets",
         )
         mock_db.add(account)
         mock_db.commit()
@@ -390,11 +394,12 @@ class TestReconciliationService:
 
         # Create account
         account = FinanceAccount(
-            entity_id=entity.id,
+            entity_id=None,
             code="1100",
             name="Cash",
             account_type=AccountType.ASSET,
             normal_balance=NormalBalance.DEBIT,
+            category="Assets",
         )
         mock_db.add(account)
         mock_db.commit()
@@ -512,11 +517,12 @@ class TestReconciliationService:
 
         # Create account
         account = FinanceAccount(
-            entity_id=entity.id,
+            entity_id=None,
             code="1100",
             name="Cash",
             account_type=AccountType.ASSET,
             normal_balance=NormalBalance.DEBIT,
+            category="Assets",
         )
         mock_db.add(account)
         mock_db.commit()
@@ -583,11 +589,12 @@ class TestReconciliationEndpoint:
         mock_db.add(transaction)
 
         account = FinanceAccount(
-            entity_id=entity.id,
+            entity_id=None,
             code="1100",
             name="Cash",
             account_type=AccountType.ASSET,
             normal_balance=NormalBalance.DEBIT,
+            category="Assets",
         )
         mock_db.add(account)
         mock_db.commit()
@@ -673,11 +680,12 @@ class TestReconciliationEndpoint:
         transaction_id = transaction.id
 
         account = FinanceAccount(
-            entity_id=entity.id,
+            entity_id=None,
             code="1100",
             name="Cash",
             account_type=AccountType.ASSET,
             normal_balance=NormalBalance.DEBIT,
+            category="Assets",
         )
         mock_db.add(account)
         mock_db.commit()
@@ -803,11 +811,12 @@ class TestReconciliationEndpoint:
         transaction_id = transaction.id
 
         account = FinanceAccount(
-            entity_id=entity.id,
+            entity_id=None,
             code="1100",
             name="Cash",
             account_type=AccountType.ASSET,
             normal_balance=NormalBalance.DEBIT,
+            category="Assets",
         )
         mock_db.add(account)
         mock_db.commit()

@@ -125,25 +125,28 @@ def test_trial_balance_with_posted_entries(client, mock_db):
     
     # Create accounts
     cash_account = FinanceAccount(
-        entity_id=entity_id,
+        entity_id=None,
         code="1000",
         name="Cash",
         account_type=AccountType.ASSET,
-        normal_balance=NormalBalance.DEBIT
+        normal_balance=NormalBalance.DEBIT,
+        category="Assets"
     )
     revenue_account = FinanceAccount(
-        entity_id=entity_id,
+        entity_id=None,
         code="4000",
         name="Revenue",
         account_type=AccountType.REVENUE,
-        normal_balance=NormalBalance.CREDIT
+        normal_balance=NormalBalance.CREDIT,
+        category="Revenue"
     )
     expense_account = FinanceAccount(
-        entity_id=entity_id,
+        entity_id=None,
         code="5000",
         name="Expenses",
         account_type=AccountType.EXPENSE,
-        normal_balance=NormalBalance.DEBIT
+        normal_balance=NormalBalance.DEBIT,
+        category="Expenses"
     )
     mock_db.add_all([cash_account, revenue_account, expense_account])
     mock_db.commit()
@@ -263,18 +266,20 @@ def test_trial_balance_filters_draft_entries(client, mock_db):
     entity_id = entity.id
     
     cash_account = FinanceAccount(
-        entity_id=entity_id,
+        entity_id=None,
         code="1000",
         name="Cash",
         account_type=AccountType.ASSET,
-        normal_balance=NormalBalance.DEBIT
+        normal_balance=NormalBalance.DEBIT,
+        category="Assets"
     )
     revenue_account = FinanceAccount(
-        entity_id=entity_id,
+        entity_id=None,
         code="4000",
         name="Revenue",
         account_type=AccountType.REVENUE,
-        normal_balance=NormalBalance.CREDIT
+        normal_balance=NormalBalance.CREDIT,
+        category="Revenue"
     )
     mock_db.add_all([cash_account, revenue_account])
     mock_db.commit()
@@ -332,18 +337,20 @@ def test_trial_balance_with_as_of_date(client, mock_db):
     entity_id = entity.id
     
     cash_account = FinanceAccount(
-        entity_id=entity_id,
+        entity_id=None,
         code="1000",
         name="Cash",
         account_type=AccountType.ASSET,
-        normal_balance=NormalBalance.DEBIT
+        normal_balance=NormalBalance.DEBIT,
+        category="Assets"
     )
     revenue_account = FinanceAccount(
-        entity_id=entity_id,
+        entity_id=None,
         code="4000",
         name="Revenue",
         account_type=AccountType.REVENUE,
-        normal_balance=NormalBalance.CREDIT
+        normal_balance=NormalBalance.CREDIT,
+        category="Revenue"
     )
     mock_db.add_all([cash_account, revenue_account])
     mock_db.commit()
@@ -475,18 +482,20 @@ def test_trial_balance_multiple_entries_same_account(client, mock_db):
     entity_id = entity.id
     
     cash_account = FinanceAccount(
-        entity_id=entity_id,
+        entity_id=None,
         code="1000",
         name="Cash",
         account_type=AccountType.ASSET,
-        normal_balance=NormalBalance.DEBIT
+        normal_balance=NormalBalance.DEBIT,
+        category="Assets"
     )
     revenue_account = FinanceAccount(
-        entity_id=entity_id,
+        entity_id=None,
         code="4000",
         name="Revenue",
         account_type=AccountType.REVENUE,
-        normal_balance=NormalBalance.CREDIT
+        normal_balance=NormalBalance.CREDIT,
+        category="Revenue"
     )
     mock_db.add_all([cash_account, revenue_account])
     mock_db.commit()

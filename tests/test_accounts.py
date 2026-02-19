@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from src.app import create_app
 from src.database import Base
 from src.models.entity import FinanceEntity, EntityStatus
-from src.models.account import FinanceAccount, AccountType, NormalBalance
+from src.models.account import FinanceAccount, AccountType, NormalBalance, AccountStatus
 
 
 @pytest.fixture
@@ -58,41 +58,45 @@ def test_entity(db_session):
 
 @pytest.fixture
 def test_accounts(db_session, test_entity):
-    """Create test accounts with hierarchy."""
-    # Parent account
+    """Create test accounts with hierarchy (group-level, no entity_id)."""
+    # Parent account - group level
     parent = FinanceAccount(
-        entity_id=test_entity.id,
+        entity_id=None,
         code="1000",
         name="Assets",
         account_type=AccountType.ASSET,
         normal_balance=NormalBalance.DEBIT,
-        is_active=True
+        category="Assets",
+        status=AccountStatus.ACTIVE,
     )
     db_session.add(parent)
-    
-    # Child account
+
+    # Child account - group level
     child = FinanceAccount(
-        entity_id=test_entity.id,
+        entity_id=None,
         code="1100",
         name="Current Assets",
         account_type=AccountType.ASSET,
         normal_balance=NormalBalance.DEBIT,
         parent_code="1000",
-        is_active=True
+        category="Assets",
+        sub_category="Current Assets",
+        status=AccountStatus.ACTIVE,
     )
     db_session.add(child)
-    
-    # Another account type
+
+    # Revenue account - group level
     revenue = FinanceAccount(
-        entity_id=test_entity.id,
+        entity_id=None,
         code="4000",
         name="Revenue",
         account_type=AccountType.REVENUE,
         normal_balance=NormalBalance.CREDIT,
-        is_active=True
+        category="Revenue",
+        status=AccountStatus.ACTIVE,
     )
     db_session.add(revenue)
-    
+
     db_session.commit()
     return [parent, child, revenue]
 
@@ -131,13 +135,13 @@ def test_list_accounts_filter_by_type(client, mock_get_db, test_accounts):
 
 
 def test_list_accounts_filter_by_entity(client, mock_get_db, test_accounts, test_entity):
-    """Test filtering accounts by entity_id."""
+    """Test filtering accounts by entity_id returns group-level accounts."""
     with patch('src.routes.accounts.get_db', mock_get_db):
         response = client.get(f'/api/finance/accounts?entity_id={test_entity.id}')
         assert response.status_code == 200
         data = response.get_json()
+        # Group-level accounts (entity_id=None) should be returned
         assert len(data) == 3
-        assert all(acc['entity_id'] == test_entity.id for acc in data)
 
 
 def test_list_accounts_invalid_type(client, mock_get_db):
@@ -161,13 +165,13 @@ def test_list_accounts_invalid_entity_id(client, mock_get_db):
 
 
 def test_create_account_success(client, mock_get_db, test_entity):
-    """Test creating a new account."""
+    """Test creating a new group-level account."""
     with patch('src.routes.accounts.get_db', mock_get_db):
         account_data = {
-            "entity_id": test_entity.id,
             "code": "1000",
             "name": "Assets",
-            "account_type": "Asset"
+            "account_type": "Asset",
+            "category": "Assets",
         }
         response = client.post('/api/finance/accounts', json=account_data)
         assert response.status_code == 201
@@ -176,17 +180,22 @@ def test_create_account_success(client, mock_get_db, test_entity):
         assert data['name'] == 'Assets'
         assert data['account_type'] == 'Asset'
         assert data['normal_balance'] == 'Debit'  # Auto-derived
+        assert data['entity_id'] is None  # Group-level
+        assert data['category'] == 'Assets'
+        assert data['status'] == 'Active'
+        assert data['is_bank_account'] is False
 
 
 def test_create_account_with_parent(client, mock_get_db, test_accounts, test_entity):
     """Test creating account with parent_code."""
     with patch('src.routes.accounts.get_db', mock_get_db):
         account_data = {
-            "entity_id": test_entity.id,
             "code": "1110",
             "name": "Cash",
             "account_type": "Asset",
-            "parent_code": "1100"
+            "parent_code": "1100",
+            "category": "Assets",
+            "sub_category": "Cash",
         }
         response = client.post('/api/finance/accounts', json=account_data)
         assert response.status_code == 201
@@ -199,11 +208,11 @@ def test_create_account_invalid_parent(client, mock_get_db, test_entity):
     """Test creating account with invalid parent_code."""
     with patch('src.routes.accounts.get_db', mock_get_db):
         account_data = {
-            "entity_id": test_entity.id,
             "code": "1110",
             "name": "Cash",
             "account_type": "Asset",
-            "parent_code": "9999"  # Non-existent parent
+            "parent_code": "9999",  # Non-existent parent
+            "category": "Assets",
         }
         response = client.post('/api/finance/accounts', json=account_data)
         assert response.status_code == 409
@@ -216,10 +225,10 @@ def test_create_account_duplicate_code(client, mock_get_db, test_accounts, test_
     """Test creating account with duplicate code."""
     with patch('src.routes.accounts.get_db', mock_get_db):
         account_data = {
-            "entity_id": test_entity.id,
             "code": "1000",  # Already exists
             "name": "Duplicate",
-            "account_type": "Asset"
+            "account_type": "Asset",
+            "category": "Assets",
         }
         response = client.post('/api/finance/accounts', json=account_data)
         assert response.status_code == 409
@@ -232,16 +241,13 @@ def test_create_account_validation_error(client, mock_get_db, test_entity):
     """Test creating account with invalid data."""
     with patch('src.routes.accounts.get_db', mock_get_db):
         account_data = {
-            "entity_id": test_entity.id,
             "code": "invalid!@#",  # Invalid format (special chars)
             "name": "Invalid Account",
-            "account_type": "Asset"
+            "account_type": "Asset",
+            "category": "Assets",
         }
         response = client.post('/api/finance/accounts', json=account_data)
         data = response.get_json()
-        # Debug: print the actual response
-        if response.status_code != 400:
-            print(f"Status: {response.status_code}, Response: {data}")
         assert response.status_code == 400
         assert 'error' in data
 
@@ -272,13 +278,13 @@ def test_update_account_success(client, mock_get_db, test_accounts):
     with patch('src.routes.accounts.get_db', mock_get_db):
         update_data = {
             "name": "Updated Assets",
-            "is_active": False
+            "status": "Suspended"
         }
         response = client.put(f'/api/finance/accounts/{account.id}', json=update_data)
         assert response.status_code == 200
         data = response.get_json()
         assert data['name'] == 'Updated Assets'
-        assert data['is_active'] is False
+        assert data['status'] == 'Suspended'
 
 
 def test_update_account_not_found(client, mock_get_db):
@@ -311,11 +317,224 @@ def test_account_hierarchy_relationships(client, mock_get_db, test_accounts):
         response = client.get('/api/finance/accounts')
         assert response.status_code == 200
         data = response.get_json()
-        
+
         # Find child account
         child = next(acc for acc in data if acc['code'] == '1100')
         assert child['parent_code'] == '1000'
-        
+
         # Find parent account
         parent = next(acc for acc in data if acc['code'] == '1000')
         assert parent['parent_code'] is None
+
+
+# ---- New COA v2 tests ----
+
+
+def test_create_group_level_account(client, mock_get_db, test_entity):
+    """Test creating a group-level account (no entity_id)."""
+    with patch('src.routes.accounts.get_db', mock_get_db):
+        account_data = {
+            "code": "2000",
+            "name": "Liabilities",
+            "account_type": "Liability",
+            "category": "Liabilities",
+            "description": "All liabilities",
+        }
+        response = client.post('/api/finance/accounts', json=account_data)
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data['entity_id'] is None
+        assert data['is_bank_account'] is False
+        assert data['category'] == 'Liabilities'
+        assert data['description'] == 'All liabilities'
+
+
+def test_create_bank_account(client, mock_get_db, test_entity):
+    """Test creating a bank account (with entity_id, is_bank_account=True)."""
+    with patch('src.routes.accounts.get_db', mock_get_db):
+        account_data = {
+            "entity_id": test_entity.id,
+            "code": "1050",
+            "name": "DBS Bank SGD",
+            "account_type": "Asset",
+            "category": "Assets",
+            "sub_category": "Bank Accounts",
+            "is_bank_account": True,
+        }
+        response = client.post('/api/finance/accounts', json=account_data)
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data['entity_id'] == test_entity.id
+        assert data['is_bank_account'] is True
+
+
+def test_create_bank_account_requires_entity_id(client, mock_get_db):
+    """Test that bank accounts require entity_id."""
+    with patch('src.routes.accounts.get_db', mock_get_db):
+        account_data = {
+            "code": "1050",
+            "name": "DBS Bank SGD",
+            "account_type": "Asset",
+            "category": "Assets",
+            "is_bank_account": True,
+            # No entity_id
+        }
+        response = client.post('/api/finance/accounts', json=account_data)
+        assert response.status_code == 409
+        data = response.get_json()
+        assert 'error' in data
+        assert 'entity_id' in data['error']
+
+
+def test_suspend_account(client, mock_get_db, test_accounts):
+    """Test suspending an account via status update."""
+    account = test_accounts[0]
+    with patch('src.routes.accounts.get_db', mock_get_db):
+        update_data = {"status": "Suspended"}
+        response = client.put(f'/api/finance/accounts/{account.id}', json=update_data)
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['status'] == 'Suspended'
+
+
+def test_filter_by_status(client, mock_get_db, test_accounts, db_session):
+    """Test filtering accounts by status."""
+    # Suspend one account
+    test_accounts[0].status = AccountStatus.SUSPENDED
+    db_session.commit()
+
+    with patch('src.routes.accounts.get_db', mock_get_db):
+        # Filter for active only
+        response = client.get('/api/finance/accounts?status=Active')
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data) == 2
+        assert all(acc['status'] == 'Active' for acc in data)
+
+        # Filter for suspended only
+        response = client.get('/api/finance/accounts?status=Suspended')
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data) == 1
+        assert data[0]['status'] == 'Suspended'
+
+
+def test_code_uniqueness_group_level(client, mock_get_db, test_accounts):
+    """Test that code must be globally unique for group-level accounts."""
+    with patch('src.routes.accounts.get_db', mock_get_db):
+        # Try to create account with same code as existing group-level account
+        account_data = {
+            "code": "1000",  # Already exists
+            "name": "Duplicate Code",
+            "account_type": "Asset",
+            "category": "Assets",
+        }
+        response = client.post('/api/finance/accounts', json=account_data)
+        assert response.status_code == 409
+        data = response.get_json()
+        assert 'already exists' in data['error']
+
+
+def test_new_account_types(client, mock_get_db):
+    """Test creating accounts with new account types."""
+    with patch('src.routes.accounts.get_db', mock_get_db):
+        # Cost of Sales
+        response = client.post('/api/finance/accounts', json={
+            "code": "5000",
+            "name": "Host Payouts",
+            "account_type": "Cost of Sales",
+            "category": "Cost of Sales",
+        })
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data['account_type'] == 'Cost of Sales'
+        assert data['normal_balance'] == 'Debit'
+
+        # Other Income
+        response = client.post('/api/finance/accounts', json={
+            "code": "7000",
+            "name": "Other Income",
+            "account_type": "Other Income",
+            "category": "Other Income",
+        })
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data['account_type'] == 'Other Income'
+        assert data['normal_balance'] == 'Credit'
+
+        # Intercompany
+        response = client.post('/api/finance/accounts', json={
+            "code": "8000",
+            "name": "IC Receivable",
+            "account_type": "Intercompany",
+            "category": "Intercompany",
+        })
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data['account_type'] == 'Intercompany'
+        assert data['normal_balance'] == 'Debit'
+
+        # Tax
+        response = client.post('/api/finance/accounts', json={
+            "code": "9000",
+            "name": "Income Tax",
+            "account_type": "Tax",
+            "category": "Tax",
+        })
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data['account_type'] == 'Tax'
+        assert data['normal_balance'] == 'Debit'
+
+
+def test_account_response_includes_new_fields(client, mock_get_db, test_accounts):
+    """Test that account response includes all new fields."""
+    account = test_accounts[0]
+    with patch('src.routes.accounts.get_db', mock_get_db):
+        response = client.get(f'/api/finance/accounts/{account.id}')
+        assert response.status_code == 200
+        data = response.get_json()
+        # Verify new fields are present
+        assert 'category' in data
+        assert 'sub_category' in data
+        assert 'description' in data
+        assert 'is_bank_account' in data
+        assert 'status' in data
+        # Verify old field is gone
+        assert 'is_active' not in data
+
+
+def test_invalid_status_filter(client, mock_get_db):
+    """Test filtering with invalid status."""
+    with patch('src.routes.accounts.get_db', mock_get_db):
+        response = client.get('/api/finance/accounts?status=InvalidStatus')
+        assert response.status_code == 400
+        data = response.get_json()
+        assert 'error' in data
+        assert 'Invalid status' in data['error']
+
+
+def test_update_description(client, mock_get_db, test_accounts):
+    """Test updating account description."""
+    account = test_accounts[0]
+    with patch('src.routes.accounts.get_db', mock_get_db):
+        update_data = {
+            "description": "All company assets including current and fixed assets"
+        }
+        response = client.put(f'/api/finance/accounts/{account.id}', json=update_data)
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['description'] == 'All company assets including current and fixed assets'
+
+
+def test_update_sub_category(client, mock_get_db, test_accounts):
+    """Test updating account sub_category."""
+    account = test_accounts[0]
+    with patch('src.routes.accounts.get_db', mock_get_db):
+        update_data = {
+            "sub_category": "Fixed Assets"
+        }
+        response = client.put(f'/api/finance/accounts/{account.id}', json=update_data)
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['sub_category'] == 'Fixed Assets'

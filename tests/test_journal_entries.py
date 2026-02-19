@@ -80,20 +80,20 @@ def test_list_journal_entries_with_data(client, mock_db):
     mock_db.flush()
     
     cash_account = FinanceAccount(
-        entity_id=entity.id,
+        entity_id=None,
         code="1000",
         name="Cash",
         account_type=AccountType.ASSET,
         normal_balance=NormalBalance.DEBIT,
-        is_active=True
+        category="Assets"
     )
     revenue_account = FinanceAccount(
-        entity_id=entity.id,
+        entity_id=None,
         code="4000",
         name="Revenue",
         account_type=AccountType.REVENUE,
         normal_balance=NormalBalance.CREDIT,
-        is_active=True
+        category="Revenue"
     )
     mock_db.add_all([cash_account, revenue_account])
     mock_db.flush()
@@ -142,23 +142,24 @@ def test_list_journal_entries_filter_by_entity(client, mock_db):
     mock_db.add_all([entity1, entity2])
     mock_db.flush()
     
-    # Create accounts for both entities
-    for entity in [entity1, entity2]:
-        cash = FinanceAccount(
-            entity_id=entity.id,
-            code="1000",
-            name="Cash",
-            account_type=AccountType.ASSET,
-            normal_balance=NormalBalance.DEBIT
-        )
-        revenue = FinanceAccount(
-            entity_id=entity.id,
-            code="4000",
-            name="Revenue",
-            account_type=AccountType.REVENUE,
-            normal_balance=NormalBalance.CREDIT
-        )
-        mock_db.add_all([cash, revenue])
+    # Create group-level accounts (shared across entities)
+    cash = FinanceAccount(
+        entity_id=None,
+        code="1000",
+        name="Cash",
+        account_type=AccountType.ASSET,
+        normal_balance=NormalBalance.DEBIT,
+        category="Assets"
+    )
+    revenue = FinanceAccount(
+        entity_id=None,
+        code="4000",
+        name="Revenue",
+        account_type=AccountType.REVENUE,
+        normal_balance=NormalBalance.CREDIT,
+        category="Revenue"
+    )
+    mock_db.add_all([cash, revenue])
     mock_db.flush()
     
     # Create entries for both entities
@@ -191,24 +192,26 @@ def test_list_journal_entries_filter_by_status(client, mock_db):
     mock_db.add(entity)
     mock_db.flush()
     
-    # Create accounts
+    # Create accounts (group-level)
     cash = FinanceAccount(
-        entity_id=entity.id,
+        entity_id=None,
         code="1000",
         name="Cash",
         account_type=AccountType.ASSET,
-        normal_balance=NormalBalance.DEBIT
+        normal_balance=NormalBalance.DEBIT,
+        category="Assets"
     )
     revenue = FinanceAccount(
-        entity_id=entity.id,
+        entity_id=None,
         code="4000",
         name="Revenue",
         account_type=AccountType.REVENUE,
-        normal_balance=NormalBalance.CREDIT
+        normal_balance=NormalBalance.CREDIT,
+        category="Revenue"
     )
     mock_db.add_all([cash, revenue])
     mock_db.flush()
-    
+
     # Create entries with different statuses
     draft = FinanceJournalEntry(
         entity_id=entity.id,
@@ -261,18 +264,20 @@ def test_create_journal_entry_success(client, mock_db):
     mock_db.flush()
     
     cash = FinanceAccount(
-        entity_id=entity.id,
+        entity_id=None,
         code="1000",
         name="Cash",
         account_type=AccountType.ASSET,
-        normal_balance=NormalBalance.DEBIT
+        normal_balance=NormalBalance.DEBIT,
+        category="Assets"
     )
     revenue = FinanceAccount(
-        entity_id=entity.id,
+        entity_id=None,
         code="4000",
         name="Revenue",
         account_type=AccountType.REVENUE,
-        normal_balance=NormalBalance.CREDIT
+        normal_balance=NormalBalance.CREDIT,
+        category="Revenue"
     )
     mock_db.add_all([cash, revenue])
     mock_db.commit()
@@ -322,8 +327,8 @@ def test_create_journal_entry_posted_status(client, mock_db):
     mock_db.add(entity)
     mock_db.flush()
     
-    cash = FinanceAccount(entity_id=entity.id, code="1000", name="Cash", account_type=AccountType.ASSET, normal_balance=NormalBalance.DEBIT)
-    revenue = FinanceAccount(entity_id=entity.id, code="4000", name="Revenue", account_type=AccountType.REVENUE, normal_balance=NormalBalance.CREDIT)
+    cash = FinanceAccount(entity_id=None, code="1000", name="Cash", account_type=AccountType.ASSET, normal_balance=NormalBalance.DEBIT, category="Assets")
+    revenue = FinanceAccount(entity_id=None, code="4000", name="Revenue", account_type=AccountType.REVENUE, normal_balance=NormalBalance.CREDIT, category="Revenue")
     mock_db.add_all([cash, revenue])
     mock_db.commit()
     
@@ -357,8 +362,8 @@ def test_create_journal_entry_unbalanced(client, mock_db):
     mock_db.add(entity)
     mock_db.flush()
     
-    cash = FinanceAccount(entity_id=entity.id, code="1000", name="Cash", account_type=AccountType.ASSET, normal_balance=NormalBalance.DEBIT)
-    revenue = FinanceAccount(entity_id=entity.id, code="4000", name="Revenue", account_type=AccountType.REVENUE, normal_balance=NormalBalance.CREDIT)
+    cash = FinanceAccount(entity_id=None, code="1000", name="Cash", account_type=AccountType.ASSET, normal_balance=NormalBalance.DEBIT, category="Assets")
+    revenue = FinanceAccount(entity_id=None, code="4000", name="Revenue", account_type=AccountType.REVENUE, normal_balance=NormalBalance.CREDIT, category="Revenue")
     mock_db.add_all([cash, revenue])
     mock_db.commit()
     
@@ -391,7 +396,7 @@ def test_create_journal_entry_invalid_account(client, mock_db):
     mock_db.add(entity)
     mock_db.flush()
     
-    cash = FinanceAccount(entity_id=entity.id, code="1000", name="Cash", account_type=AccountType.ASSET, normal_balance=NormalBalance.DEBIT)
+    cash = FinanceAccount(entity_id=None, code="1000", name="Cash", account_type=AccountType.ASSET, normal_balance=NormalBalance.DEBIT, category="Assets")
     mock_db.add(cash)
     mock_db.commit()
     
@@ -425,7 +430,7 @@ def test_create_journal_entry_too_few_lines(client, mock_db):
     mock_db.add(entity)
     mock_db.flush()
     
-    cash = FinanceAccount(entity_id=entity.id, code="1000", name="Cash", account_type=AccountType.ASSET, normal_balance=NormalBalance.DEBIT)
+    cash = FinanceAccount(entity_id=None, code="1000", name="Cash", account_type=AccountType.ASSET, normal_balance=NormalBalance.DEBIT, category="Assets")
     mock_db.add(cash)
     mock_db.commit()
     
@@ -534,10 +539,10 @@ def test_create_complex_journal_entry(client, mock_db):
     
     # Create multiple accounts
     accounts = [
-        FinanceAccount(entity_id=entity.id, code="1000", name="Cash", account_type=AccountType.ASSET, normal_balance=NormalBalance.DEBIT),
-        FinanceAccount(entity_id=entity.id, code="1200", name="AR", account_type=AccountType.ASSET, normal_balance=NormalBalance.DEBIT),
-        FinanceAccount(entity_id=entity.id, code="4000", name="Sales", account_type=AccountType.REVENUE, normal_balance=NormalBalance.CREDIT),
-        FinanceAccount(entity_id=entity.id, code="2200", name="Tax Payable", account_type=AccountType.LIABILITY, normal_balance=NormalBalance.CREDIT),
+        FinanceAccount(entity_id=None, code="1000", name="Cash", account_type=AccountType.ASSET, normal_balance=NormalBalance.DEBIT, category="Assets"),
+        FinanceAccount(entity_id=None, code="1200", name="AR", account_type=AccountType.ASSET, normal_balance=NormalBalance.DEBIT, category="Assets"),
+        FinanceAccount(entity_id=None, code="4000", name="Sales", account_type=AccountType.REVENUE, normal_balance=NormalBalance.CREDIT, category="Revenue"),
+        FinanceAccount(entity_id=None, code="2200", name="Tax Payable", account_type=AccountType.LIABILITY, normal_balance=NormalBalance.CREDIT, category="Liabilities"),
     ]
     mock_db.add_all(accounts)
     mock_db.commit()
@@ -586,20 +591,20 @@ def test_post_journal_entry_success(client, mock_db):
     entity_id = entity.id
     
     cash_account = FinanceAccount(
-        entity_id=entity_id,
+        entity_id=None,
         code="1000",
         name="Cash",
         account_type=AccountType.ASSET,
         normal_balance=NormalBalance.DEBIT,
-        is_active=True
+        category="Assets"
     )
     revenue_account = FinanceAccount(
-        entity_id=entity_id,
+        entity_id=None,
         code="4000",
         name="Revenue",
         account_type=AccountType.REVENUE,
         normal_balance=NormalBalance.CREDIT,
-        is_active=True
+        category="Revenue"
     )
     mock_db.add_all([cash_account, revenue_account])
     mock_db.flush()
@@ -658,20 +663,20 @@ def test_post_journal_entry_with_user_id(client, mock_db):
     entity_id = entity.id
     
     cash_account = FinanceAccount(
-        entity_id=entity_id,
+        entity_id=None,
         code="1000",
         name="Cash",
         account_type=AccountType.ASSET,
         normal_balance=NormalBalance.DEBIT,
-        is_active=True
+        category="Assets"
     )
     revenue_account = FinanceAccount(
-        entity_id=entity_id,
+        entity_id=None,
         code="4000",
         name="Revenue",
         account_type=AccountType.REVENUE,
         normal_balance=NormalBalance.CREDIT,
-        is_active=True
+        category="Revenue"
     )
     mock_db.add_all([cash_account, revenue_account])
     mock_db.flush()
@@ -735,20 +740,20 @@ def test_post_journal_entry_already_posted(client, mock_db):
     entity_id = entity.id
     
     cash_account = FinanceAccount(
-        entity_id=entity_id,
+        entity_id=None,
         code="1000",
         name="Cash",
         account_type=AccountType.ASSET,
         normal_balance=NormalBalance.DEBIT,
-        is_active=True
+        category="Assets"
     )
     revenue_account = FinanceAccount(
-        entity_id=entity_id,
+        entity_id=None,
         code="4000",
         name="Revenue",
         account_type=AccountType.REVENUE,
         normal_balance=NormalBalance.CREDIT,
-        is_active=True
+        category="Revenue"
     )
     mock_db.add_all([cash_account, revenue_account])
     mock_db.flush()
@@ -812,20 +817,20 @@ def test_post_journal_entry_unbalanced(client, mock_db):
     entity_id = entity.id
     
     cash_account = FinanceAccount(
-        entity_id=entity_id,
+        entity_id=None,
         code="1000",
         name="Cash",
         account_type=AccountType.ASSET,
         normal_balance=NormalBalance.DEBIT,
-        is_active=True
+        category="Assets"
     )
     revenue_account = FinanceAccount(
-        entity_id=entity_id,
+        entity_id=None,
         code="4000",
         name="Revenue",
         account_type=AccountType.REVENUE,
         normal_balance=NormalBalance.CREDIT,
-        is_active=True
+        category="Revenue"
     )
     mock_db.add_all([cash_account, revenue_account])
     mock_db.flush()
@@ -881,20 +886,20 @@ def test_post_journal_entry_atomic(client, mock_db):
     entity_id = entity.id
     
     cash_account = FinanceAccount(
-        entity_id=entity_id,
+        entity_id=None,
         code="1000",
         name="Cash",
         account_type=AccountType.ASSET,
         normal_balance=NormalBalance.DEBIT,
-        is_active=True
+        category="Assets"
     )
     revenue_account = FinanceAccount(
-        entity_id=entity_id,
+        entity_id=None,
         code="4000",
         name="Revenue",
         account_type=AccountType.REVENUE,
         normal_balance=NormalBalance.CREDIT,
-        is_active=True
+        category="Revenue"
     )
     mock_db.add_all([cash_account, revenue_account])
     mock_db.flush()
@@ -958,20 +963,20 @@ def test_verify_posted_entry_has_timestamp(client, mock_db):
     entity_id = entity.id
     
     cash_account = FinanceAccount(
-        entity_id=entity_id,
+        entity_id=None,
         code="1000",
         name="Cash",
         account_type=AccountType.ASSET,
         normal_balance=NormalBalance.DEBIT,
-        is_active=True
+        category="Assets"
     )
     revenue_account = FinanceAccount(
-        entity_id=entity_id,
+        entity_id=None,
         code="4000",
         name="Revenue",
         account_type=AccountType.REVENUE,
         normal_balance=NormalBalance.CREDIT,
-        is_active=True
+        category="Revenue"
     )
     mock_db.add_all([cash_account, revenue_account])
     mock_db.flush()

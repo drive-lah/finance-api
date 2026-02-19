@@ -19,7 +19,7 @@ from sqlalchemy.orm import sessionmaker
 from src.database import Base
 from src.models import (
     FinanceEntity, EntityStatus,
-    FinanceAccount, AccountType, NormalBalance,
+    FinanceAccount, AccountType, NormalBalance, AccountStatus,
     FinanceBankAccount, BankAccountStatus,
     FinanceTransaction, TransactionStatus,
     FinanceJournalEntry, JournalEntryStatus,
@@ -90,11 +90,16 @@ class TestAccountType:
         assert AccountType.EQUITY.value == "Equity"
         assert AccountType.REVENUE.value == "Revenue"
         assert AccountType.EXPENSE.value == "Expense"
-    
+        assert AccountType.COST_OF_SALES.value == "Cost of Sales"
+        assert AccountType.INTERCOMPANY.value == "Intercompany"
+        assert AccountType.OTHER_INCOME.value == "Other Income"
+        assert AccountType.OTHER_EXPENSE.value == "Other Expense"
+        assert AccountType.TAX.value == "Tax"
+
     def test_enum_members(self):
         """Test that AccountType has all expected members."""
         members = list(AccountType)
-        assert len(members) == 5
+        assert len(members) == 10
 
 
 class TestNormalBalance:
@@ -104,6 +109,7 @@ class TestNormalBalance:
         """Test that NormalBalance has expected values."""
         assert NormalBalance.DEBIT.value == "Debit"
         assert NormalBalance.CREDIT.value == "Credit"
+        assert NormalBalance.VARIES.value == "Varies"
 
 
 # =============================================================================
@@ -221,62 +227,66 @@ class TestFinanceAccountModel:
     def test_create_account(self, test_session, sample_entity):
         """Test creating a basic finance account."""
         account = FinanceAccount(
-            entity_id=sample_entity.id,
+            entity_id=None,
             code="1000",
             name="Cash",
             account_type=AccountType.ASSET,
             normal_balance=NormalBalance.DEBIT,
+            category="Assets",
         )
         test_session.add(account)
         test_session.commit()
-        
+
         assert account.id is not None
-        assert account.entity_id == sample_entity.id
+        assert account.entity_id is None
         assert account.code == "1000"
         assert account.name == "Cash"
         assert account.account_type == AccountType.ASSET
         assert account.normal_balance == NormalBalance.DEBIT
-        assert account.is_active is True
+        assert account.status == AccountStatus.ACTIVE
     
     def test_account_with_parent(self, test_session, sample_entity):
         """Test creating an account with parent reference."""
         # Create parent account
         parent = FinanceAccount(
-            entity_id=sample_entity.id,
+            entity_id=None,
             code="1000",
             name="Assets",
             account_type=AccountType.ASSET,
             normal_balance=NormalBalance.DEBIT,
+            category="Assets",
         )
         test_session.add(parent)
         test_session.commit()
-        
+
         # Create child account
         child = FinanceAccount(
-            entity_id=sample_entity.id,
+            entity_id=None,
             code="1100",
             name="Cash and Bank",
             account_type=AccountType.ASSET,
             normal_balance=NormalBalance.DEBIT,
             parent_code="1000",
+            category="Assets",
         )
         test_session.add(child)
         test_session.commit()
-        
+
         assert child.parent_code == "1000"
     
     def test_account_repr(self, test_session, sample_entity):
         """Test account string representation."""
         account = FinanceAccount(
-            entity_id=sample_entity.id,
+            entity_id=None,
             code="2000",
             name="Liabilities",
             account_type=AccountType.LIABILITY,
             normal_balance=NormalBalance.CREDIT,
+            category="Liabilities",
         )
         test_session.add(account)
         test_session.commit()
-        
+
         repr_str = repr(account)
         assert "FinanceAccount" in repr_str
         assert "2000" in repr_str
@@ -285,23 +295,24 @@ class TestFinanceAccountModel:
     def test_account_to_dict(self, test_session, sample_entity):
         """Test account to_dict method."""
         account = FinanceAccount(
-            entity_id=sample_entity.id,
+            entity_id=None,
             code="4000",
             name="Revenue",
             account_type=AccountType.REVENUE,
             normal_balance=NormalBalance.CREDIT,
             parent_code=None,
-            is_active=True,
+            category="Revenue",
         )
         test_session.add(account)
         test_session.commit()
-        
+
         data = account.to_dict()
         assert data["code"] == "4000"
         assert data["name"] == "Revenue"
         assert data["account_type"] == "Revenue"
         assert data["normal_balance"] == "Credit"
-        assert data["is_active"] is True
+        assert data["status"] == "Active"
+        assert data["category"] == "Revenue"
     
     def test_get_normal_balance_for_type(self):
         """Test static method for determining normal balance."""
@@ -311,27 +322,29 @@ class TestFinanceAccountModel:
         assert FinanceAccount.get_normal_balance_for_type(AccountType.EQUITY) == NormalBalance.CREDIT
         assert FinanceAccount.get_normal_balance_for_type(AccountType.REVENUE) == NormalBalance.CREDIT
     
-    def test_account_unique_code_per_entity(self, test_session, sample_entity):
-        """Test that account codes must be unique within an entity."""
+    def test_account_unique_code_globally(self, test_session, sample_entity):
+        """Test that account codes must be globally unique."""
         account1 = FinanceAccount(
-            entity_id=sample_entity.id,
+            entity_id=None,
             code="1000",
             name="Cash",
             account_type=AccountType.ASSET,
             normal_balance=NormalBalance.DEBIT,
+            category="Assets",
         )
         test_session.add(account1)
         test_session.commit()
-        
+
         account2 = FinanceAccount(
-            entity_id=sample_entity.id,
-            code="1000",  # Same code, same entity
+            entity_id=None,
+            code="1000",  # Same code - should fail
             name="Another Cash",
             account_type=AccountType.ASSET,
             normal_balance=NormalBalance.DEBIT,
+            category="Assets",
         )
         test_session.add(account2)
-        
+
         with pytest.raises(Exception):  # IntegrityError
             test_session.commit()
 
@@ -412,25 +425,25 @@ class TestAccountSchemas:
     def test_account_create_valid(self):
         """Test valid account creation schema."""
         data = AccountCreate(
-            entity_id=1,
             code="1000",
             name="Cash",
             account_type=AccountType.ASSET,
+            category="Assets",
         )
-        assert data.entity_id == 1
+        assert data.entity_id is None
         assert data.code == "1000"
         assert data.name == "Cash"
         assert data.account_type == AccountType.ASSET
-        assert data.is_active is True
+        assert data.status == AccountStatus.ACTIVE
     
     def test_account_create_with_parent(self):
         """Test account creation with parent code."""
         data = AccountCreate(
-            entity_id=1,
             code="1100",
             name="Cash in Bank",
             account_type=AccountType.ASSET,
             parent_code="1000",
+            category="Assets",
         )
         assert data.parent_code == "1000"
     
@@ -438,20 +451,20 @@ class TestAccountSchemas:
         """Test validation fails for invalid account code."""
         with pytest.raises(ValidationError) as exc:
             AccountCreate(
-                entity_id=1,
                 code="10 00",  # Space not allowed
                 name="Cash",
                 account_type=AccountType.ASSET,
+                category="Assets",
             )
         assert "code" in str(exc.value).lower()
     
     def test_account_create_alphanumeric_code(self):
         """Test that alphanumeric codes with dots and hyphens are valid."""
         data = AccountCreate(
-            entity_id=1,
             code="1000.100-A",
             name="Sub Account",
             account_type=AccountType.ASSET,
+            category="Assets",
         )
         assert data.code == "1000.100-A"
     
@@ -463,14 +476,14 @@ class TestAccountSchemas:
                 code="1000",
                 name="Cash",
                 account_type=AccountType.ASSET,
+                category="Assets",
             )
     
     def test_account_update_partial(self):
         """Test partial update schema."""
         data = AccountUpdate(name="Updated Name")
         assert data.name == "Updated Name"
-        assert data.account_type is None
-        assert data.is_active is None
+        assert data.status is None
 
 
 # =============================================================================

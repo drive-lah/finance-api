@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 
 from src.models.journal_entry import FinanceJournalEntry, JournalEntryStatus
 from src.models.journal_line import FinanceJournalLine
-from src.models.account import FinanceAccount
+from src.models.account import FinanceAccount, AccountStatus
 from src.models.entity import FinanceEntity
 
 
@@ -102,14 +102,18 @@ class JournalService:
             Tuple of (all_exist: bool, missing_code: Optional[str])
         """
         for code in account_codes:
+            # Accounts are globally unique by code; look up by code only
             account = db.query(FinanceAccount).filter(
-                FinanceAccount.entity_id == entity_id,
                 FinanceAccount.code == code
             ).first()
-            
+
             if account is None:
                 return False, code
-        
+
+            # Verify account is active
+            if hasattr(account, 'status') and account.status != AccountStatus.ACTIVE:
+                return False, code
+
         return True, None
     
     def validate_balanced_entry(self, lines: list[dict[str, Any]]) -> tuple[bool, str]:

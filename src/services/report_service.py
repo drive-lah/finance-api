@@ -80,8 +80,7 @@ class ReportService:
             )
             .join(
                 FinanceAccount,
-                (FinanceJournalLine.account_code == FinanceAccount.code) &
-                (FinanceJournalLine.entity_id == FinanceAccount.entity_id)
+                FinanceJournalLine.account_code == FinanceAccount.code
             )
             .filter(FinanceJournalLine.entity_id == entity_id)
             .filter(FinanceJournalEntry.status == JournalEntryStatus.POSTED)

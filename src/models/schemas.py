@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field, field_validator
 import re
 
 from src.models.entity import EntityStatus
-from src.models.account import AccountType, NormalBalance
+from src.models.account import AccountType, NormalBalance, AccountStatus
 from src.models.bank_account import BankAccountStatus
 from src.models.transaction import TransactionStatus
 from src.models.journal_entry import JournalEntryStatus
@@ -90,14 +90,18 @@ class EntityResponse(BaseModel):
 
 class AccountCreate(BaseModel):
     """Schema for creating a new finance account."""
-    entity_id: int = Field(..., gt=0, description="ID of the owning entity")
+    entity_id: Optional[int] = Field(None, gt=0, description="Entity ID (None for group-level, set for bank accounts)")
     code: str = Field(..., min_length=1, max_length=20, description="Account code (e.g., '1000')")
     name: str = Field(..., min_length=1, max_length=255, description="Account name")
     account_type: AccountType = Field(..., description="Account type (Asset, Liability, etc.)")
     normal_balance: Optional[NormalBalance] = Field(None, description="Normal balance (auto-derived if not provided)")
     parent_code: Optional[str] = Field(None, max_length=20, description="Parent account code for hierarchy")
-    is_active: Optional[bool] = Field(default=True, description="Whether account is active")
-    
+    category: str = Field(..., min_length=1, max_length=100, description="Account category (e.g., 'Assets', 'Revenue')")
+    sub_category: Optional[str] = Field(None, max_length=100, description="Account sub-category")
+    description: Optional[str] = Field(None, description="Detailed description of the account")
+    is_bank_account: Optional[bool] = Field(default=False, description="Whether this is a bank account")
+    status: Optional[AccountStatus] = Field(default=AccountStatus.ACTIVE, description="Account status")
+
     @field_validator('code')
     @classmethod
     def validate_code(cls, v: str) -> str:
@@ -110,25 +114,30 @@ class AccountCreate(BaseModel):
 class AccountUpdate(BaseModel):
     """Schema for updating an existing finance account."""
     name: Optional[str] = Field(None, min_length=1, max_length=255)
-    account_type: Optional[AccountType] = None
     normal_balance: Optional[NormalBalance] = None
     parent_code: Optional[str] = Field(None, max_length=20)
-    is_active: Optional[bool] = None
+    status: Optional[AccountStatus] = None
+    description: Optional[str] = None
+    sub_category: Optional[str] = Field(None, max_length=100)
 
 
 class AccountResponse(BaseModel):
     """Schema for account response."""
     id: int
-    entity_id: int
+    entity_id: Optional[int]
     code: str
     name: str
     account_type: str
     normal_balance: str
     parent_code: Optional[str]
-    is_active: bool
+    category: str
+    sub_category: Optional[str]
+    description: Optional[str]
+    is_bank_account: bool
+    status: str
     created_at: datetime
     updated_at: datetime
-    
+
     model_config = {"from_attributes": True}
 
 
