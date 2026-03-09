@@ -9,104 +9,148 @@ from sqlalchemy.orm import Session
 
 from src.models.categorization_rule import (
     FinanceCategorizationRule,
-    RuleType,
     RuleStatus,
+    TransactionCategory,
+    TransactionDirection,
+    AmountOperator,
 )
 from src.models.account import FinanceAccount
+from src.models.bank_account import FinanceBankAccount
 from src.models.schemas import RuleCreate, RuleUpdate
 
 
 class RuleService:
-    """Service layer for categorization rule operations."""
+    """Service layer for categorization rule CRUD with validation."""
 
     def get_all(
         self,
         db: Session,
-        entity_id: Optional[int] = None,
         status: Optional[RuleStatus] = None,
     ) -> List[FinanceCategorizationRule]:
-        """Retrieve all rules, optionally filtered, ordered by priority."""
+        """Retrieve all rules ordered by priority."""
         query = db.query(FinanceCategorizationRule)
-
-        if entity_id is not None:
-            query = query.filter(
-                (FinanceCategorizationRule.entity_id == entity_id)
-                | (FinanceCategorizationRule.entity_id.is_(None))
-            )
-
         if status is not None:
             query = query.filter(FinanceCategorizationRule.status == status)
-
         return query.order_by(FinanceCategorizationRule.priority).all()
 
-    def get_by_id(
-        self, db: Session, rule_id: int
-    ) -> Optional[FinanceCategorizationRule]:
-        """Retrieve a rule by ID."""
+    def get_by_id(self, db: Session, rule_id: int) -> Optional[FinanceCategorizationRule]:
         return (
             db.query(FinanceCategorizationRule)
             .filter(FinanceCategorizationRule.id == rule_id)
             .first()
         )
 
+    # ------------------------------------------------------------------
+    # Validation helpers
+    # ------------------------------------------------------------------
+
     def _validate_account_code(self, db: Session, code: str) -> None:
-        """Validate that an account code exists in the chart of accounts."""
-        account = db.query(FinanceAccount).filter(
-            FinanceAccount.code == code
-        ).first()
+        account = db.query(FinanceAccount).filter(FinanceAccount.code == code).first()
         if not account:
             raise ValueError(f"Account code '{code}' does not exist in the chart of accounts")
 
-    def create(
-        self, db: Session, rule_data: RuleCreate
-    ) -> FinanceCategorizationRule:
-        """
-        Create a new categorization rule with validation.
+    def _validate_bank_account(self, db: Session, bank_account_id: int) -> None:
+        ba = db.query(FinanceBankAccount).filter(FinanceBankAccount.id == bank_account_id).first()
+        if not ba:
+            raise ValueError(f"Bank account {bank_account_id} does not exist")
 
-        Raises:
-            ValueError: If contra_account_code doesn't exist or intercompany fields are missing
-        """
-        # Validate contra account exists
-        self._validate_account_code(db, rule_data.contra_account_code)
+    def _validate_rule(
+        self,
+        db: Session,
+        direction: TransactionDirection,
+        category: TransactionCategory,
+        contra_account_code: Optional[str],
+        target_bank_account_id: Optional[int],
+        amount_operator,
+        amount_value: Optional[float],
+        amount_value_max: Optional[float],
+    ) -> None:
+        # Direction/category constraint
+        if category == TransactionCategory.EXPENSE and direction != TransactionDirection.OUTGOING:
+            raise ValueError("category='expense' requires direction='outgoing'")
+        if category == TransactionCategory.DEPOSIT and direction != TransactionDirection.INCOMING:
+            raise ValueError("category='deposit' requires direction='incoming'")
 
-        # Validate intercompany rules require target fields
-        if rule_data.rule_type == RuleType.INTERCOMPANY:
-            if not rule_data.target_entity_id:
+        # Action requirements
+        if category == TransactionCategory.INTERNAL_TRANSFER:
+            if not target_bank_account_id:
+                raise ValueError("category='internal_transfer' requires target_bank_account_id")
+            self._validate_bank_account(db, target_bank_account_id)
+        else:
+            if not contra_account_code:
                 raise ValueError(
-                    "Intercompany rules require target_entity_id"
+                    f"category='{category.value}' requires contra_account_code"
                 )
-            if not rule_data.target_contra_account_code:
-                raise ValueError(
-                    "Intercompany rules require target_contra_account_code"
-                )
-            # Validate target contra account exists
-            self._validate_account_code(db, rule_data.target_contra_account_code)
+            self._validate_account_code(db, contra_account_code)
 
-        # Convert tag_ids list to JSON string
+        # BETWEEN requires both bounds
+        if amount_operator == AmountOperator.BETWEEN:
+            if amount_value is None or amount_value_max is None:
+                raise ValueError("amount_operator='between' requires both amount_value and amount_value_max")
+            if amount_value > amount_value_max:
+                raise ValueError("amount_value must be <= amount_value_max for BETWEEN")
+
+        # amount_operator without amount_value is useless
+        if amount_operator is not None and amount_value is None:
+            raise ValueError("amount_operator requires amount_value")
+
+    # ------------------------------------------------------------------
+    # CRUD
+    # ------------------------------------------------------------------
+
+    def create(self, db: Session, rule_data: RuleCreate) -> FinanceCategorizationRule:
+        """Create a new categorization rule with validation."""
+        self._validate_rule(
+            db,
+            direction=rule_data.direction,
+            category=rule_data.category,
+            contra_account_code=rule_data.contra_account_code,
+            target_bank_account_id=rule_data.target_bank_account_id,
+            amount_operator=rule_data.amount_operator,
+            amount_value=rule_data.amount_value,
+            amount_value_max=rule_data.amount_value_max,
+        )
+
+        # Validate contra_account_code for intercompany internal transfer
+        # (used as IC clearing account in both entities)
+        if (
+            rule_data.category == TransactionCategory.INTERNAL_TRANSFER
+            and rule_data.contra_account_code
+        ):
+            self._validate_account_code(db, rule_data.contra_account_code)
+
+        bank_account_ids_json = None
+        if rule_data.bank_account_ids is not None:
+            bank_account_ids_json = json.dumps(rule_data.bank_account_ids)
+
         tag_ids_json = None
         if rule_data.tag_ids is not None:
             tag_ids_json = json.dumps(rule_data.tag_ids)
 
         rule = FinanceCategorizationRule(
             name=rule_data.name,
-            entity_id=rule_data.entity_id,
             priority=rule_data.priority if rule_data.priority is not None else 100,
-            rule_type=rule_data.rule_type,
-            match_description_pattern=rule_data.match_description_pattern,
-            match_amount_min=rule_data.match_amount_min,
-            match_amount_max=rule_data.match_amount_max,
-            match_bank_account_id=rule_data.match_bank_account_id,
+            status=rule_data.status if rule_data.status is not None else RuleStatus.ACTIVE,
+            description=rule_data.description,
+            bank_account_ids=bank_account_ids_json,
+            direction=rule_data.direction,
+            amount_operator=rule_data.amount_operator,
+            amount_value=rule_data.amount_value,
+            amount_value_max=rule_data.amount_value_max,
+            description_operator=rule_data.description_operator,
+            description_value=rule_data.description_value,
+            transaction_type_operator=rule_data.transaction_type_operator,
+            transaction_type_value=rule_data.transaction_type_value,
+            counterparty_operator=rule_data.counterparty_operator,
+            counterparty_value=rule_data.counterparty_value,
             match_currency=rule_data.match_currency,
-            match_transaction_type=rule_data.match_transaction_type,
+            category=rule_data.category,
             contra_account_code=rule_data.contra_account_code,
+            target_bank_account_id=rule_data.target_bank_account_id,
             counterparty_name=rule_data.counterparty_name,
             counterparty_type=rule_data.counterparty_type,
             tag_ids=tag_ids_json,
-            target_entity_id=rule_data.target_entity_id,
-            target_contra_account_code=rule_data.target_contra_account_code,
             gst_override=rule_data.gst_override,
-            status=rule_data.status if rule_data.status is not None else RuleStatus.ACTIVE,
-            description=rule_data.description,
         )
 
         db.add(rule)
@@ -117,30 +161,41 @@ class RuleService:
     def update(
         self, db: Session, rule_id: int, update_data: RuleUpdate
     ) -> Optional[FinanceCategorizationRule]:
-        """
-        Update a categorization rule. Returns None if not found.
-
-        Raises:
-            ValueError: If contra_account_code doesn't exist
-        """
+        """Update a rule. Returns None if not found."""
         rule = self.get_by_id(db, rule_id)
         if not rule:
             return None
 
         update_dict = update_data.model_dump(exclude_unset=True)
 
-        # Validate contra account code if being updated
-        if "contra_account_code" in update_dict:
-            self._validate_account_code(db, update_dict["contra_account_code"])
+        # Resolve effective values for cross-field validation
+        effective_direction = update_dict.get("direction", rule.direction)
+        effective_category = update_dict.get("category", rule.category)
+        effective_contra = update_dict.get("contra_account_code", rule.contra_account_code)
+        effective_target = update_dict.get("target_bank_account_id", rule.target_bank_account_id)
+        effective_amount_op = update_dict.get("amount_operator", rule.amount_operator)
+        effective_amount_val = update_dict.get("amount_value", rule.amount_value)
+        effective_amount_max = update_dict.get("amount_value_max", rule.amount_value_max)
 
-        # Validate target_contra_account_code if being updated
-        if "target_contra_account_code" in update_dict and update_dict["target_contra_account_code"]:
-            self._validate_account_code(db, update_dict["target_contra_account_code"])
+        self._validate_rule(
+            db,
+            direction=effective_direction,
+            category=effective_category,
+            contra_account_code=effective_contra,
+            target_bank_account_id=effective_target,
+            amount_operator=effective_amount_op,
+            amount_value=effective_amount_val,
+            amount_value_max=effective_amount_max,
+        )
 
-        # Convert tag_ids list to JSON string if provided
+        # Serialise list fields
+        if "bank_account_ids" in update_dict:
+            v = update_dict["bank_account_ids"]
+            update_dict["bank_account_ids"] = json.dumps(v) if v is not None else None
+
         if "tag_ids" in update_dict:
-            if update_dict["tag_ids"] is not None:
-                update_dict["tag_ids"] = json.dumps(update_dict["tag_ids"])
+            v = update_dict["tag_ids"]
+            update_dict["tag_ids"] = json.dumps(v) if v is not None else None
 
         for key, value in update_dict.items():
             setattr(rule, key, value)
@@ -154,7 +209,6 @@ class RuleService:
         rule = self.get_by_id(db, rule_id)
         if not rule:
             return False
-
         db.delete(rule)
         db.commit()
         return True

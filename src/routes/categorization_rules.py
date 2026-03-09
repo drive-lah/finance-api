@@ -17,25 +17,15 @@ categorization_rules_bp = Blueprint(
 @categorization_rules_bp.route('', methods=['GET'])
 def list_rules():
     """
-    List categorization rules with optional filtering.
+    List categorization rules ordered by priority.
 
     Query params:
-      - entity_id: integer
       - status: Active or Inactive
     """
     db = next(get_db())
 
-    entity_id_str = request.args.get('entity_id')
     status_str = request.args.get('status')
-
-    entity_id = None
     status = None
-
-    if entity_id_str:
-        try:
-            entity_id = int(entity_id_str)
-        except ValueError:
-            raise BadRequestError("entity_id must be an integer")
 
     if status_str:
         try:
@@ -45,7 +35,7 @@ def list_rules():
                 f"Invalid status. Must be one of: {[s.value for s in RuleStatus]}"
             )
 
-    rules = rule_service.get_all(db, entity_id=entity_id, status=status)
+    rules = rule_service.get_all(db, status=status)
     rules_data = [RuleResponse.model_validate(rule).model_dump() for rule in rules]
     return jsonify(rules_data), 200
 

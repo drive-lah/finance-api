@@ -40,6 +40,14 @@ class FinanceBankAccount(Base):
     account_number: Mapped[str] = mapped_column(String(50), nullable=False)
     account_name: Mapped[str] = mapped_column(String(255), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), nullable=False)  # ISO 4217
+    csv_format: Mapped[Optional[str]] = mapped_column(
+        String(50),
+        nullable=True,
+        comment=(
+            "CSV adapter key for this bank account. Must match a key in "
+            "ADAPTER_REGISTRY (e.g. 'ocbc'). Required for CSV imports."
+        ),
+    )
     coa_account_code: Mapped[Optional[str]] = mapped_column(
         String(20),
         nullable=True,
@@ -82,6 +90,7 @@ class FinanceBankAccount(Base):
             "account_number": self.account_number,
             "account_name": self.account_name,
             "currency": self.currency,
+            "csv_format": self.csv_format,
             "coa_account_code": self.coa_account_code,
             "status": self.status.value,
             "created_at": self.created_at.isoformat() if self.created_at else None,

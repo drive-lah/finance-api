@@ -12,8 +12,11 @@ from src.models.journal_line import FinanceJournalLine
 from src.models.tag import FinanceTag, FinanceTransactionTag
 from src.models.categorization_rule import (
     FinanceCategorizationRule,
-    RuleType,
     RuleStatus,
+    TransactionDirection,
+    TransactionCategory,
+    MatchOperator,
+    AmountOperator,
 )
 from src.models.schemas import (
     EntityCreate,
@@ -68,8 +71,11 @@ __all__ = [
     "FinanceTransactionTag",
     # Categorization rule model and enums
     "FinanceCategorizationRule",
-    "RuleType",
     "RuleStatus",
+    "TransactionDirection",
+    "TransactionCategory",
+    "MatchOperator",
+    "AmountOperator",
     # Pydantic schemas
     "EntityCreate",
     "EntityUpdate",

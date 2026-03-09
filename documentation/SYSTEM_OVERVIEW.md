@@ -94,7 +94,7 @@ A group-level chart of accounts shared across all entities. Bank accounts are th
 
 **Key Design Decisions:**
 - 4-digit numbering system (1xxx-9xxx)
-- 132 accounts total across 9 ranges
+- 134 accounts total across 9 ranges
 - Revenue recorded gross (GBV), not net
 - Business lines tracked via separate account codes (P2P, P2P RMS, Flex+, Flex+ RMS)
 - GST split into Input Tax (asset 1350) and Output Tax (liability 2500)
@@ -126,7 +126,7 @@ A group-level chart of accounts shared across all entities. Bank accounts are th
 | GET | `/api/finance/accounts/:id` | Get account by ID |
 | PUT | `/api/finance/accounts/:id` | Update account (name, status, description) |
 
-**Seed Script:** `python -m src.seed_coa` creates the 3 entities and seeds all 132 accounts.
+**Seed Script:** `python -m src.seed_coa` creates the 3 entities and seeds all 134 accounts.
 
 ---
 
@@ -134,16 +134,37 @@ A group-level chart of accounts shared across all entities. Bank accounts are th
 
 **Status: Built**
 
-Upload bank statement CSVs to import transactions. Each transaction gets a fingerprint (SHA256 hash of account + date + amount + reference) for duplicate detection.
+Upload bank statement CSVs to import transactions. Each transaction gets a SHA256 fingerprint for duplicate detection. The fingerprint fields are **adapter-owned** — each bank adapter declares which fields uniquely identify a row in its own CSV format.
 
 **Flow:**
 1. User selects a bank account and uploads CSV
-2. System parses rows, generates fingerprints, skips duplicates
-3. New transactions created with status **Pending**
-4. Supports multiple date formats (YYYY-MM-DD, DD/MM/YYYY)
-5. Original CSV row stored for audit trail
+2. System selects the correct adapter based on the bank account's `csv_format` field
+3. Adapter normalizes the bank's raw CSV columns into the standard transaction schema
+4. Adapter supplies fingerprint fields; SHA256 hash computed — duplicates skipped
+5. New transactions created with status **Pending**
+6. Normalized row stored in `original_csv_row` (JSON) for audit trail
 
-**Standardized Transaction Fields:**
+**Duplicate detection design:**
+- Re-uploading the same CSV row produces the same fingerprint → blocked as duplicate.
+- Two genuine transactions that share the same date and amount (e.g. two purchases on the same day for the same price) produce **different** fingerprints because the adapter includes a disambiguating field (e.g. `running_balance` for OCBC, which is unique per row in an ordered bank statement).
+
+| Bank | Fingerprint fields |
+|------|--------------------|
+| OCBC | `account_id` + `post_date` + `amount` + `our_ref` + `closing_book_balance` |
+
+**Bank Adapter System:**
+
+There is no generic CSV format. Each bank has a dedicated adapter in `src/services/csv_adapters/` that knows the bank's exact column layout, date format, and amount encoding. The adapter is selected from the `csv_format` field on the bank account record — set explicitly at account creation and validated against the adapter registry.
+
+| Bank | `csv_format` value | Adapter file | Date format | Amount encoding |
+|------|--------------------|-------------|-------------|----------------|
+| OCBC | `ocbc` | `ocbc.py` | `YYYYMMDD` | Separate `Debit Amount` / `Credit Amount` columns |
+
+**`csv_format` is required when creating a bank account.** It is validated against `ADAPTER_REGISTRY` at creation time — invalid values are rejected immediately. This ensures adapter selection is always explicit and unambiguous, regardless of how `bank_name` is entered.
+
+**To add a new bank:** Create `src/services/csv_adapters/<bank>.py` implementing `BankCSVAdapter.parse()`, register it in `registry.py`, add a row to the table above, and update `API.md`.
+
+**Standardized Transaction Fields (output of every adapter):**
 
 | Field | Required | Description |
 |-------|----------|-------------|
@@ -151,14 +172,15 @@ Upload bank statement CSVs to import transactions. Each transaction gets a finge
 | description | Yes | Bank's transaction description/narrative |
 | amount | Yes | Positive = money in, negative = money out |
 | reference_number | No | Bank reference / cheque number |
-| counterparty_name | No | Who the money went to/came from |
-| counterparty_type | No | Type: vendor, employee, host, guest, bank, other |
+| currency | No | ISO 4217 — falls back to bank account's currency if not in CSV |
+| counterparty_name | No | Raw value from bank CSV — overwritten by categorization engine on rule match |
+| counterparty_type | No | Set by categorization engine (vendor, employee, host, guest, bank, other) |
 | counterparty_id | No | FK to vendor/employee (populated when those tables exist) |
 | value_date | No | Date funds actually settled (can differ from transaction_date) |
-| transaction_type | No | Bank's classification (TRANSFER, CARD, DIRECT_DEBIT) |
-| running_balance | No | Running balance after transaction (for reconciliation) |
+| transaction_type | No | Bank's own transaction classification code |
+| running_balance | No | Running balance after transaction (from bank statement) |
 
-**Counterparty linking:** Transactions track who the money went to/came from. The `counterparty_type` identifies the category (vendor, employee, host, guest, bank, other) and `counterparty_id` will link to the vendor/employee record once those tables are built.
+**Counterparty linking:** `counterparty_name` is populated from the raw bank CSV during import (adapter-specific field). The categorization engine overwrites it with the canonical counterparty name when a rule matches. `counterparty_type` and `counterparty_id` are set by the categorization engine only.
 
 **API Endpoints:**
 
@@ -169,20 +191,20 @@ Upload bank statement CSVs to import transactions. Each transaction gets a finge
 | GET | `/api/finance/transactions/:id` | Get transaction by ID |
 
 **Currency Handling:**
-- Each transaction stores its `currency` (ISO 4217 from bank statement)
+- Each transaction stores its `currency` (ISO 4217 — sourced from CSV via adapter, or bank account's currency as fallback)
 - No exchange rate conversion at transaction level
 - Conversion to group reporting currency (USD) happens at report time using standardized period rates
 - Exchange rate table will be built with consolidated reporting module
 
 **Next Steps:**
-- Column mapping UI for different bank CSV formats
 - Auto-detect counterparty from transaction description using categorization rules
+- Add adapters for DBS, Wise, ANZ, Westpac as those bank accounts come online
 
 ---
 
 ### 3.3 Categorization Engine
 
-**Status: Built** (310 tests passing)
+**Status: Built** (331 tests passing)
 
 The categorization engine automatically converts bank transactions into journal entries by applying configurable rules. It is the core of the finance system — without it, every bank transaction would need manual journal entry creation.
 
@@ -204,39 +226,51 @@ For each Pending transaction:
   │   ├── Create journal entry (debit/credit based on amount sign)
   │   ├── Update transaction counterparty (name, type)
   │   ├── Apply tags from rule
-  │   └── Set status → Reconciled, link to JE
+  │   └── Set status → Matched, link to JE
   └── IF NO MATCH:
       └── Leave as Pending (manual review queue)
 ```
 
-**Rule Types:**
+**Transaction Status Lifecycle:**
 
-| Type | What it does | Example |
-|------|-------------|---------|
-| **Simple** | Description/amount pattern → contra account | "AWS" → Debit 6700 Tech Infrastructure, Credit bank |
-| **Intra-Bank** | Same entity, different bank accounts | OCBC → Wise transfer = one JE |
-| **Intercompany** | Different entities | SG → AU transfer = two paired JEs with shared intercompany_group_id |
+| Status | Trigger | Who |
+|--------|---------|-----|
+| `Pending` | Transaction imported from CSV or Stripe | System |
+| `Matched` | Categorization rule applied, journal entry created | System (categorization engine) |
+| `Reconciled` | Confirmed correct | Human reviewer (near-term); AI agent (future) |
+
+Transactions that remain `Pending` after categorization runs had no matching rule — they sit in a manual review queue.
+
+**Rule Categories:**
+
+| Category | Direction | Journal entry |
+|----------|-----------|---------------|
+| `expense` | outgoing | Dr contra account / Cr bank |
+| `deposit` | incoming | Dr bank / Cr contra account |
+| `internal_transfer` | either | Single JE (same entity) or paired JEs with `intercompany_group_id` (cross-entity) |
 
 **Rule Match Criteria (AND logic — all non-null must match):**
 
-| Criterion | Description |
-|-----------|-------------|
-| `match_description_pattern` | Regex or keyword match against transaction description (case-insensitive) |
-| `match_amount_min` / `match_amount_max` | Amount range filter (uses absolute value) |
-| `match_bank_account_id` | Restrict rule to a specific bank account |
-| `match_currency` | Match specific currency (SGD, AUD, etc.) |
-| `match_transaction_type` | Match bank's classification (TRANSFER, CARD, etc.) |
-| `entity_id` | Restrict rule to a specific entity (null = all entities) |
+| Criterion | Operators | Notes |
+|-----------|-----------|-------|
+| `bank_account_ids` | — (scope filter) | JSON array; null = all accounts |
+| `direction` | — (required field) | `incoming` or `outgoing` checked first |
+| `amount_operator` + `amount_value` | `equals` · `not_equals` · `greater_than` · `less_than` · `between` | `between` also requires `amount_value_max` |
+| `description_operator` + `description_value` | `contains` · `not_contains` · `is_exactly` · `matches_regex` | Case-insensitive |
+| `transaction_type_operator` + `transaction_type_value` | Same as description | Matches bank's type code (e.g. `TRANSFER`) |
+| `counterparty_operator` + `counterparty_value` | Same as description | Matches raw counterparty from bank CSV |
+| `match_currency` | — (exact) | ISO 4217 (e.g. `SGD`) |
 
 **Rule Actions (what happens when matched):**
 
 | Action | Description |
 |--------|-------------|
-| `contra_account_code` | The other side of the journal entry (bank side is auto-determined from bank account's `coa_account_code`) |
+| `contra_account_code` | Required for `expense`/`deposit` — the non-bank side of the JE |
+| `target_bank_account_id` | Required for `internal_transfer` — destination bank account (entity derived from it) |
 | `counterparty_name` | Set on the transaction (e.g., "AWS", "Stripe") |
 | `counterparty_type` | Set on the transaction (vendor, employee, host, guest, bank, other) |
 | `tag_ids` | JSON array of tag IDs to apply to the transaction |
-| `target_entity_id` + `target_contra_account_code` | For intercompany rules — the other entity and its contra account |
+| `gst_override` | `null` = use account default · `true` = force GST · `false` = force no GST |
 
 **Amount sign determines debit/credit direction:**
 - **Positive amount** (money IN to bank): Debit bank account, Credit contra account
@@ -254,14 +288,17 @@ finance_transaction_tags: transaction_id, tag_id (unique together)
 ```
 
 **Intercompany Handling:**
-When an intercompany rule matches:
-1. Creates **two journal entries** — one per entity
-2. Both JEs share the same `intercompany_group_id` (UUID)
-3. Source transaction is reconciled to the source JE
-4. When the other entity's bank CSV is uploaded, that transaction auto-matches the existing target JE
+When an `internal_transfer` rule matches and source and target bank accounts belong to **different entities**:
+1. Creates **two journal entries** — one per entity, linked by `intercompany_group_id` (UUID)
+2. Source JE: Dr/Cr the `contra_account_code` (intercompany clearing account) in the source entity
+3. Target JE: Dr/Cr the target bank account's COA code in the target entity
+4. Source transaction status → `Matched`, linked to source JE
+
+When source and target bank accounts belong to the **same entity**:
+1. Creates **one journal entry** — Dr target bank / Cr source bank (or vice versa for incoming)
 
 **Manual Categorization:**
-For unmatched transactions, users can manually categorize via `POST /api/finance/categorization/manual` specifying the contra account, counterparty, and tags.
+For unmatched transactions, users can manually categorize via `POST /api/finance/categorization/manual` specifying the contra account, counterparty, tags, and optional `gst_override`.
 
 **API Endpoints:**
 
@@ -269,7 +306,7 @@ For unmatched transactions, users can manually categorize via `POST /api/finance
 |--------|------|-------------|
 | POST | `/api/finance/categorization/run` | Run engine on Pending transactions |
 | POST | `/api/finance/categorization/manual` | Manually categorize a single transaction |
-| GET | `/api/finance/categorization/rules` | List rules (filter by entity_id, status) |
+| GET | `/api/finance/categorization/rules` | List rules (filter by status) |
 | POST | `/api/finance/categorization/rules` | Create rule |
 | GET | `/api/finance/categorization/rules/:id` | Get rule |
 | PUT | `/api/finance/categorization/rules/:id` | Update rule |
@@ -284,36 +321,56 @@ For unmatched transactions, users can manually categorize via `POST /api/finance
 ```
 finance_categorization_rules
 ├── id
-├── name (human-readable rule name)
-├── entity_id (nullable — null applies to all entities)
-├── priority (integer — lower = higher priority, default 100)
-├── rule_type (simple | intra_bank | intercompany)
-├── match_description_pattern (regex or keyword)
-├── match_amount_min (nullable)
-├── match_amount_max (nullable)
-├── match_bank_account_id (nullable — restrict to specific bank)
-├── match_currency (nullable — match specific currency)
-├── match_transaction_type (nullable — match bank classification)
-├── contra_account_code (the other side of the journal entry)
-├── counterparty_name (nullable — set on transaction when matched)
-├── counterparty_type (nullable — vendor, employee, host, etc.)
-├── tag_ids (JSON array of tag IDs to apply)
-├── target_entity_id (nullable — for intercompany rules)
-├── target_contra_account_code (nullable — for intercompany rules)
-├── status (Active | Inactive)
-├── description (what this rule does)
+├── name                     (human-readable rule name)
+├── priority                 (integer — lower = higher priority, default 100)
+├── status                   (Active | Inactive)
+├── description              (nullable)
+│
+├── SCOPE
+│   └── bank_account_ids     (JSON int array — null = all accounts)
+│
+├── DIRECTION / CATEGORY
+│   ├── direction            (incoming | outgoing — required)
+│   └── category             (expense | deposit | internal_transfer — required)
+│
+├── MATCH CRITERIA (all nullable, AND logic)
+│   ├── amount_operator      (equals | not_equals | greater_than | less_than | between)
+│   ├── amount_value
+│   ├── amount_value_max     (required when operator = between)
+│   ├── description_operator (contains | not_contains | is_exactly | matches_regex)
+│   ├── description_value
+│   ├── transaction_type_operator
+│   ├── transaction_type_value
+│   ├── counterparty_operator
+│   ├── counterparty_value
+│   └── match_currency       (exact ISO 4217 match)
+│
+├── ACTION
+│   ├── contra_account_code  (required for expense/deposit)
+│   ├── target_bank_account_id (required for internal_transfer)
+│   ├── counterparty_name    (set on transaction when matched)
+│   ├── counterparty_type    (vendor | employee | host | guest | bank | other)
+│   ├── tag_ids              (JSON int array)
+│   └── gst_override         (null = account default | true | false)
+│
 ├── created_at
-├── updated_at
+└── updated_at
 ```
+
+**Validation:**
+- `outgoing` → category must be `expense` or `internal_transfer`
+- `incoming` → category must be `deposit` or `internal_transfer`
+- `internal_transfer` → `target_bank_account_id` required; same-entity = 1 JE, cross-entity = paired JEs with `intercompany_group_id`
+- `expense`/`deposit` → `contra_account_code` required and must exist in COA
 
 **Example Rules:**
 
-| Rule | Priority | Pattern | Contra Account | Counterparty |
-|------|----------|---------|---------------|-------------|
-| AWS Payment | 10 | `AWS` | 6700 Tech Infrastructure | AWS (vendor) |
-| Stripe Payout | 20 | `STRIPE PAYOUT` | 2120 Host Payables | Stripe (vendor) |
-| Office Rent | 30 | `LANDLORD CORP` | 6300 Office Rent | Landlord Corp (vendor) |
-| Transfer to AU | 40 | `TRANSFER.*DL AU` | 8000 IC Due from AU | DL AU (bank) |
+| Rule | Dir | Category | Priority | Match | Action |
+|------|-----|----------|----------|-------|--------|
+| AWS Cloud | out | expense | 10 | description contains `AWS` | COA 6700, counterparty: AWS (vendor) |
+| Stripe Payout | in | deposit | 20 | description contains `STRIPE PAYOUT` | COA 2120, counterparty: Stripe |
+| Office Rent | out | expense | 30 | description contains `LANDLORD CORP` | COA 6300, counterparty: Landlord Corp |
+| SG→AU Transfer | out | internal_transfer | 40 | description matches `TRANSFER.*DL AU` | target_bank_account_id: AU account |
 
 **Next Steps:**
 - Populate `coa_account_code` on existing bank accounts
@@ -322,7 +379,46 @@ finance_categorization_rules
 
 ---
 
-### 3.4 Invoice Handling — Accounts Payable
+### 3.4 GST Handling
+
+**Status: Built**
+
+GST (Goods and Services Tax) is tracked at three levels: entity rate, account eligibility, and per-rule override.
+
+**How it works:**
+
+| Level | Field | Description |
+|-------|-------|-------------|
+| Entity | `gst_rate` (float, e.g. `0.09`) | The GST rate applicable to that entity (e.g. 9% for SG, 10% for AU) |
+| Account | `gst_applicable` (bool) | Whether transactions hitting this account attract GST |
+| Rule | `gst_override` (bool, nullable) | `null` = use account default, `true` = force GST, `false` = force no GST |
+| Manual | `gst_override` in request body | Same override logic when manually categorizing a transaction |
+
+**Journal entry creation with GST:**
+
+When the categorization engine matches a transaction to a GST-applicable account (or `gst_override=true`), it splits the journal entry to isolate the GST component:
+
+```
+Transaction: -$109 (payment to GST-applicable vendor, 9% GST)
+
+  Debit  6700 Tech Infrastructure    $100.00   (net expense)
+  Debit  1350 GST Input Tax          $9.00     (recoverable GST)
+  Credit 1000 Bank - OCBC Current    $109.00
+```
+
+For income/revenue transactions the output tax account (2500) is used instead of input tax (1350).
+
+**GST accounts in COA:**
+- `1350` — GST Input Tax (Asset — recoverable GST paid on purchases)
+- `2500` — GST Output Tax (Liability — GST collected on sales, owed to tax authority)
+
+**Next Steps:**
+- GST return summary report (net GST payable = Output Tax − Input Tax)
+- Period-end GST clearing journal entry
+
+---
+
+### 3.5 Invoice Handling — Accounts Payable
 
 **Status: To Be Built**
 
@@ -339,7 +435,7 @@ Manage invoices from vendors and track what the company owes (accounts payable).
 - Invoice CRUD (create, list, view, update, approve, void)
 - Line items with COA account mapping
 - Due date tracking and aging reports
-- Vendor linking (see 3.6)
+- Vendor linking (see 3.7)
 - Recurring invoices (e.g. monthly rent, software subscriptions)
 - Invoice status workflow: Draft → Approved → Partially Paid → Paid → Void
 - Accounts payable aging report (current, 30, 60, 90+ days)
@@ -394,7 +490,7 @@ finance_payments
 
 ---
 
-### 3.5 Stripe Integration
+### 3.6 Stripe Integration
 
 **Status: To Be Built (Later)**
 
@@ -419,7 +515,7 @@ Direct integration with Stripe to automatically import transactions and create j
 
 ---
 
-### 3.6 Vendor / Employee Management
+### 3.7 Vendor / Employee Management
 
 **Status: To Be Built**
 
@@ -476,7 +572,7 @@ finance_employees
 
 ---
 
-### 3.7 Accounting Basis: Cash vs Accrual
+### 3.8 Accounting Basis: Cash vs Accrual
 
 **Status: Partially Built**
 
@@ -508,7 +604,6 @@ CASH (bank payment):
 - Accrual path: Manual journal entries for accruals
 
 **What's next:**
-- Categorization engine (automates cash path)
 - Invoice/AP system (automates accrual path)
 - Prepayment scheduling (auto-spread payments over periods)
 - Revenue recognition (Stripe-specific, to be defined)
@@ -720,6 +815,7 @@ TAX (9xxx)
 | Categorization Engine | Done | — | — | Ready |
 | Tags System | Done | — | — | Ready |
 | Categorization Rules CRUD | Done | — | — | Ready |
+| GST Handling (entity/account/rule level) | Done | — | — | Ready |
 | **Invoice / AP (Accrual)** | — | — | — | Planned |
 | **Prepayment Scheduling** | — | — | — | Planned |
 | **Stripe Full Integration** | — | — | — | Later |
@@ -731,7 +827,7 @@ TAX (9xxx)
 
 ### Build Order
 
-1. **Categorization Engine** — automates the cash path (bank transactions → journal entries)
+1. ~~**Categorization Engine**~~ — ✅ Done
 2. **Vendor Management** — needed for invoice/AP and categorization rule linking
 3. **Employee Management** — needed for expense claims
 4. **Invoice / AP** — automates the accrual path (invoices → journal entries → payment matching)
@@ -762,14 +858,20 @@ Alembic manages schema migrations in `migrations/versions/`:
 | 001 | Create entities and accounts tables |
 | 002 | Create bank accounts and transactions tables |
 | 003 | Create journal entries and lines tables |
-| 004 | Update accounts for COA v2 (group-level, new fields) |
+| fbf4905 | Add `posted_at` and `posting_user_id` to journal entries |
+| 71d03f0 | Add `reconciled_journal_entry_id` and `reconciled_at` to transactions |
+| 2834411 | Add `source` and `stripe_transaction_id` to transactions |
+| 004 | Update accounts for COA v2 (group-level, new account types, GST/is_bank_account flags) |
+| 005 | Add counterparty fields, `value_date`, `transaction_type`, `running_balance`, `currency` to transactions |
+| 006 | Create categorization engine tables (rules, tags, transaction_tags) |
+| 007 | Add GST fields (`gst_rate` on entities, `gst_applicable` on accounts, `gst_override` on rules) |
 
 Run migrations: `alembic upgrade head`
 
 ### Testing
 
-- 263 tests passing (pytest)
-- mypy type checking clean
+- 331 tests passing (pytest)
+- mypy type checking clean (39 source files)
 - Run: `python -m pytest tests/ -x -q`
 - Run mypy: `python -m mypy src/ --ignore-missing-imports`
 
@@ -779,4 +881,4 @@ Seed the COA and entities: `python -m src.seed_coa`
 
 Creates:
 - 3 entities (DL Ventures, DL SG, DL AU)
-- 132 group-level accounts from `documentation/chart_of_accounts_v2.csv`
+- 134 group-level accounts from `documentation/chart_of_accounts_v2.csv`

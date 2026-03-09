@@ -69,13 +69,14 @@ def sample_entity(mock_db):
 
 @pytest.fixture
 def sample_bank_account(mock_db, sample_entity):
-    """Create a sample bank account."""
+    """Create a sample OCBC bank account."""
     bank_account = FinanceBankAccount(
         entity_id=sample_entity.id,
-        bank_name="Test Bank",
+        bank_name="OCBC",
         account_number="123456789",
         account_name="Test Account",
         currency="SGD",
+        csv_format="ocbc",
         status=BankAccountStatus.ACTIVE
     )
     mock_db.add(bank_account)
@@ -84,12 +85,24 @@ def sample_bank_account(mock_db, sample_entity):
     return bank_account
 
 
+# Minimal OCBC CSV header — only required columns + common optional ones
+OCBC_HEADER = "Post Date,Statement Details Info,Debit Amount,Credit Amount,Account Currency,Our Ref,Transaction Type Code,Closing Book Balance,Statement Value Date"
+
+
+def ocbc_row(post_date, description, debit=0, credit=0, currency="SGD", ref="", txn_type="NMSC", balance=1000, value_date=None):
+    """Build a single OCBC CSV data row with amounts formatted to 2dp."""
+    vd = value_date or post_date
+    return f"{post_date},{description},{debit:.2f},{credit:.2f},{currency},{ref},{txn_type},{balance:.2f},{vd}"
+
+
 def test_import_csv_success(client, mock_db, sample_bank_account):
-    """Test successful CSV import."""
-    csv_content = """date,description,amount,reference
-2024-01-15,Purchase at Store A,-50.00,REF001
-2024-01-16,Salary deposit,3000.00,REF002
-2024-01-17,Utility bill payment,-100.50,REF003"""
+    """Test successful CSV import with OCBC format."""
+    csv_content = "\n".join([
+        OCBC_HEADER,
+        ocbc_row("20240115", "Purchase at Store A", debit=50.00, ref="REF001"),
+        ocbc_row("20240116", "Salary deposit", credit=3000.00, txn_type="NTRF", ref="REF002"),
+        ocbc_row("20240117", "Utility bill payment", debit=100.50, ref="REF003"),
+    ])
     
     data = {
         'bank_account_id': str(sample_bank_account.id),
@@ -120,9 +133,11 @@ def test_import_csv_with_duplicates(client, mock_db, sample_bank_account):
     bank_account_id = sample_bank_account.id
     
     # First import
-    csv_content = """date,description,amount,reference
-2024-01-15,Purchase at Store A,-50.00,REF001
-2024-01-16,Salary deposit,3000.00,REF002"""
+    csv_content = "\n".join([
+        OCBC_HEADER,
+        ocbc_row("20240115", "Purchase at Store A", debit=50.00, ref="REF001"),
+        ocbc_row("20240116", "Salary deposit", credit=3000.00, ref="REF002"),
+    ])
     
     data = {
         'bank_account_id': str(bank_account_id),
@@ -140,9 +155,11 @@ def test_import_csv_with_duplicates(client, mock_db, sample_bank_account):
     assert result['transactions_created'] == 2
     
     # Second import with one duplicate and one new
-    csv_content2 = """date,description,amount,reference
-2024-01-15,Purchase at Store A,-50.00,REF001
-2024-01-17,New transaction,-75.00,REF003"""
+    csv_content2 = "\n".join([
+        OCBC_HEADER,
+        ocbc_row("20240115", "Purchase at Store A", debit=50.00, ref="REF001"),
+        ocbc_row("20240117", "New transaction", debit=75.00, ref="REF003"),
+    ])
     
     data2 = {
         'bank_account_id': str(bank_account_id),
@@ -166,10 +183,12 @@ def test_import_csv_with_duplicates(client, mock_db, sample_bank_account):
 
 
 def test_import_csv_alternate_date_format(client, mock_db, sample_bank_account):
-    """Test CSV import with DD/MM/YYYY date format."""
-    csv_content = """date,description,amount,reference
-15/01/2024,Purchase at Store A,-50.00,REF001
-16/01/2024,Salary deposit,3000.00,REF002"""
+    """Test CSV import with OCBC YYYYMMDD date format."""
+    csv_content = "\n".join([
+        OCBC_HEADER,
+        ocbc_row("20240115", "Purchase at Store A", debit=50.00),
+        ocbc_row("20240116", "Salary deposit", credit=3000.00),
+    ])
     
     data = {
         'bank_account_id': str(sample_bank_account.id),
@@ -188,10 +207,12 @@ def test_import_csv_alternate_date_format(client, mock_db, sample_bank_account):
 
 
 def test_import_csv_missing_reference(client, mock_db, sample_bank_account):
-    """Test CSV import with missing reference numbers."""
-    csv_content = """date,description,amount,reference
-2024-01-15,Purchase without ref,-50.00,
-2024-01-16,Another purchase,-30.00,"""
+    """Test CSV import with missing reference numbers (Our Ref blank)."""
+    csv_content = "\n".join([
+        OCBC_HEADER,
+        ocbc_row("20240115", "Purchase without ref", debit=50.00, ref=""),
+        ocbc_row("20240116", "Another purchase", debit=30.00, ref=""),
+    ])
     
     data = {
         'bank_account_id': str(sample_bank_account.id),
@@ -215,35 +236,40 @@ def test_import_csv_missing_reference(client, mock_db, sample_bank_account):
 
 
 def test_import_csv_validation_errors(client, mock_db, sample_bank_account):
-    """Test CSV import with validation errors."""
-    csv_content = """date,description,amount,reference
-,Purchase at Store A,-50.00,REF001
-2024-01-16,,3000.00,REF002
-2024-01-17,Utility bill payment,invalid,REF003
-invalid-date,Another purchase,-30.00,REF004"""
-    
+    """Test CSV import with validation errors (OCBC format)."""
+    # Row 2: missing Post Date
+    # Row 3: missing Statement Details Info
+    # Row 4: both Debit and Credit amounts missing
+    # Row 5: invalid Post Date format
+    csv_content = "\n".join([
+        OCBC_HEADER,
+        ",Purchase at Store A,50.00,0,SGD,REF001,NMSC,1000,20240115",   # empty Post Date
+        "20240116,,0,3000.00,SGD,REF002,NTRF,4000,20240116",             # empty description
+        "20240117,Utility bill payment,,,SGD,REF003,NMSC,3900,20240117", # both amounts missing
+        "not-a-date,Another purchase,30.00,0,SGD,REF004,NMSC,3870,not-a-date",  # bad date
+    ])
+
     data = {
         'bank_account_id': str(sample_bank_account.id),
         'file': (io.BytesIO(csv_content.encode('utf-8')), 'transactions.csv')
     }
-    
+
     response = client.post(
         '/api/finance/transactions/import',
         data=data,
         content_type='multipart/form-data'
     )
-    
+
     assert response.status_code == 200
     result = response.get_json()
     assert result['transactions_created'] == 0
     assert len(result['errors']) == 4
-    
-    # Check error messages
+
     errors = result['errors']
-    assert any('Missing date' in err['error'] for err in errors)
-    assert any('Missing description' in err['error'] for err in errors)
-    assert any('Invalid amount' in err['error'] for err in errors)
-    assert any('Invalid date format' in err['error'] for err in errors)
+    assert any('Missing Post Date' in err['error'] for err in errors)
+    assert any('Missing Statement Details Info' in err['error'] for err in errors)
+    assert any('Debit Amount and Credit Amount are missing' in err['error'] for err in errors)
+    assert any('Invalid Post Date' in err['error'] for err in errors)
 
 
 def test_import_csv_no_file(client):
@@ -318,39 +344,43 @@ def test_import_csv_nonexistent_bank_account(client, mock_db):
 
 
 def test_import_csv_stores_original_csv_row(client, mock_db, sample_bank_account):
-    """Test that original CSV row is stored for audit."""
+    """Test that normalized row data is stored for audit."""
     import json
-    
-    csv_content = """date,description,amount,reference
-2024-01-15,Purchase at Store A,-50.00,REF001"""
-    
+
+    csv_content = "\n".join([
+        OCBC_HEADER,
+        ocbc_row("20240115", "Purchase at Store A", debit=50.00, ref="REF001"),
+    ])
+
     data = {
         'bank_account_id': str(sample_bank_account.id),
         'file': (io.BytesIO(csv_content.encode('utf-8')), 'transactions.csv')
     }
-    
+
     response = client.post(
         '/api/finance/transactions/import',
         data=data,
         content_type='multipart/form-data'
     )
-    
+
     assert response.status_code == 200
-    
-    # Verify original_csv_row is stored
+
+    # Verify original_csv_row stores the normalized dict for audit
     transaction = mock_db.query(FinanceTransaction).first()
     assert transaction.original_csv_row is not None
-    csv_row = json.loads(transaction.original_csv_row)
-    assert csv_row['date'] == '2024-01-15'
-    assert csv_row['description'] == 'Purchase at Store A'
-    assert csv_row['amount'] == '-50.00'
-    assert csv_row['reference'] == 'REF001'
+    stored = json.loads(transaction.original_csv_row)
+    assert stored['transaction_date'] == '2024-01-15'
+    assert stored['description'] == 'Purchase at Store A'
+    assert stored['amount'] == '-50.00'
+    assert stored['reference_number'] == 'REF001'
 
 
 def test_import_csv_with_custom_batch_id(client, mock_db, sample_bank_account):
     """Test CSV import with custom import_batch_id."""
-    csv_content = """date,description,amount,reference
-2024-01-15,Purchase,-50.00,REF001"""
+    csv_content = "\n".join([
+        OCBC_HEADER,
+        ocbc_row("20240115", "Purchase", debit=50.00, ref="REF001"),
+    ])
     
     custom_batch_id = "BATCH-2024-TEST"
     

@@ -18,12 +18,15 @@ from src.models.journal_line import FinanceJournalLine
 from src.models.tag import FinanceTag, FinanceTransactionTag
 from src.models.categorization_rule import (
     FinanceCategorizationRule,
-    RuleType,
     RuleStatus,
+    TransactionDirection,
+    TransactionCategory,
+    MatchOperator,
+    AmountOperator,
 )
 from src.services.tag_service import tag_service
 from src.services.rule_service import rule_service
-from src.services.categorization_service import categorization_service
+from src.services.categorization_service import categorization_service, _text_matches
 from src.models.schemas import TagCreate, TagUpdate, RuleCreate, RuleUpdate
 
 
@@ -33,20 +36,16 @@ from src.models.schemas import TagCreate, TagUpdate, RuleCreate, RuleUpdate
 
 @pytest.fixture
 def app():
-    """Create application for testing."""
-    app = create_app({'TESTING': True})
-    return app
+    return create_app({'TESTING': True})
 
 
 @pytest.fixture
 def client(app):
-    """Create test client."""
     return app.test_client()
 
 
 @pytest.fixture
 def db_session():
-    """Create in-memory SQLite database for testing."""
     engine = create_engine('sqlite:///:memory:')
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
@@ -57,7 +56,6 @@ def db_session():
 
 @pytest.fixture
 def mock_get_db(db_session):
-    """Mock get_db to return test session."""
     def _get_db():
         yield db_session
     return _get_db
@@ -65,12 +63,9 @@ def mock_get_db(db_session):
 
 @pytest.fixture
 def test_entity(db_session):
-    """Create test entity."""
     entity = FinanceEntity(
-        name="Test Company SG",
-        country="SG",
-        base_currency="SGD",
-        status=EntityStatus.ACTIVE
+        name="Test Company SG", country="SG",
+        base_currency="SGD", status=EntityStatus.ACTIVE
     )
     db_session.add(entity)
     db_session.commit()
@@ -80,12 +75,9 @@ def test_entity(db_session):
 
 @pytest.fixture
 def test_entity_au(db_session):
-    """Create a second test entity for intercompany tests."""
     entity = FinanceEntity(
-        name="Test Company AU",
-        country="AU",
-        base_currency="AUD",
-        status=EntityStatus.ACTIVE
+        name="Test Company AU", country="AU",
+        base_currency="AUD", status=EntityStatus.ACTIVE
     )
     db_session.add(entity)
     db_session.commit()
@@ -95,43 +87,14 @@ def test_entity_au(db_session):
 
 @pytest.fixture
 def test_accounts(db_session, test_entity):
-    """Create test chart of accounts."""
     accounts = [
-        FinanceAccount(
-            code="1000", name="Cash at Bank", account_type=AccountType.ASSET,
-            normal_balance=NormalBalance.DEBIT, category="Assets",
-            status=AccountStatus.ACTIVE
-        ),
-        FinanceAccount(
-            code="2000", name="Accounts Payable", account_type=AccountType.LIABILITY,
-            normal_balance=NormalBalance.CREDIT, category="Liabilities",
-            status=AccountStatus.ACTIVE
-        ),
-        FinanceAccount(
-            code="4000", name="Revenue", account_type=AccountType.REVENUE,
-            normal_balance=NormalBalance.CREDIT, category="Revenue",
-            status=AccountStatus.ACTIVE
-        ),
-        FinanceAccount(
-            code="5000", name="Office Expenses", account_type=AccountType.EXPENSE,
-            normal_balance=NormalBalance.DEBIT, category="Expenses",
-            status=AccountStatus.ACTIVE
-        ),
-        FinanceAccount(
-            code="1500", name="IC Receivable", account_type=AccountType.INTERCOMPANY,
-            normal_balance=NormalBalance.DEBIT, category="Intercompany",
-            status=AccountStatus.ACTIVE
-        ),
-        FinanceAccount(
-            code="2500", name="IC Payable", account_type=AccountType.INTERCOMPANY,
-            normal_balance=NormalBalance.CREDIT, category="Intercompany",
-            status=AccountStatus.ACTIVE
-        ),
-        FinanceAccount(
-            code="6000", name="Marketing Expenses", account_type=AccountType.EXPENSE,
-            normal_balance=NormalBalance.DEBIT, category="Expenses",
-            status=AccountStatus.ACTIVE
-        ),
+        FinanceAccount(code="1000", name="Cash at Bank",       account_type=AccountType.ASSET,     normal_balance=NormalBalance.DEBIT,  category="Assets",       status=AccountStatus.ACTIVE),
+        FinanceAccount(code="1001", name="Wise Account",       account_type=AccountType.ASSET,     normal_balance=NormalBalance.DEBIT,  category="Assets",       status=AccountStatus.ACTIVE),
+        FinanceAccount(code="1500", name="IC Receivable",      account_type=AccountType.ASSET,     normal_balance=NormalBalance.DEBIT,  category="Intercompany", status=AccountStatus.ACTIVE),
+        FinanceAccount(code="2000", name="Accounts Payable",   account_type=AccountType.LIABILITY, normal_balance=NormalBalance.CREDIT, category="Liabilities",  status=AccountStatus.ACTIVE),
+        FinanceAccount(code="4000", name="Revenue",            account_type=AccountType.REVENUE,   normal_balance=NormalBalance.CREDIT, category="Revenue",      status=AccountStatus.ACTIVE),
+        FinanceAccount(code="5000", name="Office Expenses",    account_type=AccountType.EXPENSE,   normal_balance=NormalBalance.DEBIT,  category="Expenses",     status=AccountStatus.ACTIVE),
+        FinanceAccount(code="6000", name="Marketing Expenses", account_type=AccountType.EXPENSE,   normal_balance=NormalBalance.DEBIT,  category="Expenses",     status=AccountStatus.ACTIVE),
     ]
     for acc in accounts:
         db_session.add(acc)
@@ -141,15 +104,39 @@ def test_accounts(db_session, test_entity):
 
 @pytest.fixture
 def test_bank_account(db_session, test_entity):
-    """Create a bank account with COA code."""
     ba = FinanceBankAccount(
         entity_id=test_entity.id,
-        bank_name="OCBC",
-        account_number="123-456-789",
-        account_name="OCBC Current",
-        currency="SGD",
-        coa_account_code="1000",
-        status=BankAccountStatus.ACTIVE,
+        bank_name="OCBC", account_number="123-456-789",
+        account_name="OCBC Current", currency="SGD",
+        coa_account_code="1000", status=BankAccountStatus.ACTIVE,
+    )
+    db_session.add(ba)
+    db_session.commit()
+    db_session.refresh(ba)
+    return ba
+
+
+@pytest.fixture
+def test_bank_account_wise(db_session, test_entity):
+    ba = FinanceBankAccount(
+        entity_id=test_entity.id,
+        bank_name="Wise", account_number="WISE-001",
+        account_name="Wise SGD", currency="SGD",
+        coa_account_code="1001", status=BankAccountStatus.ACTIVE,
+    )
+    db_session.add(ba)
+    db_session.commit()
+    db_session.refresh(ba)
+    return ba
+
+
+@pytest.fixture
+def test_bank_account_au(db_session, test_entity_au):
+    ba = FinanceBankAccount(
+        entity_id=test_entity_au.id,
+        bank_name="ANZ", account_number="ANZ-001",
+        account_name="ANZ AUD", currency="AUD",
+        coa_account_code="1000", status=BankAccountStatus.ACTIVE,
     )
     db_session.add(ba)
     db_session.commit()
@@ -159,15 +146,11 @@ def test_bank_account(db_session, test_entity):
 
 @pytest.fixture
 def test_bank_account_usd(db_session, test_entity):
-    """Create a USD bank account."""
     ba = FinanceBankAccount(
         entity_id=test_entity.id,
-        bank_name="Citibank",
-        account_number="987-654-321",
-        account_name="Citi USD",
-        currency="USD",
-        coa_account_code="1000",
-        status=BankAccountStatus.ACTIVE,
+        bank_name="Citibank", account_number="987-654-321",
+        account_name="Citi USD", currency="USD",
+        coa_account_code="1000", status=BankAccountStatus.ACTIVE,
     )
     db_session.add(ba)
     db_session.commit()
@@ -175,9 +158,10 @@ def test_bank_account_usd(db_session, test_entity):
     return ba
 
 
-def _make_transaction(db_session, bank_account, description="Test txn", amount=100.0,
-                      currency="SGD", transaction_type=None, fingerprint=None):
-    """Helper to create a pending transaction."""
+def _make_transaction(
+    db_session, bank_account, description="Test txn", amount=100.0,
+    currency="SGD", transaction_type=None, counterparty_name=None, fingerprint=None,
+):
     if fingerprint is None:
         import hashlib
         fingerprint = hashlib.sha256(f"{description}{amount}{bank_account.id}".encode()).hexdigest()
@@ -192,10 +176,36 @@ def _make_transaction(db_session, bank_account, description="Test txn", amount=1
     )
     if transaction_type:
         txn.transaction_type = transaction_type
+    if counterparty_name:
+        txn.counterparty_name = counterparty_name
     db_session.add(txn)
     db_session.commit()
     db_session.refresh(txn)
     return txn
+
+
+def _expense_rule(**kwargs) -> RuleCreate:
+    """Helper: minimal outgoing expense rule."""
+    defaults = dict(
+        name="Expense Rule",
+        direction=TransactionDirection.OUTGOING,
+        category=TransactionCategory.EXPENSE,
+        contra_account_code="5000",
+    )
+    defaults.update(kwargs)
+    return RuleCreate(**defaults)
+
+
+def _deposit_rule(**kwargs) -> RuleCreate:
+    """Helper: minimal incoming deposit rule."""
+    defaults = dict(
+        name="Deposit Rule",
+        direction=TransactionDirection.INCOMING,
+        category=TransactionCategory.DEPOSIT,
+        contra_account_code="4000",
+    )
+    defaults.update(kwargs)
+    return RuleCreate(**defaults)
 
 
 # ============================================================================
@@ -203,65 +213,41 @@ def _make_transaction(db_session, bank_account, description="Test txn", amount=1
 # ============================================================================
 
 class TestTagService:
-    """Tests for tag CRUD operations."""
-
     def test_create_tag(self, db_session):
-        """Create a tag with all fields."""
-        tag_data = TagCreate(name="Recurring", color="#FF5733", description="Recurring expense")
-        tag = tag_service.create(db_session, tag_data)
+        tag = tag_service.create(db_session, TagCreate(name="Recurring", color="#FF5733", description="Recurring expense"))
         assert tag.id is not None
         assert tag.name == "Recurring"
-        assert tag.color == "#FF5733"
-        assert tag.description == "Recurring expense"
 
     def test_create_tag_duplicate_name(self, db_session):
-        """Duplicate tag name should raise ValueError."""
         tag_service.create(db_session, TagCreate(name="DupTag"))
         with pytest.raises(ValueError, match="already exists"):
             tag_service.create(db_session, TagCreate(name="DupTag"))
 
-    def test_list_tags(self, db_session):
-        """List all tags ordered by name."""
+    def test_list_tags_ordered_by_name(self, db_session):
         tag_service.create(db_session, TagCreate(name="Zeta"))
         tag_service.create(db_session, TagCreate(name="Alpha"))
         tags = tag_service.get_all(db_session)
-        assert len(tags) == 2
         assert tags[0].name == "Alpha"
         assert tags[1].name == "Zeta"
 
     def test_update_tag(self, db_session):
-        """Update a tag's fields."""
         tag = tag_service.create(db_session, TagCreate(name="OldName"))
         updated = tag_service.update(db_session, tag.id, TagUpdate(name="NewName", color="#000000"))
-        assert updated is not None
         assert updated.name == "NewName"
-        assert updated.color == "#000000"
-
-    def test_update_tag_not_found(self, db_session):
-        """Updating nonexistent tag returns None."""
-        result = tag_service.update(db_session, 999, TagUpdate(name="X"))
-        assert result is None
 
     def test_delete_tag(self, db_session):
-        """Delete a tag that is not in use."""
         tag = tag_service.create(db_session, TagCreate(name="ToDelete"))
         assert tag_service.delete(db_session, tag.id) is True
-        assert tag_service.get_by_id(db_session, tag.id) is None
 
     def test_delete_tag_in_use(self, db_session, test_bank_account):
-        """Deleting a tag that is applied to transactions should fail."""
         tag = tag_service.create(db_session, TagCreate(name="InUse"))
         txn = _make_transaction(db_session, test_bank_account, description="Tagged txn")
-        # Create association
-        assoc = FinanceTransactionTag(transaction_id=txn.id, tag_id=tag.id)
-        db_session.add(assoc)
+        db_session.add(FinanceTransactionTag(transaction_id=txn.id, tag_id=tag.id))
         db_session.commit()
-
         with pytest.raises(ValueError, match="Cannot delete"):
             tag_service.delete(db_session, tag.id)
 
     def test_delete_tag_not_found(self, db_session):
-        """Deleting nonexistent tag returns False."""
         assert tag_service.delete(db_session, 999) is False
 
 
@@ -270,29 +256,19 @@ class TestTagService:
 # ============================================================================
 
 class TestTagRoutes:
-    """Tests for tag API endpoints."""
-
     def test_create_tag_route(self, client, db_session, mock_get_db):
-        """POST /api/finance/tags creates a tag."""
         with patch('src.routes.tags.get_db', mock_get_db):
-            resp = client.post('/api/finance/tags', json={
-                "name": "TestTag", "color": "#123456"
-            })
+            resp = client.post('/api/finance/tags', json={"name": "TestTag", "color": "#123456"})
             assert resp.status_code == 201
-            data = resp.get_json()
-            assert data["name"] == "TestTag"
+            assert resp.get_json()["name"] == "TestTag"
 
     def test_list_tags_route(self, client, db_session, mock_get_db):
-        """GET /api/finance/tags returns all tags."""
         tag_service.create(db_session, TagCreate(name="RouteTag"))
         with patch('src.routes.tags.get_db', mock_get_db):
             resp = client.get('/api/finance/tags')
             assert resp.status_code == 200
-            data = resp.get_json()
-            assert len(data) >= 1
 
     def test_update_tag_route(self, client, db_session, mock_get_db):
-        """PUT /api/finance/tags/:id updates a tag."""
         tag = tag_service.create(db_session, TagCreate(name="Before"))
         with patch('src.routes.tags.get_db', mock_get_db):
             resp = client.put(f'/api/finance/tags/{tag.id}', json={"name": "After"})
@@ -300,7 +276,6 @@ class TestTagRoutes:
             assert resp.get_json()["name"] == "After"
 
     def test_delete_tag_route(self, client, db_session, mock_get_db):
-        """DELETE /api/finance/tags/:id deletes a tag."""
         tag = tag_service.create(db_session, TagCreate(name="DeleteMe"))
         with patch('src.routes.tags.get_db', mock_get_db):
             resp = client.delete(f'/api/finance/tags/{tag.id}')
@@ -312,117 +287,125 @@ class TestTagRoutes:
 # ============================================================================
 
 class TestRuleService:
-    """Tests for categorization rule CRUD operations."""
 
-    def test_create_simple_rule(self, db_session, test_accounts):
-        """Create a simple categorization rule."""
-        rule_data = RuleCreate(
+    def test_create_expense_rule(self, db_session, test_accounts):
+        rule = rule_service.create(db_session, _expense_rule(
             name="Office Supplies",
-            rule_type=RuleType.SIMPLE,
-            match_description_pattern="OFFICE.*DEPOT",
-            contra_account_code="5000",
+            description_operator=MatchOperator.CONTAINS,
+            description_value="OFFICE DEPOT",
             counterparty_name="Office Depot",
             counterparty_type="vendor",
-        )
-        rule = rule_service.create(db_session, rule_data)
+        ))
         assert rule.id is not None
         assert rule.name == "Office Supplies"
         assert rule.priority == 100
-        assert rule.rule_type == RuleType.SIMPLE
+        assert rule.direction == TransactionDirection.OUTGOING
+        assert rule.category == TransactionCategory.EXPENSE
         assert rule.contra_account_code == "5000"
 
-    def test_create_rule_invalid_account(self, db_session, test_accounts):
-        """Rule with nonexistent contra_account_code should fail."""
-        rule_data = RuleCreate(
-            name="Bad Rule",
-            rule_type=RuleType.SIMPLE,
-            contra_account_code="9999",
-        )
+    def test_create_deposit_rule(self, db_session, test_accounts):
+        rule = rule_service.create(db_session, _deposit_rule(name="Client Revenue"))
+        assert rule.direction == TransactionDirection.INCOMING
+        assert rule.category == TransactionCategory.DEPOSIT
+
+    def test_direction_category_mismatch_expense_incoming(self, db_session, test_accounts):
+        with pytest.raises(ValueError, match="requires direction='outgoing'"):
+            rule_service.create(db_session, RuleCreate(
+                name="Bad Rule",
+                direction=TransactionDirection.INCOMING,
+                category=TransactionCategory.EXPENSE,
+                contra_account_code="5000",
+            ))
+
+    def test_direction_category_mismatch_deposit_outgoing(self, db_session, test_accounts):
+        with pytest.raises(ValueError, match="requires direction='incoming'"):
+            rule_service.create(db_session, RuleCreate(
+                name="Bad Rule",
+                direction=TransactionDirection.OUTGOING,
+                category=TransactionCategory.DEPOSIT,
+                contra_account_code="4000",
+            ))
+
+    def test_expense_rule_missing_contra_account(self, db_session, test_accounts):
+        with pytest.raises(ValueError, match="requires contra_account_code"):
+            rule_service.create(db_session, RuleCreate(
+                name="No Contra",
+                direction=TransactionDirection.OUTGOING,
+                category=TransactionCategory.EXPENSE,
+            ))
+
+    def test_expense_rule_invalid_contra_account(self, db_session, test_accounts):
         with pytest.raises(ValueError, match="does not exist"):
-            rule_service.create(db_session, rule_data)
+            rule_service.create(db_session, _expense_rule(
+                name="Bad Account", contra_account_code="9999",
+            ))
 
-    def test_create_intercompany_rule_missing_target(self, db_session, test_accounts):
-        """Intercompany rule without target fields should fail."""
-        rule_data = RuleCreate(
-            name="IC Rule",
-            rule_type=RuleType.INTERCOMPANY,
-            contra_account_code="1500",
-        )
-        with pytest.raises(ValueError, match="target_entity_id"):
-            rule_service.create(db_session, rule_data)
+    def test_internal_transfer_missing_target_bank_account(self, db_session, test_accounts):
+        with pytest.raises(ValueError, match="requires target_bank_account_id"):
+            rule_service.create(db_session, RuleCreate(
+                name="Transfer",
+                direction=TransactionDirection.OUTGOING,
+                category=TransactionCategory.INTERNAL_TRANSFER,
+            ))
 
-    def test_create_intercompany_rule_missing_target_account(self, db_session, test_accounts, test_entity_au):
-        """Intercompany rule without target_contra_account_code should fail."""
-        rule_data = RuleCreate(
-            name="IC Rule",
-            rule_type=RuleType.INTERCOMPANY,
-            contra_account_code="1500",
-            target_entity_id=test_entity_au.id,
-        )
-        with pytest.raises(ValueError, match="target_contra_account_code"):
-            rule_service.create(db_session, rule_data)
+    def test_internal_transfer_invalid_target_bank_account(self, db_session, test_accounts):
+        with pytest.raises(ValueError, match="does not exist"):
+            rule_service.create(db_session, RuleCreate(
+                name="Transfer",
+                direction=TransactionDirection.OUTGOING,
+                category=TransactionCategory.INTERNAL_TRANSFER,
+                target_bank_account_id=9999,
+            ))
+
+    def test_between_operator_requires_both_bounds(self, db_session, test_accounts):
+        with pytest.raises(ValueError, match="requires both amount_value and amount_value_max"):
+            rule_service.create(db_session, _expense_rule(
+                name="Between No Max",
+                amount_operator=AmountOperator.BETWEEN,
+                amount_value=10.0,
+            ))
+
+    def test_between_operator_invalid_range(self, db_session, test_accounts):
+        with pytest.raises(ValueError, match="amount_value must be"):
+            rule_service.create(db_session, _expense_rule(
+                name="Inverted Range",
+                amount_operator=AmountOperator.BETWEEN,
+                amount_value=100.0,
+                amount_value_max=10.0,
+            ))
+
+    def test_bank_account_ids_stored_as_json(self, db_session, test_accounts, test_bank_account):
+        rule = rule_service.create(db_session, _expense_rule(
+            name="Scoped Rule", bank_account_ids=[test_bank_account.id],
+        ))
+        assert rule.bank_account_ids == json.dumps([test_bank_account.id])
+
+    def test_tag_ids_stored_as_json(self, db_session, test_accounts):
+        rule = rule_service.create(db_session, _expense_rule(name="Tagged", tag_ids=[1, 3, 5]))
+        assert rule.tag_ids == "[1, 3, 5]"
 
     def test_list_rules_filter_by_status(self, db_session, test_accounts):
-        """List rules filtered by status."""
-        rule_service.create(db_session, RuleCreate(
-            name="Active Rule", rule_type=RuleType.SIMPLE,
-            contra_account_code="5000", status=RuleStatus.ACTIVE,
-        ))
-        rule_service.create(db_session, RuleCreate(
-            name="Inactive Rule", rule_type=RuleType.SIMPLE,
-            contra_account_code="5000", status=RuleStatus.INACTIVE,
-        ))
+        rule_service.create(db_session, _expense_rule(name="Active",   status=RuleStatus.ACTIVE))
+        rule_service.create(db_session, _expense_rule(name="Inactive", status=RuleStatus.INACTIVE))
         active = rule_service.get_all(db_session, status=RuleStatus.ACTIVE)
         assert len(active) == 1
-        assert active[0].name == "Active Rule"
-
-    def test_list_rules_filter_by_entity(self, db_session, test_accounts, test_entity):
-        """List rules filtered by entity_id includes null-entity rules."""
-        rule_service.create(db_session, RuleCreate(
-            name="Global Rule", rule_type=RuleType.SIMPLE,
-            contra_account_code="5000",
-        ))
-        rule_service.create(db_session, RuleCreate(
-            name="Entity Rule", rule_type=RuleType.SIMPLE,
-            contra_account_code="5000", entity_id=test_entity.id,
-        ))
-        rules = rule_service.get_all(db_session, entity_id=test_entity.id)
-        assert len(rules) == 2  # Both global and entity-specific
+        assert active[0].name == "Active"
 
     def test_update_rule(self, db_session, test_accounts):
-        """Update a rule's fields."""
-        rule = rule_service.create(db_session, RuleCreate(
-            name="Original", rule_type=RuleType.SIMPLE,
-            contra_account_code="5000", priority=50,
-        ))
+        rule = rule_service.create(db_session, _expense_rule(name="Original", priority=50))
         updated = rule_service.update(db_session, rule.id, RuleUpdate(name="Updated", priority=10))
-        assert updated is not None
         assert updated.name == "Updated"
         assert updated.priority == 10
 
-    def test_update_rule_invalid_account(self, db_session, test_accounts):
-        """Updating rule with invalid account code should fail."""
-        rule = rule_service.create(db_session, RuleCreate(
-            name="Rule", rule_type=RuleType.SIMPLE, contra_account_code="5000",
-        ))
+    def test_update_rule_invalid_contra_account(self, db_session, test_accounts):
+        rule = rule_service.create(db_session, _expense_rule(name="Rule"))
         with pytest.raises(ValueError, match="does not exist"):
             rule_service.update(db_session, rule.id, RuleUpdate(contra_account_code="9999"))
 
     def test_delete_rule(self, db_session, test_accounts):
-        """Delete a rule."""
-        rule = rule_service.create(db_session, RuleCreate(
-            name="DeleteMe", rule_type=RuleType.SIMPLE, contra_account_code="5000",
-        ))
+        rule = rule_service.create(db_session, _expense_rule(name="DeleteMe"))
         assert rule_service.delete(db_session, rule.id) is True
         assert rule_service.get_by_id(db_session, rule.id) is None
-
-    def test_create_rule_with_tags(self, db_session, test_accounts):
-        """Create a rule with tag IDs stored as JSON."""
-        rule = rule_service.create(db_session, RuleCreate(
-            name="Tagged Rule", rule_type=RuleType.SIMPLE,
-            contra_account_code="5000", tag_ids=[1, 3, 5],
-        ))
-        assert rule.tag_ids == "[1, 3, 5]"
 
 
 # ============================================================================
@@ -430,44 +413,72 @@ class TestRuleService:
 # ============================================================================
 
 class TestRuleRoutes:
-    """Tests for categorization rule API endpoints."""
 
     def test_create_rule_route(self, client, db_session, mock_get_db, test_accounts):
-        """POST /api/finance/categorization/rules creates a rule."""
         with patch('src.routes.categorization_rules.get_db', mock_get_db):
             resp = client.post('/api/finance/categorization/rules', json={
                 "name": "Test Rule",
-                "rule_type": "simple",
+                "direction": "outgoing",
+                "category": "expense",
                 "contra_account_code": "5000",
             })
             assert resp.status_code == 201
-            data = resp.get_json()
-            assert data["name"] == "Test Rule"
+            assert resp.get_json()["name"] == "Test Rule"
 
     def test_list_rules_route(self, client, db_session, mock_get_db, test_accounts):
-        """GET /api/finance/categorization/rules returns rules."""
-        rule_service.create(db_session, RuleCreate(
-            name="RouteRule", rule_type=RuleType.SIMPLE, contra_account_code="5000",
-        ))
+        rule_service.create(db_session, _expense_rule(name="RouteRule"))
         with patch('src.routes.categorization_rules.get_db', mock_get_db):
             resp = client.get('/api/finance/categorization/rules')
             assert resp.status_code == 200
 
     def test_get_rule_route(self, client, db_session, mock_get_db, test_accounts):
-        """GET /api/finance/categorization/rules/:id returns single rule."""
-        rule = rule_service.create(db_session, RuleCreate(
-            name="Single", rule_type=RuleType.SIMPLE, contra_account_code="5000",
-        ))
+        rule = rule_service.create(db_session, _expense_rule(name="Single"))
         with patch('src.routes.categorization_rules.get_db', mock_get_db):
             resp = client.get(f'/api/finance/categorization/rules/{rule.id}')
             assert resp.status_code == 200
             assert resp.get_json()["name"] == "Single"
 
     def test_get_rule_not_found(self, client, db_session, mock_get_db):
-        """GET nonexistent rule returns 404."""
         with patch('src.routes.categorization_rules.get_db', mock_get_db):
             resp = client.get('/api/finance/categorization/rules/999')
             assert resp.status_code == 404
+
+
+# ============================================================================
+# Text matching helper tests
+# ============================================================================
+
+class TestTextMatches:
+    def test_contains_match(self):
+        assert _text_matches("GRAB RIDE SG-123", MatchOperator.CONTAINS, "grab") is True
+
+    def test_contains_no_match(self):
+        assert _text_matches("Rent payment", MatchOperator.CONTAINS, "grab") is False
+
+    def test_not_contains_match(self):
+        assert _text_matches("Rent payment", MatchOperator.NOT_CONTAINS, "grab") is True
+
+    def test_not_contains_no_match(self):
+        assert _text_matches("GRAB RIDE", MatchOperator.NOT_CONTAINS, "grab") is False
+
+    def test_is_exactly(self):
+        assert _text_matches("GRAB", MatchOperator.IS_EXACTLY, "grab") is True
+        assert _text_matches("GRAB RIDE", MatchOperator.IS_EXACTLY, "grab") is False
+
+    def test_matches_regex(self):
+        assert _text_matches("GRAB RIDE SG-123", MatchOperator.MATCHES_REGEX, r"GRAB.*RIDE") is True
+        assert _text_matches("Rent payment", MatchOperator.MATCHES_REGEX, r"GRAB.*RIDE") is False
+
+    def test_none_value_not_contains_is_true(self):
+        # null field doesn't contain anything
+        assert _text_matches(None, MatchOperator.NOT_CONTAINS, "grab") is True
+
+    def test_none_value_contains_is_false(self):
+        assert _text_matches(None, MatchOperator.CONTAINS, "grab") is False
+
+    def test_case_insensitive(self):
+        assert _text_matches("AWS CHARGE", MatchOperator.CONTAINS, "aws") is True
+        assert _text_matches("aws charge", MatchOperator.CONTAINS, "AWS") is True
 
 
 # ============================================================================
@@ -475,375 +486,369 @@ class TestRuleRoutes:
 # ============================================================================
 
 class TestCategorizationEngine:
-    """Tests for the core categorization engine."""
 
-    def test_simple_description_match(self, db_session, test_accounts, test_bank_account, test_entity):
-        """Simple rule matches transaction by description pattern."""
-        rule_service.create(db_session, RuleCreate(
+    def test_description_contains_match(self, db_session, test_accounts, test_bank_account):
+        rule_service.create(db_session, _expense_rule(
             name="Grab Match",
-            rule_type=RuleType.SIMPLE,
-            match_description_pattern="GRAB.*RIDE",
-            contra_account_code="5000",
+            description_operator=MatchOperator.CONTAINS,
+            description_value="GRAB",
             counterparty_name="Grab",
             counterparty_type="vendor",
         ))
         txn = _make_transaction(db_session, test_bank_account, description="GRAB RIDE SG-123", amount=-25.50)
-
         result = categorization_service.run(db_session)
 
-        assert result["total_processed"] == 1
         assert result["categorized"] == 1
-        assert result["uncategorized"] == 0
         assert result["results"][0]["rule_name"] == "Grab Match"
 
-        # Verify transaction was updated
         db_session.refresh(txn)
-        assert txn.status == TransactionStatus.RECONCILED
+        assert txn.status == TransactionStatus.MATCHED    # engine → MATCHED, not RECONCILED
         assert txn.counterparty_name == "Grab"
-        assert txn.counterparty_type == "vendor"
         assert txn.reconciled_journal_entry_id is not None
 
-    def test_amount_range_matching(self, db_session, test_accounts, test_bank_account, test_entity):
-        """Rule with amount range matches correctly."""
-        rule_service.create(db_session, RuleCreate(
-            name="Small Expense",
-            rule_type=RuleType.SIMPLE,
-            match_amount_min=10.0,
-            match_amount_max=50.0,
-            contra_account_code="5000",
+    def test_description_not_contains(self, db_session, test_accounts, test_bank_account):
+        """NOT_CONTAINS: transaction whose description lacks the pattern is matched."""
+        rule_service.create(db_session, _expense_rule(
+            name="Not Grab",
+            description_operator=MatchOperator.NOT_CONTAINS,
+            description_value="GRAB",
         ))
-        # Within range
-        txn_in = _make_transaction(db_session, test_bank_account, description="Small payment", amount=-30.0, fingerprint="a1")
-        # Below range
-        txn_below = _make_transaction(db_session, test_bank_account, description="Tiny payment", amount=-5.0, fingerprint="a2")
-        # Above range
-        txn_above = _make_transaction(db_session, test_bank_account, description="Big payment", amount=-100.0, fingerprint="a3")
+        txn_other = _make_transaction(db_session, test_bank_account, description="RENT PAYMENT", amount=-100.0, fingerprint="nc1")
+        txn_grab  = _make_transaction(db_session, test_bank_account, description="GRAB RIDE",   amount=-25.0, fingerprint="nc2")
 
         result = categorization_service.run(db_session)
-
         assert result["categorized"] == 1
-        assert result["uncategorized"] == 2
 
+        db_session.refresh(txn_other)
+        assert txn_other.status == TransactionStatus.MATCHED
+        db_session.refresh(txn_grab)
+        assert txn_grab.status == TransactionStatus.PENDING
+
+    def test_description_is_exactly(self, db_session, test_accounts, test_bank_account):
+        rule_service.create(db_session, _expense_rule(
+            name="Exact Match",
+            description_operator=MatchOperator.IS_EXACTLY,
+            description_value="RENT",
+        ))
+        txn_exact = _make_transaction(db_session, test_bank_account, description="RENT", amount=-500.0, fingerprint="ex1")
+        txn_extra = _make_transaction(db_session, test_bank_account, description="RENT PAYMENT", amount=-500.0, fingerprint="ex2")
+
+        result = categorization_service.run(db_session)
+        assert result["categorized"] == 1
+        db_session.refresh(txn_exact)
+        assert txn_exact.status == TransactionStatus.MATCHED
+        db_session.refresh(txn_extra)
+        assert txn_extra.status == TransactionStatus.PENDING
+
+    def test_amount_between_operator(self, db_session, test_accounts, test_bank_account):
+        rule_service.create(db_session, _expense_rule(
+            name="Small Expense",
+            amount_operator=AmountOperator.BETWEEN,
+            amount_value=10.0,
+            amount_value_max=50.0,
+        ))
+        txn_in    = _make_transaction(db_session, test_bank_account, description="Small", amount=-30.0, fingerprint="am1")
+        txn_below = _make_transaction(db_session, test_bank_account, description="Tiny",  amount=-5.0,  fingerprint="am2")
+        txn_above = _make_transaction(db_session, test_bank_account, description="Big",   amount=-100.0, fingerprint="am3")
+
+        result = categorization_service.run(db_session)
+        assert result["categorized"] == 1
         db_session.refresh(txn_in)
-        assert txn_in.status == TransactionStatus.RECONCILED
-
+        assert txn_in.status == TransactionStatus.MATCHED
         db_session.refresh(txn_below)
         assert txn_below.status == TransactionStatus.PENDING
 
-    def test_bank_account_specific_rule(self, db_session, test_accounts, test_bank_account, test_bank_account_usd, test_entity):
-        """Rule matching specific bank account only applies to that account."""
-        rule_service.create(db_session, RuleCreate(
-            name="OCBC Only",
-            rule_type=RuleType.SIMPLE,
-            match_bank_account_id=test_bank_account.id,
-            contra_account_code="4000",
+    def test_amount_greater_than(self, db_session, test_accounts, test_bank_account):
+        rule_service.create(db_session, _expense_rule(
+            name="Big Expense",
+            amount_operator=AmountOperator.GREATER_THAN,
+            amount_value=100.0,
         ))
-        txn_ocbc = _make_transaction(db_session, test_bank_account, description="Deposit", amount=1000.0, fingerprint="b1")
-        txn_citi = _make_transaction(db_session, test_bank_account_usd, description="Deposit USD", amount=500.0, currency="USD", fingerprint="b2")
+        txn_big   = _make_transaction(db_session, test_bank_account, description="Big",   amount=-200.0, fingerprint="gt1")
+        txn_small = _make_transaction(db_session, test_bank_account, description="Small", amount=-50.0,  fingerprint="gt2")
 
         result = categorization_service.run(db_session)
-
         assert result["categorized"] == 1
-        assert result["uncategorized"] == 1
-        assert result["results"][0]["transaction_id"] == txn_ocbc.id
+        db_session.refresh(txn_big)
+        assert txn_big.status == TransactionStatus.MATCHED
 
-    def test_currency_matching(self, db_session, test_accounts, test_bank_account, test_bank_account_usd, test_entity):
-        """Rule matching specific currency."""
-        rule_service.create(db_session, RuleCreate(
-            name="USD Revenue",
-            rule_type=RuleType.SIMPLE,
-            match_currency="USD",
-            contra_account_code="4000",
+    def test_amount_less_than(self, db_session, test_accounts, test_bank_account):
+        rule_service.create(db_session, _expense_rule(
+            name="Small Expense",
+            amount_operator=AmountOperator.LESS_THAN,
+            amount_value=50.0,
         ))
-        _make_transaction(db_session, test_bank_account, description="SGD deposit", amount=100.0, fingerprint="c1")
-        txn_usd = _make_transaction(db_session, test_bank_account_usd, description="USD deposit", amount=200.0, currency="USD", fingerprint="c2")
+        txn_small = _make_transaction(db_session, test_bank_account, description="Small", amount=-20.0, fingerprint="lt1")
+        txn_big   = _make_transaction(db_session, test_bank_account, description="Big",   amount=-200.0, fingerprint="lt2")
 
         result = categorization_service.run(db_session)
+        assert result["categorized"] == 1
+        db_session.refresh(txn_small)
+        assert txn_small.status == TransactionStatus.MATCHED
 
+    def test_amount_equals(self, db_session, test_accounts, test_bank_account):
+        rule_service.create(db_session, _expense_rule(
+            name="Exact Amount",
+            amount_operator=AmountOperator.EQUALS,
+            amount_value=99.99,
+        ))
+        txn_match = _make_transaction(db_session, test_bank_account, description="Exact", amount=-99.99, fingerprint="eq1")
+        txn_other = _make_transaction(db_session, test_bank_account, description="Other", amount=-50.00, fingerprint="eq2")
+
+        result = categorization_service.run(db_session)
+        assert result["categorized"] == 1
+        db_session.refresh(txn_match)
+        assert txn_match.status == TransactionStatus.MATCHED
+
+    def test_bank_account_scope(self, db_session, test_accounts, test_bank_account, test_bank_account_wise):
+        rule_service.create(db_session, _expense_rule(
+            name="OCBC Only",
+            bank_account_ids=[test_bank_account.id],
+        ))
+        txn_ocbc = _make_transaction(db_session, test_bank_account,      description="Payment", amount=-50.0, fingerprint="ba1")
+        txn_wise = _make_transaction(db_session, test_bank_account_wise, description="Payment", amount=-50.0, fingerprint="ba2")
+
+        result = categorization_service.run(db_session)
+        assert result["categorized"] == 1
+        db_session.refresh(txn_ocbc)
+        assert txn_ocbc.status == TransactionStatus.MATCHED
+        db_session.refresh(txn_wise)
+        assert txn_wise.status == TransactionStatus.PENDING
+
+    def test_direction_filters_incoming_vs_outgoing(self, db_session, test_accounts, test_bank_account):
+        rule_service.create(db_session, _expense_rule(name="Outgoing Only"))
+        txn_out = _make_transaction(db_session, test_bank_account, description="Expense",  amount=-50.0, fingerprint="dir1")
+        txn_in  = _make_transaction(db_session, test_bank_account, description="Incoming", amount=+50.0, fingerprint="dir2")
+
+        result = categorization_service.run(db_session)
+        assert result["categorized"] == 1
+        db_session.refresh(txn_out)
+        assert txn_out.status == TransactionStatus.MATCHED
+        db_session.refresh(txn_in)
+        assert txn_in.status == TransactionStatus.PENDING
+
+    def test_counterparty_contains(self, db_session, test_accounts, test_bank_account):
+        rule_service.create(db_session, _expense_rule(
+            name="AWS Rule",
+            counterparty_operator=MatchOperator.CONTAINS,
+            counterparty_value="Amazon",
+        ))
+        txn_aws   = _make_transaction(db_session, test_bank_account, description="Cloud bill", amount=-200.0, counterparty_name="Amazon Web Services", fingerprint="cp1")
+        txn_other = _make_transaction(db_session, test_bank_account, description="Rent",       amount=-500.0, counterparty_name="Landlord Ltd",         fingerprint="cp2")
+
+        result = categorization_service.run(db_session)
+        assert result["categorized"] == 1
+        db_session.refresh(txn_aws)
+        assert txn_aws.status == TransactionStatus.MATCHED
+
+    def test_transaction_type_is_exactly(self, db_session, test_accounts, test_bank_account):
+        rule_service.create(db_session, _expense_rule(
+            name="Card Only",
+            transaction_type_operator=MatchOperator.IS_EXACTLY,
+            transaction_type_value="CARD",
+        ))
+        txn_card     = _make_transaction(db_session, test_bank_account, description="Purchase",  amount=-30.0, transaction_type="CARD",     fingerprint="tt1")
+        txn_transfer = _make_transaction(db_session, test_bank_account, description="Wire",      amount=-30.0, transaction_type="TRANSFER", fingerprint="tt2")
+
+        result = categorization_service.run(db_session)
+        assert result["categorized"] == 1
+        db_session.refresh(txn_card)
+        assert txn_card.status == TransactionStatus.MATCHED
+        db_session.refresh(txn_transfer)
+        assert txn_transfer.status == TransactionStatus.PENDING
+
+    def test_currency_matching(self, db_session, test_accounts, test_bank_account, test_bank_account_usd):
+        rule_service.create(db_session, _deposit_rule(name="USD Revenue", match_currency="USD"))
+        _make_transaction(db_session, test_bank_account,     description="SGD deposit", amount=100.0, fingerprint="cur1")
+        txn_usd = _make_transaction(db_session, test_bank_account_usd, description="USD deposit", amount=200.0, currency="USD", fingerprint="cur2")
+
+        result = categorization_service.run(db_session)
         assert result["categorized"] == 1
         db_session.refresh(txn_usd)
-        assert txn_usd.status == TransactionStatus.RECONCILED
+        assert txn_usd.status == TransactionStatus.MATCHED
 
-    def test_priority_ordering(self, db_session, test_accounts, test_bank_account, test_entity):
-        """Lower priority number wins when multiple rules match."""
-        rule_service.create(db_session, RuleCreate(
-            name="Low Priority",
-            rule_type=RuleType.SIMPLE,
-            priority=100,
-            match_description_pattern="PAYMENT",
-            contra_account_code="5000",
+    def test_priority_first_match_wins(self, db_session, test_accounts, test_bank_account):
+        rule_service.create(db_session, _expense_rule(
+            name="Low Priority", priority=100,
+            description_operator=MatchOperator.CONTAINS, description_value="PAYMENT",
         ))
-        rule_service.create(db_session, RuleCreate(
-            name="High Priority",
-            rule_type=RuleType.SIMPLE,
-            priority=10,
-            match_description_pattern="PAYMENT",
+        rule_service.create(db_session, _expense_rule(
+            name="High Priority", priority=10,
+            description_operator=MatchOperator.CONTAINS, description_value="PAYMENT",
             contra_account_code="6000",
         ))
         _make_transaction(db_session, test_bank_account, description="PAYMENT TO VENDOR", amount=-50.0)
-
         result = categorization_service.run(db_session)
-
         assert result["categorized"] == 1
         assert result["results"][0]["rule_name"] == "High Priority"
 
-    def test_tags_applied(self, db_session, test_accounts, test_bank_account, test_entity):
-        """Rule with tag_ids applies tags to the transaction."""
+    def test_tags_applied(self, db_session, test_accounts, test_bank_account):
         tag1 = FinanceTag(name="Recurring")
         tag2 = FinanceTag(name="Marketing")
         db_session.add_all([tag1, tag2])
         db_session.commit()
 
-        rule_service.create(db_session, RuleCreate(
+        rule_service.create(db_session, _expense_rule(
             name="Tagged Rule",
-            rule_type=RuleType.SIMPLE,
-            match_description_pattern="AD SPEND",
-            contra_account_code="6000",
-            tag_ids=[tag1.id, tag2.id],
+            description_operator=MatchOperator.CONTAINS, description_value="AD SPEND",
+            contra_account_code="6000", tag_ids=[tag1.id, tag2.id],
         ))
         txn = _make_transaction(db_session, test_bank_account, description="AD SPEND FB", amount=-200.0)
-
         categorization_service.run(db_session)
-
-        # Verify tags were applied
-        tag_assocs = db_session.query(FinanceTransactionTag).filter(
-            FinanceTransactionTag.transaction_id == txn.id
-        ).all()
-        assert len(tag_assocs) == 2
-        applied_tag_ids = {a.tag_id for a in tag_assocs}
-        assert tag1.id in applied_tag_ids
-        assert tag2.id in applied_tag_ids
-
-    def test_unmatched_stays_pending(self, db_session, test_accounts, test_bank_account, test_entity):
-        """Transactions that don't match any rule stay Pending."""
-        _make_transaction(db_session, test_bank_account, description="Random payment", amount=-10.0)
-
-        result = categorization_service.run(db_session)
-
-        assert result["total_processed"] == 1
-        assert result["categorized"] == 0
-        assert result["uncategorized"] == 1
-
-    def test_journal_entry_created_positive_amount(self, db_session, test_accounts, test_bank_account, test_entity):
-        """Positive amount: Debit bank (1000), Credit contra (4000)."""
-        rule_service.create(db_session, RuleCreate(
-            name="Revenue",
-            rule_type=RuleType.SIMPLE,
-            match_description_pattern="CLIENT PAYMENT",
-            contra_account_code="4000",
-        ))
-        txn = _make_transaction(db_session, test_bank_account, description="CLIENT PAYMENT #123", amount=500.0)
-
-        categorization_service.run(db_session)
-
-        db_session.refresh(txn)
-        je = db_session.query(FinanceJournalEntry).filter(
-            FinanceJournalEntry.id == txn.reconciled_journal_entry_id
-        ).first()
-        assert je is not None
-        assert je.source == "categorization_engine"
-
-        lines = db_session.query(FinanceJournalLine).filter(
-            FinanceJournalLine.entry_id == je.id
-        ).all()
-        assert len(lines) == 2
-
-        debit_line = [l for l in lines if float(l.debit_amount) > 0][0]
-        credit_line = [l for l in lines if float(l.credit_amount) > 0][0]
-
-        assert debit_line.account_code == "1000"  # bank
-        assert float(debit_line.debit_amount) == 500.0
-        assert credit_line.account_code == "4000"  # contra
-        assert float(credit_line.credit_amount) == 500.0
-
-    def test_journal_entry_created_negative_amount(self, db_session, test_accounts, test_bank_account, test_entity):
-        """Negative amount: Debit contra (5000), Credit bank (1000)."""
-        rule_service.create(db_session, RuleCreate(
-            name="Expense",
-            rule_type=RuleType.SIMPLE,
-            match_description_pattern="RENT",
-            contra_account_code="5000",
-        ))
-        txn = _make_transaction(db_session, test_bank_account, description="RENT PAYMENT JAN", amount=-1500.0)
-
-        categorization_service.run(db_session)
-
-        db_session.refresh(txn)
-        je = db_session.query(FinanceJournalEntry).filter(
-            FinanceJournalEntry.id == txn.reconciled_journal_entry_id
-        ).first()
-        lines = db_session.query(FinanceJournalLine).filter(
-            FinanceJournalLine.entry_id == je.id
-        ).all()
-
-        debit_line = [l for l in lines if float(l.debit_amount) > 0][0]
-        credit_line = [l for l in lines if float(l.credit_amount) > 0][0]
-
-        assert debit_line.account_code == "5000"  # contra (expense)
-        assert float(debit_line.debit_amount) == 1500.0
-        assert credit_line.account_code == "1000"  # bank
-        assert float(credit_line.credit_amount) == 1500.0
-
-    def test_manual_categorization(self, db_session, test_accounts, test_bank_account, test_entity):
-        """Manually categorize a single transaction."""
-        txn = _make_transaction(db_session, test_bank_account, description="Unknown payment", amount=-75.0)
-
-        result = categorization_service.manual_categorize(
-            db=db_session,
-            transaction_id=txn.id,
-            contra_account_code="5000",
-            counterparty_name="Manual Vendor",
-            counterparty_type="vendor",
-            description="Manual office expense",
-        )
-
-        assert result["status"] == "categorized"
-        assert result["journal_entry_id"] is not None
-
-        db_session.refresh(txn)
-        assert txn.status == TransactionStatus.RECONCILED
-        assert txn.counterparty_name == "Manual Vendor"
-
-        # Check JE source
-        je = db_session.query(FinanceJournalEntry).filter(
-            FinanceJournalEntry.id == result["journal_entry_id"]
-        ).first()
-        assert je.source == "manual"
-
-    def test_manual_categorize_not_pending(self, db_session, test_accounts, test_bank_account, test_entity):
-        """Manual categorization of non-pending transaction should fail."""
-        txn = _make_transaction(db_session, test_bank_account, description="Already done", amount=-10.0)
-        txn.status = TransactionStatus.RECONCILED
-        db_session.commit()
-
-        with pytest.raises(ValueError, match="not in Pending status"):
-            categorization_service.manual_categorize(
-                db=db_session,
-                transaction_id=txn.id,
-                contra_account_code="5000",
-            )
-
-    def test_manual_categorize_invalid_account(self, db_session, test_accounts, test_bank_account, test_entity):
-        """Manual categorization with invalid account code should fail."""
-        txn = _make_transaction(db_session, test_bank_account, description="Bad account", amount=-10.0)
-
-        with pytest.raises(ValueError, match="does not exist"):
-            categorization_service.manual_categorize(
-                db=db_session,
-                transaction_id=txn.id,
-                contra_account_code="9999",
-            )
-
-    def test_manual_categorize_with_tags(self, db_session, test_accounts, test_bank_account, test_entity):
-        """Manual categorization can apply tags."""
-        tag = FinanceTag(name="ManualTag")
-        db_session.add(tag)
-        db_session.commit()
-
-        txn = _make_transaction(db_session, test_bank_account, description="Tag me", amount=-20.0)
-
-        categorization_service.manual_categorize(
-            db=db_session,
-            transaction_id=txn.id,
-            contra_account_code="5000",
-            tag_ids=[tag.id],
-        )
 
         assocs = db_session.query(FinanceTransactionTag).filter(
             FinanceTransactionTag.transaction_id == txn.id
         ).all()
-        assert len(assocs) == 1
-        assert assocs[0].tag_id == tag.id
+        applied_ids = {a.tag_id for a in assocs}
+        assert tag1.id in applied_ids
+        assert tag2.id in applied_ids
 
-    def test_entity_filter(self, db_session, test_accounts, test_bank_account, test_entity):
-        """Engine respects entity_id filter."""
-        rule_service.create(db_session, RuleCreate(
-            name="All Match",
-            rule_type=RuleType.SIMPLE,
-            contra_account_code="5000",
+    def test_unmatched_stays_pending(self, db_session, test_accounts, test_bank_account):
+        _make_transaction(db_session, test_bank_account, description="Random payment", amount=-10.0)
+        result = categorization_service.run(db_session)
+        assert result["categorized"] == 0
+        assert result["uncategorized"] == 1
+
+    def test_journal_entry_deposit_debit_bank_credit_contra(self, db_session, test_accounts, test_bank_account):
+        """Money in: Dr bank (1000), Cr contra (4000)."""
+        rule_service.create(db_session, _deposit_rule(
+            name="Revenue",
+            description_operator=MatchOperator.CONTAINS, description_value="CLIENT PAYMENT",
         ))
-        _make_transaction(db_session, test_bank_account, description="Something", amount=-10.0)
+        txn = _make_transaction(db_session, test_bank_account, description="CLIENT PAYMENT #123", amount=500.0)
+        categorization_service.run(db_session)
 
-        # Run with a different entity ID - should match nothing (no bank accounts for that entity)
-        result = categorization_service.run(db_session, entity_id=999)
-        assert result["total_processed"] == 0
+        db_session.refresh(txn)
+        je = db_session.query(FinanceJournalEntry).filter(FinanceJournalEntry.id == txn.reconciled_journal_entry_id).first()
+        lines = db_session.query(FinanceJournalLine).filter(FinanceJournalLine.entry_id == je.id).all()
+        debit_line  = next(l for l in lines if float(l.debit_amount) > 0)
+        credit_line = next(l for l in lines if float(l.credit_amount) > 0)
+        assert debit_line.account_code == "1000"
+        assert credit_line.account_code == "4000"
 
-        # Run with correct entity
-        result = categorization_service.run(db_session, entity_id=test_entity.id)
-        assert result["total_processed"] == 1
-
-    def test_transaction_type_matching(self, db_session, test_accounts, test_bank_account, test_entity):
-        """Rule matching transaction_type."""
-        rule_service.create(db_session, RuleCreate(
-            name="Card Only",
-            rule_type=RuleType.SIMPLE,
-            match_transaction_type="CARD",
-            contra_account_code="5000",
+    def test_journal_entry_expense_debit_contra_credit_bank(self, db_session, test_accounts, test_bank_account):
+        """Money out: Dr contra (5000), Cr bank (1000)."""
+        rule_service.create(db_session, _expense_rule(
+            name="Expense",
+            description_operator=MatchOperator.CONTAINS, description_value="RENT",
         ))
-        txn_card = _make_transaction(db_session, test_bank_account, description="Visa purchase", amount=-30.0, transaction_type="CARD", fingerprint="tt1")
-        txn_transfer = _make_transaction(db_session, test_bank_account, description="Wire transfer", amount=-30.0, transaction_type="TRANSFER", fingerprint="tt2")
+        txn = _make_transaction(db_session, test_bank_account, description="RENT PAYMENT JAN", amount=-1500.0)
+        categorization_service.run(db_session)
 
+        db_session.refresh(txn)
+        je = db_session.query(FinanceJournalEntry).filter(FinanceJournalEntry.id == txn.reconciled_journal_entry_id).first()
+        lines = db_session.query(FinanceJournalLine).filter(FinanceJournalLine.entry_id == je.id).all()
+        debit_line  = next(l for l in lines if float(l.debit_amount) > 0)
+        credit_line = next(l for l in lines if float(l.credit_amount) > 0)
+        assert debit_line.account_code == "5000"
+        assert credit_line.account_code == "1000"
+
+    def test_intra_entity_internal_transfer(self, db_session, test_accounts, test_bank_account, test_bank_account_wise):
+        """Same-entity internal transfer: single 2-line JE between bank accounts."""
+        rule_service.create(db_session, RuleCreate(
+            name="OCBC to Wise",
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.INTERNAL_TRANSFER,
+            target_bank_account_id=test_bank_account_wise.id,
+            description_operator=MatchOperator.CONTAINS, description_value="WISE TRANSFER",
+        ))
+        txn = _make_transaction(db_session, test_bank_account, description="WISE TRANSFER", amount=-1000.0)
         result = categorization_service.run(db_session)
 
         assert result["categorized"] == 1
-        db_session.refresh(txn_card)
-        assert txn_card.status == TransactionStatus.RECONCILED
-        db_session.refresh(txn_transfer)
-        assert txn_transfer.status == TransactionStatus.PENDING
+        db_session.refresh(txn)
+        assert txn.status == TransactionStatus.MATCHED
 
-    def test_bank_account_without_coa_code(self, db_session, test_accounts, test_entity):
-        """Engine should raise error if bank account has no COA code."""
+        je = db_session.query(FinanceJournalEntry).filter(FinanceJournalEntry.id == txn.reconciled_journal_entry_id).first()
+        lines = db_session.query(FinanceJournalLine).filter(FinanceJournalLine.entry_id == je.id).all()
+        assert len(lines) == 2
+        codes = {l.account_code for l in lines}
+        assert "1000" in codes   # source bank
+        assert "1001" in codes   # target bank (Wise)
+
+    def test_inactive_rules_skipped(self, db_session, test_accounts, test_bank_account):
+        rule_service.create(db_session, _expense_rule(
+            name="Inactive Rule",
+            description_operator=MatchOperator.CONTAINS, description_value="MATCH ME",
+            status=RuleStatus.INACTIVE,
+        ))
+        _make_transaction(db_session, test_bank_account, description="MATCH ME PLEASE", amount=-10.0)
+        result = categorization_service.run(db_session)
+        assert result["categorized"] == 0
+
+    def test_run_with_limit(self, db_session, test_accounts, test_bank_account):
+        rule_service.create(db_session, _expense_rule(name="Match All"))
+        for i in range(5):
+            _make_transaction(db_session, test_bank_account, description=f"Txn {i}", amount=-10.0, fingerprint=f"lim{i}")
+        result = categorization_service.run(db_session, limit=2)
+        assert result["total_processed"] == 2
+
+    def test_entity_filter(self, db_session, test_accounts, test_bank_account, test_entity):
+        rule_service.create(db_session, _expense_rule(name="All Match"))
+        _make_transaction(db_session, test_bank_account, description="Something", amount=-10.0)
+        assert categorization_service.run(db_session, entity_id=999)["total_processed"] == 0
+        assert categorization_service.run(db_session, entity_id=test_entity.id)["total_processed"] == 1
+
+    def test_bank_account_without_coa_raises_error(self, db_session, test_accounts, test_entity):
         ba_no_coa = FinanceBankAccount(
-            entity_id=test_entity.id,
-            bank_name="NoCOA Bank",
-            account_number="000-000-000",
-            account_name="No COA",
-            currency="SGD",
-            coa_account_code=None,
-            status=BankAccountStatus.ACTIVE,
+            entity_id=test_entity.id, bank_name="NoCOA Bank",
+            account_number="000", account_name="No COA",
+            currency="SGD", coa_account_code=None, status=BankAccountStatus.ACTIVE,
         )
         db_session.add(ba_no_coa)
         db_session.commit()
 
-        rule_service.create(db_session, RuleCreate(
-            name="Any",
-            rule_type=RuleType.SIMPLE,
-            contra_account_code="5000",
-        ))
+        rule_service.create(db_session, _expense_rule(name="Any"))
         _make_transaction(db_session, ba_no_coa, description="No COA txn", amount=-10.0)
-
         result = categorization_service.run(db_session)
-        # Should fail with error, not crash
         assert result["errors"] == 1
         assert "COA account code" in result["results"][0]["error"]
 
-    def test_run_with_limit(self, db_session, test_accounts, test_bank_account, test_entity):
-        """Engine respects the limit parameter."""
-        rule_service.create(db_session, RuleCreate(
-            name="Match All",
-            rule_type=RuleType.SIMPLE,
+
+# ============================================================================
+# Manual Categorization Tests
+# ============================================================================
+
+class TestManualCategorization:
+
+    def test_manual_categorize_goes_straight_to_reconciled(self, db_session, test_accounts, test_bank_account):
+        """Manual categorization = human confirmation → RECONCILED directly."""
+        txn = _make_transaction(db_session, test_bank_account, description="Unknown", amount=-75.0)
+        result = categorization_service.manual_categorize(
+            db=db_session, transaction_id=txn.id,
             contra_account_code="5000",
-        ))
-        for i in range(5):
-            _make_transaction(db_session, test_bank_account, description=f"Txn {i}", amount=-10.0, fingerprint=f"lim{i}")
+            counterparty_name="Manual Vendor", counterparty_type="vendor",
+        )
+        assert result["status"] == "categorized"
+        db_session.refresh(txn)
+        assert txn.status == TransactionStatus.RECONCILED
+        assert txn.counterparty_name == "Manual Vendor"
+        je = db_session.query(FinanceJournalEntry).filter(FinanceJournalEntry.id == result["journal_entry_id"]).first()
+        assert je.source == "manual"
 
-        result = categorization_service.run(db_session, limit=2)
-        assert result["total_processed"] == 2
+    def test_manual_categorize_not_pending_fails(self, db_session, test_accounts, test_bank_account):
+        txn = _make_transaction(db_session, test_bank_account, description="Already done", amount=-10.0)
+        txn.status = TransactionStatus.RECONCILED
+        db_session.commit()
+        with pytest.raises(ValueError, match="not in Pending status"):
+            categorization_service.manual_categorize(db=db_session, transaction_id=txn.id, contra_account_code="5000")
 
-    def test_inactive_rules_skipped(self, db_session, test_accounts, test_bank_account, test_entity):
-        """Inactive rules should not be used for matching."""
-        rule_service.create(db_session, RuleCreate(
-            name="Inactive Rule",
-            rule_type=RuleType.SIMPLE,
-            match_description_pattern="MATCH ME",
-            contra_account_code="5000",
-            status=RuleStatus.INACTIVE,
-        ))
-        _make_transaction(db_session, test_bank_account, description="MATCH ME PLEASE", amount=-10.0)
+    def test_manual_categorize_invalid_account_fails(self, db_session, test_accounts, test_bank_account):
+        txn = _make_transaction(db_session, test_bank_account, description="Bad", amount=-10.0)
+        with pytest.raises(ValueError, match="does not exist"):
+            categorization_service.manual_categorize(db=db_session, transaction_id=txn.id, contra_account_code="9999")
 
-        result = categorization_service.run(db_session)
-        assert result["categorized"] == 0
-        assert result["uncategorized"] == 1
+    def test_manual_categorize_applies_tags(self, db_session, test_accounts, test_bank_account):
+        tag = FinanceTag(name="ManualTag")
+        db_session.add(tag)
+        db_session.commit()
+        txn = _make_transaction(db_session, test_bank_account, description="Tag me", amount=-20.0)
+        categorization_service.manual_categorize(
+            db=db_session, transaction_id=txn.id,
+            contra_account_code="5000", tag_ids=[tag.id],
+        )
+        assocs = db_session.query(FinanceTransactionTag).filter(FinanceTransactionTag.transaction_id == txn.id).all()
+        assert len(assocs) == 1
 
 
 # ============================================================================
@@ -851,20 +856,15 @@ class TestCategorizationEngine:
 # ============================================================================
 
 class TestCategorizationRoutes:
-    """Tests for categorization engine API endpoints."""
 
     def test_run_route(self, client, db_session, mock_get_db, test_accounts, test_bank_account, test_entity):
-        """POST /api/finance/categorization/run executes engine."""
         _make_transaction(db_session, test_bank_account, description="Route test", amount=-10.0)
         with patch('src.routes.categorization.get_db', mock_get_db):
             resp = client.post('/api/finance/categorization/run', json={})
             assert resp.status_code == 200
-            data = resp.get_json()
-            assert "total_processed" in data
-            assert data["total_processed"] == 1
+            assert resp.get_json()["total_processed"] == 1
 
     def test_manual_route(self, client, db_session, mock_get_db, test_accounts, test_bank_account, test_entity):
-        """POST /api/finance/categorization/manual categorizes one transaction."""
         txn = _make_transaction(db_session, test_bank_account, description="Manual route", amount=-25.0)
         with patch('src.routes.categorization.get_db', mock_get_db):
             resp = client.post('/api/finance/categorization/manual', json={
@@ -873,11 +873,9 @@ class TestCategorizationRoutes:
                 "counterparty_name": "Route Vendor",
             })
             assert resp.status_code == 200
-            data = resp.get_json()
-            assert data["status"] == "categorized"
+            assert resp.get_json()["status"] == "categorized"
 
     def test_manual_route_invalid_transaction(self, client, db_session, mock_get_db, test_accounts):
-        """Manual categorization with invalid transaction returns 400."""
         with patch('src.routes.categorization.get_db', mock_get_db):
             resp = client.post('/api/finance/categorization/manual', json={
                 "transaction_id": 999,

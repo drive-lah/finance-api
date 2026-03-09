@@ -15,8 +15,10 @@ from src.models.journal_entry import FinanceJournalEntry, JournalEntryStatus
 from src.models.journal_line import FinanceJournalLine
 from src.models.categorization_rule import (
     FinanceCategorizationRule,
-    RuleType,
     RuleStatus,
+    TransactionDirection,
+    TransactionCategory,
+    MatchOperator,
 )
 from src.services.rule_service import rule_service
 from src.services.categorization_service import (
@@ -221,8 +223,10 @@ class TestGSTExpense:
         """Expense with GST creates 3-line JE: debit expense (ex-GST) + debit GST receivable + credit bank."""
         rule_service.create(db_session, RuleCreate(
             name="AWS Expense",
-            rule_type=RuleType.SIMPLE,
-            match_description_pattern="AWS",
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.EXPENSE,
+            description_operator=MatchOperator.CONTAINS,
+            description_value="AWS",
             contra_account_code="5000",  # gst_applicable=True
         ))
         # $109.00 SGD inclusive of 9% GST
@@ -254,8 +258,10 @@ class TestGSTExpense:
         """GST amounts are rounded to 2 decimal places."""
         rule_service.create(db_session, RuleCreate(
             name="Misc Expense",
-            rule_type=RuleType.SIMPLE,
-            match_description_pattern="MISC",
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.EXPENSE,
+            description_operator=MatchOperator.CONTAINS,
+            description_value="MISC",
             contra_account_code="5000",
         ))
         # $100 inclusive of 9% GST: ex_gst = 100/1.09 = 91.74, gst = 8.26
@@ -290,8 +296,10 @@ class TestGSTRevenue:
         """Revenue with GST creates 3-line JE: debit bank + credit revenue (ex-GST) + credit GST payable."""
         rule_service.create(db_session, RuleCreate(
             name="Client Payment",
-            rule_type=RuleType.SIMPLE,
-            match_description_pattern="CLIENT",
+            direction=TransactionDirection.INCOMING,
+            category=TransactionCategory.DEPOSIT,
+            description_operator=MatchOperator.CONTAINS,
+            description_value="CLIENT",
             contra_account_code="4000",  # gst_applicable=True
         ))
         # $1,090 SGD inclusive of 9% GST
@@ -330,8 +338,10 @@ class TestNoGST:
         """Account with gst_applicable=False produces standard 2-line JE."""
         rule_service.create(db_session, RuleCreate(
             name="Rent Payment",
-            rule_type=RuleType.SIMPLE,
-            match_description_pattern="RENT",
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.EXPENSE,
+            description_operator=MatchOperator.CONTAINS,
+            description_value="RENT",
             contra_account_code="5100",  # gst_applicable=False
         ))
         txn = _make_transaction(db_session, sg_bank_account, description="RENT PAYMENT JAN", amount=-3000.00)
@@ -365,8 +375,10 @@ class TestNoGST:
 
         rule_service.create(db_session, RuleCreate(
             name="US Expense",
-            rule_type=RuleType.SIMPLE,
-            match_description_pattern="EXPENSE",
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.EXPENSE,
+            description_operator=MatchOperator.CONTAINS,
+            description_value="EXPENSE",
             contra_account_code="5000",  # gst_applicable=True
         ))
         txn = _make_transaction(db_session, ba, description="EXPENSE USD", amount=-500.0, currency="USD")
@@ -389,8 +401,10 @@ class TestGSTOverride:
         """gst_override=True forces GST even on non-GST account."""
         rule_service.create(db_session, RuleCreate(
             name="Marketing with GST",
-            rule_type=RuleType.SIMPLE,
-            match_description_pattern="MARKETING",
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.EXPENSE,
+            description_operator=MatchOperator.CONTAINS,
+            description_value="MARKETING",
             contra_account_code="6000",  # gst_applicable=False
             gst_override=True,           # Force GST
         ))
@@ -410,8 +424,10 @@ class TestGSTOverride:
         """gst_override=False suppresses GST even on GST-applicable account."""
         rule_service.create(db_session, RuleCreate(
             name="Exempt Purchase",
-            rule_type=RuleType.SIMPLE,
-            match_description_pattern="EXEMPT",
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.EXPENSE,
+            description_operator=MatchOperator.CONTAINS,
+            description_value="EXEMPT",
             contra_account_code="5000",  # gst_applicable=True
             gst_override=False,          # Force no GST
         ))
@@ -430,8 +446,10 @@ class TestGSTOverride:
         """gst_override=None falls through to account's gst_applicable."""
         rule_service.create(db_session, RuleCreate(
             name="Default GST",
-            rule_type=RuleType.SIMPLE,
-            match_description_pattern="DEFAULT",
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.EXPENSE,
+            description_operator=MatchOperator.CONTAINS,
+            description_value="DEFAULT",
             contra_account_code="5000",  # gst_applicable=True
             gst_override=None,           # Use account default
         ))
@@ -511,8 +529,10 @@ class TestGSTRatesByEntity:
         """SG entity uses 9% GST rate."""
         rule_service.create(db_session, RuleCreate(
             name="SG Expense",
-            rule_type=RuleType.SIMPLE,
-            match_description_pattern="SG EXPENSE",
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.EXPENSE,
+            description_operator=MatchOperator.CONTAINS,
+            description_value="SG EXPENSE",
             contra_account_code="5000",
         ))
         # $109 inclusive of 9% GST
@@ -532,8 +552,10 @@ class TestGSTRatesByEntity:
         """AU entity uses 10% GST rate."""
         rule_service.create(db_session, RuleCreate(
             name="AU Expense",
-            rule_type=RuleType.SIMPLE,
-            match_description_pattern="AU EXPENSE",
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.EXPENSE,
+            description_operator=MatchOperator.CONTAINS,
+            description_value="AU EXPENSE",
             contra_account_code="5000",
         ))
         # $110 inclusive of 10% GST
@@ -557,8 +579,10 @@ class TestGSTRatesByEntity:
         """Same gross amount produces different ex-GST amounts for SG vs AU."""
         rule_service.create(db_session, RuleCreate(
             name="Common Expense",
-            rule_type=RuleType.SIMPLE,
-            match_description_pattern="COMMON",
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.EXPENSE,
+            description_operator=MatchOperator.CONTAINS,
+            description_value="COMMON",
             contra_account_code="5000",
         ))
 
@@ -629,7 +653,8 @@ class TestGSTModelFields:
         """Rule gst_override is included in to_dict()."""
         rule = rule_service.create(db_session, RuleCreate(
             name="Override Rule",
-            rule_type=RuleType.SIMPLE,
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.EXPENSE,
             contra_account_code="5000",
             gst_override=True,
         ))
@@ -641,7 +666,8 @@ class TestGSTModelFields:
         """Rule without gst_override has None in to_dict()."""
         rule = rule_service.create(db_session, RuleCreate(
             name="No Override Rule",
-            rule_type=RuleType.SIMPLE,
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.EXPENSE,
             contra_account_code="5000",
         ))
         d = rule.to_dict()
@@ -659,8 +685,10 @@ class TestGSTJEBalance:
         """3-line GST expense JE debits equal credits."""
         rule_service.create(db_session, RuleCreate(
             name="Balance Test Expense",
-            rule_type=RuleType.SIMPLE,
-            match_description_pattern="BALANCE",
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.EXPENSE,
+            description_operator=MatchOperator.CONTAINS,
+            description_value="BALANCE",
             contra_account_code="5000",
         ))
         txn = _make_transaction(db_session, sg_bank_account, description="BALANCE TEST", amount=-250.75)
@@ -676,8 +704,10 @@ class TestGSTJEBalance:
         """3-line GST revenue JE debits equal credits."""
         rule_service.create(db_session, RuleCreate(
             name="Balance Test Revenue",
-            rule_type=RuleType.SIMPLE,
-            match_description_pattern="REVENUE",
+            direction=TransactionDirection.INCOMING,
+            category=TransactionCategory.DEPOSIT,
+            description_operator=MatchOperator.CONTAINS,
+            description_value="REVENUE",
             contra_account_code="4000",
         ))
         txn = _make_transaction(db_session, sg_bank_account, description="REVENUE RECEIVED", amount=1635.50)

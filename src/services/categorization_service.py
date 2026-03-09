@@ -2,8 +2,8 @@
 Categorization Engine Service
 
 Core engine that automatically converts bank transactions into journal entries
-by applying configurable rules. Supports simple, intra-bank, and intercompany
-categorization.
+by applying configurable rules. Supports expense, deposit, and internal transfer
+categorization (both intra-entity and intercompany).
 """
 import json
 import re
@@ -18,8 +18,11 @@ from src.models.transaction import FinanceTransaction, TransactionStatus
 from src.models.bank_account import FinanceBankAccount
 from src.models.categorization_rule import (
     FinanceCategorizationRule,
-    RuleType,
     RuleStatus,
+    TransactionDirection,
+    TransactionCategory,
+    MatchOperator,
+    AmountOperator,
 )
 from src.models.tag import FinanceTransactionTag
 from src.models.account import FinanceAccount
@@ -37,8 +40,9 @@ class CategorizationService:
     """
     Core categorization engine.
 
-    Matches pending bank transactions against rules in priority order
-    and creates journal entries for matched transactions.
+    Evaluates pending transactions against active rules in priority order.
+    First matching rule wins. On match, creates a journal entry and advances
+    the transaction to MATCHED status (pending human or AI confirmation).
     """
 
     def run(
@@ -53,36 +57,29 @@ class CategorizationService:
 
         Args:
             db: Database session
-            entity_id: Optional filter - only process this entity's transactions
-            bank_account_id: Optional filter - only process this bank account
-            limit: Maximum number of transactions to process
+            entity_id: Optional — only process transactions belonging to this entity
+            bank_account_id: Optional — only process this bank account
+            limit: Maximum transactions to process in one run
 
         Returns:
-            Summary dict with total_processed, categorized, uncategorized, errors, results
+            Summary: total_processed, categorized, uncategorized, errors, results
         """
-        # 1. Query pending transactions
         query = db.query(FinanceTransaction).filter(
             FinanceTransaction.status == TransactionStatus.PENDING
         )
 
         if bank_account_id is not None:
-            query = query.filter(
-                FinanceTransaction.bank_account_id == bank_account_id
-            )
+            query = query.filter(FinanceTransaction.bank_account_id == bank_account_id)
         elif entity_id is not None:
-            # Filter by entity via bank account join
-            bank_account_id_list = [
+            bank_account_ids = [
                 row[0] for row in db.query(FinanceBankAccount.id).filter(
                     FinanceBankAccount.entity_id == entity_id
                 ).all()
             ]
-            query = query.filter(
-                FinanceTransaction.bank_account_id.in_(bank_account_id_list)
-            )
+            query = query.filter(FinanceTransaction.bank_account_id.in_(bank_account_ids))
 
         transactions = query.limit(limit).all()
 
-        # 2. Load active rules ordered by priority
         rules = (
             db.query(FinanceCategorizationRule)
             .filter(FinanceCategorizationRule.status == RuleStatus.ACTIVE)
@@ -90,7 +87,6 @@ class CategorizationService:
             .all()
         )
 
-        # 3. Process each transaction
         results = []
         categorized = 0
         uncategorized = 0
@@ -98,7 +94,7 @@ class CategorizationService:
 
         for transaction in transactions:
             try:
-                matched_rule = self._match_transaction(db, transaction, rules)
+                matched_rule = self._match_transaction(transaction, rules)
                 if matched_rule:
                     result = self._apply_rule(db, transaction, matched_rule)
                     results.append(result)
@@ -113,10 +109,7 @@ class CategorizationService:
                     })
                     uncategorized += 1
             except Exception as e:
-                logger.error(
-                    f"Error categorizing transaction {transaction.id}: {e}",
-                    exc_info=True,
-                )
+                logger.error(f"Error categorizing transaction {transaction.id}: {e}", exc_info=True)
                 db.rollback()
                 results.append({
                     "transaction_id": transaction.id,
@@ -135,85 +128,87 @@ class CategorizationService:
             "results": results,
         }
 
+    # ------------------------------------------------------------------
+    # Matching
+    # ------------------------------------------------------------------
+
     def _match_transaction(
         self,
-        db: Session,
         transaction: FinanceTransaction,
         rules: list[FinanceCategorizationRule],
     ) -> Optional[FinanceCategorizationRule]:
-        """
-        Try to match a transaction against rules in priority order.
-
-        All non-null criteria must match (AND logic).
-        First matching rule wins.
-        """
-        # Get the bank account for entity matching
-        bank_account = db.query(FinanceBankAccount).filter(
-            FinanceBankAccount.id == transaction.bank_account_id
-        ).first()
-
+        """Walk rules in priority order; return first match."""
         for rule in rules:
-            if self._rule_matches(transaction, rule, bank_account):
+            if self._rule_matches(transaction, rule):
                 return rule
-
         return None
 
     def _rule_matches(
         self,
         transaction: FinanceTransaction,
         rule: FinanceCategorizationRule,
-        bank_account: Optional[FinanceBankAccount],
     ) -> bool:
-        """Check if a single rule matches a transaction. All non-null criteria must match."""
-        # Check entity_id: rule.entity_id is null (all) or matches transaction's bank account entity
-        if rule.entity_id is not None:
-            if bank_account is None or bank_account.entity_id != rule.entity_id:
-                return False
-
-        # Check description pattern
-        if rule.match_description_pattern is not None:
-            if transaction.description is None:
-                return False
-            try:
-                if not re.search(
-                    rule.match_description_pattern,
-                    transaction.description,
-                    re.IGNORECASE,
-                ):
-                    return False
-            except re.error:
-                # Invalid regex - treat as literal substring match
-                if rule.match_description_pattern.lower() not in transaction.description.lower():
-                    return False
-
-        # Check amount range
+        """Return True if ALL non-null criteria on the rule match the transaction."""
         amount = float(transaction.amount) if transaction.amount is not None else 0.0
+
+        # 1. Bank account scope
+        if rule.bank_account_ids:
+            try:
+                allowed_ids = json.loads(rule.bank_account_ids)
+            except (json.JSONDecodeError, TypeError):
+                allowed_ids = []
+            if transaction.bank_account_id not in allowed_ids:
+                return False
+
+        # 2. Direction
+        if rule.direction == TransactionDirection.INCOMING and amount <= 0:
+            return False
+        if rule.direction == TransactionDirection.OUTGOING and amount >= 0:
+            return False
+
+        # 3. Amount (absolute value)
         abs_amount = abs(amount)
+        if rule.amount_operator is not None and rule.amount_value is not None:
+            v = float(rule.amount_value)
+            op = rule.amount_operator
+            if op == AmountOperator.EQUALS and abs_amount != v:
+                return False
+            if op == AmountOperator.NOT_EQUALS and abs_amount == v:
+                return False
+            if op == AmountOperator.GREATER_THAN and abs_amount <= v:
+                return False
+            if op == AmountOperator.LESS_THAN and abs_amount >= v:
+                return False
+            if op == AmountOperator.BETWEEN:
+                v_max = float(rule.amount_value_max) if rule.amount_value_max is not None else v
+                if not (v <= abs_amount <= v_max):
+                    return False
 
-        if rule.match_amount_min is not None:
-            if abs_amount < float(rule.match_amount_min):
+        # 4. Description
+        if rule.description_operator is not None and rule.description_value is not None:
+            if not _text_matches(transaction.description, rule.description_operator, rule.description_value):
                 return False
 
-        if rule.match_amount_max is not None:
-            if abs_amount > float(rule.match_amount_max):
+        # 5. Transaction type
+        if rule.transaction_type_operator is not None and rule.transaction_type_value is not None:
+            if not _text_matches(transaction.transaction_type, rule.transaction_type_operator, rule.transaction_type_value):
                 return False
 
-        # Check bank_account_id
-        if rule.match_bank_account_id is not None:
-            if transaction.bank_account_id != rule.match_bank_account_id:
+        # 6. Counterparty name (from raw bank CSV)
+        if rule.counterparty_operator is not None and rule.counterparty_value is not None:
+            if not _text_matches(transaction.counterparty_name, rule.counterparty_operator, rule.counterparty_value):
                 return False
 
-        # Check currency
+        # 7. Currency
         if rule.match_currency is not None:
             if transaction.currency != rule.match_currency:
                 return False
 
-        # Check transaction_type
-        if rule.match_transaction_type is not None:
-            if transaction.transaction_type != rule.match_transaction_type:
-                return False
-
         return True
+
+    # ------------------------------------------------------------------
+    # Apply rule
+    # ------------------------------------------------------------------
 
     def _apply_rule(
         self,
@@ -221,57 +216,51 @@ class CategorizationService:
         transaction: FinanceTransaction,
         rule: FinanceCategorizationRule,
     ) -> dict[str, Any]:
-        """
-        Apply a matched rule to a transaction.
-
-        Creates journal entry, updates transaction, applies tags.
-        """
-        # Look up bank account for entity and COA code
+        """Create journal entry, update transaction to MATCHED, apply tags."""
         bank_account = db.query(FinanceBankAccount).filter(
             FinanceBankAccount.id == transaction.bank_account_id
         ).first()
 
         if not bank_account:
-            raise ValueError(
-                f"Bank account {transaction.bank_account_id} not found"
-            )
-
+            raise ValueError(f"Bank account {transaction.bank_account_id} not found")
         if not bank_account.coa_account_code:
             raise ValueError(
                 f"Bank account {bank_account.id} ({bank_account.bank_name}) "
                 f"has no COA account code configured"
             )
 
-        entity_id = bank_account.entity_id
-        bank_coa_code = bank_account.coa_account_code
-        contra_code = rule.contra_account_code
         amount = float(transaction.amount) if transaction.amount is not None else 0.0
         abs_amount = abs(amount)
 
-        if rule.rule_type == RuleType.INTERCOMPANY:
-            journal_entry = self._create_intercompany_entries(
-                db, transaction, rule, bank_account, abs_amount
+        if rule.category == TransactionCategory.INTERNAL_TRANSFER:
+            journal_entry = self._create_internal_transfer_entries(
+                db, transaction, rule, bank_account, amount, abs_amount
             )
         else:
             journal_entry = self._create_simple_entry(
-                db, transaction, entity_id, bank_coa_code, contra_code,
-                amount, abs_amount, source="categorization_engine",
+                db=db,
+                transaction=transaction,
+                entity_id=bank_account.entity_id,
+                bank_coa_code=bank_account.coa_account_code,
+                contra_code=rule.contra_account_code,
+                amount=amount,
+                abs_amount=abs_amount,
+                source="categorization_engine",
                 rule=rule,
             )
 
-        # Update transaction
+        # Update transaction metadata
         if rule.counterparty_name:
             transaction.counterparty_name = rule.counterparty_name
         if rule.counterparty_type:
             transaction.counterparty_type = rule.counterparty_type
 
-        transaction.status = TransactionStatus.RECONCILED
+        # Categorization engine → MATCHED (awaiting human/AI confirmation → RECONCILED)
+        transaction.status = TransactionStatus.MATCHED
         transaction.reconciled_journal_entry_id = journal_entry.id
         transaction.reconciled_at = datetime.now(UTC)
 
-        # Apply tags
         self._apply_tags(db, transaction.id, rule.tag_ids)
-
         db.commit()
 
         return {
@@ -282,44 +271,9 @@ class CategorizationService:
             "error": None,
         }
 
-    def _should_apply_gst(
-        self,
-        db: Session,
-        contra_code: str,
-        rule: Optional[FinanceCategorizationRule],
-        entity_id: int,
-        gst_override: Optional[bool] = None,
-    ) -> bool:
-        """Determine if GST should be applied.
-
-        Priority: explicit gst_override param > rule.gst_override > account.gst_applicable
-        """
-        # 1. Check explicit override (from manual categorization)
-        if gst_override is not None:
-            return gst_override
-
-        # 2. Check rule override
-        if rule is not None and rule.gst_override is not None:
-            return rule.gst_override
-
-        # 3. Check contra account's gst_applicable
-        account = db.query(FinanceAccount).filter(
-            FinanceAccount.code == contra_code
-        ).first()
-        if account and account.gst_applicable:
-            return True
-
-        return False
-
-    def _get_gst_rate(self, db: Session, entity_id: int) -> float:
-        """Get GST rate from entity."""
-        from src.models.entity import FinanceEntity
-        entity = db.query(FinanceEntity).filter(
-            FinanceEntity.id == entity_id
-        ).first()
-        if entity and entity.gst_rate:
-            return float(entity.gst_rate)
-        return 0.0
+    # ------------------------------------------------------------------
+    # Journal entry creation
+    # ------------------------------------------------------------------
 
     def _create_simple_entry(
         self,
@@ -336,103 +290,43 @@ class CategorizationService:
         gst_override: Optional[bool] = None,
     ) -> Any:
         """
-        Create a simple journal entry for a transaction.
+        Create a 2-line (or 3-line with GST) journal entry.
 
-        Positive amount (money in): Debit bank account, Credit contra account
-        Negative amount (money out): Debit contra account, Credit bank account
+        Money in  (amount >= 0): Debit bank,  Credit contra
+        Money out (amount <  0): Debit contra, Credit bank
 
         If GST applies, creates a 3-line entry splitting GST from the amount.
         """
         je_description = description_override or transaction.description or "Categorized transaction"
 
-        # Determine if GST applies
         apply_gst = self._should_apply_gst(db, contra_code, rule, entity_id, gst_override)
-        gst_rate = 0.0
-        if apply_gst:
-            gst_rate = self._get_gst_rate(db, entity_id)
+        gst_rate = self._get_gst_rate(db, entity_id) if apply_gst else 0.0
 
         if apply_gst and gst_rate > 0:
-            # Transaction amount is GST-inclusive
-            ex_gst_amount = round(abs_amount / (1 + gst_rate), 2)
-            gst_amount = round(abs_amount - ex_gst_amount, 2)
-
+            ex_gst = round(abs_amount / (1 + gst_rate), 2)
+            gst_amount = round(abs_amount - ex_gst, 2)
             if amount < 0:
-                # Money out: Debit contra (ex-GST) + Debit GST Receivable + Credit bank
                 lines = [
-                    {
-                        "account_code": contra_code,
-                        "debit_amount": ex_gst_amount,
-                        "credit_amount": 0.0,
-                        "description": je_description,
-                    },
-                    {
-                        "account_code": GST_INPUT_TAX_CODE,
-                        "debit_amount": gst_amount,
-                        "credit_amount": 0.0,
-                        "description": je_description,
-                    },
-                    {
-                        "account_code": bank_coa_code,
-                        "debit_amount": 0.0,
-                        "credit_amount": abs_amount,
-                        "description": je_description,
-                    },
+                    {"account_code": contra_code,        "debit_amount": ex_gst,    "credit_amount": 0.0,       "description": je_description},
+                    {"account_code": GST_INPUT_TAX_CODE, "debit_amount": gst_amount, "credit_amount": 0.0,       "description": je_description},
+                    {"account_code": bank_coa_code,      "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
                 ]
             else:
-                # Money in: Debit bank + Credit contra (ex-GST) + Credit GST Payable
                 lines = [
-                    {
-                        "account_code": bank_coa_code,
-                        "debit_amount": abs_amount,
-                        "credit_amount": 0.0,
-                        "description": je_description,
-                    },
-                    {
-                        "account_code": contra_code,
-                        "debit_amount": 0.0,
-                        "credit_amount": ex_gst_amount,
-                        "description": je_description,
-                    },
-                    {
-                        "account_code": GST_OUTPUT_TAX_CODE,
-                        "debit_amount": 0.0,
-                        "credit_amount": gst_amount,
-                        "description": je_description,
-                    },
+                    {"account_code": bank_coa_code,       "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
+                    {"account_code": contra_code,         "debit_amount": 0.0,        "credit_amount": ex_gst,    "description": je_description},
+                    {"account_code": GST_OUTPUT_TAX_CODE, "debit_amount": 0.0,        "credit_amount": gst_amount, "description": je_description},
                 ]
         else:
-            # No GST: standard 2-line entry
             if amount >= 0:
-                # Money in: Debit bank, Credit contra
                 lines = [
-                    {
-                        "account_code": bank_coa_code,
-                        "debit_amount": abs_amount,
-                        "credit_amount": 0.0,
-                        "description": je_description,
-                    },
-                    {
-                        "account_code": contra_code,
-                        "debit_amount": 0.0,
-                        "credit_amount": abs_amount,
-                        "description": je_description,
-                    },
+                    {"account_code": bank_coa_code, "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
+                    {"account_code": contra_code,   "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
                 ]
             else:
-                # Money out: Debit contra, Credit bank
                 lines = [
-                    {
-                        "account_code": contra_code,
-                        "debit_amount": abs_amount,
-                        "credit_amount": 0.0,
-                        "description": je_description,
-                    },
-                    {
-                        "account_code": bank_coa_code,
-                        "debit_amount": 0.0,
-                        "credit_amount": abs_amount,
-                        "description": je_description,
-                    },
+                    {"account_code": contra_code,   "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
+                    {"account_code": bank_coa_code, "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
                 ]
 
         entry = journal_service.create(
@@ -446,115 +340,171 @@ class CategorizationService:
         db.flush()
         return entry
 
-    def _create_intercompany_entries(
+    def _create_internal_transfer_entries(
         self,
         db: Session,
         transaction: FinanceTransaction,
         rule: FinanceCategorizationRule,
         bank_account: FinanceBankAccount,
+        amount: float,
         abs_amount: float,
     ) -> Any:
         """
-        Create paired intercompany journal entries.
+        Create journal entry/entries for an internal transfer.
 
-        Creates two JEs with the same intercompany_group_id:
-        - Source entity: Debit IC receivable, Credit bank (for outgoing)
-        - Target entity: Debit bank/expense, Credit IC payable (for outgoing)
+        Same entity (intra-bank): single 2-line JE moving cash between accounts.
+        Different entities (intercompany): paired JEs with a shared intercompany_group_id.
+        The contra_account_code (if set on the rule) is used as the IC clearing account
+        in both entities for intercompany transfers.
         """
-        ic_group_id = str(uuid.uuid4())
-        entity_id = bank_account.entity_id
-        bank_coa_code = bank_account.coa_account_code
-        amount = float(transaction.amount) if transaction.amount is not None else 0.0
-        je_description = transaction.description or "Intercompany transfer"
-
-        if not bank_coa_code:
+        target_ba = db.query(FinanceBankAccount).filter(
+            FinanceBankAccount.id == rule.target_bank_account_id
+        ).first()
+        if not target_ba:
             raise ValueError(
-                f"Bank account {bank_account.id} has no COA account code configured"
+                f"Target bank account {rule.target_bank_account_id} not found"
+            )
+        if not target_ba.coa_account_code:
+            raise ValueError(
+                f"Target bank account {target_ba.id} ({target_ba.bank_name}) "
+                f"has no COA account code configured"
             )
 
-        if not rule.target_entity_id or not rule.target_contra_account_code:
-            raise ValueError("Intercompany rule missing target_entity_id or target_contra_account_code")
+        source_entity_id = bank_account.entity_id
+        target_entity_id = target_ba.entity_id
+        source_coa = bank_account.coa_account_code
+        target_coa = target_ba.coa_account_code
+        je_description = transaction.description or "Internal transfer"
 
-        # Source entity entry
-        if amount >= 0:
-            source_lines = [
-                {"account_code": bank_coa_code, "debit_amount": abs_amount, "credit_amount": 0.0, "description": je_description},
-                {"account_code": rule.contra_account_code, "debit_amount": 0.0, "credit_amount": abs_amount, "description": je_description},
-            ]
+        if source_entity_id == target_entity_id:
+            # Intra-entity: one 2-line JE
+            # Outgoing from source: Dr target_bank / Cr source_bank
+            # Incoming to source:  Dr source_bank / Cr target_bank
+            if amount < 0:
+                lines = [
+                    {"account_code": target_coa, "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
+                    {"account_code": source_coa, "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
+                ]
+            else:
+                lines = [
+                    {"account_code": source_coa, "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
+                    {"account_code": target_coa, "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
+                ]
+            entry = journal_service.create(
+                db=db,
+                entity_id=source_entity_id,
+                entry_date=transaction.transaction_date,
+                description=je_description,
+                lines=lines,
+            )
+            entry.source = "categorization_engine"
+            db.flush()
+            return entry
+
         else:
-            source_lines = [
-                {"account_code": rule.contra_account_code, "debit_amount": abs_amount, "credit_amount": 0.0, "description": je_description},
-                {"account_code": bank_coa_code, "debit_amount": 0.0, "credit_amount": abs_amount, "description": je_description},
-            ]
+            # Intercompany: two paired JEs
+            ic_group_id = str(uuid.uuid4())
+            ic_code = rule.contra_account_code  # IC clearing account used in both entities
 
-        source_entry = journal_service.create(
-            db=db,
-            entity_id=entity_id,
-            entry_date=transaction.transaction_date,
-            description=je_description,
-            lines=source_lines,
-        )
-        source_entry.source = "categorization_engine"
-        source_entry.intercompany_group_id = ic_group_id
+            if not ic_code:
+                raise ValueError(
+                    "Intercompany internal_transfer rule requires contra_account_code "
+                    "(IC clearing account used in both entities)"
+                )
 
-        # Target entity entry (mirror)
-        if amount >= 0:
-            target_lines = [
-                {"account_code": rule.target_contra_account_code, "debit_amount": abs_amount, "credit_amount": 0.0, "description": je_description},
-                {"account_code": rule.contra_account_code, "debit_amount": 0.0, "credit_amount": abs_amount, "description": je_description},
-            ]
-        else:
-            target_lines = [
-                {"account_code": rule.contra_account_code, "debit_amount": abs_amount, "credit_amount": 0.0, "description": je_description},
-                {"account_code": rule.target_contra_account_code, "debit_amount": 0.0, "credit_amount": abs_amount, "description": je_description},
-            ]
+            if amount < 0:
+                # Source entity sends money out: Dr IC Receivable / Cr Source Bank
+                source_lines = [
+                    {"account_code": ic_code,    "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
+                    {"account_code": source_coa, "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
+                ]
+                # Target entity receives money in: Dr Target Bank / Cr IC Payable
+                target_lines = [
+                    {"account_code": target_coa, "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
+                    {"account_code": ic_code,    "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
+                ]
+            else:
+                # Source entity receives money in: Dr Source Bank / Cr IC Payable
+                source_lines = [
+                    {"account_code": source_coa, "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
+                    {"account_code": ic_code,    "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
+                ]
+                # Target entity sends money out: Dr IC Receivable / Cr Target Bank
+                target_lines = [
+                    {"account_code": ic_code,    "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
+                    {"account_code": target_coa, "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
+                ]
 
-        target_entry = journal_service.create(
-            db=db,
-            entity_id=rule.target_entity_id,
-            entry_date=transaction.transaction_date,
-            description=je_description,
-            lines=target_lines,
-        )
-        target_entry.source = "categorization_engine"
-        target_entry.intercompany_group_id = ic_group_id
+            source_entry = journal_service.create(
+                db=db, entity_id=source_entity_id,
+                entry_date=transaction.transaction_date,
+                description=je_description, lines=source_lines,
+            )
+            source_entry.source = "categorization_engine"
+            source_entry.intercompany_group_id = ic_group_id
 
-        db.flush()
+            target_entry = journal_service.create(
+                db=db, entity_id=target_entity_id,
+                entry_date=transaction.transaction_date,
+                description=je_description, lines=target_lines,
+            )
+            target_entry.source = "categorization_engine"
+            target_entry.intercompany_group_id = ic_group_id
 
-        return source_entry
+            db.flush()
+            return source_entry
 
-    def _apply_tags(
+    # ------------------------------------------------------------------
+    # GST helpers
+    # ------------------------------------------------------------------
+
+    def _should_apply_gst(
         self,
         db: Session,
-        transaction_id: int,
-        tag_ids_json: Optional[str],
-    ) -> None:
-        """Apply tags from a JSON array string to a transaction."""
+        contra_code: str,
+        rule: Optional[FinanceCategorizationRule],
+        entity_id: int,
+        gst_override: Optional[bool] = None,
+    ) -> bool:
+        """Priority: explicit override > rule override > account.gst_applicable"""
+        if gst_override is not None:
+            return gst_override
+        if rule is not None and rule.gst_override is not None:
+            return rule.gst_override
+        account = db.query(FinanceAccount).filter(FinanceAccount.code == contra_code).first()
+        return bool(account and account.gst_applicable)
+
+    def _get_gst_rate(self, db: Session, entity_id: int) -> float:
+        from src.models.entity import FinanceEntity
+        entity = db.query(FinanceEntity).filter(FinanceEntity.id == entity_id).first()
+        return float(entity.gst_rate) if entity and entity.gst_rate else 0.0
+
+    # ------------------------------------------------------------------
+    # Tags
+    # ------------------------------------------------------------------
+
+    def _apply_tags(self, db: Session, transaction_id: int, tag_ids_json: Optional[str]) -> None:
         if not tag_ids_json:
             return
-
         try:
             tag_ids = json.loads(tag_ids_json)
         except (json.JSONDecodeError, TypeError):
             return
-
         if not isinstance(tag_ids, list):
             return
-
         for tag_id in tag_ids:
             if not isinstance(tag_id, int):
                 continue
-            # Check if association already exists
             existing = db.query(FinanceTransactionTag).filter(
                 FinanceTransactionTag.transaction_id == transaction_id,
                 FinanceTransactionTag.tag_id == tag_id,
             ).first()
             if not existing:
-                assoc = FinanceTransactionTag(
-                    transaction_id=transaction_id,
-                    tag_id=tag_id,
-                )
-                db.add(assoc)
+                db.add(FinanceTransactionTag(transaction_id=transaction_id, tag_id=tag_id))
+
+    # ------------------------------------------------------------------
+    # Manual categorization (human-driven → straight to RECONCILED)
+    # ------------------------------------------------------------------
 
     def manual_categorize(
         self,
@@ -570,68 +520,45 @@ class CategorizationService:
         """
         Manually categorize a single transaction.
 
-        Args:
-            db: Database session
-            transaction_id: ID of the transaction to categorize
-            contra_account_code: The contra account code
-            counterparty_name: Optional counterparty name
-            counterparty_type: Optional counterparty type
-            tag_ids: Optional list of tag IDs to apply
-            description: Optional JE description override
-
-        Returns:
-            Dict with transaction_id, journal_entry_id, status
+        Human-driven: bypasses the rules engine and goes directly to RECONCILED
+        (no separate confirmation step needed — the human IS the confirmation).
 
         Raises:
-            ValueError: If transaction not found, not pending, or account code invalid
+            ValueError: If transaction not found, not pending, or account code invalid.
         """
         transaction = db.query(FinanceTransaction).filter(
             FinanceTransaction.id == transaction_id
         ).first()
-
         if not transaction:
             raise ValueError(f"Transaction with ID {transaction_id} not found")
-
         if transaction.status != TransactionStatus.PENDING:
             raise ValueError(
                 f"Transaction {transaction_id} is not in Pending status "
                 f"(current: {transaction.status.value})"
             )
 
-        # Validate contra account exists
-        account = db.query(FinanceAccount).filter(
-            FinanceAccount.code == contra_account_code
-        ).first()
+        account = db.query(FinanceAccount).filter(FinanceAccount.code == contra_account_code).first()
         if not account:
-            raise ValueError(
-                f"Account code '{contra_account_code}' does not exist"
-            )
+            raise ValueError(f"Account code '{contra_account_code}' does not exist")
 
-        # Get bank account
         bank_account = db.query(FinanceBankAccount).filter(
             FinanceBankAccount.id == transaction.bank_account_id
         ).first()
-
         if not bank_account:
-            raise ValueError(
-                f"Bank account {transaction.bank_account_id} not found"
-            )
-
+            raise ValueError(f"Bank account {transaction.bank_account_id} not found")
         if not bank_account.coa_account_code:
             raise ValueError(
                 f"Bank account {bank_account.id} ({bank_account.bank_name}) "
                 f"has no COA account code configured"
             )
 
-        entity_id = bank_account.entity_id
         amount = float(transaction.amount) if transaction.amount is not None else 0.0
         abs_amount = abs(amount)
 
-        # Create journal entry
         entry = self._create_simple_entry(
             db=db,
             transaction=transaction,
-            entity_id=entity_id,
+            entity_id=bank_account.entity_id,
             bank_coa_code=bank_account.coa_account_code,
             contra_code=contra_account_code,
             amount=amount,
@@ -641,20 +568,18 @@ class CategorizationService:
             gst_override=gst_override,
         )
 
-        # Update transaction
         if counterparty_name:
             transaction.counterparty_name = counterparty_name
         if counterparty_type:
             transaction.counterparty_type = counterparty_type
 
+        # Manual categorization = human confirmation → RECONCILED directly
         transaction.status = TransactionStatus.RECONCILED
         transaction.reconciled_journal_entry_id = entry.id
         transaction.reconciled_at = datetime.now(UTC)
 
-        # Apply tags
         if tag_ids:
-            tag_ids_json = json.dumps(tag_ids)
-            self._apply_tags(db, transaction.id, tag_ids_json)
+            self._apply_tags(db, transaction.id, json.dumps(tag_ids))
 
         db.commit()
 
@@ -663,6 +588,38 @@ class CategorizationService:
             "journal_entry_id": entry.id,
             "status": "categorized",
         }
+
+
+# ------------------------------------------------------------------
+# Text matching helper
+# ------------------------------------------------------------------
+
+def _text_matches(value: Optional[str], operator: MatchOperator, pattern: str) -> bool:
+    """
+    Apply a MatchOperator comparison between a field value and a pattern string.
+
+    None field value:
+      - NOT_CONTAINS → True  (null doesn't contain anything)
+      - everything else → False
+    """
+    if value is None:
+        return operator == MatchOperator.NOT_CONTAINS
+
+    v_lower = value.lower()
+    p_lower = pattern.lower()
+
+    if operator == MatchOperator.CONTAINS:
+        return p_lower in v_lower
+    if operator == MatchOperator.NOT_CONTAINS:
+        return p_lower not in v_lower
+    if operator == MatchOperator.IS_EXACTLY:
+        return v_lower == p_lower
+    if operator == MatchOperator.MATCHES_REGEX:
+        try:
+            return bool(re.search(pattern, value, re.IGNORECASE))
+        except re.error:
+            return p_lower in v_lower  # fallback: treat as substring
+    return False
 
 
 # Singleton instance

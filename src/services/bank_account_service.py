@@ -61,14 +61,13 @@ class BankAccountService:
         """
         Find the next available COA code in the 1000-1199 range for bank accounts.
 
-        Checks entity-specific accounts (is_bank_account=True) for this entity.
+        Scans ALL accounts in 1000-1199 globally because codes are globally unique
+        (enforced by ix_finance_accounts_code unique index). A code used by any
+        entity or as a placeholder cannot be reused.
         """
         existing_codes = (
             db.query(FinanceAccount.code)
-            .filter(
-                FinanceAccount.entity_id == entity_id,
-                FinanceAccount.is_bank_account == True,
-            )
+            .filter(FinanceAccount.code.between('1000', '1199'))
             .all()
         )
         used_codes = {int(row[0]) for row in existing_codes if row[0].isdigit()}
@@ -77,7 +76,7 @@ class BankAccountService:
             if code not in used_codes:
                 return str(code)
 
-        raise ValueError("No available COA codes in 1000-1199 range for this entity")
+        raise ValueError("No available COA codes in 1000-1199 range")
 
     def create(self, db: Session, bank_account_data: BankAccountCreate) -> FinanceBankAccount:
         """
@@ -123,6 +122,7 @@ class BankAccountService:
             account_number=bank_account_data.account_number,
             account_name=bank_account_data.account_name,
             currency=bank_account_data.currency,
+            csv_format=bank_account_data.csv_format,
             coa_account_code=coa_code,
             status=bank_account_data.status
         )

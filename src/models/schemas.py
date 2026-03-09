@@ -15,7 +15,13 @@ from src.models.account import AccountType, NormalBalance, AccountStatus
 from src.models.bank_account import BankAccountStatus
 from src.models.transaction import TransactionStatus
 from src.models.journal_entry import JournalEntryStatus
-from src.models.categorization_rule import RuleType, RuleStatus
+from src.models.categorization_rule import (
+    RuleStatus,
+    TransactionDirection,
+    TransactionCategory,
+    MatchOperator,
+    AmountOperator,
+)
 
 
 # =============================================================================
@@ -159,6 +165,15 @@ class BankAccountCreate(BaseModel):
     account_number: str = Field(..., min_length=1, max_length=50, description="Bank account number")
     account_name: str = Field(..., min_length=1, max_length=255, description="Account holder name")
     currency: str = Field(..., min_length=3, max_length=3, description="ISO 4217 currency code")
+    csv_format: str = Field(
+        ...,
+        min_length=1,
+        max_length=50,
+        description=(
+            "CSV adapter key for this bank account. Must match a registered adapter "
+            "(e.g. 'ocbc'). Used to select the correct parser when importing bank statements."
+        ),
+    )
     coa_account_code: Optional[str] = Field(None, max_length=20, description="COA account code this bank account maps to")
     status: Optional[BankAccountStatus] = Field(
         default=BankAccountStatus.ACTIVE,
@@ -173,6 +188,19 @@ class BankAccountCreate(BaseModel):
             raise ValueError('Currency must be a 3-letter ISO 4217 code')
         return v.upper()
 
+    @field_validator('csv_format')
+    @classmethod
+    def validate_csv_format(cls, v: str) -> str:
+        """Validate csv_format is a registered adapter key."""
+        from src.services.csv_adapters.registry import ADAPTER_REGISTRY
+        normalised = v.strip().lower()
+        if normalised not in ADAPTER_REGISTRY:
+            supported = sorted(ADAPTER_REGISTRY.keys())
+            raise ValueError(
+                f"csv_format '{v}' is not a registered adapter. Supported values: {supported}"
+            )
+        return normalised
+
 
 class BankAccountUpdate(BaseModel):
     """Schema for updating an existing bank account."""
@@ -180,6 +208,7 @@ class BankAccountUpdate(BaseModel):
     account_number: Optional[str] = Field(None, min_length=1, max_length=50)
     account_name: Optional[str] = Field(None, min_length=1, max_length=255)
     currency: Optional[str] = Field(None, min_length=3, max_length=3)
+    csv_format: Optional[str] = Field(None, min_length=1, max_length=50)
     coa_account_code: Optional[str] = Field(None, max_length=20, description="COA account code this bank account maps to")
     status: Optional[BankAccountStatus] = None
 
@@ -201,6 +230,7 @@ class BankAccountResponse(BaseModel):
     account_number: str
     account_name: str
     currency: str
+    csv_format: Optional[str] = None
     coa_account_code: Optional[str] = None
     status: str
     created_at: datetime
@@ -390,89 +420,99 @@ class TagResponse(BaseModel):
 
 class RuleCreate(BaseModel):
     """Schema for creating a new categorization rule."""
-    name: str = Field(..., min_length=1, max_length=255, description="Human-readable rule name")
-    entity_id: Optional[int] = Field(None, gt=0, description="Entity ID (null = applies to all)")
+    name: str = Field(..., min_length=1, max_length=255)
     priority: Optional[int] = Field(default=100, ge=1, description="Lower number = higher priority")
-    rule_type: RuleType = Field(..., description="Rule type: simple, intra_bank, intercompany")
+    status: Optional[RuleStatus] = Field(default=RuleStatus.ACTIVE)
+    description: Optional[str] = Field(None)
 
-    # Match criteria
-    match_description_pattern: Optional[str] = Field(None, max_length=500, description="Regex or keyword pattern")
-    match_amount_min: Optional[float] = Field(None, description="Minimum amount (inclusive)")
-    match_amount_max: Optional[float] = Field(None, description="Maximum amount (inclusive)")
-    match_bank_account_id: Optional[int] = Field(None, gt=0, description="Specific bank account")
-    match_currency: Optional[str] = Field(None, max_length=3, description="ISO 4217 currency code")
-    match_transaction_type: Optional[str] = Field(None, max_length=50, description="Bank classification")
+    # Scope
+    bank_account_ids: Optional[list[int]] = Field(
+        None, description="Bank account IDs this rule applies to. Null = all accounts."
+    )
+    direction: TransactionDirection = Field(..., description="incoming or outgoing")
+
+    # Match criteria (all optional; AND logic)
+    amount_operator: Optional[AmountOperator] = None
+    amount_value: Optional[float] = Field(None, description="Single value or lower bound for BETWEEN")
+    amount_value_max: Optional[float] = Field(None, description="Upper bound for BETWEEN only")
+    description_operator: Optional[MatchOperator] = None
+    description_value: Optional[str] = Field(None, max_length=500)
+    transaction_type_operator: Optional[MatchOperator] = None
+    transaction_type_value: Optional[str] = Field(None, max_length=50)
+    counterparty_operator: Optional[MatchOperator] = None
+    counterparty_value: Optional[str] = Field(None, max_length=255)
+    match_currency: Optional[str] = Field(None, max_length=3)
 
     # Action
-    contra_account_code: str = Field(..., min_length=1, max_length=20, description="Contra account code")
-    counterparty_name: Optional[str] = Field(None, max_length=255, description="Counterparty name to set")
-    counterparty_type: Optional[str] = Field(None, max_length=50, description="Counterparty type")
-
-    # Tags
-    tag_ids: Optional[list[int]] = Field(None, description="List of tag IDs to apply")
-
-    # Intercompany
-    target_entity_id: Optional[int] = Field(None, gt=0, description="Target entity for IC transfers")
-    target_contra_account_code: Optional[str] = Field(None, max_length=20, description="Contra account in target entity")
-
-    # GST
-    gst_override: Optional[bool] = Field(default=None, description="Override account GST. null=default, true=force GST, false=force no GST")
-
-    status: Optional[RuleStatus] = Field(default=RuleStatus.ACTIVE, description="Rule status")
-    description: Optional[str] = Field(None, description="Rule description")
+    category: TransactionCategory = Field(..., description="expense | deposit | internal_transfer")
+    contra_account_code: Optional[str] = Field(None, max_length=20, description="Required for expense/deposit")
+    target_bank_account_id: Optional[int] = Field(None, gt=0, description="Required for internal_transfer")
+    counterparty_name: Optional[str] = Field(None, max_length=255)
+    counterparty_type: Optional[str] = Field(None, max_length=50)
+    tag_ids: Optional[list[int]] = None
+    gst_override: Optional[bool] = None
 
 
 class RuleUpdate(BaseModel):
     """Schema for updating an existing categorization rule."""
     name: Optional[str] = Field(None, min_length=1, max_length=255)
-    entity_id: Optional[int] = Field(None, gt=0)
     priority: Optional[int] = Field(None, ge=1)
-    rule_type: Optional[RuleType] = None
-
-    match_description_pattern: Optional[str] = Field(None, max_length=500)
-    match_amount_min: Optional[float] = None
-    match_amount_max: Optional[float] = None
-    match_bank_account_id: Optional[int] = Field(None, gt=0)
-    match_currency: Optional[str] = Field(None, max_length=3)
-    match_transaction_type: Optional[str] = Field(None, max_length=50)
-
-    contra_account_code: Optional[str] = Field(None, min_length=1, max_length=20)
-    counterparty_name: Optional[str] = Field(None, max_length=255)
-    counterparty_type: Optional[str] = Field(None, max_length=50)
-
-    tag_ids: Optional[list[int]] = None
-
-    target_entity_id: Optional[int] = Field(None, gt=0)
-    target_contra_account_code: Optional[str] = Field(None, max_length=20)
-
-    gst_override: Optional[bool] = None
-
     status: Optional[RuleStatus] = None
     description: Optional[str] = None
+
+    bank_account_ids: Optional[list[int]] = None
+    direction: Optional[TransactionDirection] = None
+
+    amount_operator: Optional[AmountOperator] = None
+    amount_value: Optional[float] = None
+    amount_value_max: Optional[float] = None
+    description_operator: Optional[MatchOperator] = None
+    description_value: Optional[str] = Field(None, max_length=500)
+    transaction_type_operator: Optional[MatchOperator] = None
+    transaction_type_value: Optional[str] = Field(None, max_length=50)
+    counterparty_operator: Optional[MatchOperator] = None
+    counterparty_value: Optional[str] = Field(None, max_length=255)
+    match_currency: Optional[str] = Field(None, max_length=3)
+
+    category: Optional[TransactionCategory] = None
+    contra_account_code: Optional[str] = Field(None, max_length=20)
+    target_bank_account_id: Optional[int] = Field(None, gt=0)
+    counterparty_name: Optional[str] = Field(None, max_length=255)
+    counterparty_type: Optional[str] = Field(None, max_length=50)
+    tag_ids: Optional[list[int]] = None
+    gst_override: Optional[bool] = None
 
 
 class RuleResponse(BaseModel):
     """Schema for categorization rule response."""
     id: int
     name: str
-    entity_id: Optional[int] = None
     priority: int
-    rule_type: str
-    match_description_pattern: Optional[str] = None
-    match_amount_min: Optional[float] = None
-    match_amount_max: Optional[float] = None
-    match_bank_account_id: Optional[int] = None
+    status: str
+    description: Optional[str] = None
+
+    bank_account_ids: Optional[str] = None
+    direction: str
+
+    amount_operator: Optional[str] = None
+    amount_value: Optional[float] = None
+    amount_value_max: Optional[float] = None
+    description_operator: Optional[str] = None
+    description_value: Optional[str] = None
+    transaction_type_operator: Optional[str] = None
+    transaction_type_value: Optional[str] = None
+    counterparty_operator: Optional[str] = None
+    counterparty_value: Optional[str] = None
     match_currency: Optional[str] = None
-    match_transaction_type: Optional[str] = None
-    contra_account_code: str
+
+    category: str
+    contra_account_code: Optional[str] = None
+    target_bank_account_id: Optional[int] = None
     counterparty_name: Optional[str] = None
     counterparty_type: Optional[str] = None
     tag_ids: Optional[str] = None
-    target_entity_id: Optional[int] = None
-    target_contra_account_code: Optional[str] = None
     gst_override: Optional[bool] = None
-    status: str
-    description: Optional[str] = None
+
     created_at: datetime
     updated_at: datetime
 

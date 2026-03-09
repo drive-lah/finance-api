@@ -6,7 +6,7 @@ Business logic for generating financial reports.
 from datetime import date
 from decimal import Decimal
 from typing import Optional
-from sqlalchemy import func
+from sqlalchemy import func, and_, or_
 from sqlalchemy.orm import Session
 
 from src.models import (
@@ -80,7 +80,13 @@ class ReportService:
             )
             .join(
                 FinanceAccount,
-                FinanceJournalLine.account_code == FinanceAccount.code
+                and_(
+                    FinanceJournalLine.account_code == FinanceAccount.code,
+                    or_(
+                        FinanceAccount.entity_id == entity_id,   # entity-specific (bank accounts)
+                        FinanceAccount.entity_id == None          # group-level (all other accounts)
+                    )
+                )
             )
             .filter(FinanceJournalLine.entity_id == entity_id)
             .filter(FinanceJournalEntry.status == JournalEntryStatus.POSTED)

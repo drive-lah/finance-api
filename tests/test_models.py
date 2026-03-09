@@ -859,25 +859,28 @@ class TestBankAccountSchemas:
         """Test valid bank account creation schema."""
         data = BankAccountCreate(
             entity_id=1,
-            bank_name="Commonwealth Bank",
+            bank_name="OCBC",
             account_number="12345678",
             account_name="Operating Account",
-            currency="AUD",
+            currency="SGD",
+            csv_format="ocbc",
         )
         assert data.entity_id == 1
-        assert data.bank_name == "Commonwealth Bank"
+        assert data.bank_name == "OCBC"
         assert data.account_number == "12345678"
-        assert data.currency == "AUD"
+        assert data.currency == "SGD"
+        assert data.csv_format == "ocbc"
         assert data.status == BankAccountStatus.ACTIVE
-    
+
     def test_bank_account_create_lowercase_currency(self):
         """Test that currency code is uppercased."""
         data = BankAccountCreate(
             entity_id=1,
-            bank_name="Bank",
+            bank_name="OCBC",
             account_number="111",
             account_name="Account",
             currency="sgd",
+            csv_format="ocbc",
         )
         assert data.currency == "SGD"
     

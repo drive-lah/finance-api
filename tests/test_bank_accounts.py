@@ -168,9 +168,10 @@ def test_create_bank_account_success(client, db_session):
         "bank_name": "OCBC",
         "account_number": "123-456-789",
         "account_name": "Operating Account",
-        "currency": "SGD"
+        "currency": "SGD",
+        "csv_format": "ocbc",
     }
-    
+
     with patch('src.routes.bank_accounts.get_db', mock_get_db(db_session)):
         response = client.post('/api/finance/bank-accounts', json=bank_account_data)
         assert response.status_code == 201
@@ -179,6 +180,7 @@ def test_create_bank_account_success(client, db_session):
         assert data['account_number'] == "123-456-789"
         assert data['account_name'] == "Operating Account"
         assert data['currency'] == "SGD"
+        assert data['csv_format'] == "ocbc"
         assert data['status'] == "active"
         assert 'id' in data
         assert 'created_at' in data
@@ -202,7 +204,8 @@ def test_create_bank_account_with_status(client, db_session):
         "account_number": "999-888-777",
         "account_name": "Dormant Account",
         "currency": "SGD",
-        "status": "inactive"
+        "csv_format": "ocbc",
+        "status": "inactive",
     }
     
     with patch('src.routes.bank_accounts.get_db', mock_get_db(db_session)):
@@ -219,7 +222,8 @@ def test_create_bank_account_invalid_entity(client, db_session):
         "bank_name": "OCBC",
         "account_number": "123-456-789",
         "account_name": "Operating Account",
-        "currency": "SGD"
+        "currency": "SGD",
+        "csv_format": "ocbc",
     }
     
     with patch('src.routes.bank_accounts.get_db', mock_get_db(db_session)):
@@ -335,10 +339,10 @@ def test_create_mvp_bank_accounts(client, db_session):
     
     # MVP bank accounts from PRD
     mvp_accounts = [
-        {"entity_id": dl_ventures.id, "bank_name": "OCBC", "account_number": "XXX-1", "account_name": "DL Ventures Operating", "currency": "SGD"},
-        {"entity_id": dl_ventures.id, "bank_name": "Wise", "account_number": "XXX-2", "account_name": "DL Ventures Multi-Currency", "currency": "USD"},
-        {"entity_id": dl_sg.id, "bank_name": "DBS", "account_number": "XXX-3", "account_name": "DL SG Operating", "currency": "SGD"},
-        {"entity_id": dl_au.id, "bank_name": "NAB", "account_number": "XXX-4", "account_name": "DL AU Operating", "currency": "AUD"},
+        {"entity_id": dl_ventures.id, "bank_name": "OCBC", "account_number": "XXX-1", "account_name": "DL Ventures Operating", "currency": "SGD", "csv_format": "ocbc"},
+        {"entity_id": dl_ventures.id, "bank_name": "Wise", "account_number": "XXX-2", "account_name": "DL Ventures Multi-Currency", "currency": "USD", "csv_format": "ocbc"},
+        {"entity_id": dl_sg.id, "bank_name": "DBS", "account_number": "XXX-3", "account_name": "DL SG Operating", "currency": "SGD", "csv_format": "ocbc"},
+        {"entity_id": dl_au.id, "bank_name": "NAB", "account_number": "XXX-4", "account_name": "DL AU Operating", "currency": "AUD", "csv_format": "ocbc"},
     ]
     
     with patch('src.routes.bank_accounts.get_db', mock_get_db(db_session)):

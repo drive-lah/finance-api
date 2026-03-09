@@ -17,10 +17,12 @@ from src.database import Base
 class TransactionStatus(enum.Enum):
     """
     Status of a bank transaction in the reconciliation workflow.
-    
-    - PENDING: Newly imported, not yet matched
-    - MATCHED: Matched to a journal entry but not confirmed
-    - RECONCILED: Confirmed match with journal entry
+
+    - PENDING:     Imported from CSV or Stripe. Awaiting categorization.
+    - MATCHED:     Categorization applied and journal entry created (system-driven).
+                   Represents the system's best guess — not yet approved.
+    - RECONCILED:  Confirmed correct. Initially approved by a human reviewer;
+                   later by an AI agent. Locked for accounting purposes.
     """
     PENDING = "Pending"
     MATCHED = "Matched"

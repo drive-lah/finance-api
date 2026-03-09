@@ -3,85 +3,40 @@ Transaction Fingerprinting Utility
 
 Generates consistent SHA256 fingerprints for bank transactions
 to enable duplicate detection across import batches.
+
+Design: the fingerprint is built from a list of normalised string fields
+supplied by the caller. What fields to include is a per-adapter decision —
+each bank adapter declares which fields uniquely identify a row in its own
+CSV format (see BankCSVAdapter.fingerprint_fields).
+
+bank_account_id is always prepended so fingerprints are scoped per account.
 """
 import hashlib
-from datetime import date
-from decimal import Decimal
-from typing import Optional, Union
+from typing import Sequence
 
 
-def generate_fingerprint(
-    bank_account_id: int,
-    transaction_date: Union[date, str],
-    amount: Union[float, Decimal, str],
-    reference: Optional[str] = None
-) -> str:
+def generate_fingerprint(bank_account_id: int, fields: Sequence[str]) -> str:
     """
-    Generate a SHA256 fingerprint for a bank transaction.
-    
-    The fingerprint is deterministic - identical inputs always produce
-    the same hash. This enables reliable duplicate detection.
-    
+    Generate a SHA256 fingerprint from a bank account ID and a list of
+    normalised field values.
+
     Args:
-        bank_account_id: ID of the bank account (integer)
-        transaction_date: Transaction date (date object or ISO string)
-        amount: Transaction amount (float, Decimal, or string)
-        reference: Optional reference number (None treated as empty string)
-    
+        bank_account_id: ID of the bank account — always included first so
+            identical transactions on different accounts never collide.
+        fields: Ordered list of normalised string values that together
+            uniquely identify this transaction row. The adapter is responsible
+            for choosing and normalising these fields.
+
     Returns:
-        64-character hexadecimal SHA256 hash
-    
-    Normalization rules:
-        - bank_account_id: converted to string
-        - date: converted to ISO format YYYY-MM-DD
-        - amount: formatted as decimal with 2 decimal places (e.g., "123.45")
-        - reference: stripped, lowercased, empty string if None
-    
-    Examples:
-        >>> generate_fingerprint(1, date(2024, 1, 15), 100.50, "REF123")
-        '...'  # 64-char hex string
-        
-        >>> # Same inputs produce same hash
-        >>> h1 = generate_fingerprint(1, "2024-01-15", Decimal("100.50"), "REF123")
-        >>> h2 = generate_fingerprint(1, date(2024, 1, 15), 100.5, "REF123")
-        >>> h1 == h2
-        True
+        64-character hexadecimal SHA256 hash.
+
+    Normalisation contract (callers must honour):
+        - All strings should be stripped of surrounding whitespace.
+        - Case should be lowercased where the field is case-insensitive.
+        - None / missing values should be passed as empty string "".
+        - Amounts should be formatted as fixed 2dp strings (e.g. "-50.00").
+        - Dates should be ISO format "YYYY-MM-DD".
     """
-    # Normalize bank_account_id
-    normalized_account_id = str(bank_account_id)
-    
-    # Normalize transaction_date
-    if isinstance(transaction_date, date):
-        normalized_date = transaction_date.isoformat()  # YYYY-MM-DD
-    else:
-        # Assume string in ISO format
-        normalized_date = str(transaction_date).strip()
-    
-    # Normalize amount - format with 2 decimal places
-    if isinstance(amount, str):
-        # Parse string to float first
-        amount = float(amount)
-    if isinstance(amount, Decimal):
-        amount = float(amount)
-    normalized_amount = f"{amount:.2f}"
-    
-    # Normalize reference - lowercase, strip whitespace, empty string if None
-    if reference is None:
-        normalized_reference = ""
-    else:
-        normalized_reference = reference.strip().lower()
-    
-    # Concatenate all normalized values with a delimiter
-    # Using pipe (|) as delimiter to separate fields clearly
-    fingerprint_input = "|".join([
-        normalized_account_id,
-        normalized_date,
-        normalized_amount,
-        normalized_reference
-    ])
-    
-    # Generate SHA256 hash
-    hash_object = hashlib.sha256(fingerprint_input.encode('utf-8'))
-    fingerprint = hash_object.hexdigest()
-    
-    return fingerprint
+    parts = [str(bank_account_id)] + list(fields)
+    fingerprint_input = "|".join(parts)
+    return hashlib.sha256(fingerprint_input.encode("utf-8")).hexdigest()

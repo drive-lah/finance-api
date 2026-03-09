@@ -74,6 +74,15 @@ if __name__ == '__main__':
     app = create_app()
     port = app.config['PORT']
     debug = app.config['DEBUG']
-    
+
+    # Eagerly establish the DB connection pool so the first real request
+    # doesn't pay the RDS cold-start cost (can be 10-60s on first connect).
+    print("Connecting to database...")
+    from src.database import test_connection
+    if test_connection():
+        print("Database connection established.")
+    else:
+        print("WARNING: Database connection failed — requests requiring DB will error.")
+
     print(f"Starting Finance API on port {port}...")
     app.run(host='0.0.0.0', port=port, debug=debug)

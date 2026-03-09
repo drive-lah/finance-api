@@ -3,14 +3,13 @@
 from typing import Dict, Any, List, Optional
 from datetime import datetime, date
 from decimal import Decimal
-import csv
-import io
 import json
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
 from src.models.transaction import FinanceTransaction, TransactionStatus
 from src.models.bank_account import FinanceBankAccount
+from src.services.csv_adapters import get_adapter
 from src.utils.fingerprint import generate_fingerprint
 
 
@@ -40,105 +39,89 @@ class TransactionService:
         import_batch_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Import transactions from CSV content.
-        
+        Import transactions from CSV content using a bank-specific adapter.
+
+        The adapter is selected automatically from the bank account's bank_name.
+        Each bank has its own adapter in src/services/csv_adapters/ that knows
+        how to parse that bank's column layout and normalize it into our schema.
+
         Args:
             db: Database session
             bank_account_id: ID of the bank account
             csv_content: CSV file content as string
             import_batch_id: Optional batch ID for grouping imports
-            
+
         Returns:
             Dict with import summary: transactions_created, duplicates_skipped, errors
+
+        Raises:
+            ValueError: If bank account not found or no adapter exists for the bank.
         """
-        # Validate bank account exists
-        if not self.validate_bank_account_exists(db, bank_account_id):
+        # Load bank account to get bank_name for adapter selection
+        bank_account = db.get(FinanceBankAccount, bank_account_id)
+        if not bank_account:
             raise ValueError(f"Bank account with id {bank_account_id} not found")
+
+        # Select adapter from registry using the explicit csv_format field.
+        # csv_format is set when the bank account is created and validated against
+        # ADAPTER_REGISTRY at that point, so this lookup should never fail for
+        # properly created accounts.
+        if not bank_account.csv_format:
+            raise ValueError(
+                f"Bank account {bank_account_id} has no csv_format set. "
+                f"Update the bank account with a csv_format value before importing."
+            )
+        adapter = get_adapter(bank_account.csv_format)
 
         # Generate batch ID if not provided
         if import_batch_id is None:
             import_batch_id = datetime.utcnow().strftime('%Y%m%d%H%M%S')
 
-        # Parse CSV
-        csv_file = io.StringIO(csv_content)
-        reader = csv.DictReader(csv_file)
-        
+        # Parse CSV via adapter — adapter records its own row-level errors
+        normalized_rows = adapter.parse(csv_content)
+        errors = list(adapter.errors)  # row-level parse failures from adapter
+
         transactions_created = 0
         duplicates_skipped = 0
-        errors = []
 
-        for row_num, row in enumerate(reader, start=2):  # start=2 because row 1 is header
+        for normalized in normalized_rows:
             try:
-                # Extract and validate fields
-                date_str = row.get('date', '').strip()
-                description = row.get('description', '').strip()
-                amount_str = row.get('amount', '').strip()
-                reference = row.get('reference', '').strip() or None
-
-                # Validate required fields
-                if not date_str:
-                    errors.append({"row": row_num, "error": "Missing date"})
-                    continue
-                if not description:
-                    errors.append({"row": row_num, "error": "Missing description"})
-                    continue
-                if not amount_str:
-                    errors.append({"row": row_num, "error": "Missing amount"})
-                    continue
-
-                # Parse date
-                try:
-                    transaction_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-                except ValueError:
-                    try:
-                        # Try alternate format DD/MM/YYYY
-                        transaction_date = datetime.strptime(date_str, '%d/%m/%Y').date()
-                    except ValueError:
-                        errors.append({"row": row_num, "error": f"Invalid date format: {date_str}"})
-                        continue
-
-                # Parse amount
-                try:
-                    amount = Decimal(amount_str)
-                except (ValueError, Exception):
-                    errors.append({"row": row_num, "error": f"Invalid amount: {amount_str}"})
-                    continue
-
-                # Generate fingerprint
                 fingerprint = generate_fingerprint(
                     bank_account_id=bank_account_id,
-                    transaction_date=transaction_date,
-                    amount=amount,
-                    reference=reference
+                    fields=adapter.fingerprint_fields(normalized),
                 )
 
-                # Check for duplicate
+                # Skip duplicates
                 existing = db.query(FinanceTransaction).filter(
                     FinanceTransaction.fingerprint == fingerprint
                 ).first()
-
                 if existing:
                     duplicates_skipped += 1
                     continue
 
-                # Create transaction
                 transaction = FinanceTransaction(
                     bank_account_id=bank_account_id,
-                    transaction_date=transaction_date,
-                    description=description,
-                    amount=amount,
-                    reference_number=reference,
+                    transaction_date=normalized.transaction_date,
+                    description=normalized.description,
+                    amount=normalized.amount,
+                    reference_number=normalized.reference_number,
+                    currency=normalized.currency or bank_account.currency,
+                    counterparty_name=normalized.counterparty_name,
+                    transaction_type=normalized.transaction_type,
+                    running_balance=normalized.running_balance,
+                    value_date=normalized.value_date,
                     fingerprint=fingerprint,
                     status=TransactionStatus.PENDING,
+                    source="csv_import",
                     import_batch_id=import_batch_id,
-                    original_csv_row=json.dumps(dict(row))  # Store original row as JSON string for audit
+                    original_csv_row=json.dumps(normalized.to_dict(), default=str),
                 )
 
                 db.add(transaction)
                 transactions_created += 1
 
             except Exception as e:
-                errors.append({"row": row_num, "error": str(e)})
+                errors.append({"error": str(e)})
                 continue
 
         # Commit all transactions
@@ -152,7 +135,7 @@ class TransactionService:
             "transactions_created": transactions_created,
             "duplicates_skipped": duplicates_skipped,
             "errors": errors,
-            "import_batch_id": import_batch_id
+            "import_batch_id": import_batch_id,
         }
 
     def create_from_stripe(
@@ -195,14 +178,19 @@ class TransactionService:
         if existing_stripe:
             raise ValueError(f"Transaction with Stripe ID {stripe_transaction_id} already exists")
         
-        # Generate fingerprint
+        # Generate fingerprint for Stripe transactions.
+        # Stripe has stripe_transaction_id as the primary dedup key,
+        # but we also fingerprint on date + amount + reference as a
+        # secondary check. No running_balance for Stripe.
         fingerprint = generate_fingerprint(
             bank_account_id=bank_account_id,
-            transaction_date=transaction_date,
-            amount=amount,
-            reference=reference_number
+            fields=[
+                transaction_date.isoformat(),
+                f"{amount:.2f}",
+                (reference_number or "").strip().lower(),
+            ],
         )
-        
+
         # Check for duplicate fingerprint
         existing_fingerprint = db.query(FinanceTransaction).filter(
             FinanceTransaction.fingerprint == fingerprint

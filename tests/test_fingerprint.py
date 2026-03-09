@@ -1,213 +1,222 @@
 """
 Tests for transaction fingerprinting utility.
+
+generate_fingerprint(bank_account_id, fields) is a thin SHA256 wrapper.
+Normalisation (lowercase, 2dp amounts, ISO dates) is the adapter's responsibility;
+these tests only verify the hashing contract.
+
+OCBC-specific fingerprint behaviour (running_balance differentiates genuine
+same-day same-amount rows; re-upload detection) is tested in
+TestOCBCFingerprintBehaviour below.
 """
 import pytest
 from datetime import date
 from decimal import Decimal
 
 from src.utils.fingerprint import generate_fingerprint
+from src.services.csv_adapters.ocbc import OCBCAdapter
+from src.services.csv_adapters.base import NormalizedRow
 
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _make_row(
+    *,
+    transaction_date: date = date(2024, 1, 15),
+    description: str = "Test payment",
+    amount: Decimal = Decimal("100.00"),
+    reference_number: str | None = "REF123",
+    running_balance: Decimal | None = Decimal("1000.00"),
+) -> NormalizedRow:
+    return NormalizedRow(
+        transaction_date=transaction_date,
+        description=description,
+        amount=amount,
+        reference_number=reference_number,
+        running_balance=running_balance,
+    )
+
+
+ADAPTER = OCBCAdapter()
+
+
+# ---------------------------------------------------------------------------
+# Core hashing contract
+# ---------------------------------------------------------------------------
 
 class TestGenerateFingerprint:
-    """Test suite for generate_fingerprint function."""
-    
+    """Core generate_fingerprint behaviour — independent of any adapter."""
+
     def test_returns_64_character_hex_string(self):
-        """Fingerprint should be a 64-character hexadecimal string."""
-        fingerprint = generate_fingerprint(
-            bank_account_id=1,
-            transaction_date=date(2024, 1, 15),
-            amount=100.50,
-            reference="REF123"
-        )
-        
-        assert len(fingerprint) == 64
-        # Check that it's valid hex (all characters are 0-9 or a-f)
-        assert all(c in "0123456789abcdef" for c in fingerprint)
-    
-    def test_consistent_hash_for_same_inputs(self):
-        """Same inputs should always produce the same fingerprint."""
-        fingerprint1 = generate_fingerprint(
-            bank_account_id=1,
-            transaction_date=date(2024, 1, 15),
-            amount=100.50,
-            reference="REF123"
-        )
-        fingerprint2 = generate_fingerprint(
-            bank_account_id=1,
-            transaction_date=date(2024, 1, 15),
-            amount=100.50,
-            reference="REF123"
-        )
-        
-        assert fingerprint1 == fingerprint2
-    
-    def test_different_inputs_produce_different_fingerprints(self):
-        """Different inputs should produce different fingerprints."""
-        fp1 = generate_fingerprint(1, date(2024, 1, 15), 100.50, "REF123")
-        fp2 = generate_fingerprint(2, date(2024, 1, 15), 100.50, "REF123")  # Different account
-        fp3 = generate_fingerprint(1, date(2024, 1, 16), 100.50, "REF123")  # Different date
-        fp4 = generate_fingerprint(1, date(2024, 1, 15), 200.50, "REF123")  # Different amount
-        fp5 = generate_fingerprint(1, date(2024, 1, 15), 100.50, "REF456")  # Different reference
-        
-        # All fingerprints should be unique
-        fingerprints = {fp1, fp2, fp3, fp4, fp5}
-        assert len(fingerprints) == 5
-    
-    def test_missing_reference_handled_gracefully(self):
-        """Missing reference number should use empty string."""
-        fp_with_none = generate_fingerprint(
-            bank_account_id=1,
-            transaction_date=date(2024, 1, 15),
-            amount=100.50,
-            reference=None
-        )
-        fp_with_empty = generate_fingerprint(
-            bank_account_id=1,
-            transaction_date=date(2024, 1, 15),
-            amount=100.50,
-            reference=""
-        )
-        
-        # None and empty string should produce the same fingerprint
-        assert fp_with_none == fp_with_empty
-        assert len(fp_with_none) == 64
-    
-    def test_date_object_vs_string(self):
-        """Date object and ISO string should produce the same fingerprint."""
-        fp_date_object = generate_fingerprint(
-            bank_account_id=1,
-            transaction_date=date(2024, 1, 15),
-            amount=100.50,
-            reference="REF123"
-        )
-        fp_date_string = generate_fingerprint(
-            bank_account_id=1,
-            transaction_date="2024-01-15",
-            amount=100.50,
-            reference="REF123"
-        )
-        
-        assert fp_date_object == fp_date_string
-    
-    def test_amount_type_normalization(self):
-        """Float, Decimal, and string amounts should normalize identically."""
-        fp_float = generate_fingerprint(1, date(2024, 1, 15), 100.50, "REF123")
-        fp_decimal = generate_fingerprint(1, date(2024, 1, 15), Decimal("100.50"), "REF123")
-        fp_string = generate_fingerprint(1, date(2024, 1, 15), "100.50", "REF123")
-        
-        # All should produce the same fingerprint
-        assert fp_float == fp_decimal == fp_string
-    
-    def test_amount_decimal_precision(self):
-        """Amounts with different decimal representations should normalize to 2 decimal places."""
-        # 100.5 and 100.50 should be treated as the same
-        fp1 = generate_fingerprint(1, date(2024, 1, 15), 100.5, "REF123")
-        fp2 = generate_fingerprint(1, date(2024, 1, 15), 100.50, "REF123")
-        fp3 = generate_fingerprint(1, date(2024, 1, 15), Decimal("100.500"), "REF123")
-        
-        assert fp1 == fp2 == fp3
-    
-    def test_negative_amounts(self):
-        """Negative amounts should be handled correctly."""
-        fp_positive = generate_fingerprint(1, date(2024, 1, 15), 100.50, "REF123")
-        fp_negative = generate_fingerprint(1, date(2024, 1, 15), -100.50, "REF123")
-        
-        # Positive and negative should produce different fingerprints
-        assert fp_positive != fp_negative
-        assert len(fp_negative) == 64
-    
-    def test_zero_amount(self):
-        """Zero amount should be handled correctly."""
-        fingerprint = generate_fingerprint(1, date(2024, 1, 15), 0.0, "REF123")
-        
-        assert len(fingerprint) == 64
-        # Zero should produce a different fingerprint than non-zero
-        fp_nonzero = generate_fingerprint(1, date(2024, 1, 15), 1.0, "REF123")
-        assert fingerprint != fp_nonzero
-    
-    def test_reference_normalization_lowercase(self):
-        """Reference numbers should be normalized to lowercase."""
-        fp_upper = generate_fingerprint(1, date(2024, 1, 15), 100.50, "REF123")
-        fp_lower = generate_fingerprint(1, date(2024, 1, 15), 100.50, "ref123")
-        fp_mixed = generate_fingerprint(1, date(2024, 1, 15), 100.50, "ReF123")
-        
-        # All should produce the same fingerprint
-        assert fp_upper == fp_lower == fp_mixed
-    
-    def test_reference_whitespace_stripping(self):
-        """Whitespace in reference numbers should be stripped."""
-        fp_normal = generate_fingerprint(1, date(2024, 1, 15), 100.50, "REF123")
-        fp_leading = generate_fingerprint(1, date(2024, 1, 15), 100.50, "  REF123")
-        fp_trailing = generate_fingerprint(1, date(2024, 1, 15), 100.50, "REF123  ")
-        fp_both = generate_fingerprint(1, date(2024, 1, 15), 100.50, "  REF123  ")
-        
-        # All should produce the same fingerprint
-        assert fp_normal == fp_leading == fp_trailing == fp_both
-    
-    def test_special_characters_in_reference(self):
-        """Special characters in reference numbers should be preserved."""
-        fp1 = generate_fingerprint(1, date(2024, 1, 15), 100.50, "REF-123/A")
-        fp2 = generate_fingerprint(1, date(2024, 1, 15), 100.50, "REF-123/B")
-        
-        # Different special character patterns should produce different fingerprints
+        fp = generate_fingerprint(bank_account_id=1, fields=["2024-01-15", "100.50", "ref123", "1000.00"])
+        assert len(fp) == 64
+        assert all(c in "0123456789abcdef" for c in fp)
+
+    def test_deterministic_for_same_inputs(self):
+        fields = ["2024-01-15", "100.50", "ref123", "1000.00"]
+        assert generate_fingerprint(1, fields) == generate_fingerprint(1, fields)
+
+    def test_different_bank_account_ids_differ(self):
+        fields = ["2024-01-15", "100.50", "ref123", "1000.00"]
+        assert generate_fingerprint(1, fields) != generate_fingerprint(2, fields)
+
+    def test_different_field_values_differ(self):
+        base = ["2024-01-15", "100.50", "ref123", "1000.00"]
+        fp_base = generate_fingerprint(1, base)
+
+        changed_date   = ["2024-01-16", "100.50", "ref123", "1000.00"]
+        changed_amount = ["2024-01-15", "200.00", "ref123", "1000.00"]
+        changed_ref    = ["2024-01-15", "100.50", "ref456", "1000.00"]
+        changed_bal    = ["2024-01-15", "100.50", "ref123", "950.00"]
+
+        for variant in [changed_date, changed_amount, changed_ref, changed_bal]:
+            assert generate_fingerprint(1, variant) != fp_base
+
+    def test_empty_fields_list_is_valid(self):
+        """Edge case: no fields beyond account ID still produces a valid hash."""
+        fp = generate_fingerprint(bank_account_id=1, fields=[])
+        assert len(fp) == 64
+
+    def test_empty_string_field_differs_from_nonempty(self):
+        fp_empty = generate_fingerprint(1, [""])
+        fp_value = generate_fingerprint(1, ["something"])
+        assert fp_empty != fp_value
+
+    def test_field_order_matters(self):
+        """Reversing field order must produce a different fingerprint."""
+        fp1 = generate_fingerprint(1, ["2024-01-15", "100.50"])
+        fp2 = generate_fingerprint(1, ["100.50", "2024-01-15"])
         assert fp1 != fp2
-        assert len(fp1) == 64
-    
-    def test_large_amounts(self):
-        """Large transaction amounts should be handled correctly."""
-        fingerprint = generate_fingerprint(
-            bank_account_id=1,
-            transaction_date=date(2024, 1, 15),
-            amount=1234567890.12,
-            reference="REF123"
+
+    def test_negative_amount_field_differs_from_positive(self):
+        fp_pos = generate_fingerprint(1, ["2024-01-15", "100.50", "ref123", "1000.00"])
+        fp_neg = generate_fingerprint(1, ["2024-01-15", "-100.50", "ref123", "1000.00"])
+        assert fp_pos != fp_neg
+
+
+# ---------------------------------------------------------------------------
+# OCBC adapter fingerprint behaviour
+# ---------------------------------------------------------------------------
+
+class TestOCBCFingerprintBehaviour:
+    """
+    Tests that verify OCBC's fingerprint_fields() produces values that satisfy
+    the two key requirements:
+
+    1. RE-UPLOAD DETECTION:
+       The same CSV row imported twice must produce the same fingerprint so
+       the second import is blocked as a duplicate.
+
+    2. GENUINE TRANSACTION DISAMBIGUATION:
+       Two genuinely different transactions that happen to share the same date
+       and amount (e.g. two purchases on the same day for the same price) must
+       produce DIFFERENT fingerprints so both rows are imported correctly.
+       running_balance is the differentiator — it is unique per row in an
+       ordered bank statement.
+    """
+
+    def test_same_row_produces_same_fingerprint(self):
+        """Re-uploading the same CSV row must be detected as a duplicate."""
+        row = _make_row(
+            transaction_date=date(2024, 2, 13),
+            amount=Decimal("50.00"),
+            reference_number="REF-A",
+            running_balance=Decimal("7406.17"),
         )
-        
-        assert len(fingerprint) == 64
-    
-    def test_very_small_amounts(self):
-        """Very small amounts (fractions of cents) should be rounded to 2 decimal places."""
-        # 0.001 should be normalized to 0.00
-        fp1 = generate_fingerprint(1, date(2024, 1, 15), 0.001, "REF123")
-        fp2 = generate_fingerprint(1, date(2024, 1, 15), 0.00, "REF123")
-        
-        # Should produce the same fingerprint after rounding
+        fp1 = generate_fingerprint(bank_account_id=1, fields=ADAPTER.fingerprint_fields(row))
+        fp2 = generate_fingerprint(bank_account_id=1, fields=ADAPTER.fingerprint_fields(row))
         assert fp1 == fp2
-    
-    def test_date_format_edge_cases(self):
-        """Different date representations should normalize correctly."""
-        # Date object with single-digit day/month
-        fp1 = generate_fingerprint(1, date(2024, 1, 5), 100.50, "REF123")
-        # String with zero-padded format
-        fp2 = generate_fingerprint(1, "2024-01-05", 100.50, "REF123")
-        
-        assert fp1 == fp2
-    
-    def test_account_id_types(self):
-        """Different bank account IDs should produce different fingerprints."""
-        fp1 = generate_fingerprint(1, date(2024, 1, 15), 100.50, "REF123")
-        fp2 = generate_fingerprint(10, date(2024, 1, 15), 100.50, "REF123")
-        fp3 = generate_fingerprint(100, date(2024, 1, 15), 100.50, "REF123")
-        
-        # All should be different
-        assert fp1 != fp2 != fp3
-        assert fp1 != fp3
-    
-    def test_real_world_scenario(self):
-        """Test with realistic bank transaction data."""
-        # Simulate importing the same transaction twice
-        transaction_data = {
-            "bank_account_id": 5,
-            "transaction_date": date(2024, 2, 13),
-            "amount": Decimal("1250.75"),
-            "reference": "INV-2024-001"
-        }
-        
-        # First import
-        fp1 = generate_fingerprint(**transaction_data)
-        
-        # Second import (simulating duplicate)
-        fp2 = generate_fingerprint(**transaction_data)
-        
-        # Should detect as duplicate
-        assert fp1 == fp2
-        assert len(fp1) == 64
+
+    def test_same_day_same_amount_different_balance_are_distinct(self):
+        """
+        Two genuine transactions on the same date with the same amount but
+        different running balances (i.e. consecutive rows in the statement)
+        must NOT be treated as duplicates.
+        """
+        row1 = _make_row(
+            transaction_date=date(2024, 2, 13),
+            amount=Decimal("-50.00"),
+            reference_number="",
+            running_balance=Decimal("7406.17"),
+        )
+        row2 = _make_row(
+            transaction_date=date(2024, 2, 13),
+            amount=Decimal("-50.00"),
+            reference_number="",
+            running_balance=Decimal("7356.17"),  # balance after second debit
+        )
+        fp1 = generate_fingerprint(bank_account_id=1, fields=ADAPTER.fingerprint_fields(row1))
+        fp2 = generate_fingerprint(bank_account_id=1, fields=ADAPTER.fingerprint_fields(row2))
+        assert fp1 != fp2
+
+    def test_same_row_different_bank_accounts_are_distinct(self):
+        """The same transaction imported into two different bank accounts must differ."""
+        row = _make_row()
+        fp1 = generate_fingerprint(bank_account_id=1, fields=ADAPTER.fingerprint_fields(row))
+        fp2 = generate_fingerprint(bank_account_id=2, fields=ADAPTER.fingerprint_fields(row))
+        assert fp1 != fp2
+
+    def test_none_running_balance_uses_empty_string(self):
+        """Rows without running_balance must still fingerprint consistently."""
+        row = _make_row(running_balance=None)
+        fields = ADAPTER.fingerprint_fields(row)
+        # The balance position should be an empty string, not blow up
+        assert fields[3] == ""
+        fp = generate_fingerprint(bank_account_id=1, fields=fields)
+        assert len(fp) == 64
+
+    def test_none_running_balance_differs_from_zero_balance(self):
+        """None balance and 0.00 balance must produce different fingerprints."""
+        row_none = _make_row(running_balance=None)
+        row_zero = _make_row(running_balance=Decimal("0.00"))
+        fp_none = generate_fingerprint(bank_account_id=1, fields=ADAPTER.fingerprint_fields(row_none))
+        fp_zero = generate_fingerprint(bank_account_id=1, fields=ADAPTER.fingerprint_fields(row_zero))
+        assert fp_none != fp_zero
+
+    def test_none_reference_uses_empty_string(self):
+        """None reference must produce the same fingerprint as an empty reference."""
+        row_none = _make_row(reference_number=None)
+        row_empty = _make_row(reference_number="")
+        fp_none  = generate_fingerprint(bank_account_id=1, fields=ADAPTER.fingerprint_fields(row_none))
+        fp_empty = generate_fingerprint(bank_account_id=1, fields=ADAPTER.fingerprint_fields(row_empty))
+        assert fp_none == fp_empty
+
+    def test_reference_normalised_to_lowercase(self):
+        """Upper/mixed-case references must produce the same fingerprint."""
+        row_upper = _make_row(reference_number="REF123")
+        row_lower = _make_row(reference_number="ref123")
+        row_mixed = _make_row(reference_number="ReF123")
+        fp_upper = generate_fingerprint(bank_account_id=1, fields=ADAPTER.fingerprint_fields(row_upper))
+        fp_lower = generate_fingerprint(bank_account_id=1, fields=ADAPTER.fingerprint_fields(row_lower))
+        fp_mixed = generate_fingerprint(bank_account_id=1, fields=ADAPTER.fingerprint_fields(row_mixed))
+        assert fp_upper == fp_lower == fp_mixed
+
+    def test_amount_formatted_to_2dp(self):
+        """Amount field must be 2 decimal places regardless of Decimal precision."""
+        row_2dp  = _make_row(amount=Decimal("100.50"))
+        row_3dp  = _make_row(amount=Decimal("100.500"))
+        fp_2dp = generate_fingerprint(bank_account_id=1, fields=ADAPTER.fingerprint_fields(row_2dp))
+        fp_3dp = generate_fingerprint(bank_account_id=1, fields=ADAPTER.fingerprint_fields(row_3dp))
+        assert fp_2dp == fp_3dp
+
+    def test_fingerprint_fields_returns_four_elements(self):
+        """OCBC fingerprint_fields must always return exactly 4 elements."""
+        row = _make_row()
+        fields = ADAPTER.fingerprint_fields(row)
+        assert len(fields) == 4
+
+    def test_fingerprint_fields_order(self):
+        """Verify the expected field order: date, amount, reference, balance."""
+        row = _make_row(
+            transaction_date=date(2024, 3, 1),
+            amount=Decimal("-75.25"),
+            reference_number="  MyRef  ",
+            running_balance=Decimal("500.00"),
+        )
+        fields = ADAPTER.fingerprint_fields(row)
+        assert fields[0] == "2024-03-01"
+        assert fields[1] == "-75.25"
+        assert fields[2] == "myref"        # stripped + lowercased
+        assert fields[3] == "500.00"
