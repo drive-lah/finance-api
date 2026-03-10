@@ -580,6 +580,7 @@ class CounterpartyCreate(BaseModel):
     is_gst_registered: Optional[bool] = Field(default=False)
     payment_terms_days: Optional[int] = Field(None, gt=0)
     default_account_code: Optional[str] = Field(None, max_length=20)
+    currency: Optional[str] = Field(None, max_length=3, description="ISO 4217 default billing currency. NULL = entity base currency.")
     notes: Optional[str] = None
     status: Optional[str] = Field(default="active")
     metadata: Optional[dict] = None
@@ -590,6 +591,15 @@ class CounterpartyCreate(BaseModel):
         if v not in COUNTERPARTY_TYPES:
             raise ValueError(f"type must be one of: {', '.join(sorted(COUNTERPARTY_TYPES))}")
         return v
+
+    @field_validator('currency')
+    @classmethod
+    def validate_currency(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        if not re.match(r'^[A-Z]{3}$', v.upper()):
+            raise ValueError('Currency must be a 3-letter ISO 4217 code')
+        return v.upper()
 
 
 class CounterpartyUpdate(BaseModel):
@@ -606,9 +616,19 @@ class CounterpartyUpdate(BaseModel):
     is_gst_registered: Optional[bool] = None
     payment_terms_days: Optional[int] = Field(None, gt=0)
     default_account_code: Optional[str] = Field(None, max_length=20)
+    currency: Optional[str] = Field(None, max_length=3)
     notes: Optional[str] = None
     status: Optional[str] = None
     metadata: Optional[dict] = None
+
+    @field_validator('currency')
+    @classmethod
+    def validate_currency(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        if not re.match(r'^[A-Z]{3}$', v.upper()):
+            raise ValueError('Currency must be a 3-letter ISO 4217 code')
+        return v.upper()
 
     @field_validator('type')
     @classmethod
@@ -633,6 +653,7 @@ class CounterpartyResponse(BaseModel):
     is_gst_registered: bool
     payment_terms_days: Optional[int] = None
     default_account_code: Optional[str] = None
+    currency: Optional[str] = None
     notes: Optional[str] = None
     status: str
     metadata: Optional[dict] = None

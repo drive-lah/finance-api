@@ -63,6 +63,9 @@ class FinanceCounterparty(Base):
     # Accounting default
     default_account_code: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
 
+    # Default billing/payment currency (null = entity base currency)
+    currency: Mapped[Optional[str]] = mapped_column(String(3), nullable=True)
+
     # Meta
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="active", nullable=False)
@@ -95,6 +98,7 @@ class FinanceCounterparty(Base):
             "is_gst_registered": self.is_gst_registered,
             "payment_terms_days": self.payment_terms_days,
             "default_account_code": self.default_account_code,
+            "currency": self.currency,
             "notes": self.notes,
             "status": self.status,
             "metadata": self.metadata,
