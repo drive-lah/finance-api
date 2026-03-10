@@ -583,7 +583,7 @@ class CounterpartyCreate(BaseModel):
     currency: Optional[str] = Field(None, max_length=3, description="ISO 4217 default billing currency. NULL = entity base currency.")
     notes: Optional[str] = None
     status: Optional[str] = Field(default="active")
-    metadata: Optional[dict] = None
+    extra_data: Optional[dict] = None
 
     @field_validator('type')
     @classmethod
@@ -619,7 +619,7 @@ class CounterpartyUpdate(BaseModel):
     currency: Optional[str] = Field(None, max_length=3)
     notes: Optional[str] = None
     status: Optional[str] = None
-    metadata: Optional[dict] = None
+    extra_data: Optional[dict] = None
 
     @field_validator('currency')
     @classmethod
@@ -656,7 +656,7 @@ class CounterpartyResponse(BaseModel):
     currency: Optional[str] = None
     notes: Optional[str] = None
     status: str
-    metadata: Optional[dict] = None
+    extra_data: Optional[dict] = None
     created_at: datetime
     updated_at: datetime
 

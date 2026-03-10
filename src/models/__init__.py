@@ -18,6 +18,7 @@ from src.models.categorization_rule import (
     MatchOperator,
     AmountOperator,
 )
+from src.models.counterparty import FinanceCounterparty, CounterpartyType, CounterpartyStatus
 from src.models.schemas import (
     EntityCreate,
     EntityUpdate,
@@ -69,6 +70,10 @@ __all__ = [
     # Tag models and enums
     "FinanceTag",
     "FinanceTransactionTag",
+    # Counterparty model and enums
+    "FinanceCounterparty",
+    "CounterpartyType",
+    "CounterpartyStatus",
     # Categorization rule model and enums
     "FinanceCategorizationRule",
     "RuleStatus",
