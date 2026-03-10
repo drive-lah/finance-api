@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
 from src.models.transaction import FinanceTransaction, TransactionStatus
+from src.models.journal_entry import FinanceJournalEntry, JournalEntryStatus
 from src.models.bank_account import FinanceBankAccount
 from src.services.csv_adapters import get_adapter
 from src.utils.fingerprint import generate_fingerprint
@@ -16,16 +17,122 @@ from src.utils.fingerprint import generate_fingerprint
 class TransactionService:
     """Service layer for transaction operations."""
 
-    def get_all(self, db: Session, bank_account_id: Optional[int] = None) -> List[FinanceTransaction]:
-        """Get all transactions, optionally filtered by bank account."""
+    def get_all(
+        self,
+        db: Session,
+        bank_account_id: Optional[int] = None,
+        entity_id: Optional[int] = None,
+        status: Optional[TransactionStatus] = None,
+        date_from: Optional[date] = None,
+        date_to: Optional[date] = None,
+        search: Optional[str] = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> List[FinanceTransaction]:
+        """Get transactions with optional filters."""
         query = db.query(FinanceTransaction)
+
         if bank_account_id is not None:
             query = query.filter(FinanceTransaction.bank_account_id == bank_account_id)
-        return query.order_by(FinanceTransaction.transaction_date.desc()).all()
+
+        if entity_id is not None:
+            bank_account_ids = (
+                db.query(FinanceBankAccount.id)
+                .filter(FinanceBankAccount.entity_id == entity_id)
+                .subquery()
+            )
+            query = query.filter(FinanceTransaction.bank_account_id.in_(bank_account_ids))
+
+        if status is not None:
+            query = query.filter(FinanceTransaction.status == status)
+
+        if date_from is not None:
+            query = query.filter(FinanceTransaction.transaction_date >= date_from)
+
+        if date_to is not None:
+            query = query.filter(FinanceTransaction.transaction_date <= date_to)
+
+        if search:
+            term = f"%{search}%"
+            query = query.filter(
+                FinanceTransaction.description.ilike(term)
+                | FinanceTransaction.counterparty_name.ilike(term)
+                | FinanceTransaction.reference_number.ilike(term)
+            )
+
+        return (
+            query.order_by(FinanceTransaction.transaction_date.desc())
+            .limit(limit)
+            .offset(offset)
+            .all()
+        )
 
     def get_by_id(self, db: Session, transaction_id: int) -> Optional[FinanceTransaction]:
         """Get transaction by ID."""
         return db.query(FinanceTransaction).filter(FinanceTransaction.id == transaction_id).first()
+
+    def approve(self, db: Session, transaction_id: int) -> FinanceTransaction:
+        """
+        Approve a Matched transaction.
+
+        Posts the linked draft journal entry and sets transaction status to Reconciled.
+        Raises ValueError if transaction not found, not in Matched status, or JE already posted.
+        """
+        transaction = self.get_by_id(db, transaction_id)
+        if not transaction:
+            raise ValueError(f"Transaction {transaction_id} not found")
+        if transaction.status != TransactionStatus.MATCHED:
+            raise ValueError(
+                f"Transaction must be in Matched status to approve (current: {transaction.status.value})"
+            )
+        if not transaction.reconciled_journal_entry_id:
+            raise ValueError("Transaction has no linked journal entry to approve")
+
+        je = db.get(FinanceJournalEntry, transaction.reconciled_journal_entry_id)
+        if not je:
+            raise ValueError("Linked journal entry not found")
+        if je.status == JournalEntryStatus.POSTED:
+            raise ValueError("Journal entry is already posted")
+
+        je.status = JournalEntryStatus.POSTED
+        je.posted_at = datetime.utcnow()
+        je.posting_user_id = "admin"
+
+        transaction.status = TransactionStatus.RECONCILED
+        transaction.reconciled_at = datetime.utcnow()
+
+        db.commit()
+        db.refresh(transaction)
+        return transaction
+
+    def reject(self, db: Session, transaction_id: int) -> FinanceTransaction:
+        """
+        Reject a Matched transaction.
+
+        Voids the linked draft journal entry and resets transaction to Pending
+        so the categorization engine can re-evaluate it with updated rules.
+        Raises ValueError if transaction not found or not in Matched status.
+        """
+        transaction = self.get_by_id(db, transaction_id)
+        if not transaction:
+            raise ValueError(f"Transaction {transaction_id} not found")
+        if transaction.status != TransactionStatus.MATCHED:
+            raise ValueError(
+                f"Transaction must be in Matched status to reject (current: {transaction.status.value})"
+            )
+
+        if transaction.reconciled_journal_entry_id:
+            je = db.get(FinanceJournalEntry, transaction.reconciled_journal_entry_id)
+            if je and je.status == JournalEntryStatus.DRAFT:
+                je.status = JournalEntryStatus.VOID
+
+        transaction.status = TransactionStatus.PENDING
+        transaction.reconciled_journal_entry_id = None
+        transaction.reconciled_at = None
+
+        db.commit()
+        db.refresh(transaction)
+        return transaction
 
     def validate_bank_account_exists(self, db: Session, bank_account_id: int) -> bool:
         """Check if bank account exists."""

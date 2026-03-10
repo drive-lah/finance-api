@@ -1,14 +1,116 @@
 """Transaction routes for Flask app."""
 
+from datetime import date as date_type
 from flask import Blueprint, request, jsonify
 from decimal import Decimal
 
 from src.database import get_db
 from src.services.transaction_service import transaction_service
 from src.models.schemas import StripeTransactionCreate, TransactionResponse
+from src.models.transaction import TransactionStatus
 from src.utils.errors import BadRequestError, NotFoundError, ConflictError
 
 transactions_bp = Blueprint('transactions', __name__, url_prefix='/api/finance/transactions')
+
+
+@transactions_bp.route('', methods=['GET'])
+def list_transactions():
+    """
+    List transactions with optional filters.
+
+    Query params:
+      bank_account_id, entity_id, status (Pending|Matched|Reconciled),
+      date_from (YYYY-MM-DD), date_to (YYYY-MM-DD), search, limit, offset
+    """
+    db = next(get_db())
+
+    bank_account_id = request.args.get('bank_account_id', type=int)
+    entity_id = request.args.get('entity_id', type=int)
+    status_str = request.args.get('status')
+    date_from_str = request.args.get('date_from')
+    date_to_str = request.args.get('date_to')
+    search = request.args.get('search')
+    limit = request.args.get('limit', default=100, type=int)
+    offset = request.args.get('offset', default=0, type=int)
+
+    status = None
+    if status_str:
+        try:
+            status = TransactionStatus(status_str)
+        except ValueError:
+            raise BadRequestError(f"Invalid status. Must be one of: {[s.value for s in TransactionStatus]}")
+
+    date_from = None
+    if date_from_str:
+        try:
+            date_from = date_type.fromisoformat(date_from_str)
+        except ValueError:
+            raise BadRequestError("date_from must be YYYY-MM-DD")
+
+    date_to = None
+    if date_to_str:
+        try:
+            date_to = date_type.fromisoformat(date_to_str)
+        except ValueError:
+            raise BadRequestError("date_to must be YYYY-MM-DD")
+
+    transactions = transaction_service.get_all(
+        db,
+        bank_account_id=bank_account_id,
+        entity_id=entity_id,
+        status=status,
+        date_from=date_from,
+        date_to=date_to,
+        search=search,
+        limit=min(limit, 500),
+        offset=offset,
+    )
+
+    return jsonify([TransactionResponse.model_validate(t).model_dump() for t in transactions]), 200
+
+
+@transactions_bp.route('/<int:transaction_id>', methods=['GET'])
+def get_transaction(transaction_id: int):
+    """Get a single transaction by ID."""
+    db = next(get_db())
+    transaction = transaction_service.get_by_id(db, transaction_id)
+    if not transaction:
+        raise NotFoundError(f"Transaction {transaction_id} not found")
+    return jsonify(TransactionResponse.model_validate(transaction).model_dump()), 200
+
+
+@transactions_bp.route('/<int:transaction_id>/approve', methods=['POST'])
+def approve_transaction(transaction_id: int):
+    """
+    Approve a Matched transaction.
+    Posts the draft journal entry and sets status to Reconciled.
+    """
+    db = next(get_db())
+    try:
+        transaction = transaction_service.approve(db, transaction_id)
+    except ValueError as e:
+        msg = str(e)
+        if "not found" in msg:
+            raise NotFoundError(msg)
+        raise BadRequestError(msg)
+    return jsonify(TransactionResponse.model_validate(transaction).model_dump()), 200
+
+
+@transactions_bp.route('/<int:transaction_id>/reject', methods=['POST'])
+def reject_transaction(transaction_id: int):
+    """
+    Reject a Matched transaction.
+    Voids the draft journal entry and resets status to Pending.
+    """
+    db = next(get_db())
+    try:
+        transaction = transaction_service.reject(db, transaction_id)
+    except ValueError as e:
+        msg = str(e)
+        if "not found" in msg:
+            raise NotFoundError(msg)
+        raise BadRequestError(msg)
+    return jsonify(TransactionResponse.model_validate(transaction).model_dump()), 200
 
 
 @transactions_bp.route('/import', methods=['POST'])
