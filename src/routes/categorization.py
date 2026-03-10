@@ -1,7 +1,7 @@
 """Routes for categorization engine execution."""
 from flask import Blueprint, request, jsonify
 
-from src.database import get_db
+from src.database import db_session
 from src.services.categorization_service import categorization_service
 from src.models.schemas import (
     CategorizationRunRequest,
@@ -27,21 +27,20 @@ def run_categorization():
       - bank_account_id: int - Process only this bank account
       - limit: int - Maximum transactions to process (default 100)
     """
-    db = next(get_db())
+    with db_session() as db:
+        # Parse request - allow empty body
+        body = request.json or {}
+        run_request = CategorizationRunRequest.model_validate(body)
 
-    # Parse request - allow empty body
-    body = request.json or {}
-    run_request = CategorizationRunRequest.model_validate(body)
+        result = categorization_service.run(
+            db=db,
+            entity_id=run_request.entity_id,
+            bank_account_id=run_request.bank_account_id,
+            limit=run_request.limit if run_request.limit is not None else 100,
+        )
 
-    result = categorization_service.run(
-        db=db,
-        entity_id=run_request.entity_id,
-        bank_account_id=run_request.bank_account_id,
-        limit=run_request.limit if run_request.limit is not None else 100,
-    )
-
-    response = CategorizationRunResponse.model_validate(result)
-    return jsonify(response.model_dump()), 200
+        response = CategorizationRunResponse.model_validate(result)
+        return jsonify(response.model_dump()), 200
 
 
 @categorization_bp.route('/manual', methods=['POST'])
@@ -57,21 +56,21 @@ def manual_categorize():
       - tag_ids: list[int] (optional)
       - description: str (optional)
     """
-    db = next(get_db())
-    manual_request = ManualCategorizeRequest.model_validate(request.json)
+    with db_session() as db:
+        manual_request = ManualCategorizeRequest.model_validate(request.json)
 
-    try:
-        result = categorization_service.manual_categorize(
-            db=db,
-            transaction_id=manual_request.transaction_id,
-            contra_account_code=manual_request.contra_account_code,
-            counterparty_name=manual_request.counterparty_name,
-            counterparty_type=manual_request.counterparty_type,
-            tag_ids=manual_request.tag_ids,
-            description=manual_request.description,
-            gst_override=manual_request.gst_override,
-        )
-    except ValueError as e:
-        raise BadRequestError(str(e))
+        try:
+            result = categorization_service.manual_categorize(
+                db=db,
+                transaction_id=manual_request.transaction_id,
+                contra_account_code=manual_request.contra_account_code,
+                counterparty_name=manual_request.counterparty_name,
+                counterparty_type=manual_request.counterparty_type,
+                tag_ids=manual_request.tag_ids,
+                description=manual_request.description,
+                gst_override=manual_request.gst_override,
+            )
+        except ValueError as e:
+            raise BadRequestError(str(e))
 
-    return jsonify(result), 200
+        return jsonify(result), 200

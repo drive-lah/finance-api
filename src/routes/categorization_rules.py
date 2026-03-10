@@ -1,7 +1,7 @@
 """Routes for categorization rule management."""
 from flask import Blueprint, request, jsonify
 
-from src.database import get_db
+from src.database import db_session
 from src.services.rule_service import rule_service
 from src.models.schemas import RuleCreate, RuleUpdate, RuleResponse
 from src.models.categorization_rule import RuleStatus
@@ -22,77 +22,74 @@ def list_rules():
     Query params:
       - status: Active or Inactive
     """
-    db = next(get_db())
+    with db_session() as db:
+        status_str = request.args.get('status')
+        status = None
 
-    status_str = request.args.get('status')
-    status = None
+        if status_str:
+            try:
+                status = RuleStatus(status_str)
+            except ValueError:
+                raise BadRequestError(
+                    f"Invalid status. Must be one of: {[s.value for s in RuleStatus]}"
+                )
 
-    if status_str:
-        try:
-            status = RuleStatus(status_str)
-        except ValueError:
-            raise BadRequestError(
-                f"Invalid status. Must be one of: {[s.value for s in RuleStatus]}"
-            )
-
-    rules = rule_service.get_all(db, status=status)
-    rules_data = [RuleResponse.model_validate(rule).model_dump() for rule in rules]
-    return jsonify(rules_data), 200
+        rules = rule_service.get_all(db, status=status)
+        rules_data = [RuleResponse.model_validate(rule).model_dump() for rule in rules]
+        return jsonify(rules_data), 200
 
 
 @categorization_rules_bp.route('', methods=['POST'])
 def create_rule():
     """Create a new categorization rule."""
-    db = next(get_db())
-    rule_data = RuleCreate.model_validate(request.json)
+    with db_session() as db:
+        rule_data = RuleCreate.model_validate(request.json)
 
-    try:
-        rule = rule_service.create(db, rule_data)
-    except ValueError as e:
-        raise ConflictError(str(e))
+        try:
+            rule = rule_service.create(db, rule_data)
+        except ValueError as e:
+            raise ConflictError(str(e))
 
-    response = RuleResponse.model_validate(rule).model_dump()
-    return jsonify(response), 201
+        response = RuleResponse.model_validate(rule).model_dump()
+        return jsonify(response), 201
 
 
 @categorization_rules_bp.route('/<int:rule_id>', methods=['GET'])
 def get_rule(rule_id: int):
     """Get a single categorization rule by ID."""
-    db = next(get_db())
+    with db_session() as db:
+        rule = rule_service.get_by_id(db, rule_id)
+        if not rule:
+            raise NotFoundError(f"Rule with ID {rule_id} not found")
 
-    rule = rule_service.get_by_id(db, rule_id)
-    if not rule:
-        raise NotFoundError(f"Rule with ID {rule_id} not found")
-
-    response = RuleResponse.model_validate(rule).model_dump()
-    return jsonify(response), 200
+        response = RuleResponse.model_validate(rule).model_dump()
+        return jsonify(response), 200
 
 
 @categorization_rules_bp.route('/<int:rule_id>', methods=['PUT'])
 def update_rule(rule_id: int):
     """Update a categorization rule."""
-    db = next(get_db())
-    update_data = RuleUpdate.model_validate(request.json)
+    with db_session() as db:
+        update_data = RuleUpdate.model_validate(request.json)
 
-    try:
-        rule = rule_service.update(db, rule_id, update_data)
-    except ValueError as e:
-        raise ConflictError(str(e))
+        try:
+            rule = rule_service.update(db, rule_id, update_data)
+        except ValueError as e:
+            raise ConflictError(str(e))
 
-    if not rule:
-        raise NotFoundError(f"Rule with ID {rule_id} not found")
+        if not rule:
+            raise NotFoundError(f"Rule with ID {rule_id} not found")
 
-    response = RuleResponse.model_validate(rule).model_dump()
-    return jsonify(response), 200
+        response = RuleResponse.model_validate(rule).model_dump()
+        return jsonify(response), 200
 
 
 @categorization_rules_bp.route('/<int:rule_id>', methods=['DELETE'])
 def delete_rule(rule_id: int):
     """Delete a categorization rule."""
-    db = next(get_db())
+    with db_session() as db:
+        deleted = rule_service.delete(db, rule_id)
+        if not deleted:
+            raise NotFoundError(f"Rule with ID {rule_id} not found")
 
-    deleted = rule_service.delete(db, rule_id)
-    if not deleted:
-        raise NotFoundError(f"Rule with ID {rule_id} not found")
-
-    return jsonify({"message": f"Rule {rule_id} deleted"}), 200
+        return jsonify({"message": f"Rule {rule_id} deleted"}), 200
