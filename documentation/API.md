@@ -3,7 +3,7 @@
 **Base URL:** `http://localhost:8082` (dev) · `/api/finance/...`
 **Auth:** None yet (JWT planned via Admin BFF)
 **Content-Type:** `application/json` unless noted
-**Last updated:** 2026-03-09
+**Last updated:** 2026-03-10
 
 > **Maintenance rule:** Add a row here in the same commit you add a new endpoint.
 
@@ -74,13 +74,21 @@ All errors return:
 
 ## Transactions
 
-| Method | Path | Content-Type | Body / Form | Returns |
-|--------|------|-------------|-------------|---------|
+| Method | Path | Content-Type | Body / Query | Returns |
+|--------|------|-------------|--------------|---------|
+| GET | `/api/finance/transactions` | — | `bank_account_id`, `entity_id`, `status`, `date_from` (YYYY-MM-DD), `date_to` (YYYY-MM-DD), `search`, `limit` (default 100, max 500), `offset` | 200 array of transactions |
+| GET | `/api/finance/transactions/:id` | — | — | 200 transaction / 404 |
+| POST | `/api/finance/transactions/:id/approve` | — | — | 200 transaction (posts linked JE, status → `Reconciled`) / 400 if not `Matched` |
+| POST | `/api/finance/transactions/:id/reject` | — | — | 200 transaction (voids linked JE, status → `Pending`) / 400 if not `Matched` |
 | POST | `/api/finance/transactions/import` | `multipart/form-data` | `file`* (CSV), `bank_account_id`* (form field), `import_batch_id` (optional) | 200 `{ transactions_created, duplicates_skipped, errors, import_batch_id }` |
 | POST | `/api/finance/transactions/stripe` | `application/json` | `bank_account_id`*, `stripe_transaction_id`*, `transaction_date`* (YYYY-MM-DD), `description`*, `amount`*, `reference_number` | 201 transaction / 409 duplicate |
 
 **CSV format:** Bank-specific. The CSV adapter is selected automatically from the bank account's `bank_name`. There is no generic CSV format — each bank has its own adapter.
 **Transaction status values:** `Pending` · `Matched` · `Reconciled`
+
+**Approve / Reject workflow:**
+- `approve`: Posts the draft journal entry linked to the transaction (JE status → `Posted`), sets transaction status → `Reconciled`, stamps `reconciled_at`. Only valid for `Matched` transactions.
+- `reject`: Voids the linked journal entry (JE status → `Void`), resets transaction status → `Pending`, clears `reconciled_journal_entry_id`. Only valid for `Matched` transactions.
 
 **Supported bank adapters:**
 
@@ -102,8 +110,6 @@ All errors return:
 | `Statement Value Date` | `value_date` |
 
 > To add a new bank: create `src/services/csv_adapters/<bank>.py` implementing `BankCSVAdapter`, add one entry to `ADAPTER_REGISTRY` in `registry.py`, and add a row to the table above.
-
-> ⚠️ GET /transactions and GET /transactions/:id are implemented at service layer but not yet wired to routes.
 
 ---
 
@@ -217,6 +223,44 @@ Lines must balance: `sum(debit_amount) == sum(credit_amount)` — enforced at cr
 - `incoming` → category must be `deposit` or `internal_transfer`
 - `internal_transfer` → `target_bank_account_id` required; same-entity transfer creates 1 JE, cross-entity creates paired JEs with `intercompany_group_id`
 - `expense`/`deposit` → `contra_account_code` required and must exist in COA
+
+---
+
+## Counterparties
+
+Universal party directory — vendors, customers, employees, investors, hosts, guests, banks, government entities.
+
+`entity_id = null` means the record is **global** (shared across all entities). When filtering with `entity_id`, records with `entity_id = null` are always included.
+
+| Method | Path | Query Params | Body | Returns |
+|--------|------|-------------|------|---------|
+| GET | `/api/finance/counterparties` | `entity_id`, `type`, `status`, `search` | — | 200 array |
+| POST | `/api/finance/counterparties` | — | See fields below | 201 counterparty |
+| GET | `/api/finance/counterparties/:id` | — | — | 200 counterparty / 404 |
+| PUT | `/api/finance/counterparties/:id` | — | Any counterparty field | 200 counterparty / 404 |
+| DELETE | `/api/finance/counterparties/:id` | — | — | 200 / 404 |
+
+**Type values:** `vendor` · `customer` · `employee` · `investor` · `host` · `guest` · `bank` · `government` · `other`
+
+**Fields:**
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | ✓ | Display name (e.g. "Amazon Web Services", "John Tan") |
+| `type` | ✓ | One of the type values above |
+| `entity_id` | — | Scope to one entity; omit or `null` = global |
+| `external_id` | — | ID in an external system (e.g. monitor API user ID) |
+| `external_system` | — | `monitor_api` · `drivelah_platform` · `xero` · `other` |
+| `email` | — | Contact email |
+| `phone` | — | Contact phone |
+| `address` | — | Billing/mailing address |
+| `tax_registration_number` | — | GST reg / ABN / NRIC |
+| `is_gst_registered` | — | bool (default `false`) |
+| `payment_terms_days` | — | e.g. 30, 60, 90 — for AP aging |
+| `default_account_code` | — | COA code used as contra account fallback when no rule specifies one |
+| `notes` | — | Internal notes |
+| `status` | — | `active` · `inactive` (default `active`) |
+| `metadata` | — | JSON object — escape hatch for type-specific data (e.g. investor equity %) |
 
 ---
 

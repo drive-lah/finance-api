@@ -1,7 +1,7 @@
 # Drive Lah Finance System — System Overview
 
-**Version:** 2.0
-**Date:** 2026-02-19
+**Version:** 2.1
+**Date:** 2026-03-10
 **Status:** Living Document
 
 ---
@@ -45,7 +45,7 @@ RMS is an overlay — a car is either on P2P or Flex+, and can be either Regular
 |  src/features/finance/                                     |
 |    components/FinanceContainer.tsx  (tab navigation)       |
 |    components/AccountingModule.tsx  (accounting tabs)       |
-|    components/accounting/*.tsx      (7 tab components)      |
+|    components/accounting/*.tsx      (9 tab components)      |
 |    services/accountingService.ts   (API service layer)     |
 |    hooks/useAccounting.ts          (TanStack Query hooks)  |
 |    types/accounting.ts             (TypeScript types)       |
@@ -187,8 +187,10 @@ There is no generic CSV format. Each bank has a dedicated adapter in `src/servic
 | Method | Path | Description |
 |--------|------|-------------|
 | POST | `/api/finance/transactions/import` | Upload CSV (multipart/form-data) |
-| GET | `/api/finance/transactions` | List transactions |
+| GET | `/api/finance/transactions` | List with filters (entity, bank account, status, date, search) |
 | GET | `/api/finance/transactions/:id` | Get transaction by ID |
+| POST | `/api/finance/transactions/:id/approve` | Post linked JE, set status → Reconciled |
+| POST | `/api/finance/transactions/:id/reject` | Void linked JE, reset status → Pending |
 
 **Currency Handling:**
 - Each transaction stores its `currency` (ISO 4217 — sourced from CSV via adapter, or bank account's currency as fallback)
@@ -515,60 +517,84 @@ Direct integration with Stripe to automatically import transactions and create j
 
 ---
 
-### 3.7 Vendor / Employee Management
+### 3.7 Counterparty Module
 
-**Status: To Be Built**
+**Status: Built**
 
-Manage the parties the company transacts with — vendors who provide services and employees who incur expenses.
+A universal party directory representing any external (or internal) party the business has a financial relationship with. Replaces the previously planned separate vendor and employee tables with a single, flexible model.
 
-**Vendors — Planned Features:**
-- Vendor CRUD (create, list, view, update, deactivate)
-- Vendor categories (workshop, insurer, towing, assessor, software, professional services, etc.)
-- Default COA account per vendor (e.g. workshop always hits 5032)
-- Link to invoices and payments
-- Vendor used in categorization rules (transactions from vendor X → specific account)
+**Entity scoping:**
+- `entity_id = null` → **global** record, shared across all entities (most vendors, investors)
+- `entity_id = X` → entity-scoped, visible only to that entity
+- When querying with an `entity_id` filter, both entity-specific records AND global records are returned
 
-**Employees — Planned Features:**
-- Employee CRUD (basic info, entity, department)
-- Link to expense claims (Employee Claims Payable 2303)
-- Claim categories mapping to COA (6010-6014)
-- Approval workflow for claims
-- Payroll integration reference (for salary journal entries)
+**Type values and use cases:**
 
-**Planned Data Model:**
+| Type | Used for | External link |
+|------|----------|---------------|
+| `vendor` | AWS, Stripe, lawyers, accountants, workshops | — |
+| `customer` | B2B clients we issue invoices to | — |
+| `employee` | Staff, contractors | `external_id` → monitor API user ID |
+| `investor` | Shareholders, lenders | `metadata` → equity %, round info |
+| `host` | Drivelah car owners receiving payouts | `external_id` → Drivelah host ID |
+| `guest` | Drivelah renters | `external_id` → Drivelah guest ID |
+| `bank` | Financial institutions — fees, interest | — |
+| `government` | IRAS, ACRA, MOM | — |
+| `other` | Catch-all | — |
+
+**Employee ↔ monitor API linking:**
+Employees are stored here with `external_system = "monitor_api"` and `external_id = <monitor_api_user_id>`. This keeps the finance module lightweight (no duplicate employee profile data) while enabling cross-system joins. Payroll-specific fields (salary, bank details) will live in a future `counterparty_payroll_details` extension table — no migration to this table needed when payroll is built.
+
+**Data Model:**
 
 ```
-finance_vendors
+finance_counterparties
 ├── id
-├── name
-├── entity_id (nullable — null = group vendor, set = entity-specific)
-├── category (workshop | insurer | towing | assessor | software | professional | other)
-├── default_account_code (nullable — default COA code for this vendor)
-├── contact_name
-├── contact_email
-├── contact_phone
-├── tax_id (ABN/UEN/GST registration)
-├── payment_terms_days (default: 30)
-├── currency
-├── bank_details (JSON — bank name, account number, BSB/SWIFT)
-├── status (active | inactive)
-├── notes
+├── name                      (required — e.g. "Amazon Web Services", "John Tan")
+├── type                      (required — see types above)
+├── entity_id                 (nullable — null = global)
+│
+├── EXTERNAL LINK
+│   ├── external_id           (ID in another system, e.g. "usr_abc123")
+│   └── external_system       (monitor_api | drivelah_platform | xero | other)
+│
+├── CONTACT
+│   ├── email
+│   ├── phone
+│   └── address
+│
+├── TAX / AP
+│   ├── tax_registration_number  (GST reg / ABN / NRIC)
+│   ├── is_gst_registered        (bool, default false)
+│   └── payment_terms_days       (int — for AP aging)
+│
+├── ACCOUNTING DEFAULT
+│   └── default_account_code  (COA code — fallback contra account)
+│
+├── META
+│   ├── notes
+│   ├── status                (active | inactive)
+│   └── metadata              (jsonb — type-specific data, e.g. investor equity %)
+│
 ├── created_at
-├── updated_at
-
-finance_employees
-├── id
-├── entity_id
-├── name
-├── email
-├── department
-├── role
-├── status (active | inactive | terminated)
-├── start_date
-├── end_date (nullable)
-├── created_at
-├── updated_at
+└── updated_at
 ```
+
+**API Endpoints:**
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/finance/counterparties` | List (filter by entity_id, type, status, search) |
+| POST | `/api/finance/counterparties` | Create |
+| GET | `/api/finance/counterparties/:id` | Get by ID |
+| PUT | `/api/finance/counterparties/:id` | Update |
+| DELETE | `/api/finance/counterparties/:id` | Delete |
+
+**Future integrations (not yet built):**
+- `counterparty_id` FK on categorization rules → engine sets counterparty on matched transactions + can inherit `default_account_code` as fallback
+- `counterparty_id` FK on transactions → rich counterparty linking beyond free-text name
+- `counterparty_payroll_details` table → salary, bank account for payment (employees)
+- `counterparty_invoices` → AP/AR invoice records
 
 ---
 
@@ -812,15 +838,16 @@ TAX (9xxx)
 | Reconciliation Confirmation | Done | Done | Done | Ready |
 | Stripe Webhook (basic) | Done | — | — | Partial |
 | Cash vs Accrual Framework | Defined | — | — | Documented |
-| Categorization Engine | Done | — | — | Ready |
+| Categorization Engine | Done | Done | Done | Ready |
 | Tags System | Done | — | — | Ready |
-| Categorization Rules CRUD | Done | — | — | Ready |
+| Categorization Rules CRUD | Done | Done | Done | Ready |
 | GST Handling (entity/account/rule level) | Done | — | — | Ready |
+| Transaction Review Queue (approve/reject) | Done | Done | Done | Ready |
+| **Counterparty Module** | Done | Done | Done | Ready |
 | **Invoice / AP (Accrual)** | — | — | — | Planned |
 | **Prepayment Scheduling** | — | — | — | Planned |
 | **Stripe Full Integration** | — | — | — | Later |
-| **Vendor Management** | — | — | — | Planned |
-| **Employee Management** | — | — | — | Planned |
+| **Payroll (via Counterparty + payroll_details)** | — | — | — | Planned |
 | **P&L Report** | — | — | — | Planned |
 | **Balance Sheet Report** | — | — | — | Planned |
 | **Business Line Margin Report** | — | — | — | Planned |
@@ -828,12 +855,14 @@ TAX (9xxx)
 ### Build Order
 
 1. ~~**Categorization Engine**~~ — ✅ Done
-2. **Vendor Management** — needed for invoice/AP and categorization rule linking
-3. **Employee Management** — needed for expense claims
-4. **Invoice / AP** — automates the accrual path (invoices → journal entries → payment matching)
-5. **Prepayment Scheduling** — auto-spread payments over future periods
-6. **Stripe Full Integration** — automate Stripe transaction ingestion and categorization
-7. **Financial Reports** — P&L, balance sheet, business line margins
+2. ~~**Transaction Review Queue**~~ — ✅ Done (approve/reject with JE posting/voiding)
+3. ~~**Counterparty Module**~~ — ✅ Done (universal vendor/employee/investor/host/guest directory)
+4. **Invoice / AP** — automates the accrual path (invoices → journal entries → payment matching); link to counterparty_id
+5. **Categorization → Counterparty wiring** — `counterparty_id` on rules; engine sets it on matched transactions, inherits `default_account_code`
+6. **Payroll** — `counterparty_payroll_details` extension + payroll journal entry generation; syncs employees from monitor API via `external_id`
+7. **Prepayment Scheduling** — auto-spread payments over future periods
+8. **Stripe Full Integration** — automate Stripe transaction ingestion and categorization
+9. **Financial Reports** — P&L, balance sheet, business line margins
 
 ---
 
@@ -865,6 +894,9 @@ Alembic manages schema migrations in `migrations/versions/`:
 | 005 | Add counterparty fields, `value_date`, `transaction_type`, `running_balance`, `currency` to transactions |
 | 006 | Create categorization engine tables (rules, tags, transaction_tags) |
 | 007 | Add GST fields (`gst_rate` on entities, `gst_applicable` on accounts, `gst_override` on rules) |
+| 008_csv_format | Add `csv_format` field to bank accounts (adapter key for CSV imports) |
+| 009_cat_rules_v2 | Redesign categorization rules — operator-based matching, direction/category, bank_account_ids scope |
+| 010_counterparties | Create `finance_counterparties` table — universal party directory |
 
 Run migrations: `alembic upgrade head`
 
