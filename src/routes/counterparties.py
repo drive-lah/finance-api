@@ -25,8 +25,11 @@ def list_counterparties():
 def create_counterparty():
     data = CounterpartyCreate(**request.get_json())
     with db_session() as db:
-        cp = counterparty_service.create(db, data.model_dump(exclude_none=True))
-        return jsonify(CounterpartyResponse.model_validate(cp).model_dump()), 201
+        try:
+            cp = counterparty_service.create(db, data.model_dump(exclude_none=True))
+            return jsonify(CounterpartyResponse.model_validate(cp).model_dump()), 201
+        except ValueError as e:
+            return jsonify({"error": str(e)}), 409
 
 
 @counterparties_bp.route('/<int:counterparty_id>', methods=['GET'])

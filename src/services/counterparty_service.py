@@ -43,7 +43,17 @@ class CounterpartyService:
     def get_by_id(self, db: Session, counterparty_id: int) -> Optional[FinanceCounterparty]:
         return db.get(FinanceCounterparty, counterparty_id)
 
+    def get_by_name_type(self, db: Session, name: str, type: str) -> Optional[FinanceCounterparty]:
+        query = select(FinanceCounterparty).where(
+            FinanceCounterparty.name == name,
+            FinanceCounterparty.type == type,
+        )
+        return db.execute(query).scalars().first()
+
     def create(self, db: Session, data: dict) -> FinanceCounterparty:
+        existing = self.get_by_name_type(db, data.get("name", ""), data.get("type", ""))
+        if existing:
+            raise ValueError(f"Counterparty '{data['name']}' already exists as type '{data['type']}' (id={existing.id})")
         cp = FinanceCounterparty(**data)
         db.add(cp)
         db.commit()
