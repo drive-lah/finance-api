@@ -557,3 +557,86 @@ class ManualCategorizeRequest(BaseModel):
     tag_ids: Optional[list[int]] = Field(None, description="Tag IDs to apply")
     description: Optional[str] = Field(None, max_length=500, description="JE description override")
     gst_override: Optional[bool] = Field(default=None, description="Override GST. null=default, true=force GST, false=force no GST")
+
+
+# =============================================================================
+# Counterparty Schemas
+# =============================================================================
+
+COUNTERPARTY_TYPES = {"vendor", "customer", "employee", "investor", "host", "guest", "bank", "government", "other"}
+
+
+class CounterpartyCreate(BaseModel):
+    """Schema for creating a counterparty."""
+    name: str = Field(..., min_length=1, max_length=255)
+    type: str = Field(..., description="vendor | customer | employee | investor | host | guest | bank | government | other")
+    entity_id: Optional[int] = Field(None, description="NULL = global/shared across all entities")
+    external_id: Optional[str] = Field(None, max_length=255)
+    external_system: Optional[str] = Field(None, max_length=100, description="monitor_api | drivelah_platform | etc.")
+    email: Optional[str] = Field(None, max_length=255)
+    phone: Optional[str] = Field(None, max_length=50)
+    address: Optional[str] = None
+    tax_registration_number: Optional[str] = Field(None, max_length=100)
+    is_gst_registered: Optional[bool] = Field(default=False)
+    payment_terms_days: Optional[int] = Field(None, gt=0)
+    default_account_code: Optional[str] = Field(None, max_length=20)
+    notes: Optional[str] = None
+    status: Optional[str] = Field(default="active")
+    metadata: Optional[dict] = None
+
+    @field_validator('type')
+    @classmethod
+    def validate_type(cls, v: str) -> str:
+        if v not in COUNTERPARTY_TYPES:
+            raise ValueError(f"type must be one of: {', '.join(sorted(COUNTERPARTY_TYPES))}")
+        return v
+
+
+class CounterpartyUpdate(BaseModel):
+    """Schema for updating a counterparty (all fields optional)."""
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    type: Optional[str] = None
+    entity_id: Optional[int] = None
+    external_id: Optional[str] = Field(None, max_length=255)
+    external_system: Optional[str] = Field(None, max_length=100)
+    email: Optional[str] = Field(None, max_length=255)
+    phone: Optional[str] = Field(None, max_length=50)
+    address: Optional[str] = None
+    tax_registration_number: Optional[str] = Field(None, max_length=100)
+    is_gst_registered: Optional[bool] = None
+    payment_terms_days: Optional[int] = Field(None, gt=0)
+    default_account_code: Optional[str] = Field(None, max_length=20)
+    notes: Optional[str] = None
+    status: Optional[str] = None
+    metadata: Optional[dict] = None
+
+    @field_validator('type')
+    @classmethod
+    def validate_type(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in COUNTERPARTY_TYPES:
+            raise ValueError(f"type must be one of: {', '.join(sorted(COUNTERPARTY_TYPES))}")
+        return v
+
+
+class CounterpartyResponse(BaseModel):
+    """Schema for counterparty response."""
+    id: int
+    name: str
+    type: str
+    entity_id: Optional[int] = None
+    external_id: Optional[str] = None
+    external_system: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    tax_registration_number: Optional[str] = None
+    is_gst_registered: bool
+    payment_terms_days: Optional[int] = None
+    default_account_code: Optional[str] = None
+    notes: Optional[str] = None
+    status: str
+    metadata: Optional[dict] = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
