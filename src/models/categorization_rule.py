@@ -16,7 +16,7 @@ import enum
 
 from sqlalchemy import (
     String, DateTime, Integer, Boolean, ForeignKey, Enum as SQLEnum,
-    Index, Text, Numeric
+    Index, Text, Numeric,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -140,6 +140,15 @@ class FinanceCategorizationRule(Base):
         String(3), nullable=True,
         comment="ISO 4217 currency code — simple equality check, no operator needed"
     )
+    counterparty_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("finance_counterparties.id", ondelete="SET NULL"),
+        nullable=True,
+        comment=(
+            "If set, rule only matches transactions already linked to this counterparty. "
+            "Enrichment runs before rules, so this is reliable."
+        ),
+    )
 
     # ------------------------------------------------------------------
     # ACTION
@@ -221,6 +230,7 @@ class FinanceCategorizationRule(Base):
             "counterparty_operator": self.counterparty_operator.value if self.counterparty_operator else None,
             "counterparty_value": self.counterparty_value,
             "match_currency": self.match_currency,
+            "counterparty_id": self.counterparty_id,
             "category": self.category.value,
             "contra_account_code": self.contra_account_code,
             "target_bank_account_id": self.target_bank_account_id,

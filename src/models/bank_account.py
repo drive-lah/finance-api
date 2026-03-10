@@ -8,7 +8,7 @@ from datetime import datetime, UTC
 from typing import Optional
 import enum
 
-from sqlalchemy import String, DateTime, Integer, ForeignKey, Enum as SQLEnum, Index
+from sqlalchemy import JSON, String, DateTime, Integer, ForeignKey, Enum as SQLEnum, Index
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.database import Base
@@ -53,6 +53,15 @@ class FinanceBankAccount(Base):
         nullable=True,
         comment="COA account code this bank account maps to (e.g., 1000 for OCBC Current)"
     )
+    api_credentials: Mapped[Optional[dict]] = mapped_column(
+        JSON,
+        nullable=True,
+        comment=(
+            "API credentials for bank integrations. "
+            "For Wise: {\"profile_id\": 123, \"balance_id\": 456}. "
+            "API keys are NOT stored here — use environment variables."
+        ),
+    )
     status: Mapped[BankAccountStatus] = mapped_column(
         SQLEnum(BankAccountStatus, name="bank_account_status", native_enum=False),
         default=BankAccountStatus.ACTIVE,
@@ -92,6 +101,7 @@ class FinanceBankAccount(Base):
             "currency": self.currency,
             "csv_format": self.csv_format,
             "coa_account_code": self.coa_account_code,
+            "api_credentials": self.api_credentials,
             "status": self.status.value,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,

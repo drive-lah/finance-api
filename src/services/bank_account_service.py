@@ -123,6 +123,7 @@ class BankAccountService:
             account_name=bank_account_data.account_name,
             currency=bank_account_data.currency,
             csv_format=bank_account_data.csv_format,
+            api_credentials=bank_account_data.api_credentials,
             coa_account_code=coa_code,
             status=bank_account_data.status
         )

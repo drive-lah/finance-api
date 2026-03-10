@@ -27,6 +27,7 @@ class NormalizedRow:
         transaction_type: Optional[str] = None,
         running_balance: Optional[Decimal] = None,
         value_date: Optional[date] = None,
+        source_id: Optional[str] = None,
     ) -> None:
         self.transaction_date = transaction_date
         self.description = description
@@ -37,6 +38,9 @@ class NormalizedRow:
         self.transaction_type = transaction_type
         self.running_balance = running_balance
         self.value_date = value_date
+        # Platform-assigned unique transaction ID (e.g., Wise TransferWise ID).
+        # When set, used as the sole fingerprint field — overrides adapter.fingerprint_fields().
+        self.source_id = source_id
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -49,6 +53,7 @@ class NormalizedRow:
             "transaction_type": self.transaction_type,
             "running_balance": self.running_balance,
             "value_date": self.value_date,
+            "source_id": self.source_id,
         }
 
 

@@ -1,11 +1,15 @@
 """Transaction routes for Flask app."""
 
+import logging
 from datetime import date as date_type
 from flask import Blueprint, request, jsonify
 from decimal import Decimal
 
+logger = logging.getLogger(__name__)
+
 from src.database import db_session
 from src.services.transaction_service import transaction_service
+from src.services.categorization_service import categorization_service
 from src.models.schemas import StripeTransactionCreate, TransactionResponse
 from src.models.transaction import TransactionStatus
 from src.utils.errors import BadRequestError, NotFoundError, ConflictError
@@ -159,8 +163,20 @@ def import_transactions():
                 import_batch_id=import_batch_id
             )
         except ValueError as e:
-            # Service layer raises ValueError for invalid bank_account_id or validation errors
             raise BadRequestError(str(e))
+
+        # Auto-categorize newly imported transactions
+        if result.get('transactions_created', 0) > 0:
+            try:
+                cat = categorization_service.run(db, bank_account_id=bank_account_id)
+                result['categorization'] = {
+                    'categorized': cat['categorized'],
+                    'uncategorized': cat['uncategorized'],
+                    'errors': cat['errors'],
+                }
+            except Exception as e:
+                logger.warning(f"Auto-categorization failed after import: {e}", exc_info=True)
+                result['categorization'] = {'error': str(e)}
 
         return jsonify(result), 200
 

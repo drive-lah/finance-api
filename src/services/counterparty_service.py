@@ -3,7 +3,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import select, or_
 
-from src.models.counterparty import FinanceCounterparty
+from src.models.counterparty import FinanceCounterparty, CounterpartyType, CounterpartyStatus
 
 
 class CounterpartyService:
@@ -78,6 +78,63 @@ class CounterpartyService:
         db.delete(cp)
         db.commit()
         return True
+
+    def get_by_external(self, db: Session, external_system: str, external_id: str) -> Optional[FinanceCounterparty]:
+        query = select(FinanceCounterparty).where(
+            FinanceCounterparty.external_system == external_system,
+            FinanceCounterparty.external_id == external_id,
+        )
+        return db.execute(query).scalars().first()
+
+    def sync_employees(self, db: Session, employees: list[dict]) -> dict:
+        """Upsert a list of employees from an external system into counterparties.
+
+        Each employee dict must have: external_system, external_id, name.
+        Optional: email, phone, status.
+        Returns counts of created/updated/skipped.
+        """
+        created = 0
+        updated = 0
+
+        for emp in employees:
+            external_system = emp.get("external_system", "user_registry")
+            external_id = str(emp.get("external_id", ""))
+            if not external_id:
+                continue
+
+            existing = self.get_by_external(db, external_system, external_id)
+            if existing:
+                # Update mutable fields
+                existing.name = emp.get("name", existing.name)
+                existing.email = emp.get("email", existing.email)
+                existing.phone = emp.get("phone", existing.phone)
+                # Keep status in sync: active → Active, inactive/suspended → Inactive
+                raw_status = emp.get("status", "active")
+                existing.status = (
+                    CounterpartyStatus.ACTIVE if raw_status == "active"
+                    else CounterpartyStatus.INACTIVE
+                )
+                updated += 1
+            else:
+                raw_status = emp.get("status", "active")
+                status = (
+                    CounterpartyStatus.ACTIVE if raw_status == "active"
+                    else CounterpartyStatus.INACTIVE
+                )
+                cp = FinanceCounterparty(
+                    name=emp["name"],
+                    type=CounterpartyType.EMPLOYEE,
+                    status=status,
+                    email=emp.get("email"),
+                    phone=emp.get("phone"),
+                    external_system=external_system,
+                    external_id=external_id,
+                )
+                db.add(cp)
+                created += 1
+
+        db.commit()
+        return {"created": created, "updated": updated}
 
 
 counterparty_service = CounterpartyService()

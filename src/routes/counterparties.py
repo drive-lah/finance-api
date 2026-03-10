@@ -51,6 +51,22 @@ def update_counterparty(counterparty_id: int):
         return jsonify(CounterpartyResponse.model_validate(cp).model_dump()), 200
 
 
+@counterparties_bp.route('/sync/employees', methods=['POST'])
+def sync_employees():
+    """Bulk upsert employees from an external system.
+
+    Expects JSON body: {"employees": [{external_system, external_id, name, email?, phone?, status?}]}
+    """
+    body = request.get_json() or {}
+    employees = body.get("employees", [])
+    if not isinstance(employees, list):
+        return jsonify({"error": "employees must be a list"}), 400
+
+    with db_session() as db:
+        result = counterparty_service.sync_employees(db, employees)
+        return jsonify({"message": "Employee sync complete", **result}), 200
+
+
 @counterparties_bp.route('/<int:counterparty_id>', methods=['DELETE'])
 def delete_counterparty(counterparty_id: int):
     with db_session() as db:

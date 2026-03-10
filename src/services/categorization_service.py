@@ -53,7 +53,18 @@ class CategorizationService:
         limit: int = 100,
     ) -> dict[str, Any]:
         """
-        Run the categorization engine on pending transactions.
+        Run the two-phase categorization pipeline on pending transactions.
+
+        Phase 1 — Counterparty Enrichment:
+            Match each transaction's raw counterparty_name / description against
+            the finance_counterparties directory. Sets counterparty_id FK,
+            canonical counterparty_name, and counterparty_type.
+
+        Phase 2 — Accounting Classification:
+            A) If transaction has a counterparty with default_account_code →
+               auto-create the journal entry (no rule needed).
+            B) Otherwise walk active rules in priority order (first match wins).
+            C) Unmatched transactions stay Pending.
 
         Args:
             db: Database session
@@ -80,12 +91,25 @@ class CategorizationService:
 
         transactions = query.limit(limit).all()
 
+        # ── Phase 1: Counterparty enrichment ──────────────────────────────
+        self._enrich_counterparties(db, transactions)
+
+        # ── Phase 2: Accounting classification ───────────────────────────
         rules = (
             db.query(FinanceCategorizationRule)
             .filter(FinanceCategorizationRule.status == RuleStatus.ACTIVE)
             .order_by(FinanceCategorizationRule.priority)
             .all()
         )
+
+        # Pre-load counterparties that have a default_account_code for the default-account path
+        from src.models.counterparty import FinanceCounterparty
+        cp_map: dict[int, FinanceCounterparty] = {}
+        if transactions:
+            cp_ids = {t.counterparty_id for t in transactions if t.counterparty_id}
+            if cp_ids:
+                cps = db.query(FinanceCounterparty).filter(FinanceCounterparty.id.in_(cp_ids)).all()
+                cp_map = {cp.id: cp for cp in cps}
 
         results = []
         categorized = 0
@@ -94,9 +118,21 @@ class CategorizationService:
 
         for transaction in transactions:
             try:
-                matched_rule = self._match_transaction(transaction, rules)
-                if matched_rule:
-                    result = self._apply_rule(db, transaction, matched_rule)
+                result = None
+
+                # Phase 2A: default_account_code from linked counterparty
+                if transaction.counterparty_id and transaction.counterparty_id in cp_map:
+                    cp = cp_map[transaction.counterparty_id]
+                    if cp.default_account_code:
+                        result = self._apply_default_account(db, transaction, cp)
+
+                # Phase 2B: rule-based matching
+                if result is None:
+                    matched_rule = self._match_transaction(transaction, rules)
+                    if matched_rule:
+                        result = self._apply_rule(db, transaction, matched_rule)
+
+                if result is not None:
                     results.append(result)
                     categorized += 1
                 else:
@@ -108,6 +144,7 @@ class CategorizationService:
                         "error": None,
                     })
                     uncategorized += 1
+
             except Exception as e:
                 logger.error(f"Error categorizing transaction {transaction.id}: {e}", exc_info=True)
                 db.rollback()
@@ -126,6 +163,134 @@ class CategorizationService:
             "uncategorized": uncategorized,
             "errors": errors,
             "results": results,
+        }
+
+    # ------------------------------------------------------------------
+    # Phase 1: Counterparty enrichment
+    # ------------------------------------------------------------------
+
+    def _enrich_counterparties(
+        self,
+        db: Session,
+        transactions: list[FinanceTransaction],
+    ) -> None:
+        """
+        Match each transaction's raw bank data against the counterparty directory.
+
+        Matching strategy (in priority order, first match wins):
+          1. Exact: lower(cp.name) == lower(transaction.counterparty_name)
+          2. Substring: lower(cp.name) found inside lower(transaction.description)
+          3. Substring: lower(cp.name) found inside lower(transaction.counterparty_name)
+
+        On match: sets counterparty_id, counterparty_type, and overwrites
+        counterparty_name with the canonical name from the directory.
+
+        Transactions already linked (counterparty_id set) are skipped.
+        """
+        from src.models.counterparty import FinanceCounterparty
+
+        if not transactions:
+            return
+
+        # Load active counterparties once for the whole batch
+        counterparties = (
+            db.query(FinanceCounterparty)
+            .filter(FinanceCounterparty.status == "active")
+            .all()
+        )
+        if not counterparties:
+            return
+
+        for txn in transactions:
+            if txn.counterparty_id:
+                continue  # already linked
+
+            raw_cp = (txn.counterparty_name or "").lower().strip()
+            raw_desc = (txn.description or "").lower().strip()
+
+            matched = None
+            for cp in counterparties:
+                name_lower = cp.name.lower().strip()
+                if not name_lower:
+                    continue
+
+                # 1. Exact match on raw counterparty name from bank CSV
+                if raw_cp and raw_cp == name_lower:
+                    matched = cp
+                    break
+
+                # 2. Counterparty name appears as substring in transaction description
+                if name_lower in raw_desc:
+                    matched = cp
+                    break
+
+                # 3. Counterparty name appears as substring in raw counterparty field
+                if raw_cp and name_lower in raw_cp:
+                    matched = cp
+                    break
+
+            if matched:
+                txn.counterparty_id = matched.id
+                txn.counterparty_type = matched.type
+                txn.counterparty_name = matched.name  # canonical name
+
+        # Flush enrichments so the accounting phase sees the updated counterparty_ids
+        db.flush()
+
+    # ------------------------------------------------------------------
+    # Phase 2A: Default account fallback
+    # ------------------------------------------------------------------
+
+    def _apply_default_account(
+        self,
+        db: Session,
+        transaction: FinanceTransaction,
+        counterparty: Any,
+    ) -> Optional[dict[str, Any]]:
+        """
+        Create a journal entry using the counterparty's default_account_code.
+
+        Called when a transaction has been enriched with a counterparty_id and
+        that counterparty has a default_account_code. No rule is needed.
+
+        Returns a result dict on success, None if the bank account has no COA code.
+        """
+        bank_account = db.query(FinanceBankAccount).filter(
+            FinanceBankAccount.id == transaction.bank_account_id
+        ).first()
+
+        if not bank_account:
+            raise ValueError(f"Bank account {transaction.bank_account_id} not found")
+        if not bank_account.coa_account_code:
+            # Can't create a JE without knowing the bank's COA code — fall through to rules
+            return None
+
+        amount = float(transaction.amount) if transaction.amount is not None else 0.0
+        abs_amount = abs(amount)
+
+        entry = self._create_simple_entry(
+            db=db,
+            transaction=transaction,
+            entity_id=bank_account.entity_id,
+            bank_coa_code=bank_account.coa_account_code,
+            contra_code=counterparty.default_account_code,
+            amount=amount,
+            abs_amount=abs_amount,
+            source="counterparty_default",
+        )
+
+        transaction.status = TransactionStatus.MATCHED
+        transaction.reconciled_journal_entry_id = entry.id
+        transaction.reconciled_at = datetime.now(UTC)
+
+        db.commit()
+
+        return {
+            "transaction_id": transaction.id,
+            "status": "categorized",
+            "rule_name": f"[default:{counterparty.name}]",
+            "journal_entry_id": entry.id,
+            "error": None,
         }
 
     # ------------------------------------------------------------------
@@ -150,6 +315,11 @@ class CategorizationService:
     ) -> bool:
         """Return True if ALL non-null criteria on the rule match the transaction."""
         amount = float(transaction.amount) if transaction.amount is not None else 0.0
+
+        # 0. Counterparty ID (exact FK match — enrichment must have run first)
+        if rule.counterparty_id is not None:
+            if transaction.counterparty_id != rule.counterparty_id:
+                return False
 
         # 1. Bank account scope
         if rule.bank_account_ids:
@@ -511,8 +681,10 @@ class CategorizationService:
         db: Session,
         transaction_id: int,
         contra_account_code: str,
+        counterparty_id: Optional[int] = None,
         counterparty_name: Optional[str] = None,
         counterparty_type: Optional[str] = None,
+        save_as_default: bool = False,
         tag_ids: Optional[list[int]] = None,
         description: Optional[str] = None,
         gst_override: Optional[bool] = None,
@@ -568,10 +740,22 @@ class CategorizationService:
             gst_override=gst_override,
         )
 
-        if counterparty_name:
-            transaction.counterparty_name = counterparty_name
-        if counterparty_type:
-            transaction.counterparty_type = counterparty_type
+        # Counterparty resolution — FK takes precedence over free-text fields
+        if counterparty_id:
+            from src.models.counterparty import FinanceCounterparty
+            cp = db.get(FinanceCounterparty, counterparty_id)
+            if cp:
+                transaction.counterparty_id = cp.id
+                transaction.counterparty_name = cp.name
+                transaction.counterparty_type = cp.type
+                # Optionally persist this account as the counterparty's default
+                if save_as_default:
+                    cp.default_account_code = contra_account_code
+        else:
+            if counterparty_name:
+                transaction.counterparty_name = counterparty_name
+            if counterparty_type:
+                transaction.counterparty_type = counterparty_type
 
         # Manual categorization = human confirmation → RECONCILED directly
         transaction.status = TransactionStatus.RECONCILED

@@ -186,25 +186,77 @@ class TransactionService:
 
         # Parse CSV via adapter — adapter records its own row-level errors
         normalized_rows = adapter.parse(csv_content)
-        errors = list(adapter.errors)  # row-level parse failures from adapter
+        parse_errors = list(adapter.errors)
 
+        return self.import_from_rows(
+            db=db,
+            bank_account=bank_account,
+            normalized_rows=normalized_rows,
+            fingerprint_fn=adapter.fingerprint_fields,
+            import_batch_id=import_batch_id,
+            source="csv_import",
+            extra_errors=parse_errors,
+        )
+
+    def import_from_rows(
+        self,
+        db: Session,
+        bank_account: FinanceBankAccount,
+        normalized_rows: list,
+        fingerprint_fn,
+        import_batch_id: Optional[str] = None,
+        source: str = "api_sync",
+        extra_errors: Optional[list] = None,
+    ) -> Dict[str, Any]:
+        """
+        Shared import loop used by both CSV and API sync paths.
+
+        fingerprint_fn: callable(NormalizedRow) -> list[str]
+            For CSV: adapter.fingerprint_fields
+            For API: lambda row: [row.source_id]  (e.g., Wise TransferWise ID)
+
+        If a row has row.source_id set, that is used instead of fingerprint_fn,
+        since a platform-assigned ID is the most reliable dedup key.
+        """
+        if import_batch_id is None:
+            import_batch_id = datetime.utcnow().strftime('%Y%m%d%H%M%S')
+
+        bank_account_id = bank_account.id
+        errors: list = list(extra_errors or [])
         transactions_created = 0
         duplicates_skipped = 0
+        # Track fingerprints added in this batch (session has autoflush=False,
+        # so db.query() won't see pending in-session inserts).
+        seen_in_batch: set[str] = set()
 
         for normalized in normalized_rows:
             try:
+                # Use source_id (e.g., Wise TransferWise ID) as sole fingerprint
+                # when available — it is globally unique and stable across re-syncs.
+                if normalized.source_id:
+                    fp_fields = [normalized.source_id]
+                else:
+                    fp_fields = list(fingerprint_fn(normalized))
+
                 fingerprint = generate_fingerprint(
                     bank_account_id=bank_account_id,
-                    fields=adapter.fingerprint_fields(normalized),
+                    fields=fp_fields,
                 )
 
-                # Skip duplicates
+                # Check within-batch duplicates first (catches API returning same
+                # transaction twice in one statement response).
+                if fingerprint in seen_in_batch:
+                    duplicates_skipped += 1
+                    continue
+
                 existing = db.query(FinanceTransaction).filter(
                     FinanceTransaction.fingerprint == fingerprint
                 ).first()
                 if existing:
                     duplicates_skipped += 1
                     continue
+
+                seen_in_batch.add(fingerprint)
 
                 transaction = FinanceTransaction(
                     bank_account_id=bank_account_id,
@@ -219,7 +271,7 @@ class TransactionService:
                     value_date=normalized.value_date,
                     fingerprint=fingerprint,
                     status=TransactionStatus.PENDING,
-                    source="csv_import",
+                    source=source,
                     import_batch_id=import_batch_id,
                     original_csv_row=json.dumps(normalized.to_dict(), default=str),
                 )
@@ -231,7 +283,6 @@ class TransactionService:
                 errors.append({"error": str(e)})
                 continue
 
-        # Commit all transactions
         try:
             db.commit()
         except IntegrityError as e:

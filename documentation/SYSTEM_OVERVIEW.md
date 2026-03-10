@@ -1,6 +1,6 @@
 # Drive Lah Finance System — System Overview
 
-**Version:** 2.1
+**Version:** 2.3
 **Date:** 2026-03-10
 **Status:** Living Document
 
@@ -14,7 +14,8 @@ The Drive Lah Finance System is a multi-entity accounting platform that manages 
 
 | Entity | Country | Currency | Description |
 |--------|---------|----------|-------------|
-| DL Ventures Pte Ltd | SG | SGD | Holding company |
+| DL Ventures Holding Pte. Ltd. | SG | SGD | Group holding company |
+| DL Ventures Pte Ltd | SG | SGD | Singapore ventures entity |
 | Drive lah Pte Ltd | SG | SGD | Singapore operating entity |
 | Drive lah Australia Pty Ltd | AU | AUD | Australia operating entity |
 
@@ -130,14 +131,31 @@ A group-level chart of accounts shared across all entities. Bank accounts are th
 
 ---
 
-### 3.2 Bank Account CSV Uploading
+### 3.2 Bank Transaction Import
 
 **Status: Built**
+
+Transactions can enter the system via three paths depending on the bank: CSV upload, PDF upload (DBS), or API sync (Wise). All paths normalize to the same transaction schema and run the same fingerprint dedup check.
+
+**Import Architecture:**
+
+| Bank | Import Method | Source |
+|------|--------------|--------|
+| OCBC | CSV upload | Admin → Bank Accounts tab → Import CSV row action |
+| CBA (Commonwealth Bank AU) | CSV upload | Admin → Bank Accounts tab → Import CSV row action |
+| DBS | PDF upload | Admin → Bank Accounts tab → Import PDF row action |
+| Wise | API sync | Admin → Bank Accounts tab → Sync row action |
+
+All import/sync actions are surfaced **per-row in the Bank Accounts tab** based on bank type. The Transactions tab is view-only (no import actions there).
+
+---
+
+#### 3.2.1 CSV Import (OCBC, CBA)
 
 Upload bank statement CSVs to import transactions. Each transaction gets a SHA256 fingerprint for duplicate detection. The fingerprint fields are **adapter-owned** — each bank adapter declares which fields uniquely identify a row in its own CSV format.
 
 **Flow:**
-1. User selects a bank account and uploads CSV
+1. User selects a bank account row and clicks **Import CSV**
 2. System selects the correct adapter based on the bank account's `csv_format` field
 3. Adapter normalizes the bank's raw CSV columns into the standard transaction schema
 4. Adapter supplies fingerprint fields; SHA256 hash computed — duplicates skipped
@@ -147,22 +165,26 @@ Upload bank statement CSVs to import transactions. Each transaction gets a SHA25
 **Duplicate detection design:**
 - Re-uploading the same CSV row produces the same fingerprint → blocked as duplicate.
 - Two genuine transactions that share the same date and amount (e.g. two purchases on the same day for the same price) produce **different** fingerprints because the adapter includes a disambiguating field (e.g. `running_balance` for OCBC, which is unique per row in an ordered bank statement).
+- Within-batch dedup: a `seen_in_batch` set catches duplicate fingerprints within a single import call (prevents UniqueViolation from SQLAlchemy `autoflush=False` sessions).
 
 | Bank | Fingerprint fields |
 |------|--------------------|
 | OCBC | `account_id` + `post_date` + `amount` + `our_ref` + `closing_book_balance` |
+| DBS | `transaction_date` + `amount` + `description` + `running_balance` |
+| Wise | `source_id` (Wise `referenceNumber` — globally unique per transfer) |
 
 **Bank Adapter System:**
 
 There is no generic CSV format. Each bank has a dedicated adapter in `src/services/csv_adapters/` that knows the bank's exact column layout, date format, and amount encoding. The adapter is selected from the `csv_format` field on the bank account record — set explicitly at account creation and validated against the adapter registry.
 
-| Bank | `csv_format` value | Adapter file | Date format | Amount encoding |
-|------|--------------------|-------------|-------------|----------------|
-| OCBC | `ocbc` | `ocbc.py` | `YYYYMMDD` | Separate `Debit Amount` / `Credit Amount` columns |
+| Bank | `csv_format` value | Adapter file | Input type | Amount encoding |
+|------|--------------------|-------------|-----------|----------------|
+| OCBC | `ocbc` | `ocbc.py` | CSV | Separate `Debit Amount` / `Credit Amount` columns |
+| DBS | `dbs_pdf` | `dbs_pdf.py` | PDF | Balance-change sign detection (see 3.2.2) |
 
-**`csv_format` is required when creating a bank account.** It is validated against `ADAPTER_REGISTRY` at creation time — invalid values are rejected immediately. This ensures adapter selection is always explicit and unambiguous, regardless of how `bank_name` is entered.
+**`csv_format` is required when creating a bank account** for CSV/PDF import paths. It is validated against `ADAPTER_REGISTRY` at creation time. Wise accounts use `api_credentials` instead (no `csv_format` needed for sync).
 
-**To add a new bank:** Create `src/services/csv_adapters/<bank>.py` implementing `BankCSVAdapter.parse()`, register it in `registry.py`, add a row to the table above, and update `API.md`.
+**To add a new bank:** Create `src/services/csv_adapters/<bank>.py` implementing `BankCSVAdapter.parse()`, register it in `registry.py`, add a row to the table above.
 
 **Standardized Transaction Fields (output of every adapter):**
 
@@ -175,10 +197,11 @@ There is no generic CSV format. Each bank has a dedicated adapter in `src/servic
 | currency | No | ISO 4217 — falls back to bank account's currency if not in CSV |
 | counterparty_name | No | Raw value from bank CSV — overwritten by categorization engine on rule match |
 | counterparty_type | No | Set by categorization engine (vendor, employee, host, guest, bank, other) |
-| counterparty_id | No | FK to vendor/employee (populated when those tables exist) |
+| counterparty_id | No | FK to counterparties (set by categorization engine) |
 | value_date | No | Date funds actually settled (can differ from transaction_date) |
 | transaction_type | No | Bank's own transaction classification code |
 | running_balance | No | Running balance after transaction (from bank statement) |
+| source_id | No | External unique ID — used by Wise as sole fingerprint |
 
 **Counterparty linking:** `counterparty_name` is populated from the raw bank CSV during import (adapter-specific field). The categorization engine overwrites it with the canonical counterparty name when a rule matches. `counterparty_type` and `counterparty_id` are set by the categorization engine only.
 
@@ -187,20 +210,78 @@ There is no generic CSV format. Each bank has a dedicated adapter in `src/servic
 | Method | Path | Description |
 |--------|------|-------------|
 | POST | `/api/finance/transactions/import` | Upload CSV (multipart/form-data) |
+| POST | `/api/finance/bank-accounts/dbs/import` | Upload DBS PDF (multi-currency, single file) |
+| POST | `/api/finance/bank-accounts/:id/sync` | Sync via API (Wise) |
 | GET | `/api/finance/transactions` | List with filters (entity, bank account, status, date, search) |
 | GET | `/api/finance/transactions/:id` | Get transaction by ID |
 | POST | `/api/finance/transactions/:id/approve` | Post linked JE, set status → Reconciled |
 | POST | `/api/finance/transactions/:id/reject` | Void linked JE, reset status → Pending |
 
 **Currency Handling:**
-- Each transaction stores its `currency` (ISO 4217 — sourced from CSV via adapter, or bank account's currency as fallback)
+- Each transaction stores its `currency` (ISO 4217 — sourced from CSV/PDF/API response, or bank account's currency as fallback)
 - No exchange rate conversion at transaction level
 - Conversion to group reporting currency (USD) happens at report time using standardized period rates
-- Exchange rate table will be built with consolidated reporting module
 
-**Next Steps:**
-- Auto-detect counterparty from transaction description using categorization rules
-- Add adapters for DBS, Wise, ANZ, Westpac as those bank accounts come online
+---
+
+#### 3.2.2 DBS PDF Import (Multi-Currency)
+
+DBS provides a single consolidated PDF statement covering multiple currencies (SGD, EUR, USD, etc.). One upload imports transactions into all matching DBS bank accounts automatically.
+
+**Flow:**
+1. User clicks **Import PDF** on any DBS bank account row → selects PDF file
+2. `POST /api/finance/bank-accounts/dbs/import` receives file + `entity_id`
+3. `dbs_pdf_adapter.parse_pdf()` extracts all currency sections from the PDF using pdfplumber
+4. For each currency section, the system finds the matching DBS bank account by `(entity_id, bank_name ilike 'dbs', currency)`
+5. `import_from_rows()` runs with fingerprint dedup + auto-categorization per currency
+6. Response returns per-currency summary: `currencies_found`, `results` (created/skipped/errors), `parse_warnings`
+
+**PDF parsing details:**
+- Uses `pdfplumber` to extract text from all pages
+- Finds `Currency: XXX` section headers to determine current currency context
+- Parses "Balance Brought Forward" line to establish initial running balance
+- **Sign detection via balance-change:** For each transaction line, if `prev_balance - amount_abs ≈ current_balance` → withdrawal (negative); if `prev_balance + amount_abs ≈ current_balance` → deposit (positive). This recovers the withdrawal/deposit sign lost in PDF text extraction.
+- Skips non-transaction lines: Balance Brought Forward, Balance Carried Forward, Total, NO TRANSACTIONS AVAILABLE, section headers
+- Fingerprint: `[transaction_date, amount, description, running_balance]` (four fields make the hash collision-resistant even if same date+amount+description appears twice)
+
+**Dependency:** `pdfplumber>=0.10.0` (in `requirements.txt`). Run Flask via venv: `venv/bin/python -m flask --app src/app.py run --port 8082 --debug`.
+
+---
+
+#### 3.2.3 Wise API Sync
+
+Wise bank accounts are connected via the Wise API and synced on-demand. No CSV/PDF upload required.
+
+**Connection flow:**
+1. User clicks **Connect Wise** in Bank Accounts tab → enters API key + entity + sync-from date
+2. `POST /api/finance/bank-accounts/wise/connect` calls Wise API to list all balances for the profile
+3. For each Wise balance (currency), a bank account is auto-created in the system with `api_credentials: {profile_id, balance_id}`
+4. The corresponding COA account is also auto-created (`1xxx Bank - Wise <currency>`) if not present
+
+**Sync flow:**
+1. User clicks **Sync** on a Wise bank account row
+2. `POST /api/finance/bank-accounts/:id/sync` calls `wise_service.sync_transactions()`
+3. Wise API returns transactions for the balance (default: last 30 days; custom range via `date_from`/`date_to`)
+4. Each Wise transaction is mapped to `NormalizedRow` using `referenceNumber` as `source_id` (the sole fingerprint — Wise guarantees it is globally unique per transfer)
+5. `import_from_rows()` runs with fingerprint dedup + auto-categorization
+6. Response: `{ transactions_created, duplicates_skipped, errors, import_batch_id, date_from, date_to, categorization }`
+
+**`api_credentials` field on bank accounts (migration 015):**
+```json
+{ "profile_id": 123456789, "balance_id": 987654321, "sync_from_date": "2025-01-01", "last_synced_at": "2026-03-10T10:00:00Z" }
+```
+The Wise API key itself is stored in the `WISE_API_KEY` environment variable, not in the DB.
+
+**Bank Account API Endpoints:**
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/finance/bank-accounts` | List bank accounts (filter by entity_id) |
+| POST | `/api/finance/bank-accounts` | Create bank account |
+| GET | `/api/finance/bank-accounts/wise/profiles` | List Wise profiles for the API key |
+| POST | `/api/finance/bank-accounts/wise/connect` | Connect Wise profile → auto-create bank accounts |
+| POST | `/api/finance/bank-accounts/:id/sync` | Sync transactions via API (Wise) |
+| POST | `/api/finance/bank-accounts/dbs/import` | Import DBS PDF (multi-currency) |
 
 ---
 
@@ -542,8 +623,20 @@ A universal party directory representing any external (or internal) party the bu
 | `government` | IRAS, ACRA, MOM | — |
 | `other` | Catch-all | — |
 
-**Employee ↔ monitor API linking:**
-Employees are stored here with `external_system = "monitor_api"` and `external_id = <monitor_api_user_id>`. This keeps the finance module lightweight (no duplicate employee profile data) while enabling cross-system joins. Payroll-specific fields (salary, bank details) will live in a future `counterparty_payroll_details` extension table — no migration to this table needed when payroll is built.
+**Employee ↔ User Registry linking:**
+Employees are stored here with `external_system = "user_registry"` and `external_id = <user_registry_user_id>`. This keeps the finance module lightweight (no duplicate employee profile data) while enabling cross-system joins. Payroll-specific fields (salary, bank details) will live in a future `counterparty_payroll_details` extension table — no migration needed when payroll is built.
+
+**Employee Sync:**
+A sync endpoint (`POST /api/finance/counterparties/sync/employees`) accepts a list of employees and upserts them by `(external_system, external_id)`. The admin-bff orchestrates the full flow: it calls `UserRegistryService.getAllUsers()`, maps users to employee format, and posts to the finance API. This is triggered via the "Sync Employees" button in the Counterparties UI. Re-running is idempotent — existing employees are updated, new ones are created.
+
+**Duplicate prevention — two-layer design:**
+
+| Layer | Scope | Mechanism |
+|-------|-------|-----------|
+| Manual records | `(name, type)` unique | Partial DB index `WHERE external_id IS NULL` + service pre-check + 409 response |
+| Synced records | `(external_system, external_id)` unique | DB unique index (always enforced) |
+
+Manual records cannot share the same `(name, type)` pair. Synced records (employees with `external_id`) are exempt from the name/type constraint — the same name can appear multiple times as long as each has a different `external_id`. This prevents the sync from failing when employees share a name.
 
 **Data Model:**
 
@@ -585,10 +678,28 @@ finance_counterparties
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/api/finance/counterparties` | List (filter by entity_id, type, status, search) |
-| POST | `/api/finance/counterparties` | Create |
+| POST | `/api/finance/counterparties` | Create (manual — duplicate blocked by name+type check) |
 | GET | `/api/finance/counterparties/:id` | Get by ID |
 | PUT | `/api/finance/counterparties/:id` | Update |
 | DELETE | `/api/finance/counterparties/:id` | Delete |
+| POST | `/api/finance/counterparties/sync/employees` | Bulk upsert employees by external key |
+
+**Sync endpoint body:**
+```json
+{
+  "employees": [
+    {
+      "external_system": "user_registry",
+      "external_id": "42",
+      "name": "Jane Smith",
+      "email": "jane@drivelah.com",
+      "phone": "+65 9123 4567",
+      "status": "active"
+    }
+  ]
+}
+```
+Returns: `{ "message": "Employee sync complete", "created": N, "updated": N }`
 
 **Future integrations (not yet built):**
 - `counterparty_id` FK on categorization rules → engine sets counterparty on matched transactions + can inherit `default_account_code` as fallback
@@ -829,7 +940,10 @@ TAX (9xxx)
 | Entity Management | Done | Done | Done | Ready |
 | Chart of Accounts (v2) | Done | Done | Done | Ready |
 | Bank Account Management | Done | Done | Done | Ready |
-| CSV Transaction Import (with counterparty) | Done | Done | Done | Ready |
+| CSV Transaction Import (OCBC, CBA) | Done | Done | Done | Ready |
+| DBS PDF Import (multi-currency, single upload) | Done | Done | Done | Ready |
+| Wise API Connect + Sync | Done | Done | Done | Ready |
+| Import consolidation (all in Bank Accounts tab) | Done | Done | Done | Ready |
 | Transaction Counterparty Tracking | Done | — | — | Ready |
 | Journal Entry CRUD | Done | Done | Done | Ready |
 | Journal Posting | Done | Done | Done | Ready |
@@ -844,6 +958,7 @@ TAX (9xxx)
 | GST Handling (entity/account/rule level) | Done | — | — | Ready |
 | Transaction Review Queue (approve/reject) | Done | Done | Done | Ready |
 | **Counterparty Module** | Done | Done | Done | Ready |
+| **Employee Sync (user registry → counterparties)** | Done | Done | Done | Ready |
 | **Invoice / AP (Accrual)** | — | — | — | Planned |
 | **Prepayment Scheduling** | — | — | — | Planned |
 | **Stripe Full Integration** | — | — | — | Later |
@@ -857,12 +972,16 @@ TAX (9xxx)
 1. ~~**Categorization Engine**~~ — ✅ Done
 2. ~~**Transaction Review Queue**~~ — ✅ Done (approve/reject with JE posting/voiding)
 3. ~~**Counterparty Module**~~ — ✅ Done (universal vendor/employee/investor/host/guest directory)
-4. **Invoice / AP** — automates the accrual path (invoices → journal entries → payment matching); link to counterparty_id
-5. **Categorization → Counterparty wiring** — `counterparty_id` on rules; engine sets it on matched transactions, inherits `default_account_code`
-6. **Payroll** — `counterparty_payroll_details` extension + payroll journal entry generation; syncs employees from monitor API via `external_id`
-7. **Prepayment Scheduling** — auto-spread payments over future periods
-8. **Stripe Full Integration** — automate Stripe transaction ingestion and categorization
-9. **Financial Reports** — P&L, balance sheet, business line margins
+4. ~~**Employee Sync**~~ — ✅ Done (user registry → counterparties, bulk upsert via external key)
+5. ~~**DBS PDF Import**~~ — ✅ Done (multi-currency, single PDF upload routes to all DBS accounts)
+6. ~~**Wise API Sync**~~ — ✅ Done (connect profile → auto-create accounts, on-demand sync)
+7. **Invoice / AP** — automates the accrual path (invoices → journal entries → payment matching); link to counterparty_id
+8. **Categorization → Counterparty wiring** — `counterparty_id` on rules; engine sets it on matched transactions, inherits `default_account_code`
+9. **Payroll** — `counterparty_payroll_details` extension + payroll journal entry generation; employees already synced via `external_id`
+10. **Prepayment Scheduling** — auto-spread payments over future periods
+11. **Stripe Full Integration** — automate Stripe transaction ingestion and categorization
+12. **CBA API Sync** — Commonwealth Bank Australia (currently CSV; API sync planned)
+13. **Financial Reports** — P&L, balance sheet, business line margins
 
 ---
 
@@ -873,10 +992,17 @@ TAX (9xxx)
 | Layer | Technology |
 |-------|-----------|
 | Backend | Python 3.14, Flask 2.x, SQLAlchemy 2.x, Pydantic 2.x |
+| PDF Parsing | pdfplumber>=0.10.0 (DBS PDF adapter) |
+| External APIs | Wise API (bank sync via `WISE_API_KEY` env var) |
 | Database | PostgreSQL |
-| Middleware | Node.js, Express, TypeScript |
+| Middleware | Node.js, Express, TypeScript, multer (file upload proxy) |
 | Frontend | React 18, TypeScript, Vite, TanStack Query, Tailwind CSS |
 | Authentication | JWT via Google OAuth (dev login available for local) |
+
+**Running with PDF support:** Flask must run via the venv Python to pick up pdfplumber:
+```
+venv/bin/python -m flask --app src/app.py run --port 8082 --debug
+```
 
 ### Database Migrations
 
@@ -897,6 +1023,11 @@ Alembic manages schema migrations in `migrations/versions/`:
 | 008_csv_format | Add `csv_format` field to bank accounts (adapter key for CSV imports) |
 | 009_cat_rules_v2 | Redesign categorization rules — operator-based matching, direction/category, bank_account_ids scope |
 | 010_counterparties | Create `finance_counterparties` table — universal party directory |
+| 011_counterparty_currency | Add `currency` field to `finance_counterparties` |
+| 012_counterparty_unique_name_type | Add unique index on `(name, type)` — blocks manual duplicates |
+| 013_counterparty_partial_unique_external | Replace full `(name, type)` index with partial `WHERE external_id IS NULL`; add `(external_system, external_id)` unique index for synced records |
+| 014_counterparty_fk_and_rules_cp_id | Add FK constraint from `transactions.counterparty_id` → `finance_counterparties`; add `counterparty_id` match criterion to categorization rules |
+| 015_bank_account_api_credentials | Add `api_credentials` JSONB column to `finance_bank_accounts` — stores Wise `profile_id`, `balance_id`, `sync_from_date`, `last_synced_at` |
 
 Run migrations: `alembic upgrade head`
 
@@ -912,5 +1043,5 @@ Run migrations: `alembic upgrade head`
 Seed the COA and entities: `python -m src.seed_coa`
 
 Creates:
-- 3 entities (DL Ventures, DL SG, DL AU)
+- 4 entities (DL Ventures Holding, DL Ventures, DL SG, DL AU)
 - 134 group-level accounts from `documentation/chart_of_accounts_v2.csv`

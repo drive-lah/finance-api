@@ -101,8 +101,9 @@ class FinanceTransaction(Base):
     )
     counterparty_id: Mapped[Optional[int]] = mapped_column(
         Integer,
+        ForeignKey("finance_counterparties.id", ondelete="SET NULL"),
         nullable=True,
-        comment="FK to vendor/employee table (populated when those tables exist)"
+        comment="FK to finance_counterparties — set by enrichment phase of categorization engine"
     )
     value_date: Mapped[Optional[date]] = mapped_column(
         Date,

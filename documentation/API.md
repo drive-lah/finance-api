@@ -3,7 +3,7 @@
 **Base URL:** `http://localhost:8082` (dev) · `/api/finance/...`
 **Auth:** None yet (JWT planned via Admin BFF)
 **Content-Type:** `application/json` unless noted
-**Last updated:** 2026-03-10
+**Last updated:** 2026-03-10 (v2.2)
 
 > **Maintenance rule:** Add a row here in the same commit you add a new endpoint.
 
@@ -235,10 +235,11 @@ Universal party directory — vendors, customers, employees, investors, hosts, g
 | Method | Path | Query Params | Body | Returns |
 |--------|------|-------------|------|---------|
 | GET | `/api/finance/counterparties` | `entity_id`, `type`, `status`, `search` | — | 200 array |
-| POST | `/api/finance/counterparties` | — | See fields below | 201 counterparty |
+| POST | `/api/finance/counterparties` | — | See fields below | 201 counterparty / 409 if name+type duplicate |
 | GET | `/api/finance/counterparties/:id` | — | — | 200 counterparty / 404 |
 | PUT | `/api/finance/counterparties/:id` | — | Any counterparty field | 200 counterparty / 404 |
 | DELETE | `/api/finance/counterparties/:id` | — | — | 200 / 404 |
+| POST | `/api/finance/counterparties/sync/employees` | — | `employees`* (array) | 200 `{ message, created, updated }` |
 
 **Type values:** `vendor` · `customer` · `employee` · `investor` · `host` · `guest` · `bank` · `government` · `other`
 
@@ -260,7 +261,22 @@ Universal party directory — vendors, customers, employees, investors, hosts, g
 | `default_account_code` | — | COA code used as contra account fallback when no rule specifies one |
 | `notes` | — | Internal notes |
 | `status` | — | `active` · `inactive` (default `active`) |
-| `metadata` | — | JSON object — escape hatch for type-specific data (e.g. investor equity %) |
+| `extra_data` | — | JSON object — escape hatch for type-specific data (e.g. investor equity %) |
+
+**Duplicate prevention:**
+- Manual records (`external_id` absent): `(name, type)` must be unique — returns 409 on collision.
+- Synced records (`external_id` present): exempt from name/type uniqueness; deduplicated by `(external_system, external_id)`.
+
+**Sync endpoint — employee array items:**
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `external_system` | — | Defaults to `"user_registry"` |
+| `external_id` | ✓ | ID of the user in the source system |
+| `name` | ✓ | Full name |
+| `email` | — | Work email |
+| `phone` | — | Phone number |
+| `status` | — | `"active"` (default) or `"inactive"` — maps to counterparty status |
 
 ---
 

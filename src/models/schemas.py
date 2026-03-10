@@ -165,16 +165,23 @@ class BankAccountCreate(BaseModel):
     account_number: str = Field(..., min_length=1, max_length=50, description="Bank account number")
     account_name: str = Field(..., min_length=1, max_length=255, description="Account holder name")
     currency: str = Field(..., min_length=3, max_length=3, description="ISO 4217 currency code")
-    csv_format: str = Field(
-        ...,
+    csv_format: Optional[str] = Field(
+        None,
         min_length=1,
         max_length=50,
         description=(
-            "CSV adapter key for this bank account. Must match a registered adapter "
-            "(e.g. 'ocbc'). Used to select the correct parser when importing bank statements."
+            "CSV adapter key for CSV-import bank accounts (e.g. 'ocbc'). "
+            "Leave None for API-connected accounts (e.g. Wise)."
         ),
     )
     coa_account_code: Optional[str] = Field(None, max_length=20, description="COA account code this bank account maps to")
+    api_credentials: Optional[dict] = Field(
+        None,
+        description=(
+            "API integration credentials. For Wise: {\"profile_id\": 123, \"balance_id\": 456}. "
+            "API keys are stored in environment variables, not here."
+        ),
+    )
     status: Optional[BankAccountStatus] = Field(
         default=BankAccountStatus.ACTIVE,
         description="Bank account status"
@@ -190,8 +197,10 @@ class BankAccountCreate(BaseModel):
 
     @field_validator('csv_format')
     @classmethod
-    def validate_csv_format(cls, v: str) -> str:
-        """Validate csv_format is a registered adapter key."""
+    def validate_csv_format(cls, v: Optional[str]) -> Optional[str]:
+        """Validate csv_format is a registered adapter key (only if provided)."""
+        if v is None:
+            return v
         from src.services.csv_adapters.registry import ADAPTER_REGISTRY
         normalised = v.strip().lower()
         if normalised not in ADAPTER_REGISTRY:
@@ -232,6 +241,7 @@ class BankAccountResponse(BaseModel):
     currency: str
     csv_format: Optional[str] = None
     coa_account_code: Optional[str] = None
+    api_credentials: Optional[dict] = None
     status: str
     created_at: datetime
     updated_at: datetime
@@ -552,8 +562,10 @@ class ManualCategorizeRequest(BaseModel):
     """Schema for manually categorizing a single transaction."""
     transaction_id: int = Field(..., gt=0, description="Transaction to categorize")
     contra_account_code: str = Field(..., min_length=1, max_length=20, description="Contra account code")
-    counterparty_name: Optional[str] = Field(None, max_length=255, description="Counterparty name")
-    counterparty_type: Optional[str] = Field(None, max_length=50, description="Counterparty type")
+    counterparty_id: Optional[int] = Field(None, gt=0, description="FK to finance_counterparties — sets counterparty_id on the transaction")
+    counterparty_name: Optional[str] = Field(None, max_length=255, description="Counterparty name (ignored if counterparty_id given — name taken from directory)")
+    counterparty_type: Optional[str] = Field(None, max_length=50, description="Counterparty type (ignored if counterparty_id given)")
+    save_as_default: bool = Field(False, description="If true and counterparty_id given, sets default_account_code on that counterparty")
     tag_ids: Optional[list[int]] = Field(None, description="Tag IDs to apply")
     description: Optional[str] = Field(None, max_length=500, description="JE description override")
     gst_override: Optional[bool] = Field(default=None, description="Override GST. null=default, true=force GST, false=force no GST")
