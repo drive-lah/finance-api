@@ -89,3 +89,30 @@ def void_invoice(invoice_id: int):
     with db_session() as db:
         invoice = invoice_service.void(db, invoice_id)
         return jsonify(InvoiceResponse.model_validate(invoice).model_dump()), 200
+
+
+@invoices_bp.route('/extract', methods=['POST'])
+def extract_invoice():
+    """
+    Extract structured data from an uploaded invoice PDF using AI.
+
+    Accepts multipart/form-data with a 'file' field (PDF).
+    Returns extracted fields for review before creating the invoice.
+    Does NOT create an invoice -- just extracts data for the frontend to display.
+
+    Request: multipart/form-data, field 'file' = PDF
+    Response 200: extracted invoice data dict
+    Response 400: no file / not PDF
+    """
+    if 'file' not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+
+    file = request.files['file']
+    if not file.filename or not file.filename.lower().endswith('.pdf'):
+        return jsonify({"error": "File must be a PDF"}), 400
+
+    pdf_bytes = file.read()
+
+    from src.services.ai_extraction_service import ai_extraction_service
+    result = ai_extraction_service.extract_invoice_data(pdf_bytes)
+    return jsonify(result), 200
