@@ -47,6 +47,9 @@ def create_app(config=None):
     from src.routes.categorization_rules import categorization_rules_bp
     from src.routes.categorization import categorization_bp
     from src.routes.counterparties import counterparties_bp
+    from src.routes.invoices import invoices_bp
+    from src.routes.contracts import contracts_bp
+    from src.routes.approval_rules import approval_rules_bp
     app.register_blueprint(entities_bp)
     app.register_blueprint(accounts_bp)
     app.register_blueprint(bank_accounts_bp)
@@ -58,6 +61,9 @@ def create_app(config=None):
     app.register_blueprint(categorization_rules_bp)
     app.register_blueprint(categorization_bp)
     app.register_blueprint(counterparties_bp)
+    app.register_blueprint(invoices_bp)
+    app.register_blueprint(contracts_bp)
+    app.register_blueprint(approval_rules_bp)
     
     # Health check endpoint
     @app.route('/health', methods=['GET'])

@@ -22,6 +22,8 @@ from src.models.categorization_rule import (
     MatchOperator,
     AmountOperator,
 )
+from src.models.invoice import InvoiceStatus
+from src.models.contract import ContractType, ContractFrequency
 
 
 # =============================================================================
@@ -671,5 +673,212 @@ class CounterpartyResponse(BaseModel):
     extra_data: Optional[dict] = None
     created_at: datetime
     updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# =============================================================================
+# Invoice Schemas
+# =============================================================================
+
+class InvoiceCreate(BaseModel):
+    """Schema for creating a new invoice."""
+    entity_id: int = Field(..., gt=0, description="Entity ID")
+    counterparty_id: Optional[int] = Field(None, gt=0, description="Counterparty ID")
+    contract_id: Optional[int] = Field(None, gt=0, description="Contract ID")
+    invoice_number: Optional[str] = Field(None, max_length=100, description="Invoice number")
+    invoice_date: date_type = Field(..., description="Invoice date")
+    due_date: Optional[date_type] = Field(None, description="Payment due date")
+    total_amount: float = Field(..., gt=0, description="Total invoice amount")
+    currency: str = Field(..., min_length=3, max_length=3, description="ISO 4217 currency code")
+    contra_account_code: Optional[str] = Field(None, max_length=20, description="Suggested expense account")
+    service_period_start: Optional[date_type] = Field(None, description="Start of service period")
+    service_period_end: Optional[date_type] = Field(None, description="End of service period")
+    uploaded_by: Optional[str] = Field(None, max_length=100, description="Uploader identifier")
+    notes: Optional[str] = Field(None, description="Free-text notes")
+    pdf_s3_key: Optional[str] = Field(None, max_length=500, description="S3 key for the PDF")
+
+    @field_validator('currency')
+    @classmethod
+    def validate_invoice_currency(cls, v: str) -> str:
+        if not re.match(r'^[A-Z]{3}$', v.upper()):
+            raise ValueError('Currency must be a 3-letter ISO 4217 code')
+        return v.upper()
+
+
+class InvoiceUpdate(BaseModel):
+    """Schema for updating an invoice."""
+    counterparty_id: Optional[int] = Field(None, gt=0)
+    contract_id: Optional[int] = Field(None, gt=0)
+    invoice_number: Optional[str] = Field(None, max_length=100)
+    invoice_date: Optional[date_type] = None
+    due_date: Optional[date_type] = None
+    total_amount: Optional[float] = Field(None, gt=0)
+    currency: Optional[str] = Field(None, min_length=3, max_length=3)
+    contra_account_code: Optional[str] = Field(None, max_length=20)
+    status: Optional[InvoiceStatus] = None
+    service_period_start: Optional[date_type] = None
+    service_period_end: Optional[date_type] = None
+    rejection_reason: Optional[str] = None
+    approved_by: Optional[str] = Field(None, max_length=100)
+    notes: Optional[str] = None
+    pdf_s3_key: Optional[str] = Field(None, max_length=500)
+
+
+class InvoiceResponse(BaseModel):
+    """Schema for invoice response."""
+    id: int
+    entity_id: int
+    counterparty_id: Optional[int] = None
+    contract_id: Optional[int] = None
+    invoice_number: Optional[str] = None
+    invoice_date: date_type
+    due_date: Optional[date_type] = None
+    total_amount: float
+    amount_paid: float
+    currency: str
+    contra_account_code: Optional[str] = None
+    status: str
+    service_period_start: Optional[date_type] = None
+    service_period_end: Optional[date_type] = None
+    has_amortization_schedule: bool
+    journal_entry_id: Optional[int] = None
+    ai_extraction_raw: Optional[dict] = None
+    ai_confidence_score: Optional[float] = None
+    contract_matched: bool
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    rejection_reason: Optional[str] = None
+    uploaded_by: Optional[str] = None
+    pdf_s3_key: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# =============================================================================
+# Contract Schemas
+# =============================================================================
+
+class ContractCreate(BaseModel):
+    """Schema for creating a new contract."""
+    entity_id: int = Field(..., gt=0, description="Entity ID")
+    counterparty_id: int = Field(..., gt=0, description="Counterparty ID")
+    contract_type: ContractType = Field(..., description="Contract type")
+    expected_amount_min: Optional[float] = Field(None, description="Minimum expected amount")
+    expected_amount_max: Optional[float] = Field(None, description="Maximum expected amount")
+    frequency: ContractFrequency = Field(..., description="Billing frequency")
+    start_date: Optional[date_type] = Field(None, description="Contract start date")
+    end_date: Optional[date_type] = Field(None, description="Contract end date")
+    coa_account_code: Optional[str] = Field(None, max_length=20, description="Default COA account code")
+    auto_approve: bool = Field(default=False, description="Auto-approve matching invoices")
+    auto_approve_tolerance_pct: Optional[float] = Field(None, description="Tolerance for auto-approval (e.g. 0.10 = ±10%)")
+    notes: Optional[str] = Field(None, description="Free-text notes")
+
+
+class ContractUpdate(BaseModel):
+    """Schema for updating a contract."""
+    counterparty_id: Optional[int] = Field(None, gt=0)
+    contract_type: Optional[ContractType] = None
+    expected_amount_min: Optional[float] = None
+    expected_amount_max: Optional[float] = None
+    frequency: Optional[ContractFrequency] = None
+    start_date: Optional[date_type] = None
+    end_date: Optional[date_type] = None
+    coa_account_code: Optional[str] = Field(None, max_length=20)
+    auto_approve: Optional[bool] = None
+    auto_approve_tolerance_pct: Optional[float] = None
+    notes: Optional[str] = None
+    status: Optional[str] = Field(None, max_length=20)
+
+
+class ContractResponse(BaseModel):
+    """Schema for contract response."""
+    id: int
+    entity_id: int
+    counterparty_id: int
+    contract_type: str
+    expected_amount_min: Optional[float] = None
+    expected_amount_max: Optional[float] = None
+    frequency: str
+    start_date: Optional[date_type] = None
+    end_date: Optional[date_type] = None
+    coa_account_code: Optional[str] = None
+    auto_approve: bool
+    auto_approve_tolerance_pct: Optional[float] = None
+    notes: Optional[str] = None
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# =============================================================================
+# Approval Rule Schemas
+# =============================================================================
+
+class ApprovalRuleCreate(BaseModel):
+    """Schema for creating an approval rule."""
+    priority: int = Field(default=100, description="Rule priority (lower = higher)")
+    entity_id: Optional[int] = Field(None, gt=0, description="Entity scope (null = all)")
+    coa_account_prefix: Optional[str] = Field(None, max_length=10, description="COA prefix match (e.g. '67')")
+    amount_min: Optional[float] = Field(None, description="Minimum amount threshold")
+    amount_max: Optional[float] = Field(None, description="Maximum amount threshold")
+    vendor_type: Optional[str] = Field(None, max_length=30, description="Vendor type filter")
+    action: str = Field(..., description="'auto_approve' or 'require_approval'")
+    approver_slack_id: Optional[str] = Field(None, max_length=100, description="Slack user ID for approver")
+    approver_slack_channel: Optional[str] = Field(None, max_length=100, description="Slack channel for approval")
+    timeout_days: int = Field(default=3, description="Days before escalation")
+    escalation_slack_id: Optional[str] = Field(None, max_length=100, description="Slack user ID for escalation")
+
+    @field_validator('action')
+    @classmethod
+    def validate_action(cls, v: str) -> str:
+        if v not in ('auto_approve', 'require_approval'):
+            raise ValueError("action must be 'auto_approve' or 'require_approval'")
+        return v
+
+
+class ApprovalRuleResponse(BaseModel):
+    """Schema for approval rule response."""
+    id: int
+    priority: int
+    entity_id: Optional[int] = None
+    coa_account_prefix: Optional[str] = None
+    amount_min: Optional[float] = None
+    amount_max: Optional[float] = None
+    vendor_type: Optional[str] = None
+    action: str
+    approver_slack_id: Optional[str] = None
+    approver_slack_channel: Optional[str] = None
+    timeout_days: int
+    escalation_slack_id: Optional[str] = None
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# =============================================================================
+# Amortization Schedule Schemas
+# =============================================================================
+
+class AmortizationScheduleResponse(BaseModel):
+    """Schema for amortization schedule response."""
+    id: int
+    invoice_id: int
+    total_amount: float
+    months: int
+    monthly_amount: float
+    expense_account_code: str
+    prepaid_account_code: str
+    start_month: date_type
+    entries_posted: int
+    posting_mode: str
+    created_at: datetime
 
     model_config = {"from_attributes": True}

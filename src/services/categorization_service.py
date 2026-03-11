@@ -94,6 +94,19 @@ class CategorizationService:
         # ── Phase 1: Counterparty enrichment ──────────────────────────────
         self._enrich_counterparties(db, transactions)
 
+        results: list[dict[str, Any]] = []
+        categorized = 0
+        uncategorized = 0
+        errors = 0
+
+        # ── Phase 1.5: AP Knock-off ────────────────────────────────────────
+        # For any transaction whose counterparty was just enriched, check
+        # whether it matches an open AP invoice. If so, create the payment
+        # JE (Dr AP / Cr Bank) and mark the transaction handled so Phase 2
+        # does not double-book the expense.
+        ap_handled_ids: set[int] = self._try_ap_knockoff(db, transactions, results, categorized)
+        categorized += len(ap_handled_ids)
+
         # ── Phase 2: Accounting classification ───────────────────────────
         rules = (
             db.query(FinanceCategorizationRule)
@@ -111,12 +124,10 @@ class CategorizationService:
                 cps = db.query(FinanceCounterparty).filter(FinanceCounterparty.id.in_(cp_ids)).all()
                 cp_map = {cp.id: cp for cp in cps}
 
-        results = []
-        categorized = 0
-        uncategorized = 0
-        errors = 0
-
         for transaction in transactions:
+            if transaction.id in ap_handled_ids:
+                continue  # already handled by AP knock-off
+
             try:
                 result = None
 
@@ -164,6 +175,94 @@ class CategorizationService:
             "errors": errors,
             "results": results,
         }
+
+    # ------------------------------------------------------------------
+    # Phase 1.5: AP Knock-off
+    # ------------------------------------------------------------------
+
+    def _try_ap_knockoff(
+        self,
+        db: Session,
+        transactions: list[FinanceTransaction],
+        results: list[dict[str, Any]],
+        categorized_counter: int,
+    ) -> set[int]:
+        """
+        For each enriched transaction, check whether it matches an open AP invoice.
+
+        Outgoing payments (negative amount) from a known counterparty are checked
+        against open invoices (approved or partially_paid) for the same counterparty
+        and a similar amount (±2% tolerance for FX rounding).
+
+        On match:
+        - Creates payment JE: Dr 2000 Accounts Payable / Cr bank_coa_code
+        - Updates invoice.amount_paid; sets status → paid or partially_paid
+        - Sets transaction → MATCHED, links JE
+
+        Returns a set of transaction IDs that were handled (skip Phase 2 for these).
+        """
+        from src.services.invoice_service import invoice_service
+
+        handled: set[int] = set()
+
+        for txn in transactions:
+            if not txn.counterparty_id:
+                continue
+            amount = float(txn.amount) if txn.amount is not None else 0.0
+            if amount >= 0:
+                continue  # only outgoing payments knock off AP
+
+            try:
+                abs_amount = abs(amount)
+                invoice = invoice_service.get_open_for_counterparty(
+                    db, txn.counterparty_id, abs_amount, txn.currency
+                )
+                if not invoice:
+                    continue
+
+                bank_account = db.query(FinanceBankAccount).filter(
+                    FinanceBankAccount.id == txn.bank_account_id
+                ).first()
+                if not bank_account or not bank_account.coa_account_code:
+                    continue
+
+                # Dr 2000 AP / Cr Bank
+                je = self._create_simple_entry(
+                    db=db,
+                    transaction=txn,
+                    entity_id=bank_account.entity_id,
+                    bank_coa_code=bank_account.coa_account_code,
+                    contra_code="2000",
+                    amount=amount,
+                    abs_amount=abs_amount,
+                    source="ap_knockoff",
+                )
+
+                invoice_service.record_payment(db, invoice.id, abs_amount)
+
+                txn.status = TransactionStatus.MATCHED
+                txn.reconciled_journal_entry_id = je.id
+                txn.reconciled_at = datetime.now(UTC)
+                db.commit()
+
+                results.append({
+                    "transaction_id": txn.id,
+                    "status": "categorized",
+                    "rule_name": f"[ap_knockoff:invoice_{invoice.id}]",
+                    "journal_entry_id": je.id,
+                    "error": None,
+                })
+                handled.add(txn.id)
+
+            except Exception as e:
+                logger.warning(
+                    f"AP knock-off check failed for transaction {txn.id}: {e}",
+                    exc_info=True,
+                )
+                db.rollback()
+                # Do not add to handled — let Phase 2 handle it normally
+
+        return handled
 
     # ------------------------------------------------------------------
     # Phase 1: Counterparty enrichment
