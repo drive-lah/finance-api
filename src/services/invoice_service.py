@@ -26,6 +26,8 @@ logger = logging.getLogger(__name__)
 AP_ACCOUNT_CODE = "2000"
 # Prepaid asset account for amortization
 PREPAID_ACCOUNT_CODE = "1200"
+# GST / VAT input tax credit (recoverable on purchases)
+GST_INPUT_ACCOUNT_CODE = "1350"
 
 
 def _months_between(start: date, end: date) -> int:
@@ -103,6 +105,8 @@ class InvoiceService:
             invoice_date=data.invoice_date,
             due_date=data.due_date,
             total_amount=data.total_amount,
+            net_amount=data.net_amount,
+            tax_amount=data.tax_amount,
             currency=data.currency,
             contra_account_code=data.contra_account_code,
             service_period_start=data.service_period_start,
@@ -183,6 +187,9 @@ class InvoiceService:
             )
 
         total = float(invoice.total_amount)
+        tax = float(invoice.tax_amount) if invoice.tax_amount else 0.0
+        net = float(invoice.net_amount) if invoice.net_amount else (total - tax)
+
         needs_amortization = (
             invoice.service_period_start
             and invoice.service_period_end
@@ -190,26 +197,50 @@ class InvoiceService:
         )
 
         if needs_amortization:
-            # Amortization: Dr Prepaid (1200) / Cr AP (2000)
             debit_code = PREPAID_ACCOUNT_CODE
         else:
-            # Standard: Dr contra_account / Cr AP (2000)
             debit_code = invoice.contra_account_code
 
-        lines = [
-            {
-                "account_code": debit_code,
-                "debit_amount": total,
-                "credit_amount": 0.0,
-                "description": f"Invoice {invoice.invoice_number or invoice.id}",
-            },
-            {
-                "account_code": AP_ACCOUNT_CODE,
-                "debit_amount": 0.0,
-                "credit_amount": total,
-                "description": f"Invoice {invoice.invoice_number or invoice.id}",
-            },
-        ]
+        inv_ref = f"Invoice {invoice.invoice_number or invoice.id}"
+
+        if tax > 0:
+            # 3-line GST JE: Dr expense (net) + Dr 1350 GST Input (tax) / Cr AP (total)
+            lines = [
+                {
+                    "account_code": debit_code,
+                    "debit_amount": round(net, 2),
+                    "credit_amount": 0.0,
+                    "description": inv_ref,
+                },
+                {
+                    "account_code": GST_INPUT_ACCOUNT_CODE,
+                    "debit_amount": round(tax, 2),
+                    "credit_amount": 0.0,
+                    "description": f"GST Input Tax - {inv_ref}",
+                },
+                {
+                    "account_code": AP_ACCOUNT_CODE,
+                    "debit_amount": 0.0,
+                    "credit_amount": round(total, 2),
+                    "description": inv_ref,
+                },
+            ]
+        else:
+            # Standard 2-line JE: Dr expense / Cr AP
+            lines = [
+                {
+                    "account_code": debit_code,
+                    "debit_amount": total,
+                    "credit_amount": 0.0,
+                    "description": inv_ref,
+                },
+                {
+                    "account_code": AP_ACCOUNT_CODE,
+                    "debit_amount": 0.0,
+                    "credit_amount": total,
+                    "description": inv_ref,
+                },
+            ]
 
         entry = journal_service.create(
             db=db,

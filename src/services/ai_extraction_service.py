@@ -42,9 +42,10 @@ Return ONLY a JSON object with these exact fields (use null for missing fields):
 Rules:
 - vendor_name: the company SENDING the invoice (not us)
 - bill_to_entity_hint: look for our entity names in the Bill To section. Return the exact entity name if matched, or null
-- For service period: look for phrases like "for the period", "subscription period", "billing period", date ranges
+- For service period: look for "for the period", "subscription period", "billing period", "invoice for [month]", month names, or date ranges. If invoice says "for February 2026" or "February 2026 subscription", set service_period_start = first day of that month, service_period_end = last day of that month.
 - For COA: AWS/GCP/Azure/Cloudflare/Digital Ocean/GitHub → 6700. Legal/accounting → 6500. Office rent → 6300. Payroll/salary → 6000. Marketing/ads → 6100. Bank charges → 6600.
-- tax_amount: look for GST, VAT, tax line on invoice
+- tax_amount: extract the GST/VAT line item amount (not the total). Look for "GST", "VAT", "Tax" line. If no tax line exists, set to null — do NOT guess.
+- subtotal_amount: the pre-tax amount if shown separately, otherwise null
 - Return ONLY the JSON, no explanation
 
 Invoice text:

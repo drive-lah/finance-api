@@ -689,7 +689,9 @@ class InvoiceCreate(BaseModel):
     invoice_number: Optional[str] = Field(None, max_length=100, description="Invoice number")
     invoice_date: date_type = Field(..., description="Invoice date")
     due_date: Optional[date_type] = Field(None, description="Payment due date")
-    total_amount: float = Field(..., gt=0, description="Total invoice amount")
+    total_amount: float = Field(..., gt=0, description="Total invoice amount (incl. GST)")
+    net_amount: Optional[float] = Field(None, gt=0, description="Amount excluding GST")
+    tax_amount: Optional[float] = Field(None, ge=0, description="GST/VAT amount")
     currency: str = Field(..., min_length=3, max_length=3, description="ISO 4217 currency code")
     contra_account_code: Optional[str] = Field(None, max_length=20, description="Suggested expense account")
     service_period_start: Optional[date_type] = Field(None, description="Start of service period")
@@ -715,6 +717,8 @@ class InvoiceUpdate(BaseModel):
     invoice_date: Optional[date_type] = None
     due_date: Optional[date_type] = None
     total_amount: Optional[float] = Field(None, gt=0)
+    net_amount: Optional[float] = Field(None, gt=0)
+    tax_amount: Optional[float] = Field(None, ge=0)
     currency: Optional[str] = Field(None, min_length=3, max_length=3)
     contra_account_code: Optional[str] = Field(None, max_length=20)
     status: Optional[InvoiceStatus] = None
@@ -736,6 +740,8 @@ class InvoiceResponse(BaseModel):
     invoice_date: date_type
     due_date: Optional[date_type] = None
     total_amount: float
+    net_amount: Optional[float] = None
+    tax_amount: Optional[float] = None
     amount_paid: float
     currency: str
     contra_account_code: Optional[str] = None

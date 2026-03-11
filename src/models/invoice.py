@@ -56,6 +56,14 @@ class FinanceInvoice(Base):
     invoice_date: Mapped[date] = mapped_column(Date, nullable=False)
     due_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     total_amount: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    net_amount: Mapped[Optional[float]] = mapped_column(
+        Numeric(15, 2), nullable=True,
+        comment="Amount excluding GST/tax",
+    )
+    tax_amount: Mapped[Optional[float]] = mapped_column(
+        Numeric(15, 2), nullable=True,
+        comment="GST/VAT amount — triggers 3-line JE on approval",
+    )
     amount_paid: Mapped[float] = mapped_column(
         Numeric(15, 2), default=0, server_default="0", nullable=False,
     )
