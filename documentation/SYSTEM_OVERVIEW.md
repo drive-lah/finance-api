@@ -503,73 +503,81 @@ For income/revenue transactions the output tax account (2500) is used instead of
 
 ### 3.5 Invoice Handling — Accounts Payable
 
-**Status: To Be Built**
+**Status: Built (migration 016)**
 
-Manage invoices from vendors and track what the company owes (accounts payable).
+AI-led invoice intake: upload a PDF → Claude Haiku extracts all fields → human reviews and creates → approve. Approved invoices auto-create a journal entry. Bank transactions are matched against open AP invoices by the categorization engine (AP knock-off, Phase 1.5).
 
-**Planned Flow:**
-1. Invoice received from vendor (workshop, insurer, software vendor, etc.)
-2. Invoice created in system with line items mapped to COA accounts
-3. Invoice approved → journal entry created (debit expense/COS account, credit 2000 Trade & Other Payables)
-4. Invoice paid → payment recorded (debit 2000 Trade & Other Payables, credit bank account)
-5. Matched against bank transaction via categorization engine
+**Flow:**
+1. PDF uploaded via admin UI → `/api/finance/invoices/extract` extracts fields with AI and stores PDF to S3
+2. Human reviews extracted data (vendor, amount, COA, service period) and clicks Create
+3. Invoice created in `draft` status; auto-matched to a contract if counterparty + amount align
+4. Approval (manual in UI or auto via approval rules) → JE created: Dr contra_account / Cr 2000 AP
+5. Amortization path: if service period > 1 month → Dr 1200 Prepaid / Cr 2000 AP; monthly schedule generated
+6. AP knock-off: categorization engine matches outgoing bank transactions to open invoices → Dr 2000 AP / Cr Bank
 
-**Planned Features:**
-- Invoice CRUD (create, list, view, update, approve, void)
-- Line items with COA account mapping
-- Due date tracking and aging reports
-- Vendor linking (see 3.7)
-- Recurring invoices (e.g. monthly rent, software subscriptions)
-- Invoice status workflow: Draft → Approved → Partially Paid → Paid → Void
-- Accounts payable aging report (current, 30, 60, 90+ days)
+**Invoice status workflow:**
+```
+draft → pending_approval → approved → partially_paid / paid
+draft / pending_approval → rejected
+draft / pending_approval / rejected → void
+```
 
-**Planned Data Model:**
+**Data Model (migration 016):**
 
 ```
 finance_invoices
-├── id
-├── entity_id
-├── vendor_id (FK to finance_vendors)
-├── invoice_number
-├── invoice_date
-├── due_date
-├── total_amount
-├── amount_paid
-├── currency
-├── status (draft | approved | partially_paid | paid | void)
-├── description
-├── created_by
-├── approved_by
-├── approved_at
-├── created_at
-├── updated_at
+├── id, entity_id, counterparty_id, contract_id
+├── invoice_number, invoice_date, due_date
+├── total_amount, amount_paid, currency
+├── contra_account_code          ← expense/asset COA code (required for approval)
+├── status                       ← draft|pending_approval|approved|partially_paid|paid|rejected|void
+├── service_period_start/end     ← triggers amortization if span > 1 month
+├── has_amortization_schedule
+├── journal_entry_id             ← auto-created on approval
+├── ai_extraction_raw (JSON)     ← raw Claude Haiku response
+├── ai_confidence_score
+├── contract_matched             ← true if auto-matched to a contract
+├── approved_by, approved_at, rejection_reason
+├── uploaded_by, pdf_s3_key, notes
+├── created_at, updated_at
 
-finance_invoice_lines
-├── id
-├── invoice_id (FK)
-├── account_code (COA code)
-├── description
-├── quantity
-├── unit_price
-├── amount
-├── gst_amount
-├── created_at
-├── updated_at
+finance_contracts
+├── id, entity_id, counterparty_id
+├── name, contract_type          ← subscription|fixed_term|recurring_expectation
+├── frequency                    ← monthly|quarterly|annual|one_off
+├── amount, currency, tolerance_pct
+├── coa_account_code             ← default COA for matched invoices
+├── start_date, end_date, next_expected_date
+├── auto_approve, is_active
+├── created_at, updated_at
 
-finance_payments
-├── id
-├── entity_id
-├── invoice_id (FK, nullable — payments can be standalone)
-├── bank_account_id (FK)
-├── amount
-├── payment_date
-├── payment_method (bank_transfer | card | cash | cheque)
-├── reference_number
-├── journal_entry_id (FK — auto-created JE)
-├── transaction_id (FK — linked bank transaction)
-├── created_at
-├── updated_at
+finance_approval_rules
+├── id, entity_id, name, priority
+├── coa_account_prefix           ← matches contra_account_code prefix (e.g. "67" matches 6700)
+├── min_amount, max_amount, currency
+├── counterparty_type
+├── action                       ← auto_approve|require_approval
+├── is_active
+├── created_at, updated_at
+
+finance_amortization_schedules
+├── id, invoice_id
+├── total_amount, months, monthly_amount
+├── expense_account_code, prepaid_account_code
+├── start_month, months_posted
+├── created_at, updated_at
 ```
+
+**AI Extraction (Claude Haiku):**
+- `pdfplumber` extracts text; Claude Haiku returns vendor, dates, amounts, COA suggestion, confidence score
+- PDF stored to AWS S3: `invoices/entity_{id}/YYYY/MM/{uuid}_{filename}` (S3 failure is non-blocking)
+- Required env vars: `ANTHROPIC_API_KEY`, `AWS_S3_BUCKET`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
+
+**AP Knock-off (Phase 1.5 of categorization engine):**
+- Runs after counterparty enrichment (Phase 1), before rules engine (Phase 2)
+- For outgoing transactions with a known `counterparty_id`, finds open AP invoices with matching currency and amount (±2% tolerance, oldest first)
+- On match: creates JE (Dr 2000 AP / Cr bank account), records partial/full payment on invoice
+- Knock-off transactions are excluded from Phase 2 to prevent double-booking
 
 ---
 

@@ -288,3 +288,115 @@ Universal party directory — vendors, customers, employees, investors, hosts, g
 | POST | `/api/finance/categorization/manual` | `transaction_id`*, `contra_account_code`*, `counterparty_name`, `counterparty_type`, `tag_ids`, `description`, `gst_override` | 200 categorization result |
 
 **Engine behaviour:** Loads active rules ordered by priority. For each `Pending` transaction, evaluates direction, scope (`bank_account_ids`), and all non-null match criteria (AND logic). First match wins — creates journal entry, links transaction, sets status → `Matched`. Unmatched transactions remain `Pending`. Manual categorization sets status → `Reconciled` directly (human confirmation is the final step).
+
+---
+
+## Invoices (Accounts Payable)
+
+| Method | Path | Query Params | Body | Returns |
+|--------|------|-------------|------|---------|
+| GET | `/api/finance/invoices` | `entity_id`, `status`, `counterparty_id` | — | 200 `Invoice[]` |
+| POST | `/api/finance/invoices` | — | InvoiceCreate | 201 `Invoice` |
+| GET | `/api/finance/invoices/:id` | — | — | 200 `Invoice` |
+| PUT | `/api/finance/invoices/:id` | — | InvoiceUpdate | 200 `Invoice` |
+| POST | `/api/finance/invoices/:id/approve` | — | `{ approved_by* }` | 200 `Invoice` |
+| POST | `/api/finance/invoices/:id/reject` | — | `{ rejection_reason* }` | 200 `Invoice` |
+| POST | `/api/finance/invoices/:id/void` | — | — | 200 `Invoice` |
+| POST | `/api/finance/invoices/extract` | — | `multipart/form-data` field `file` (PDF) | 200 `AIExtractionResult` |
+
+**InvoiceCreate fields:**
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `entity_id` | ✓ | Finance entity |
+| `invoice_date` | ✓ | Date on invoice (YYYY-MM-DD) |
+| `total_amount` | ✓ | Invoice total (in invoice currency) |
+| `currency` | ✓ | 3-letter ISO code (SGD, USD, AUD…) |
+| `counterparty_id` | — | Links to `finance_counterparties` |
+| `contract_id` | — | Explicit contract link (auto-matched if omitted + counterparty set) |
+| `invoice_number` | — | Vendor invoice number |
+| `due_date` | — | Payment due date |
+| `contra_account_code` | — | COA code for expense/asset (required before approval) |
+| `service_period_start` | — | Start of billing period; span > 1 month triggers amortization |
+| `service_period_end` | — | End of billing period |
+| `uploaded_by` | — | Name of person uploading |
+| `pdf_s3_key` | — | S3 key returned by `/extract` endpoint |
+| `notes` | — | Free-text notes |
+
+**AIExtractionResult** (returned by `/extract`):
+
+| Field | Description |
+|-------|-------------|
+| `vendor_name` | Extracted vendor name |
+| `invoice_number` | Invoice number from PDF |
+| `invoice_date` | Date (YYYY-MM-DD) |
+| `due_date` | Due date (YYYY-MM-DD) |
+| `total_amount` | Numeric amount |
+| `currency` | ISO currency code |
+| `service_period_start/end` | Billing period if found |
+| `suggested_coa_account` | COA code suggestion (e.g. `6700`) |
+| `confidence` | 0–1 confidence score |
+| `pdf_s3_key` | S3 key of uploaded PDF (null if S3 not configured) |
+| `extraction_error` | Error message or null |
+
+**Approval rules:**
+- `draft` and `pending_approval` invoices can be approved, rejected, or updated
+- Approval creates a journal entry: Dr `contra_account_code` / Cr `2000` (AP)
+- Amortization: if `service_period_start`→`end` spans > 1 month, Dr `1200` (Prepaid) / Cr `2000` at approval; monthly schedule generated
+- AP knock-off: categorization engine auto-matches outgoing bank transactions to approved/partially_paid invoices (±2% tolerance)
+
+---
+
+## Contracts
+
+| Method | Path | Query Params | Body | Returns |
+|--------|------|-------------|------|---------|
+| GET | `/api/finance/contracts` | `entity_id`, `counterparty_id`, `is_active` | — | 200 `Contract[]` |
+| POST | `/api/finance/contracts` | — | ContractCreate | 201 `Contract` |
+| GET | `/api/finance/contracts/:id` | — | — | 200 `Contract` |
+| PUT | `/api/finance/contracts/:id` | — | ContractUpdate | 200 `Contract` |
+
+**ContractCreate fields:**
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `entity_id` | ✓ | Finance entity |
+| `name` | ✓ | Contract name |
+| `contract_type` | ✓ | `subscription` \| `fixed_term` \| `recurring_expectation` |
+| `counterparty_id` | — | Vendor linked to this contract |
+| `frequency` | — | `monthly` \| `quarterly` \| `annual` \| `one_off` |
+| `amount` | — | Expected invoice amount |
+| `currency` | — | ISO currency code |
+| `tolerance_pct` | — | Amount match tolerance % (default 5) |
+| `coa_account_code` | — | Default COA for matched invoices |
+| `start_date` | — | Contract start |
+| `end_date` | — | Contract end (null = open-ended) |
+| `auto_approve` | — | If true, matched invoices are auto-approved |
+| `notes` | — | Free-text notes |
+
+---
+
+## Approval Rules
+
+| Method | Path | Query Params | Body | Returns |
+|--------|------|-------------|------|---------|
+| GET | `/api/finance/approval-rules` | `entity_id`, `is_active` | — | 200 `ApprovalRule[]` |
+| POST | `/api/finance/approval-rules` | — | ApprovalRuleCreate | 201 `ApprovalRule` |
+| GET | `/api/finance/approval-rules/:id` | — | — | 200 `ApprovalRule` |
+| PUT | `/api/finance/approval-rules/:id` | — | ApprovalRuleUpdate | 200 `ApprovalRule` |
+| DELETE | `/api/finance/approval-rules/:id` | — | — | 204 |
+
+**ApprovalRuleCreate fields:**
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `entity_id` | ✓ | Finance entity |
+| `name` | ✓ | Rule name |
+| `priority` | ✓ | Lower = higher priority; first matching rule wins |
+| `action` | ✓ | `auto_approve` \| `require_approval` |
+| `coa_account_prefix` | — | Matches if `contra_account_code` starts with this (e.g. `"67"` matches `6700`) |
+| `min_amount` | — | Minimum invoice amount to match |
+| `max_amount` | — | Maximum invoice amount to match |
+| `currency` | — | Currency filter |
+| `counterparty_type` | — | `vendor` \| `employee` \| `platform` \| `intercompany` \| `other` |
+| `is_active` | — | Default true |
