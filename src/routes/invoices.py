@@ -114,5 +114,12 @@ def extract_invoice():
     pdf_bytes = file.read()
 
     from src.services.ai_extraction_service import ai_extraction_service
+    from src.services.s3_service import s3_service
+
     result = ai_extraction_service.extract_invoice_data(pdf_bytes)
+
+    # Upload to S3 (best-effort — failure does not block extraction)
+    s3_key = s3_service.upload_invoice_pdf(pdf_bytes, filename=file.filename or "invoice.pdf")
+    result["pdf_s3_key"] = s3_key
+
     return jsonify(result), 200
