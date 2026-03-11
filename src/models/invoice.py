@@ -93,6 +93,7 @@ class FinanceInvoice(Base):
     # Upload metadata
     uploaded_by: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     pdf_s3_key: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    pdf_content_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(

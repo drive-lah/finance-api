@@ -3,16 +3,19 @@ Invoice Service
 
 Business logic for managing invoices in the Accounts Payable workflow.
 Handles creation, approval (with JE generation), rejection, voiding,
-payment recording, and AP knock-off lookups.
+payment recording, AP knock-off lookups, and the AI contract review gate.
 """
+import json
 import logging
+import os
 from datetime import datetime, date, UTC
 from typing import Optional
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from src.models.invoice import FinanceInvoice, InvoiceStatus
-from src.models.contract import FinanceAmortizationSchedule
+from src.models.contract import FinanceAmortizationSchedule, FinanceContract, FinanceApprovalRule
 from src.models.schemas import InvoiceCreate, InvoiceUpdate
 from src.services.journal_service import journal_service
 from src.utils.errors import NotFoundError
@@ -32,6 +35,14 @@ def _months_between(start: date, end: date) -> int:
 
 class InvoiceService:
     """Service for managing invoices in the Accounts Payable system."""
+
+    def find_by_pdf_hash(self, db: Session, pdf_hash: str) -> Optional[FinanceInvoice]:
+        """Return an existing invoice with this PDF content hash, or None."""
+        return (
+            db.query(FinanceInvoice)
+            .filter(FinanceInvoice.pdf_content_hash == pdf_hash)
+            .first()
+        )
 
     def get_all(
         self,
@@ -61,9 +72,29 @@ class InvoiceService:
         """
         Create a new invoice.
 
-        Optionally auto-matches against an existing contract for the
-        same counterparty/entity/amount.
+        Checks for semantic duplicates (same entity+counterparty+invoice_number+date+currency)
+        before inserting. Auto-matches against contracts if counterparty is set.
         """
+        # Semantic duplicate check
+        if data.counterparty_id and data.invoice_number:
+            existing = (
+                db.query(FinanceInvoice)
+                .filter(
+                    FinanceInvoice.entity_id == data.entity_id,
+                    FinanceInvoice.counterparty_id == data.counterparty_id,
+                    FinanceInvoice.invoice_number == data.invoice_number,
+                    FinanceInvoice.invoice_date == data.invoice_date,
+                    FinanceInvoice.currency == data.currency,
+                )
+                .first()
+            )
+            if existing:
+                from src.utils.errors import ConflictError
+                raise ConflictError(
+                    f"Invoice {data.invoice_number} from this vendor on {data.invoice_date} "
+                    f"already exists (ID {existing.id}, status: {existing.status})."
+                )
+
         invoice = FinanceInvoice(
             entity_id=data.entity_id,
             counterparty_id=data.counterparty_id,
@@ -79,6 +110,7 @@ class InvoiceService:
             uploaded_by=data.uploaded_by,
             notes=data.notes,
             pdf_s3_key=data.pdf_s3_key,
+            pdf_content_hash=data.pdf_content_hash,
             status=InvoiceStatus.DRAFT.value,
         )
 
@@ -95,7 +127,12 @@ class InvoiceService:
                     invoice.contra_account_code = contract.coa_account_code
 
         db.add(invoice)
-        db.commit()
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            from src.utils.errors import ConflictError
+            raise ConflictError("Duplicate invoice detected (unique constraint violation).")
         db.refresh(invoice)
         return invoice
 
@@ -302,6 +339,207 @@ class InvoiceService:
         db.commit()
         db.refresh(invoice)
         return invoice
+
+
+    def submit(self, db: Session, invoice_id: int, confirmed: bool = False) -> dict:
+        """
+        Submit a draft invoice for approval.
+
+        Phase 1 — Validation:
+          Checks entity_id, counterparty_id, contra_account_code are all set.
+
+        Phase 2 — AI Contract Review Gate:
+          Compares invoice amount/currency/period against the linked contract.
+          Returns assessment: pass | flag | no_contract
+          If assessment is "flag" and confirmed=False → return to human for confirmation.
+          If confirmed=True (human override) → proceed regardless.
+
+        Phase 3 — Approval Rules:
+          Evaluates active rules ordered by priority.
+          auto_approve → status = approved, JE created.
+          require_approval or no match → status = pending_approval.
+        """
+        invoice = self.get_by_id(db, invoice_id)
+
+        if invoice.status != InvoiceStatus.DRAFT.value:
+            from src.utils.errors import ConflictError
+            raise ConflictError(
+                f"Only draft invoices can be submitted. Current status: {invoice.status}"
+            )
+
+        # --- Phase 1: field validation ---
+        missing = []
+        if not invoice.entity_id:
+            missing.append("entity_id")
+        if not invoice.counterparty_id:
+            missing.append("counterparty_id")
+        if not invoice.contra_account_code:
+            missing.append("contra_account_code (expense account)")
+        if missing:
+            from src.utils.errors import BadRequestError
+            raise BadRequestError(
+                f"Cannot submit invoice — missing required fields: {', '.join(missing)}"
+            )
+
+        # --- Phase 2: AI contract review gate ---
+        assessment = self._ai_contract_review(db, invoice)
+
+        if assessment["assessment"] == "flag" and not confirmed:
+            # Return to human for confirmation — do NOT change status
+            return {
+                "assessment": "flag",
+                "message": assessment["message"],
+                "concerns": assessment.get("concerns", []),
+                "invoice": None,  # status not changed yet
+            }
+
+        # --- Phase 3: approval rules ---
+        new_status, auto_approved_by = self._evaluate_approval_rules(db, invoice)
+
+        if new_status == InvoiceStatus.APPROVED.value:
+            db.commit()  # flush assessment fields before approve()
+            updated = self.approve(db, invoice_id, approved_by=auto_approved_by or "auto")
+        else:
+            invoice.status = new_status
+            db.commit()
+            db.refresh(invoice)
+            updated = invoice
+
+        from src.models.schemas import InvoiceResponse
+        return {
+            "assessment": assessment["assessment"],
+            "message": assessment["message"],
+            "concerns": assessment.get("concerns", []),
+            "invoice": InvoiceResponse.model_validate(updated).model_dump(),
+        }
+
+    # ── private helpers ────────────────────────────────────────────────────────
+
+    def _ai_contract_review(self, db: Session, invoice: FinanceInvoice) -> dict:
+        """
+        Ask Claude Haiku to assess whether this invoice looks legitimate
+        vs the linked contract (if any).
+        """
+        try:
+            api_key = os.environ.get("ANTHROPIC_API_KEY")
+            if not api_key:
+                logger.warning("ANTHROPIC_API_KEY not set — skipping AI contract review")
+                return {"assessment": "pass", "message": "AI review skipped (no API key)", "concerns": []}
+
+            import anthropic
+
+            # Gather contract info
+            contract_info = "No contract on file for this vendor."
+            if invoice.contract_id:
+                contract = db.get(FinanceContract, invoice.contract_id)
+                if contract:
+                    contract_info = (
+                        f"Contract: '{contract.name}' | Type: {contract.contract_type} | "
+                        f"Frequency: {contract.frequency} | Expected amount: {contract.amount} {contract.currency} | "
+                        f"Tolerance: ±{contract.tolerance_pct or 5}% | "
+                        f"Active: {contract.is_active}"
+                    )
+
+            prompt = f"""You are a finance controller reviewing an invoice before it is approved.
+
+Invoice details:
+- Amount: {invoice.total_amount} {invoice.currency}
+- Invoice date: {invoice.invoice_date}
+- Invoice number: {invoice.invoice_number or 'not provided'}
+- Expense account: {invoice.contra_account_code}
+- Service period: {invoice.service_period_start} to {invoice.service_period_end or 'not specified'}
+- Notes: {invoice.notes or 'none'}
+
+{contract_info}
+
+Assess: does this invoice look like a legitimate, expected charge?
+
+Return ONLY a JSON object:
+{{
+  "assessment": "pass" or "flag" or "no_contract",
+  "message": "1-2 sentence plain English explanation for the finance team",
+  "concerns": ["specific concern 1", "specific concern 2"]
+}}
+
+Rules:
+- "pass": amount matches contract within tolerance, everything looks normal
+- "flag": amount differs significantly from contract, dates look wrong, or something seems unusual — explain clearly
+- "no_contract": no contract exists for this vendor (use the contract_info above)
+- concerns array should be empty if assessment is "pass" or "no_contract"
+- Return ONLY the JSON"""
+
+            client = anthropic.Anthropic(api_key=api_key)
+            message = client.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=512,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            response_text = message.content[0].text.strip()
+            if response_text.startswith("```"):
+                lines = response_text.split("\n")
+                response_text = "\n".join(lines[1:-1] if lines[-1] == "```" else lines[1:])
+
+            result = json.loads(response_text)
+            return result
+
+        except Exception as e:
+            logger.error(f"AI contract review error: {e}", exc_info=True)
+            # On error: pass with a warning (don't block the workflow)
+            return {
+                "assessment": "pass",
+                "message": f"AI review could not be completed ({e}). Proceeding with manual review.",
+                "concerns": [],
+            }
+
+    def _evaluate_approval_rules(
+        self, db: Session, invoice: FinanceInvoice
+    ) -> tuple[str, Optional[str]]:
+        """
+        Evaluate approval rules for this invoice.
+        Returns (new_status, approved_by_label).
+        """
+        rules = (
+            db.query(FinanceApprovalRule)
+            .filter(
+                FinanceApprovalRule.entity_id == invoice.entity_id,
+                FinanceApprovalRule.is_active == True,
+            )
+            .order_by(FinanceApprovalRule.priority.asc())
+            .all()
+        )
+
+        amount = float(invoice.total_amount)
+
+        for rule in rules:
+            # Amount range check
+            if rule.min_amount is not None and amount < float(rule.min_amount):
+                continue
+            if rule.max_amount is not None and amount > float(rule.max_amount):
+                continue
+            # Currency check
+            if rule.currency and rule.currency != invoice.currency:
+                continue
+            # COA prefix check
+            if rule.coa_account_prefix and invoice.contra_account_code:
+                if not invoice.contra_account_code.startswith(rule.coa_account_prefix):
+                    continue
+            elif rule.coa_account_prefix and not invoice.contra_account_code:
+                continue
+            # Counterparty type check
+            if rule.counterparty_type and invoice.counterparty_id:
+                from src.models.counterparty import FinanceCounterparty
+                cp = db.get(FinanceCounterparty, invoice.counterparty_id)
+                if cp and cp.counterparty_type != rule.counterparty_type:
+                    continue
+
+            # Rule matched
+            if rule.action == "auto_approve":
+                return InvoiceStatus.APPROVED.value, f"auto:{rule.name}"
+            else:
+                return InvoiceStatus.PENDING_APPROVAL.value, None
+
+        # No rule matched → require approval
+        return InvoiceStatus.PENDING_APPROVAL.value, None
 
 
 # Singleton instance

@@ -1,4 +1,5 @@
 """Invoice routes for the Accounts Payable system."""
+import hashlib
 import logging
 
 from flask import Blueprint, request, jsonify
@@ -91,17 +92,48 @@ def void_invoice(invoice_id: int):
         return jsonify(InvoiceResponse.model_validate(invoice).model_dump()), 200
 
 
+@invoices_bp.route("/<int:invoice_id>/submit", methods=["POST"])
+def submit_invoice(invoice_id: int):
+    """
+    Submit a draft invoice for approval.
+
+    Runs the AI contract review gate:
+    - Validates required fields are present
+    - Compares invoice against known contract (if any)
+    - Returns assessment: pass | flag | no_contract
+
+    Body (optional):
+      { "confirmed": true }  — human override after seeing a flag
+
+    Response 200:
+      {
+        "assessment": "pass" | "flag" | "no_contract",
+        "message": "Human-readable explanation",
+        "concerns": ["..."],           # only when assessment = flag
+        "invoice": { ...InvoiceResponse... }  # populated when status changed
+      }
+    """
+    data = request.get_json() or {}
+    confirmed = bool(data.get("confirmed", False))
+
+    with db_session() as db:
+        result = invoice_service.submit(db, invoice_id, confirmed=confirmed)
+        return jsonify(result), 200
+
+
 @invoices_bp.route('/extract', methods=['POST'])
 def extract_invoice():
     """
     Extract structured data from an uploaded invoice PDF using AI.
 
-    Accepts multipart/form-data with a 'file' field (PDF).
-    Returns extracted fields for review before creating the invoice.
-    Does NOT create an invoice -- just extracts data for the frontend to display.
+    - Checks PDF hash against existing invoices (blocks exact duplicates)
+    - Passes entity names to AI for Bill-To matching
+    - Uploads PDF to S3 (best-effort)
+    - Returns extracted fields + pdf_s3_key + pdf_content_hash for frontend review
 
     Request: multipart/form-data, field 'file' = PDF
     Response 200: extracted invoice data dict
+    Response 409: duplicate PDF already exists in system
     Response 400: no file / not PDF
     """
     if 'file' not in request.files:
@@ -113,13 +145,31 @@ def extract_invoice():
 
     pdf_bytes = file.read()
 
+    # --- Duplicate detection: exact PDF hash check ---
+    pdf_hash = hashlib.sha256(pdf_bytes).hexdigest()
+    with db_session() as db:
+        existing = invoice_service.find_by_pdf_hash(db, pdf_hash)
+        if existing:
+            return jsonify({
+                "error": "Duplicate invoice",
+                "detail": f"This PDF has already been uploaded (Invoice #{existing.invoice_number or existing.id}, status: {existing.status}).",
+                "existing_invoice_id": existing.id,
+            }), 409
+
     from src.services.ai_extraction_service import ai_extraction_service
     from src.services.s3_service import s3_service
 
-    result = ai_extraction_service.extract_invoice_data(pdf_bytes)
+    # Load entity names so AI can match Bill-To
+    with db_session() as db:
+        from src.models.entity import FinanceEntity
+        entities = db.query(FinanceEntity).filter(FinanceEntity.status == "active").all()
+        entity_names = [e.name for e in entities]
 
-    # Upload to S3 (best-effort — failure does not block extraction)
+    result = ai_extraction_service.extract_invoice_data(pdf_bytes, entity_names=entity_names)
+
+    # Upload to S3 (best-effort)
     s3_key = s3_service.upload_invoice_pdf(pdf_bytes, filename=file.filename or "invoice.pdf")
     result["pdf_s3_key"] = s3_key
+    result["pdf_content_hash"] = pdf_hash
 
     return jsonify(result), 200

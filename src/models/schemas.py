@@ -697,6 +697,7 @@ class InvoiceCreate(BaseModel):
     uploaded_by: Optional[str] = Field(None, max_length=100, description="Uploader identifier")
     notes: Optional[str] = Field(None, description="Free-text notes")
     pdf_s3_key: Optional[str] = Field(None, max_length=500, description="S3 key for the PDF")
+    pdf_content_hash: Optional[str] = Field(None, max_length=64, description="SHA-256 hash of the PDF")
 
     @field_validator('currency')
     @classmethod
@@ -751,6 +752,7 @@ class InvoiceResponse(BaseModel):
     rejection_reason: Optional[str] = None
     uploaded_by: Optional[str] = None
     pdf_s3_key: Optional[str] = None
+    pdf_content_hash: Optional[str] = None
     notes: Optional[str] = None
     created_at: datetime
     updated_at: datetime
