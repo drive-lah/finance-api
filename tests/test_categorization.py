@@ -1636,3 +1636,393 @@ class TestManualApMatch:
 
         with pytest.raises(BadRequestError, match="exceeds"):
             invoice_service.match_transaction(db_session, inv.id, txn.id)
+
+
+# ============================================================================
+# Retroactive AP knock-off tests (run_retroactive_knockoff)
+# ============================================================================
+
+def _make_je(db, entity_id, source=None):
+    """Helper: create a minimal posted JE for a transaction to link to."""
+    from src.models.journal_entry import FinanceJournalEntry, JournalEntryStatus
+    from src.models.journal_line import FinanceJournalLine
+    je = FinanceJournalEntry(
+        entity_id=entity_id,
+        entry_date=date(2026, 1, 15),
+        description="test je",
+        status=JournalEntryStatus.POSTED,
+        source=source or "rules_engine",
+    )
+    db.add(je)
+    db.flush()
+    for code, dr, cr in [("5000", 100.0, 0.0), ("1000", 0.0, 100.0)]:
+        db.add(FinanceJournalLine(
+            entry_id=je.id, account_code=code,
+            debit_amount=dr, credit_amount=cr, description="test",
+            entity_id=entity_id,
+        ))
+    db.commit()
+    db.refresh(je)
+    return je
+
+
+class TestRetroactiveApKnockoff:
+    """invoice_service.run_retroactive_knockoff — all three prior states."""
+
+    def test_pending_transaction_knocked_off_on_approval(
+        self, db_session, test_entity, test_accounts, test_bank_account
+    ):
+        """PENDING transaction settled when matching invoice is approved."""
+        from src.services.invoice_service import invoice_service
+        from src.models.invoice import InvoiceStatus
+        from src.models.transaction import TransactionStatus
+
+        cp = _make_counterparty(db_session, "Retro Vendor A")
+        inv = _make_invoice(
+            db_session, test_entity.id, cp.id,
+            total_amount=500.0, currency="SGD",
+            invoice_date=date(2026, 2, 1),
+        )
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="RETRO VENDOR A PMT", amount=-500.0,
+        )
+        txn.transaction_date = date(2026, 1, 28)  # payment before invoice upload
+        txn.counterparty_id = cp.id
+        db_session.commit()
+
+        results = invoice_service.run_retroactive_knockoff(db_session, inv)
+
+        assert len(results) == 1
+        assert results[0]["transaction_id"] == txn.id
+        assert results[0]["prior_status"] == "Pending"
+        assert results[0]["amount_applied"] == 500.0
+
+        db_session.refresh(txn)
+        db_session.refresh(inv)
+        assert txn.status == TransactionStatus.MATCHED
+        assert inv.status == InvoiceStatus.PAID.value
+
+    def test_matched_transaction_reopened_then_knocked_off(
+        self, db_session, test_entity, test_accounts, test_bank_account
+    ):
+        """MATCHED (rules-engine) transaction void, reopened, then AP-matched."""
+        from src.services.invoice_service import invoice_service
+        from src.models.invoice import InvoiceStatus
+        from src.models.transaction import TransactionStatus
+        from src.models.journal_entry import JournalEntryStatus
+
+        cp = _make_counterparty(db_session, "Retro Vendor B")
+        inv = _make_invoice(
+            db_session, test_entity.id, cp.id,
+            total_amount=800.0, currency="SGD",
+            invoice_date=date(2026, 2, 10),
+        )
+        # Txn was already rules-matched to an expense account
+        old_je = _make_je(db_session, test_entity.id, source="rules_engine")
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="RETRO VENDOR B PMT", amount=-800.0,
+        )
+        txn.transaction_date = date(2026, 2, 8)
+        txn.counterparty_id = cp.id
+        txn.status = TransactionStatus.MATCHED
+        txn.reconciled_journal_entry_id = old_je.id
+        db_session.commit()
+
+        results = invoice_service.run_retroactive_knockoff(db_session, inv)
+
+        assert len(results) == 1
+        r = results[0]
+        assert r["prior_status"] == "Matched"
+        assert r["amount_applied"] == 800.0
+
+        db_session.refresh(old_je)
+        assert old_je.status == JournalEntryStatus.VOID
+
+        db_session.refresh(txn)
+        assert txn.status == TransactionStatus.MATCHED
+        assert txn.reconciled_journal_entry_id == r["journal_entry_id"]
+        assert txn.reopen_reason is not None
+
+        db_session.refresh(inv)
+        assert inv.status == InvoiceStatus.PAID.value
+
+    def test_reconciled_transaction_reopened_then_knocked_off(
+        self, db_session, test_entity, test_accounts, test_bank_account
+    ):
+        """RECONCILED (direct expense) transaction void, reopened, AP-matched."""
+        from src.services.invoice_service import invoice_service
+        from src.models.invoice import InvoiceStatus
+        from src.models.transaction import TransactionStatus
+        from src.models.journal_entry import JournalEntryStatus
+
+        cp = _make_counterparty(db_session, "Retro Vendor C")
+        inv = _make_invoice(
+            db_session, test_entity.id, cp.id,
+            total_amount=1000.0, currency="SGD",
+            invoice_date=date(2026, 2, 15),
+        )
+        old_je = _make_je(db_session, test_entity.id, source="manual_categorization")
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="RETRO VENDOR C PMT", amount=-1000.0,
+        )
+        txn.transaction_date = date(2026, 2, 12)
+        txn.counterparty_id = cp.id
+        txn.status = TransactionStatus.RECONCILED
+        txn.reconciled_journal_entry_id = old_je.id
+        db_session.commit()
+
+        results = invoice_service.run_retroactive_knockoff(db_session, inv)
+
+        assert len(results) == 1
+        assert results[0]["prior_status"] == "Reconciled"
+
+        db_session.refresh(old_je)
+        assert old_je.status == JournalEntryStatus.VOID
+
+        db_session.refresh(txn)
+        assert txn.reopen_reason is not None
+        assert txn.reopened_at is not None
+        assert txn.status == TransactionStatus.MATCHED
+
+        db_session.refresh(inv)
+        assert inv.status == InvoiceStatus.PAID.value
+
+    def test_already_ap_matched_transaction_skipped(
+        self, db_session, test_entity, test_accounts, test_bank_account
+    ):
+        """Transaction already matched via AP knock-off is not disturbed."""
+        from src.services.invoice_service import invoice_service
+        from src.models.transaction import TransactionStatus
+
+        cp = _make_counterparty(db_session, "Retro Vendor D")
+        inv = _make_invoice(
+            db_session, test_entity.id, cp.id,
+            total_amount=300.0, currency="SGD",
+            invoice_date=date(2026, 2, 1),
+        )
+        # Existing JE that came from a previous AP knock-off
+        old_je = _make_je(db_session, test_entity.id, source="ap_knockoff")
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="RETRO VENDOR D PMT", amount=-300.0,
+        )
+        txn.transaction_date = date(2026, 1, 30)
+        txn.counterparty_id = cp.id
+        txn.status = TransactionStatus.MATCHED
+        txn.reconciled_journal_entry_id = old_je.id
+        db_session.commit()
+
+        results = invoice_service.run_retroactive_knockoff(db_session, inv)
+
+        # Skipped — no results returned, transaction untouched
+        assert results == []
+        db_session.refresh(txn)
+        assert txn.reconciled_journal_entry_id == old_je.id
+
+    def test_outside_date_window_not_matched(
+        self, db_session, test_entity, test_accounts, test_bank_account
+    ):
+        """Transaction outside ±30 days of invoice_date is not matched."""
+        from src.services.invoice_service import invoice_service
+
+        cp = _make_counterparty(db_session, "Retro Vendor E")
+        inv = _make_invoice(
+            db_session, test_entity.id, cp.id,
+            total_amount=400.0, currency="SGD",
+            invoice_date=date(2026, 2, 1),
+        )
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="OLD PAYMENT", amount=-400.0,
+        )
+        txn.transaction_date = date(2025, 12, 1)  # >30 days before invoice
+        txn.counterparty_id = cp.id
+        db_session.commit()
+
+        results = invoice_service.run_retroactive_knockoff(db_session, inv)
+        assert results == []
+
+    def test_tier1_reference_match_preferred(
+        self, db_session, test_entity, test_accounts, test_bank_account
+    ):
+        """Tier 1 reference match chosen over older same-amount PENDING transaction."""
+        from src.services.invoice_service import invoice_service
+
+        cp = _make_counterparty(db_session, "Retro Vendor F")
+        inv = _make_invoice(
+            db_session, test_entity.id, cp.id,
+            total_amount=200.0, currency="SGD",
+            invoice_number="INV-RETRO-99",
+            invoice_date=date(2026, 2, 5),
+        )
+        # Older, no reference
+        txn_old = _make_transaction(
+            db_session, test_bank_account,
+            description="RETRO VENDOR F GENERIC", amount=-200.0,
+            fingerprint="retro-f-old",
+        )
+        txn_old.transaction_date = date(2026, 2, 3)
+        txn_old.counterparty_id = cp.id
+
+        # Newer, contains invoice number
+        txn_ref = _make_transaction(
+            db_session, test_bank_account,
+            description="PMT INV-RETRO-99 RETRO VENDOR F", amount=-200.0,
+            fingerprint="retro-f-ref",
+        )
+        txn_ref.transaction_date = date(2026, 2, 4)
+        txn_ref.counterparty_id = cp.id
+        db_session.commit()
+
+        results = invoice_service.run_retroactive_knockoff(db_session, inv)
+
+        assert len(results) == 1
+        assert results[0]["transaction_id"] == txn_ref.id
+        assert results[0]["tier"] == 1
+
+
+# ============================================================================
+# Phase 4: AI classification fallback tests
+# ============================================================================
+
+class TestAiClassificationFallback:
+    """Phase 4: _run_ai_classification — high confidence, low confidence, no key."""
+
+    def _make_unmatched_txn(self, db, bank_account, description, amount, cp=None):
+        import hashlib
+        fp = hashlib.sha256(f"ai-{description}{amount}".encode()).hexdigest()
+        txn = FinanceTransaction(
+            bank_account_id=bank_account.id,
+            transaction_date=date(2026, 3, 1),
+            currency="SGD",
+            description=description,
+            amount=amount,
+            fingerprint=fp,
+            status=TransactionStatus.PENDING,
+        )
+        if cp:
+            txn.counterparty_id = cp.id
+            txn.counterparty_name = cp.name
+        db.add(txn)
+        db.commit()
+        db.refresh(txn)
+        return txn
+
+    def test_no_api_key_returns_empty(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """Without ANTHROPIC_API_KEY Phase 4 skips silently."""
+        import os
+        from unittest.mock import patch as _patch
+        txn = self._make_unmatched_txn(
+            db_session, test_bank_account, "RANDOM VENDOR PMT", -200.0
+        )
+        with _patch.dict(os.environ, {}, clear=True):
+            os.environ.pop("ANTHROPIC_API_KEY", None)
+            result = categorization_service._run_ai_classification(db_session, [txn])
+        assert result == {}
+        db_session.refresh(txn)
+        assert txn.status == TransactionStatus.PENDING
+
+    def test_high_confidence_creates_je_and_matches(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """confidence >= 0.80 creates JE and sets MATCHED with AI fields stored."""
+        import os, json as json_lib
+        from unittest.mock import MagicMock, patch as _patch
+
+        txn = self._make_unmatched_txn(
+            db_session, test_bank_account, "OFFICE SUPPLIES CO", -150.0
+        )
+
+        mock_response = [{"id": txn.id, "account_code": "5000",
+                          "confidence": 0.92, "reasoning": "Office supply expense"}]
+        mock_msg = MagicMock()
+        mock_msg.content = [MagicMock(text=json_lib.dumps(mock_response))]
+
+        with _patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}):
+            with _patch("anthropic.Anthropic") as MockAnthropic:
+                MockAnthropic.return_value.messages.create.return_value = mock_msg
+                result = categorization_service._run_ai_classification(db_session, [txn])
+
+        assert txn.id in result
+        r = result[txn.id]
+        assert r["status"] == "categorized"
+        assert r["journal_entry_id"] is not None
+
+        db_session.refresh(txn)
+        assert txn.status == TransactionStatus.MATCHED
+        assert txn.ai_suggested_account_code == "5000"
+        assert float(txn.ai_confidence) == 0.92
+        assert txn.ai_reasoning == "Office supply expense"
+        assert txn.reconciled_journal_entry_id == r["journal_entry_id"]
+
+    def test_low_confidence_sets_needs_review(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """confidence < 0.80 sets NEEDS_REVIEW and stores AI suggestion fields."""
+        import os, json as json_lib
+        from unittest.mock import MagicMock, patch as _patch
+
+        txn = self._make_unmatched_txn(
+            db_session, test_bank_account, "MYSTERY PAYMENT XYZ", -75.0
+        )
+
+        mock_response = [{"id": txn.id, "account_code": "6000",
+                          "confidence": 0.55, "reasoning": "Possibly marketing but uncertain"}]
+        mock_msg = MagicMock()
+        mock_msg.content = [MagicMock(text=json_lib.dumps(mock_response))]
+
+        with _patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}):
+            with _patch("anthropic.Anthropic") as MockAnthropic:
+                MockAnthropic.return_value.messages.create.return_value = mock_msg
+                result = categorization_service._run_ai_classification(db_session, [txn])
+
+        assert txn.id in result
+        r = result[txn.id]
+        assert r["status"] == "needs_review"
+        assert r["journal_entry_id"] is None
+        assert r["ai_suggested_account_code"] == "6000"
+        assert r["ai_confidence"] == 0.55
+
+        db_session.refresh(txn)
+        assert txn.status == TransactionStatus.NEEDS_REVIEW
+        assert txn.ai_suggested_account_code == "6000"
+        assert txn.ai_reasoning == "Possibly marketing but uncertain"
+
+    def test_phase4_wired_into_run_uncategorized_transactions(
+        self, db_session, test_entity, test_accounts, test_bank_account
+    ):
+        """Phase 4 fires in the main run() call for transactions left uncategorized."""
+        import os, json as json_lib
+        from unittest.mock import MagicMock, patch as _patch
+
+        txn = self._make_unmatched_txn(
+            db_session, test_bank_account, "TOTALLY UNKNOWN PMT", -300.0
+        )
+
+        mock_response = [{"id": txn.id, "account_code": "5000",
+                          "confidence": 0.85, "reasoning": "Likely office expense"}]
+        mock_msg = MagicMock()
+        mock_msg.content = [MagicMock(text=json_lib.dumps(mock_response))]
+
+        with _patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}):
+            with _patch("anthropic.Anthropic") as MockAnthropic:
+                MockAnthropic.return_value.messages.create.return_value = mock_msg
+                output = categorization_service.run(
+                    db_session,
+                    bank_account_id=test_bank_account.id,
+                )
+
+        # Find our transaction in results
+        txn_result = next(
+            (r for r in output["results"] if r["transaction_id"] == txn.id), None
+        )
+        assert txn_result is not None
+        assert txn_result["status"] == "categorized"
+
+        db_session.refresh(txn)
+        assert txn.status == TransactionStatus.MATCHED

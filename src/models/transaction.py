@@ -148,6 +148,31 @@ class FinanceTransaction(Base):
         nullable=True,
         comment="Stripe transaction ID for automated imports"
     )
+    ai_suggested_account_code: Mapped[Optional[str]] = mapped_column(
+        String(20),
+        nullable=True,
+        comment="COA account code suggested by AI classification fallback",
+    )
+    ai_confidence: Mapped[Optional[float]] = mapped_column(
+        Numeric(4, 3),
+        nullable=True,
+        comment="AI confidence score 0.000–1.000",
+    )
+    ai_reasoning: Mapped[Optional[str]] = mapped_column(
+        Text,
+        nullable=True,
+        comment="Plain-English reasoning from AI classification for human reviewers",
+    )
+    reopen_reason: Mapped[Optional[str]] = mapped_column(
+        Text,
+        nullable=True,
+        comment="Why this transaction was reopened to PENDING by the system",
+    )
+    reopened_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime,
+        nullable=True,
+        comment="Timestamp when transaction was last reopened by the system",
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,

@@ -312,6 +312,18 @@ class InvoiceService:
 
         db.commit()
         db.refresh(invoice)
+
+        # ── Retroactive knock-off: find existing bank payments for this invoice ──
+        # Runs best-effort after commit. Errors are logged but do not fail the approval.
+        try:
+            self.run_retroactive_knockoff(db, invoice)
+        except Exception as e:
+            logger.error(
+                f"Retroactive knock-off failed for invoice {invoice.id}: {e}",
+                exc_info=True,
+            )
+
+        db.refresh(invoice)
         return invoice
 
     def reject(self, db: Session, invoice_id: int, rejection_reason: str) -> FinanceInvoice:
@@ -557,6 +569,210 @@ class InvoiceService:
             "amount_applied": abs_amount,
             "invoice_status": invoice.status,
         }
+
+    # ── Retroactive knock-off (System 2 / Step 2.1) ──────────────────────────
+
+    def _reopen_transaction(
+        self,
+        db: Session,
+        txn: "FinanceTransaction",
+        reason: str,
+    ) -> None:
+        """
+        Void the transaction's current JE and reset it to PENDING.
+
+        System-driven only — not user-initiated. Used by retroactive knock-off
+        when a payment was already matched/reconciled as a direct expense but
+        an invoice has now arrived that should settle it via AP instead.
+
+        Writes reopen_reason and reopened_at for audit trail.
+        """
+        from src.models.transaction import TransactionStatus
+        from datetime import datetime, UTC
+
+        if txn.reconciled_journal_entry_id:
+            journal_service.void_entry(
+                db, txn.reconciled_journal_entry_id,
+                reason=f"retroactive_ap_knockoff: {reason}",
+            )
+
+        txn.status = TransactionStatus.PENDING
+        txn.reconciled_journal_entry_id = None
+        txn.matched_at = None
+        txn.reconciled_at = None
+        txn.reopen_reason = reason
+        txn.reopened_at = datetime.now(UTC)
+        db.flush()
+
+    def run_retroactive_knockoff(
+        self,
+        db: Session,
+        invoice: FinanceInvoice,
+    ) -> list[dict]:
+        """
+        After an invoice is approved, search for existing bank transactions that
+        look like payments for it and knock them off against the new AP liability.
+
+        Called automatically at the end of approve(). Safe to call multiple times
+        (skips already-AP-matched transactions).
+
+        Search criteria:
+        - counterparty_id matches invoice
+        - currency matches invoice
+        - amount is negative (outgoing payment)
+        - amount fits: Tier 1 reference / Tier 2 exact / Tier 3 partial
+        - transaction_date within ±30 days of invoice_date
+
+        Per-transaction handling:
+        - PENDING    → knock off directly
+        - MATCHED    → void existing JE, reopen to PENDING, knock off
+        - RECONCILED → void existing JE, reopen to PENDING, knock off
+        - Any status with existing JE from prior AP knock-off → skip (conflict)
+
+        Returns a list of result dicts (one per transaction touched).
+        """
+        from src.models.transaction import FinanceTransaction, TransactionStatus
+        from src.models.bank_account import FinanceBankAccount
+        from src.models.journal_entry import FinanceJournalEntry
+        from datetime import timedelta, datetime, UTC
+        from sqlalchemy import or_
+
+        AP_SOURCES = {"ap_knockoff", "ap_manual_match"}
+
+        if not invoice.counterparty_id:
+            return []
+
+        remaining = float(invoice.total_amount) - float(invoice.amount_paid)
+        if remaining <= 0:
+            return []
+
+        date_low = invoice.invoice_date - timedelta(days=30)
+        date_high = invoice.invoice_date + timedelta(days=30)
+
+        candidates = (
+            db.query(FinanceTransaction)
+            .filter(
+                FinanceTransaction.counterparty_id == invoice.counterparty_id,
+                FinanceTransaction.currency == invoice.currency,
+                FinanceTransaction.amount < 0,
+                FinanceTransaction.transaction_date.between(date_low, date_high),
+                FinanceTransaction.status.in_([
+                    TransactionStatus.PENDING,
+                    TransactionStatus.MATCHED,
+                    TransactionStatus.RECONCILED,
+                ]),
+            )
+            .order_by(FinanceTransaction.transaction_date.asc(), FinanceTransaction.id.asc())
+            .all()
+        )
+
+        # Filter out any that are already AP-settled (linked to an AP JE)
+        eligible = []
+        for txn in candidates:
+            if txn.reconciled_journal_entry_id:
+                je = db.get(FinanceJournalEntry, txn.reconciled_journal_entry_id)
+                if je and getattr(je, "source", None) in AP_SOURCES:
+                    continue  # already settled via AP — skip
+            eligible.append(txn)
+
+        if not eligible:
+            return []
+
+        # Apply ranked matching to pick the best candidate(s)
+        # (same three tiers as forward knock-off, but we loop until invoice is paid)
+        inv_ref = f"Invoice {invoice.invoice_number or invoice.id}"
+        inv_num_upper = (invoice.invoice_number or "").upper()
+        results = []
+
+        def _score(txn) -> int:
+            """Return tier rank (lower = better). 99 = no match."""
+            abs_amt = abs(float(txn.amount))
+            rem = float(invoice.total_amount) - float(invoice.amount_paid)
+            if rem <= 0:
+                return 99
+            desc_upper = (txn.description or "").upper()
+            ref_upper = (txn.reference_number or "").upper()
+            if inv_num_upper and (inv_num_upper in desc_upper or inv_num_upper in ref_upper):
+                return 1
+            if abs(abs_amt - rem) <= rem * 0.02:
+                return 2
+            if 0 < abs_amt < rem * 1.02:
+                return 3
+            return 99
+
+        sorted_candidates = sorted(eligible, key=lambda t: (_score(t), t.transaction_date, t.id))
+
+        for txn in sorted_candidates:
+            tier = _score(txn)
+            if tier == 99:
+                continue
+            remaining_now = float(invoice.total_amount) - float(invoice.amount_paid)
+            if remaining_now <= 0:
+                break
+
+            abs_amount = abs(float(txn.amount))
+            apply_amount = min(abs_amount, remaining_now)
+
+            bank_account = db.get(FinanceBankAccount, txn.bank_account_id)
+            if not bank_account or not bank_account.coa_account_code:
+                results.append({
+                    "transaction_id": txn.id,
+                    "status": "skipped",
+                    "reason": "bank account has no COA code",
+                })
+                continue
+
+            prior_status = txn.status.value
+
+            # Reopen MATCHED or RECONCILED transactions before knocking off
+            if txn.status != TransactionStatus.PENDING:
+                self._reopen_transaction(
+                    db, txn,
+                    reason=f"invoice_{invoice.id}_retroactive_knockoff",
+                )
+
+            # Create AP payment JE: Dr 2000 AP / Cr Bank
+            entry = journal_service.create(
+                db=db,
+                entity_id=bank_account.entity_id,
+                entry_date=txn.transaction_date,
+                description=f"AP Payment (retroactive): {inv_ref}",
+                lines=[
+                    {
+                        "account_code": AP_ACCOUNT_CODE,
+                        "debit_amount": apply_amount,
+                        "credit_amount": 0.0,
+                        "description": inv_ref,
+                    },
+                    {
+                        "account_code": bank_account.coa_account_code,
+                        "debit_amount": 0.0,
+                        "credit_amount": apply_amount,
+                        "description": inv_ref,
+                    },
+                ],
+            )
+            entry.source = "ap_knockoff"
+            db.flush()
+
+            self.record_payment(db, invoice.id, apply_amount)
+
+            now = datetime.now(UTC)
+            txn.status = TransactionStatus.MATCHED
+            txn.reconciled_journal_entry_id = entry.id
+            txn.matched_at = now
+            db.commit()
+
+            results.append({
+                "transaction_id": txn.id,
+                "prior_status": prior_status,
+                "amount_applied": apply_amount,
+                "journal_entry_id": entry.id,
+                "tier": tier,
+                "invoice_status": invoice.status,
+            })
+
+        return results
 
     def record_payment(self, db: Session, invoice_id: int, amount_paid: float) -> FinanceInvoice:
         """

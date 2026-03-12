@@ -283,5 +283,27 @@ class JournalService:
         return result
 
 
+    def void_entry(self, db: Session, entry_id: int, reason: str = "") -> Optional[FinanceJournalEntry]:
+        """
+        Void a journal entry regardless of its current status.
+
+        Used exclusively by the retroactive AP knock-off when a transaction that was
+        previously matched or reconciled as a direct expense needs to be re-routed
+        through AP. Sets status → VOID and records the reason in the description.
+
+        Returns the voided entry, or None if not found.
+        """
+        entry = self.get_by_id(db, entry_id)
+        if entry is None:
+            return None
+        if entry.status == JournalEntryStatus.VOID:
+            return entry  # already voided — idempotent
+        entry.status = JournalEntryStatus.VOID
+        if reason:
+            entry.description = f"[VOID: {reason}] {entry.description or ''}"
+        db.flush()
+        return entry
+
+
 # Singleton instance
 journal_service = JournalService()

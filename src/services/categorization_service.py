@@ -206,6 +206,33 @@ class CategorizationService:
                 })
                 errors += 1
 
+        # ── Phase 4: AI classification fallback ───────────────────────────
+        # Collect transactions still uncategorized after Phases 1–3.
+        # One batched Haiku call; high-confidence → MATCHED, low → NEEDS_REVIEW.
+        unhandled = [
+            t for t in transactions
+            if t.id not in ap_handled_ids
+            and t.id not in payroll_handled_ids
+            and t.status == TransactionStatus.PENDING
+        ]
+        if unhandled:
+            ai_result_map = self._run_ai_classification(db, unhandled)
+            for txn in unhandled:
+                ai = ai_result_map.get(txn.id)
+                if not ai:
+                    continue
+                # Replace the "uncategorized" entry in results
+                for r in results:
+                    if r["transaction_id"] == txn.id:
+                        r.update(ai)
+                        if ai["status"] == "categorized":
+                            categorized += 1
+                            uncategorized -= 1
+                        elif ai["status"] == "needs_review":
+                            # stays in uncategorized count — human must confirm
+                            pass
+                        break
+
         return {
             "total_processed": len(transactions),
             "categorized": categorized,
@@ -1395,6 +1422,204 @@ Return only the JSON object, no explanation."""
             "journal_entry_id": entry.id,
             "status": "categorized",
         }
+
+    # ------------------------------------------------------------------
+    # Phase 4: AI classification fallback
+    # ------------------------------------------------------------------
+
+    def _run_ai_classification(
+        self,
+        db: Session,
+        transactions: list[FinanceTransaction],
+    ) -> dict[int, dict]:
+        """
+        Batch-classify unmatched transactions via Claude Haiku.
+
+        Sends all unmatched transactions in a single API call with the entity's
+        active COA as context. Claude returns a confidence-scored suggestion per
+        transaction.
+
+        confidence ≥ 0.80 → create JE → transaction → MATCHED
+        confidence < 0.80 → NEEDS_REVIEW; ai fields stored, no JE yet
+        No API key / error → returns empty dict (transactions stay PENDING)
+
+        Returns a dict keyed by transaction_id with result dicts ready to merge
+        into the main results list.
+        """
+        import os
+        import json as json_lib
+
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        if not api_key:
+            return {}
+
+        if not transactions:
+            return {}
+
+        try:
+            import anthropic
+
+            # Collect entity IDs present in this batch (may be multiple)
+            ba_ids = {t.bank_account_id for t in transactions}
+            bank_accounts: dict[int, FinanceBankAccount] = {}
+            for ba in db.query(FinanceBankAccount).filter(
+                FinanceBankAccount.id.in_(ba_ids)
+            ).all():
+                bank_accounts[ba.id] = ba
+
+            # Build entity COA context (active accounts, one entity at a time)
+            entity_ids = {ba.entity_id for ba in bank_accounts.values()}
+            from src.models.account import FinanceAccount
+            coa_by_entity: dict[int, list[dict]] = {}
+            for entity_id in entity_ids:
+                accounts = (
+                    db.query(FinanceAccount)
+                    .filter(
+                        FinanceAccount.entity_id == entity_id,
+                        FinanceAccount.status == "active",
+                    )
+                    .order_by(FinanceAccount.code)
+                    .all()
+                )
+                coa_by_entity[entity_id] = [
+                    {"code": a.code, "name": a.name, "type": a.account_type.value
+                     if hasattr(a.account_type, "value") else str(a.account_type)}
+                    for a in accounts
+                ]
+
+            # Build transaction payloads
+            txn_payloads = []
+            for txn in transactions:
+                ba = bank_accounts.get(txn.bank_account_id)
+                entity_id = ba.entity_id if ba else None
+                txn_payloads.append({
+                    "id": txn.id,
+                    "description": txn.description or "",
+                    "amount": float(txn.amount),
+                    "currency": txn.currency,
+                    "direction": "outgoing" if float(txn.amount) < 0 else "incoming",
+                    "counterparty": txn.counterparty_name or "",
+                    "bank_account": ba.account_name if ba else "",
+                    "entity_id": entity_id,
+                    "coa": coa_by_entity.get(entity_id, []),
+                })
+
+            prompt = f"""You are a finance classification engine. Classify each bank transaction
+to the most appropriate account in the chart of accounts.
+
+Transactions to classify:
+{json_lib.dumps(txn_payloads, indent=2)}
+
+For each transaction, return a JSON array (one object per transaction) with:
+{{
+  "id": <transaction id>,
+  "account_code": "<code from the coa field for that transaction>",
+  "confidence": <0.00–1.00 — your confidence in this classification>,
+  "reasoning": "<1 sentence plain-English explanation>"
+}}
+
+Rules:
+- account_code MUST be from the coa list provided for that transaction's entity_id
+- confidence >= 0.80 means you are confident; < 0.80 means uncertain
+- For intercompany or payroll transactions that don't clearly fit any account, use confidence 0.50
+- Return ONLY the JSON array, no other text"""
+
+            client = anthropic.Anthropic(api_key=api_key)
+            message = client.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=1024,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            raw = message.content[0].text.strip()
+            if raw.startswith("```"):
+                lines = raw.split("\n")
+                raw = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+
+            suggestions = json_lib.loads(raw)
+            if not isinstance(suggestions, list):
+                raise ValueError("Expected JSON array from AI classification")
+
+            # Index suggestions by transaction id
+            suggestion_map: dict[int, dict] = {s["id"]: s for s in suggestions if "id" in s}
+
+        except Exception as e:
+            logger.error(f"AI classification fallback error: {e}", exc_info=True)
+            return {}
+
+        results: dict[int, dict] = {}
+        now = datetime.now(UTC)
+
+        for txn in transactions:
+            suggestion = suggestion_map.get(txn.id)
+            if not suggestion:
+                continue
+
+            account_code = suggestion.get("account_code")
+            confidence = float(suggestion.get("confidence", 0.0))
+            reasoning = suggestion.get("reasoning", "")
+
+            if not account_code:
+                continue
+
+            # Store AI fields on the transaction regardless of outcome
+            txn.ai_suggested_account_code = account_code
+            txn.ai_confidence = round(confidence, 3)
+            txn.ai_reasoning = reasoning
+
+            if confidence >= 0.80:
+                # High confidence — create JE and MATCH
+                try:
+                    ba = bank_accounts.get(txn.bank_account_id)
+                    if not ba or not ba.coa_account_code:
+                        raise ValueError("No bank COA code")
+
+                    amount = float(txn.amount)
+                    abs_amount = abs(amount)
+                    je = self._create_simple_entry(
+                        db=db,
+                        transaction=txn,
+                        entity_id=ba.entity_id,
+                        bank_coa_code=ba.coa_account_code,
+                        contra_code=account_code,
+                        amount=amount,
+                        abs_amount=abs_amount,
+                        source="ai_classification",
+                    )
+                    txn.status = TransactionStatus.MATCHED
+                    txn.reconciled_journal_entry_id = je.id
+                    txn.matched_at = now
+                    db.commit()
+
+                    results[txn.id] = {
+                        "transaction_id": txn.id,
+                        "status": "categorized",
+                        "rule_name": f"[ai:confidence={confidence:.2f}]",
+                        "journal_entry_id": je.id,
+                        "error": None,
+                    }
+                except Exception as je_err:
+                    logger.error(
+                        f"AI classification: JE creation failed for txn {txn.id}: {je_err}",
+                        exc_info=True,
+                    )
+                    db.rollback()
+            else:
+                # Low confidence — NEEDS_REVIEW
+                txn.status = TransactionStatus.NEEDS_REVIEW
+                db.commit()
+
+                results[txn.id] = {
+                    "transaction_id": txn.id,
+                    "status": "needs_review",
+                    "rule_name": f"[ai:confidence={confidence:.2f}]",
+                    "journal_entry_id": None,
+                    "error": None,
+                    "ai_suggested_account_code": account_code,
+                    "ai_confidence": confidence,
+                    "ai_reasoning": reasoning,
+                }
+
+        return results
 
 
 # ------------------------------------------------------------------
