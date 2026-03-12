@@ -60,14 +60,20 @@ def update_invoice(invoice_id: int):
 
 @invoices_bp.route("/<int:invoice_id>/approve", methods=["POST"])
 def approve_invoice(invoice_id: int):
-    """Approve an invoice, creating the AP journal entry."""
+    """Approve an invoice, creating the AP journal entry.
+
+    Body:
+      approved_by: str  (required)
+      contra_account_code: str  (optional — approver can confirm/change the COA)
+    """
     data = request.get_json() or {}
     approved_by = data.get("approved_by")
     if not approved_by:
         return jsonify({"error": "approved_by is required"}), 400
+    contra_account_code = data.get("contra_account_code") or None
 
     with db_session() as db:
-        invoice = invoice_service.approve(db, invoice_id, approved_by)
+        invoice = invoice_service.approve(db, invoice_id, approved_by, contra_account_code=contra_account_code)
         return jsonify(InvoiceResponse.model_validate(invoice).model_dump()), 200
 
 
@@ -167,9 +173,91 @@ def extract_invoice():
 
     result = ai_extraction_service.extract_invoice_data(pdf_bytes, entity_names=entity_names)
 
+    # Vendor matching — find or prepare auto-create
+    vendor_match = {"counterparty_id": None, "counterparty_name": None,
+                    "is_new_vendor": False, "match_confidence": 0.0}
+    if result.get("vendor_name"):
+        from src.services.vendor_matching_service import vendor_matching_service
+        with db_session() as db:
+            cp, is_new, confidence = vendor_matching_service.match_or_create(
+                db, result["vendor_name"], result.get("vendor_tax_id")
+            )
+            if cp:
+                vendor_match = {
+                    "counterparty_id": cp.id,
+                    "counterparty_name": cp.name,
+                    "is_new_vendor": is_new,
+                    "match_confidence": round(confidence, 2),
+                }
+    result["vendor_match"] = vendor_match
+
     # Upload to S3 (best-effort)
     s3_key = s3_service.upload_invoice_pdf(pdf_bytes, filename=file.filename or "invoice.pdf")
     result["pdf_s3_key"] = s3_key
     result["pdf_content_hash"] = pdf_hash
 
     return jsonify(result), 200
+
+
+@invoices_bp.route("/<int:invoice_id>/match-transaction", methods=["POST"])
+def match_transaction(invoice_id: int):
+    """
+    Manually match an open invoice against a bank transaction.
+
+    Body: { "transaction_id": <int>, "matched_by": "<username>" }
+
+    Creates the AP payment JE, updates invoice.amount_paid / status,
+    and marks the transaction as MATCHED.
+    """
+    body = request.get_json(silent=True) or {}
+    transaction_id = body.get("transaction_id")
+    matched_by = body.get("matched_by", "manual")
+
+    if not transaction_id:
+        return jsonify({"error": "transaction_id is required"}), 400
+
+    try:
+        with db_session() as db:
+            result = invoice_service.match_transaction(
+                db, invoice_id, transaction_id, matched_by=matched_by
+            )
+            return jsonify(result), 200
+    except NotFoundError as e:
+        return jsonify({"error": str(e)}), 404
+    except Exception as e:
+        from src.utils.errors import BadRequestError
+        if isinstance(e, BadRequestError):
+            return jsonify({"error": str(e)}), 400
+        logger.error(f"Manual match error: {e}", exc_info=True)
+        return jsonify({"error": "Internal error during manual match"}), 500
+
+
+@invoices_bp.route("/open-for-transaction/<int:transaction_id>", methods=["GET"])
+def list_open_for_transaction(transaction_id: int):
+    """
+    List open invoices that could be manually matched against a transaction.
+
+    Returns invoices for the transaction's counterparty, same currency,
+    dated on or before the transaction date — same eligibility rules as auto-match.
+    """
+    from src.models.transaction import FinanceTransaction
+
+    with db_session() as db:
+        txn = db.get(FinanceTransaction, transaction_id)
+        if not txn:
+            return jsonify({"error": f"Transaction {transaction_id} not found"}), 404
+
+        if not txn.counterparty_id:
+            return jsonify({"invoices": [], "note": "Transaction has no linked counterparty"}), 200
+
+        invoices = invoice_service.get_open_for_match(
+            db,
+            counterparty_id=txn.counterparty_id,
+            currency=txn.currency,
+            transaction_date=txn.transaction_date,
+        )
+        return jsonify({
+            "transaction_id": transaction_id,
+            "counterparty_id": txn.counterparty_id,
+            "invoices": [InvoiceResponse.model_validate(inv).model_dump() for inv in invoices],
+        }), 200

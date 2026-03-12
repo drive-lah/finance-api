@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from src.models.transaction import FinanceTransaction, TransactionStatus
 from src.models.journal_entry import FinanceJournalEntry, JournalEntryStatus
 from src.models.bank_account import FinanceBankAccount
+from src.models.counterparty import FinanceCounterparty
 from src.services.csv_adapters import get_adapter
 from src.utils.fingerprint import generate_fingerprint
 
@@ -101,9 +102,54 @@ class TransactionService:
         transaction.status = TransactionStatus.RECONCILED
         transaction.reconciled_at = datetime.utcnow()
 
+        # Self-improving aliases: if the transaction's raw bank description differs
+        # from the canonical counterparty name, add it as an alias so future
+        # transactions with the same description match at L1 instead of L2/L3.
+        self._maybe_add_alias(db, transaction)
+
         db.commit()
         db.refresh(transaction)
         return transaction
+
+    def _maybe_add_alias(self, db: Session, transaction: FinanceTransaction) -> None:
+        """
+        Add the transaction's raw description as a counterparty alias if it is
+        not already covered by the canonical name or existing aliases.
+
+        Called on approval so that next time an identical bank description arrives
+        it resolves at L1 (deterministic) rather than L2/L3.
+        """
+        if not transaction.counterparty_id:
+            return
+
+        cp = db.get(FinanceCounterparty, transaction.counterparty_id)
+        if not cp:
+            return
+
+        # Build the candidate string: prefer counterparty_name if set (it may be
+        # the raw bank string before it was overwritten by the canonical name),
+        # otherwise fall back to description.
+        raw = (transaction.description or "").strip()
+        if not raw:
+            return
+
+        canonical = cp.name.lower().strip()
+        # Skip if the raw text already matches the canonical name exactly
+        if raw.lower() == canonical:
+            return
+
+        existing_aliases = [a.lower().strip() for a in (cp.aliases or []) if a]
+        if raw.lower() in existing_aliases:
+            return  # already known
+
+        # Add the raw description as a new alias
+        new_aliases = list(cp.aliases or []) + [raw]
+        cp.aliases = new_aliases
+
+        import logging
+        logging.getLogger(__name__).info(
+            f"Added alias '{raw}' to counterparty '{cp.name}' (id={cp.id})"
+        )
 
     def reject(self, db: Session, transaction_id: int) -> FinanceTransaction:
         """

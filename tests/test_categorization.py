@@ -4,7 +4,7 @@ import pytest
 from datetime import date
 from decimal import Decimal
 from unittest.mock import patch
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text, Table, Column, Integer as SAInteger
 from sqlalchemy.orm import sessionmaker
 
 from src.app import create_app
@@ -27,7 +27,9 @@ from src.models.categorization_rule import (
 from src.services.tag_service import tag_service
 from src.services.rule_service import rule_service
 from src.services.categorization_service import categorization_service, _text_matches
+from src.services.transaction_service import transaction_service
 from src.models.schemas import TagCreate, TagUpdate, RuleCreate, RuleUpdate
+from src.models.counterparty import FinanceCounterparty
 
 
 # ============================================================================
@@ -47,6 +49,11 @@ def client(app):
 @pytest.fixture
 def db_session():
     engine = create_engine('sqlite:///:memory:')
+    # HrEmployee (imported when create_app runs) has a FK → users.id, a
+    # cross-service table not in Base.  Register a stub so SQLAlchemy can
+    # resolve the FK reference without a NoReferencedTableError.
+    Table('users', Base.metadata, Column('id', SAInteger, primary_key=True),
+          extend_existing=True)
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     session = Session()
@@ -744,7 +751,7 @@ class TestCategorizationEngine:
         assert credit_line.account_code == "1000"
 
     def test_intra_entity_internal_transfer(self, db_session, test_accounts, test_bank_account, test_bank_account_wise):
-        """Same-entity internal transfer: single 2-line JE between bank accounts."""
+        """Same-entity internal transfer: outgoing sets AWAITING_MATCH; JE still created."""
         rule_service.create(db_session, RuleCreate(
             name="OCBC to Wise",
             direction=TransactionDirection.OUTGOING,
@@ -755,16 +762,50 @@ class TestCategorizationEngine:
         txn = _make_transaction(db_session, test_bank_account, description="WISE TRANSFER", amount=-1000.0)
         result = categorization_service.run(db_session)
 
+        # Step 0 will not pair because no counter-transaction exists yet
         assert result["categorized"] == 1
         db_session.refresh(txn)
-        assert txn.status == TransactionStatus.MATCHED
+        assert txn.status == TransactionStatus.AWAITING_MATCH
+        assert txn.expected_counterpart_ba_id == test_bank_account_wise.id
 
+        # JE is still created immediately so books balance
         je = db_session.query(FinanceJournalEntry).filter(FinanceJournalEntry.id == txn.reconciled_journal_entry_id).first()
         lines = db_session.query(FinanceJournalLine).filter(FinanceJournalLine.entry_id == je.id).all()
         assert len(lines) == 2
         codes = {l.account_code for l in lines}
         assert "1000" in codes   # source bank
         assert "1001" in codes   # target bank (Wise)
+
+    def test_intra_entity_internal_transfer_full_pairing(self, db_session, test_accounts, test_bank_account, test_bank_account_wise):
+        """When counter-transaction arrives, Step 0 pairs both sides → both MATCHED."""
+        rule_service.create(db_session, RuleCreate(
+            name="OCBC to Wise",
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.INTERNAL_TRANSFER,
+            target_bank_account_id=test_bank_account_wise.id,
+            description_operator=MatchOperator.CONTAINS, description_value="WISE TRANSFER",
+        ))
+        # Outgoing side on OCBC
+        outgoing = _make_transaction(db_session, test_bank_account, description="WISE TRANSFER", amount=-1000.0)
+        categorization_service.run(db_session)
+        db_session.refresh(outgoing)
+        assert outgoing.status == TransactionStatus.AWAITING_MATCH
+
+        # Counter-transaction arrives on Wise
+        incoming = _make_transaction(
+            db_session, test_bank_account_wise,
+            description="Incoming from OCBC", amount=1000.0, fingerprint="wise-in-001"
+        )
+        result2 = categorization_service.run(db_session)
+
+        db_session.refresh(outgoing)
+        db_session.refresh(incoming)
+
+        assert outgoing.status == TransactionStatus.MATCHED
+        assert incoming.status == TransactionStatus.MATCHED
+        assert incoming.reconciled_journal_entry_id == outgoing.reconciled_journal_entry_id
+        assert outgoing.expected_counterpart_ba_id is None  # cleared after pairing
+        assert result2["categorized"] >= 1
 
     def test_inactive_rules_skipped(self, db_session, test_accounts, test_bank_account):
         rule_service.create(db_session, _expense_rule(
@@ -882,3 +923,716 @@ class TestCategorizationRoutes:
                 "contra_account_code": "5000",
             })
             assert resp.status_code == 400
+
+
+# ============================================================================
+# Step 1b — Counterparty Aliases (L1 enrichment)
+# ============================================================================
+
+def _make_counterparty(db, name, type_="vendor", aliases=None):
+    cp = FinanceCounterparty(
+        name=name,
+        type=type_,
+        status="active",
+        aliases=aliases or [],
+    )
+    db.add(cp)
+    db.commit()
+    db.refresh(cp)
+    return cp
+
+
+class TestCounterpartyAliasEnrichment:
+    """Step 1b: aliases stored on counterparty, L1 matches via alias strings."""
+
+    def test_l1_matches_canonical_name_in_description(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """L1 strategy 2: canonical name substring found in transaction description."""
+        cp = _make_counterparty(db_session, "Amazon Web Services")
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="PAYMENT TO Amazon Web Services", amount=-100.0
+        )
+        categorization_service._enrich_counterparties(db_session, [txn])
+        db_session.refresh(txn)
+        assert txn.counterparty_id == cp.id
+
+    def test_l1_matches_alias_in_description(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """L1 strategy 5: alias substring found in transaction description."""
+        cp = _make_counterparty(
+            db_session, "Amazon Web Services",
+            aliases=["AWS PAYMENTS", "AMAZON WEB SVC"]
+        )
+        # Description contains an alias, not the canonical name
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="AWS PAYMENTS 20260301", amount=-50.0,
+            fingerprint="aws-alias-01"
+        )
+        categorization_service._enrich_counterparties(db_session, [txn])
+        db_session.refresh(txn)
+        assert txn.counterparty_id == cp.id
+        assert txn.counterparty_name == "Amazon Web Services"
+
+    def test_l1_matches_alias_exact_counterparty_field(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """L1 strategy 4: exact alias match against counterparty_name field."""
+        cp = _make_counterparty(
+            db_session, "Grab Singapore",
+            aliases=["GRAB SG"]
+        )
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="Ride payment", amount=-15.0,
+            counterparty_name="GRAB SG", fingerprint="grab-alias-01"
+        )
+        categorization_service._enrich_counterparties(db_session, [txn])
+        db_session.refresh(txn)
+        assert txn.counterparty_id == cp.id
+
+    def test_l1_skips_already_linked_transaction(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """Transactions with counterparty_id already set are not re-processed."""
+        cp1 = _make_counterparty(db_session, "AWS", aliases=["AMAZON"])
+        cp2 = _make_counterparty(db_session, "Stripe", aliases=["STRIPE PAY"])
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="AMAZON payment", amount=-100.0, fingerprint="skip-01"
+        )
+        txn.counterparty_id = cp2.id   # already linked to Stripe
+        db_session.commit()
+        categorization_service._enrich_counterparties(db_session, [txn])
+        db_session.refresh(txn)
+        # Must not be overwritten by AWS
+        assert txn.counterparty_id == cp2.id
+
+    def test_no_counterparties_enrichment_is_noop(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """With zero active counterparties, enrichment returns without error."""
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="Unknown vendor", amount=-99.0, fingerprint="no-cp-01"
+        )
+        categorization_service._enrich_counterparties(db_session, [txn])
+        db_session.refresh(txn)
+        assert txn.counterparty_id is None
+
+
+# ============================================================================
+# Step 1c — L2 Fuzzy + L3 LLM enrichment
+# ============================================================================
+
+class TestL2FuzzyEnrichment:
+    """Step 1c-L2: rapidfuzz matching for word-reordered/abbreviated bank descriptions."""
+
+    def test_l2_matches_word_reordered_description(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """L2 matches 'WEB SERVICES AMAZON' → 'Amazon Web Services' (word-reorder, score=100)."""
+        cp = _make_counterparty(db_session, "Amazon Web Services")
+        # L1 won't match: 'amazon web services' is not a substring of 'web services amazon'
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="WEB SERVICES AMAZON", amount=-100.0,
+            counterparty_name="WEB SERVICES AMAZON", fingerprint="aws-l2-01"
+        )
+        result = categorization_service._match_l2(txn, [cp])
+        assert result is not None
+        assert result.id == cp.id
+
+    def test_l2_does_not_match_unrelated_vendor(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """L2 rejects low-similarity descriptions (AWS EMEA SARL vs Grab Singapore, score≈37)."""
+        cp = _make_counterparty(db_session, "Grab Singapore")
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="AWS EMEA SARL", amount=-100.0,
+            counterparty_name="AWS EMEA SARL", fingerprint="aws-l2-no"
+        )
+        result = categorization_service._match_l2(txn, [cp])
+        assert result is None
+
+    def test_l2_picks_highest_score_counterparty(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """L2 picks Amazon (score=100) over Grab (score<88) for 'WEB SERVICES AMAZON'."""
+        cp_aws = _make_counterparty(db_session, "Amazon Web Services")
+        cp_grab = _make_counterparty(db_session, "Grab Singapore")
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="WEB SERVICES AMAZON", amount=-100.0,
+            counterparty_name="WEB SERVICES AMAZON", fingerprint="aws-l2-best"
+        )
+        result = categorization_service._match_l2(txn, [cp_aws, cp_grab])
+        assert result is not None
+        assert result.id == cp_aws.id
+
+    def test_l2_used_when_l1_fails(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """End-to-end: 'SINGAPORE GRAB CO' escapes L1 but L2 resolves via token_set_ratio=100."""
+        cp = _make_counterparty(db_session, "Grab Singapore")
+        # 'grab singapore' NOT a substring of 'singapore grab co' → L1 misses
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="SINGAPORE GRAB CO", amount=-20.0,
+            counterparty_name="SINGAPORE GRAB CO", fingerprint="grab-e2e-01"
+        )
+        l1_result = categorization_service._match_l1(txn, [cp])
+        assert l1_result is None   # verify L1 misses
+        # Full enrichment pipeline resolves via L2
+        categorization_service._enrich_counterparties(db_session, [txn])
+        db_session.refresh(txn)
+        assert txn.counterparty_id == cp.id
+
+
+class TestL3LlmEnrichment:
+    """Step 1c-L3: LLM enrichment is skipped when ANTHROPIC_API_KEY is absent."""
+
+    def test_l3_skipped_without_api_key(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """L3 batch call is skipped gracefully when ANTHROPIC_API_KEY is not set."""
+        import os
+        from unittest.mock import patch as _patch
+
+        cp = _make_counterparty(db_session, "Obscure Vendor XYZ")
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="OBSCURE VENDOR XYZ INC REF 99", amount=-55.0,
+            counterparty_name="OBSCURE VEND", fingerprint="l3-skip-01"
+        )
+
+        with _patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("ANTHROPIC_API_KEY", None)
+            # _match_l3_batch should not raise; transaction stays unenriched
+            categorization_service._match_l3_batch([txn], [cp])
+            db_session.refresh(txn)
+            assert txn.counterparty_id is None  # L3 was skipped
+
+    def test_l3_calls_anthropic_and_links_counterparty(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """L3 links counterparty_id when Anthropic returns a valid match."""
+        import json as json_lib
+        import os
+        from unittest.mock import MagicMock, patch as _patch
+
+        cp = _make_counterparty(db_session, "Obscure Vendor XYZ")
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="OBSCURE VND REF 001", amount=-30.0,
+            counterparty_name="OBSCURE VND", fingerprint="l3-mock-01"
+        )
+
+        # Simulate Anthropic returning {txn_id: cp_id}
+        mock_response = MagicMock()
+        mock_response.content = [MagicMock(text=json_lib.dumps({str(txn.id): cp.id}))]
+
+        with _patch.dict(os.environ, {"ANTHROPIC_API_KEY": "sk-test"}):
+            with _patch("anthropic.Anthropic") as mock_anthropic_cls:
+                mock_client = MagicMock()
+                mock_anthropic_cls.return_value = mock_client
+                mock_client.messages.create.return_value = mock_response
+
+                categorization_service._match_l3_batch([txn], [cp])
+
+        # _match_l3_batch sets attributes on the in-memory ORM object; it does
+        # not flush/commit (that is done by the calling _enrich_counterparties).
+        # Check the in-memory object directly without refresh.
+        assert txn.counterparty_id == cp.id
+        assert txn.counterparty_name == cp.name
+
+
+# ============================================================================
+# Self-improving aliases (_maybe_add_alias on transaction approval)
+# ============================================================================
+
+class TestMaybeAddAlias:
+    """Step 1c: approve() adds raw description to counterparty.aliases if it differs."""
+
+    def test_approve_adds_new_alias(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """Raw bank description added to aliases when it differs from canonical name."""
+        from src.models.journal_entry import FinanceJournalEntry, JournalEntryStatus
+        from src.models.journal_line import FinanceJournalLine
+
+        cp = _make_counterparty(db_session, "Amazon Web Services", aliases=[])
+        # Build a MATCHED transaction linked to a DRAFT JE
+        je = FinanceJournalEntry(
+            entity_id=test_bank_account.entity_id,
+            entry_date=date(2026, 2, 15),
+            description="Test JE",
+            status=JournalEntryStatus.DRAFT,
+        )
+        db_session.add(je)
+        db_session.flush()
+        line1 = FinanceJournalLine(entry_id=je.id, account_code="1000", debit_amount=100, credit_amount=0, entity_id=test_bank_account.entity_id)
+        line2 = FinanceJournalLine(entry_id=je.id, account_code="5000", debit_amount=0, credit_amount=100, entity_id=test_bank_account.entity_id)
+        db_session.add_all([line1, line2])
+        db_session.flush()
+
+        txn = FinanceTransaction(
+            bank_account_id=test_bank_account.id,
+            transaction_date=date(2026, 2, 15),
+            description="AWS EMEA SARL",          # raw bank description
+            amount=-100.0,
+            fingerprint="alias-approve-01",
+            status=TransactionStatus.MATCHED,
+            counterparty_id=cp.id,
+            reconciled_journal_entry_id=je.id,
+        )
+        db_session.add(txn)
+        db_session.commit()
+
+        transaction_service.approve(db_session, txn.id)
+
+        db_session.refresh(cp)
+        assert "AWS EMEA SARL" in cp.aliases
+
+    def test_approve_does_not_add_duplicate_alias(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """If raw description already in aliases, it is not duplicated on approval."""
+        from src.models.journal_entry import FinanceJournalEntry, JournalEntryStatus
+        from src.models.journal_line import FinanceJournalLine
+
+        cp = _make_counterparty(
+            db_session, "Amazon Web Services",
+            aliases=["AWS EMEA SARL"]    # already present
+        )
+        je = FinanceJournalEntry(
+            entity_id=test_bank_account.entity_id,
+            entry_date=date(2026, 2, 15),
+            description="Test JE",
+            status=JournalEntryStatus.DRAFT,
+        )
+        db_session.add(je)
+        db_session.flush()
+        line1 = FinanceJournalLine(entry_id=je.id, account_code="1000", debit_amount=100, credit_amount=0, entity_id=test_bank_account.entity_id)
+        line2 = FinanceJournalLine(entry_id=je.id, account_code="5000", debit_amount=0, credit_amount=100, entity_id=test_bank_account.entity_id)
+        db_session.add_all([line1, line2])
+        db_session.flush()
+
+        txn = FinanceTransaction(
+            bank_account_id=test_bank_account.id,
+            transaction_date=date(2026, 2, 15),
+            description="AWS EMEA SARL",
+            amount=-100.0,
+            fingerprint="alias-approve-02",
+            status=TransactionStatus.MATCHED,
+            counterparty_id=cp.id,
+            reconciled_journal_entry_id=je.id,
+        )
+        db_session.add(txn)
+        db_session.commit()
+
+        transaction_service.approve(db_session, txn.id)
+
+        db_session.refresh(cp)
+        assert cp.aliases.count("AWS EMEA SARL") == 1
+
+    def test_approve_skips_alias_when_matches_canonical(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """If raw description equals canonical name, no alias is added."""
+        from src.models.journal_entry import FinanceJournalEntry, JournalEntryStatus
+        from src.models.journal_line import FinanceJournalLine
+
+        cp = _make_counterparty(db_session, "Stripe", aliases=[])
+        je = FinanceJournalEntry(
+            entity_id=test_bank_account.entity_id,
+            entry_date=date(2026, 2, 15),
+            description="Test JE",
+            status=JournalEntryStatus.DRAFT,
+        )
+        db_session.add(je)
+        db_session.flush()
+        line1 = FinanceJournalLine(entry_id=je.id, account_code="1000", debit_amount=100, credit_amount=0, entity_id=test_bank_account.entity_id)
+        line2 = FinanceJournalLine(entry_id=je.id, account_code="5000", debit_amount=0, credit_amount=100, entity_id=test_bank_account.entity_id)
+        db_session.add_all([line1, line2])
+        db_session.flush()
+
+        txn = FinanceTransaction(
+            bank_account_id=test_bank_account.id,
+            transaction_date=date(2026, 2, 15),
+            description="Stripe",                  # same as canonical name
+            amount=-100.0,
+            fingerprint="alias-approve-03",
+            status=TransactionStatus.MATCHED,
+            counterparty_id=cp.id,
+            reconciled_journal_entry_id=je.id,
+        )
+        db_session.add(txn)
+        db_session.commit()
+
+        transaction_service.approve(db_session, txn.id)
+
+        db_session.refresh(cp)
+        assert cp.aliases == []
+
+
+# ============================================================================
+# AP Knock-off matching tests (get_open_for_counterparty ranked logic)
+# ============================================================================
+
+def _make_invoice(
+    db,
+    entity_id,
+    counterparty_id,
+    total_amount,
+    currency="SGD",
+    invoice_number=None,
+    amount_paid=0.0,
+    invoice_date=None,
+    status="approved",
+):
+    from src.models.invoice import FinanceInvoice
+    inv = FinanceInvoice(
+        entity_id=entity_id,
+        counterparty_id=counterparty_id,
+        total_amount=total_amount,
+        currency=currency,
+        invoice_number=invoice_number,
+        amount_paid=amount_paid,
+        invoice_date=invoice_date or date(2026, 1, 15),
+        status=status,
+    )
+    db.add(inv)
+    db.commit()
+    db.refresh(inv)
+    return inv
+
+
+class TestApKnockoffMatching:
+    """invoice_service.get_open_for_counterparty — ranked matching logic."""
+
+    def test_tier1_reference_match_wins_over_older_same_amount_invoice(
+        self, db_session, test_entity
+    ):
+        """Invoice whose number appears in bank description is preferred over older same-amount one."""
+        from src.services.invoice_service import invoice_service
+        cp = _make_counterparty(db_session, "Acme Corp")
+
+        older = _make_invoice(
+            db_session, test_entity.id, cp.id,
+            total_amount=1000.0, currency="SGD",
+            invoice_number="INV-001",
+            invoice_date=date(2026, 1, 1),
+        )
+        newer = _make_invoice(
+            db_session, test_entity.id, cp.id,
+            total_amount=1000.0, currency="SGD",
+            invoice_number="INV-002",
+            invoice_date=date(2026, 1, 10),
+        )
+
+        # Payment references INV-002 → should match newer despite being older FIFO candidate
+        result = invoice_service.get_open_for_counterparty(
+            db_session, cp.id, 1000.0, "SGD",
+            description="PAYMENT REF INV-002 ACME",
+        )
+        assert result is not None
+        assert result.id == newer.id
+
+    def test_tier1_reference_in_reference_number_field(
+        self, db_session, test_entity
+    ):
+        """Invoice number found in transaction reference_number field is matched (Tier 1)."""
+        from src.services.invoice_service import invoice_service
+        cp = _make_counterparty(db_session, "Stripe Inc")
+
+        inv = _make_invoice(
+            db_session, test_entity.id, cp.id,
+            total_amount=500.0, currency="SGD",
+            invoice_number="ST-9999",
+        )
+
+        result = invoice_service.get_open_for_counterparty(
+            db_session, cp.id, 500.0, "SGD",
+            reference_number="ST-9999",
+        )
+        assert result is not None
+        assert result.id == inv.id
+
+    def test_tier2_exact_amount_match_used_when_no_reference(
+        self, db_session, test_entity
+    ):
+        """Without any reference, oldest invoice with matching amount is returned."""
+        from src.services.invoice_service import invoice_service
+        cp = _make_counterparty(db_session, "DigitalOcean")
+
+        inv = _make_invoice(
+            db_session, test_entity.id, cp.id,
+            total_amount=200.0, currency="SGD",
+        )
+
+        result = invoice_service.get_open_for_counterparty(
+            db_session, cp.id, 200.0, "SGD",
+            description="DIGITALOCEAN MONTHLY",
+        )
+        assert result is not None
+        assert result.id == inv.id
+
+    def test_tier2_amount_tolerance_accepted(
+        self, db_session, test_entity
+    ):
+        """Payment within 2% of remaining balance is accepted as exact match."""
+        from src.services.invoice_service import invoice_service
+        cp = _make_counterparty(db_session, "FX Vendor")
+
+        inv = _make_invoice(
+            db_session, test_entity.id, cp.id,
+            total_amount=1000.0, currency="USD",
+        )
+
+        # 1.5% variance — within tolerance
+        result = invoice_service.get_open_for_counterparty(
+            db_session, cp.id, 985.0, "USD",
+        )
+        assert result is not None
+        assert result.id == inv.id
+
+    def test_tier3_partial_payment_accepted(
+        self, db_session, test_entity
+    ):
+        """Payment less than invoice remaining is accepted as partial (Tier 3)."""
+        from src.services.invoice_service import invoice_service
+        cp = _make_counterparty(db_session, "Big Supplier")
+
+        inv = _make_invoice(
+            db_session, test_entity.id, cp.id,
+            total_amount=1200.0, currency="SGD",
+        )
+
+        # $600 bank payment against $1200 invoice — partial payment
+        result = invoice_service.get_open_for_counterparty(
+            db_session, cp.id, 600.0, "SGD",
+            description="BIG SUPPLIER PAYMENT",
+        )
+        assert result is not None
+        assert result.id == inv.id
+
+    def test_tier3_partial_creates_partially_paid_status(
+        self, db_session, test_entity
+    ):
+        """record_payment with partial amount transitions invoice to PARTIALLY_PAID."""
+        from src.services.invoice_service import invoice_service
+        from src.models.invoice import InvoiceStatus
+        cp = _make_counterparty(db_session, "Big Supplier 2")
+
+        inv = _make_invoice(
+            db_session, test_entity.id, cp.id,
+            total_amount=1200.0, currency="SGD",
+        )
+
+        updated = invoice_service.record_payment(db_session, inv.id, 600.0)
+        assert updated.status == InvoiceStatus.PARTIALLY_PAID.value
+        assert float(updated.amount_paid) == 600.0
+
+    def test_fully_paid_invoice_not_returned(
+        self, db_session, test_entity
+    ):
+        """Invoice with zero remaining balance is excluded from matching."""
+        from src.services.invoice_service import invoice_service
+        cp = _make_counterparty(db_session, "Paid Vendor")
+
+        _make_invoice(
+            db_session, test_entity.id, cp.id,
+            total_amount=500.0, currency="SGD",
+            amount_paid=500.0,
+            status="paid",
+        )
+
+        result = invoice_service.get_open_for_counterparty(
+            db_session, cp.id, 500.0, "SGD",
+        )
+        assert result is None
+
+    def test_no_match_returns_none(
+        self, db_session, test_entity
+    ):
+        """Returns None when no open invoices exist for the counterparty."""
+        from src.services.invoice_service import invoice_service
+        cp = _make_counterparty(db_session, "Ghost Vendor")
+
+        result = invoice_service.get_open_for_counterparty(
+            db_session, cp.id, 999.0, "SGD",
+        )
+        assert result is None
+
+    def test_date_constraint_excludes_future_invoice(
+        self, db_session, test_entity
+    ):
+        """Invoice dated after transaction_date is excluded from matching."""
+        from src.services.invoice_service import invoice_service
+        cp = _make_counterparty(db_session, "Future Vendor")
+
+        _make_invoice(
+            db_session, test_entity.id, cp.id,
+            total_amount=500.0, currency="SGD",
+            invoice_date=date(2026, 3, 20),  # invoice dated AFTER payment
+        )
+
+        result = invoice_service.get_open_for_counterparty(
+            db_session, cp.id, 500.0, "SGD",
+            transaction_date=date(2026, 3, 10),  # payment date
+        )
+        assert result is None
+
+    def test_date_constraint_allows_same_day_invoice(
+        self, db_session, test_entity
+    ):
+        """Invoice dated same day as transaction is allowed (invoice_date <= txn_date)."""
+        from src.services.invoice_service import invoice_service
+        cp = _make_counterparty(db_session, "Same Day Vendor")
+
+        inv = _make_invoice(
+            db_session, test_entity.id, cp.id,
+            total_amount=300.0, currency="SGD",
+            invoice_date=date(2026, 3, 10),
+        )
+
+        result = invoice_service.get_open_for_counterparty(
+            db_session, cp.id, 300.0, "SGD",
+            transaction_date=date(2026, 3, 10),
+        )
+        assert result is not None
+        assert result.id == inv.id
+
+
+class TestManualApMatch:
+    """invoice_service.match_transaction — manual AP knock-off."""
+
+    def test_manual_match_creates_je_and_marks_matched(
+        self, db_session, test_entity, test_accounts, test_bank_account
+    ):
+        """Manual match creates payment JE and transitions both records correctly."""
+        from src.services.invoice_service import invoice_service
+        from src.models.invoice import InvoiceStatus
+        from src.models.transaction import TransactionStatus
+
+        cp = _make_counterparty(db_session, "Manual Vendor")
+        inv = _make_invoice(
+            db_session, test_entity.id, cp.id,
+            total_amount=800.0, currency="SGD",
+        )
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="MANUAL VENDOR PAYMENT", amount=-800.0,
+        )
+        txn.counterparty_id = cp.id
+        db_session.commit()
+
+        result = invoice_service.match_transaction(
+            db_session, inv.id, txn.id, matched_by="admin@test.com"
+        )
+
+        assert result["invoice_id"] == inv.id
+        assert result["transaction_id"] == txn.id
+        assert result["journal_entry_id"] is not None
+        assert result["amount_applied"] == 800.0
+        assert result["invoice_status"] == InvoiceStatus.PAID.value
+
+        db_session.refresh(txn)
+        assert txn.status == TransactionStatus.MATCHED
+        assert txn.reconciled_journal_entry_id == result["journal_entry_id"]
+
+    def test_manual_partial_match_sets_partially_paid(
+        self, db_session, test_entity, test_accounts, test_bank_account
+    ):
+        """Partial manual match transitions invoice to PARTIALLY_PAID."""
+        from src.services.invoice_service import invoice_service
+        from src.models.invoice import InvoiceStatus
+
+        cp = _make_counterparty(db_session, "Partial Manual Vendor")
+        inv = _make_invoice(
+            db_session, test_entity.id, cp.id,
+            total_amount=1000.0, currency="SGD",
+        )
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="PARTIAL PAYMENT", amount=-400.0,
+        )
+        txn.counterparty_id = cp.id
+        db_session.commit()
+
+        result = invoice_service.match_transaction(db_session, inv.id, txn.id)
+        assert result["invoice_status"] == InvoiceStatus.PARTIALLY_PAID.value
+        assert result["amount_applied"] == 400.0
+
+    def test_manual_match_rejects_already_matched_transaction(
+        self, db_session, test_entity, test_accounts, test_bank_account
+    ):
+        """Raises BadRequestError if transaction is already MATCHED."""
+        from src.services.invoice_service import invoice_service
+        from src.models.transaction import TransactionStatus
+        from src.utils.errors import BadRequestError
+
+        cp = _make_counterparty(db_session, "Double Match Vendor")
+        inv = _make_invoice(
+            db_session, test_entity.id, cp.id,
+            total_amount=500.0, currency="SGD",
+        )
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="ALREADY DONE", amount=-500.0,
+        )
+        txn.status = TransactionStatus.MATCHED
+        txn.counterparty_id = cp.id
+        db_session.commit()
+
+        with pytest.raises(BadRequestError, match="already matched"):
+            invoice_service.match_transaction(db_session, inv.id, txn.id)
+
+    def test_manual_match_rejects_incoming_transaction(
+        self, db_session, test_entity, test_accounts, test_bank_account
+    ):
+        """Raises BadRequestError if transaction amount is positive (incoming)."""
+        from src.services.invoice_service import invoice_service
+        from src.utils.errors import BadRequestError
+
+        cp = _make_counterparty(db_session, "Incoming Vendor")
+        inv = _make_invoice(
+            db_session, test_entity.id, cp.id,
+            total_amount=500.0, currency="SGD",
+        )
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="INCOMING TXN", amount=500.0,  # positive
+        )
+        txn.counterparty_id = cp.id
+        db_session.commit()
+
+        with pytest.raises(BadRequestError, match="outgoing"):
+            invoice_service.match_transaction(db_session, inv.id, txn.id)
+
+    def test_manual_match_rejects_overpayment(
+        self, db_session, test_entity, test_accounts, test_bank_account
+    ):
+        """Raises BadRequestError if payment exceeds invoice remaining by >2%."""
+        from src.services.invoice_service import invoice_service
+        from src.utils.errors import BadRequestError
+
+        cp = _make_counterparty(db_session, "Overpay Vendor")
+        inv = _make_invoice(
+            db_session, test_entity.id, cp.id,
+            total_amount=500.0, currency="SGD",
+        )
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="OVERPAY TXN", amount=-600.0,  # 20% over
+        )
+        txn.counterparty_id = cp.id
+        db_session.commit()
+
+        with pytest.raises(BadRequestError, match="exceeds"):
+            invoice_service.match_transaction(db_session, inv.id, txn.id)

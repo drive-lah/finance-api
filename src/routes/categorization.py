@@ -36,6 +36,7 @@ def run_categorization():
             db=db,
             entity_id=run_request.entity_id,
             bank_account_id=run_request.bank_account_id,
+            rule_id=run_request.rule_id,
             limit=run_request.limit if run_request.limit is not None else 100,
         )
 

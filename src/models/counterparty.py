@@ -63,6 +63,18 @@ class FinanceCounterparty(Base):
     # Accounting default
     default_account_code: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
 
+    # Known alternate bank description strings for enrichment matching.
+    # e.g. ["AWS PAYMENTS", "AMAZON WEB SERVICES"] for counterparty "Amazon Web Services"
+    # L1 enrichment checks these aliases alongside the canonical name.
+    aliases: Mapped[Optional[list]] = mapped_column(
+        JSON,
+        nullable=True,
+        comment="Alternate bank description strings for L1 enrichment matching"
+    )
+
+    # Verification — False for auto-created vendors pending finance confirmation
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
     # Default billing/payment currency (null = entity base currency)
     currency: Mapped[Optional[str]] = mapped_column(String(3), nullable=True)
 
@@ -98,6 +110,7 @@ class FinanceCounterparty(Base):
             "is_gst_registered": self.is_gst_registered,
             "payment_terms_days": self.payment_terms_days,
             "default_account_code": self.default_account_code,
+            "aliases": self.aliases or [],
             "currency": self.currency,
             "notes": self.notes,
             "status": self.status,

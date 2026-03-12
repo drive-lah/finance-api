@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from src.models.invoice import FinanceInvoice, InvoiceStatus
 from src.models.contract import FinanceAmortizationSchedule, FinanceContract, FinanceApprovalRule
+from src.models.counterparty import FinanceCounterparty
 from src.models.schemas import InvoiceCreate, InvoiceUpdate
 from src.services.journal_service import journal_service
 from src.utils.errors import NotFoundError
@@ -28,6 +29,11 @@ AP_ACCOUNT_CODE = "2000"
 PREPAID_ACCOUNT_CODE = "1200"
 # GST / VAT input tax credit (recoverable on purchases)
 GST_INPUT_ACCOUNT_CODE = "1350"
+
+
+def _invoice_dict(invoice: "FinanceInvoice") -> dict:
+    from src.models.schemas import InvoiceResponse
+    return InvoiceResponse.model_validate(invoice).model_dump()
 
 
 def _months_between(start: date, end: date) -> int:
@@ -108,17 +114,34 @@ class InvoiceService:
             net_amount=data.net_amount,
             tax_amount=data.tax_amount,
             currency=data.currency,
-            contra_account_code=data.contra_account_code,
             service_period_start=data.service_period_start,
             service_period_end=data.service_period_end,
             uploaded_by=data.uploaded_by,
             notes=data.notes,
             pdf_s3_key=data.pdf_s3_key,
             pdf_content_hash=data.pdf_content_hash,
+            new_vendor=data.new_vendor,
             status=InvoiceStatus.DRAFT.value,
         )
 
-        # Try contract matching if counterparty is set but contract_id is not
+        # ── COA priority: DB counterparty → contract → AI suggestion ──
+        coa_code: Optional[str] = None
+        coa_source: Optional[str] = None
+
+        # 1. Counterparty default_account_code
+        if data.counterparty_id:
+            cp = db.get(FinanceCounterparty, data.counterparty_id)
+            if cp and cp.default_account_code:
+                coa_code = cp.default_account_code
+                coa_source = "db"
+
+        # 2. Contract COA (after contract matching below)
+        # will be applied post-match
+
+        # 3. AI suggestion passed in contra_account_code
+        ai_coa = data.contra_account_code
+
+        # ── Contract matching ──
         if data.counterparty_id and not data.contract_id:
             from src.services.contract_service import contract_service
             contract = contract_service.find_for_invoice(
@@ -127,8 +150,17 @@ class InvoiceService:
             if contract:
                 invoice.contract_id = contract.id
                 invoice.contract_matched = True
-                if not invoice.contra_account_code and contract.coa_account_code:
-                    invoice.contra_account_code = contract.coa_account_code
+                if not coa_code and contract.coa_account_code:
+                    coa_code = contract.coa_account_code
+                    coa_source = "contract"
+
+        # 4. Fall back to AI suggestion
+        if not coa_code and ai_coa:
+            coa_code = ai_coa
+            coa_source = "ai"
+
+        invoice.contra_account_code = coa_code
+        invoice.coa_source = coa_source
 
         db.add(invoice)
         try:
@@ -163,7 +195,7 @@ class InvoiceService:
         db.refresh(invoice)
         return invoice
 
-    def approve(self, db: Session, invoice_id: int, approved_by: str) -> FinanceInvoice:
+    def approve(self, db: Session, invoice_id: int, approved_by: str, contra_account_code: Optional[str] = None) -> FinanceInvoice:
         """
         Approve an invoice, creating the corresponding journal entry.
 
@@ -179,11 +211,16 @@ class InvoiceService:
                 f"Only draft or pending_approval invoices can be approved."
             )
 
+        # Approver can provide / override the COA code at time of approval
+        if contra_account_code:
+            invoice.contra_account_code = contra_account_code
+            invoice.coa_source = "manual"
+
         if not invoice.contra_account_code:
             from src.utils.errors import BadRequestError
             raise BadRequestError(
                 "Cannot approve invoice without a contra_account_code. "
-                "Set the expense account before approving."
+                "Provide the expense account in the approval request."
             )
 
         total = float(invoice.total_amount)
@@ -320,35 +357,206 @@ class InvoiceService:
         counterparty_id: int,
         amount: float,
         currency: str,
+        description: str = "",
+        reference_number: str = "",
+        transaction_date: Optional[date] = None,
     ) -> Optional[FinanceInvoice]:
         """
-        Find the oldest open invoice for a counterparty matching the payment amount.
+        Find the best open invoice to knock off for a counterparty payment.
 
-        Used by the AP knock-off phase of the categorization engine.
-        Matches within +/-2% tolerance to handle FX rounding.
+        Ranked matching (first match wins in priority order):
+          1. Reference match  — invoice_number appears in bank description or reference_number
+          2. Exact amount     — payment ≈ remaining balance (±2% for FX rounding)
+          3. Partial payment  — payment < remaining (accepted; creates PARTIALLY_PAID record)
+
+        Within each tier, oldest invoice (by invoice_date, then id) wins (FIFO convention).
+
+        Date constraint: invoices dated after transaction_date are excluded — a payment
+        cannot precede the invoice it settles.
         """
         open_statuses = (InvoiceStatus.APPROVED.value, InvoiceStatus.PARTIALLY_PAID.value)
 
-        invoices = (
+        query = (
             db.query(FinanceInvoice)
             .filter(
                 FinanceInvoice.counterparty_id == counterparty_id,
                 FinanceInvoice.currency == currency,
                 FinanceInvoice.status.in_(open_statuses),
             )
-            .order_by(FinanceInvoice.invoice_date.asc(), FinanceInvoice.id.asc())
-            .all()
         )
+        if transaction_date is not None:
+            query = query.filter(FinanceInvoice.invoice_date <= transaction_date)
 
+        invoices = query.order_by(FinanceInvoice.invoice_date.asc(), FinanceInvoice.id.asc()).all()
+
+        desc_upper = (description or "").upper()
+        ref_upper = (reference_number or "").upper()
+
+        # Tier 1: reference match — invoice_number found in bank text
         for inv in invoices:
             remaining = float(inv.total_amount) - float(inv.amount_paid)
             if remaining <= 0:
                 continue
-            tolerance = remaining * 0.02
-            if abs(amount - remaining) <= tolerance:
+            if inv.invoice_number:
+                inv_num_upper = inv.invoice_number.upper()
+                if inv_num_upper and (
+                    inv_num_upper in desc_upper or inv_num_upper in ref_upper
+                ):
+                    return inv
+
+        # Tier 2: exact amount match (payment ≈ remaining ±2%)
+        for inv in invoices:
+            remaining = float(inv.total_amount) - float(inv.amount_paid)
+            if remaining <= 0:
+                continue
+            if abs(amount - remaining) <= remaining * 0.02:
+                return inv
+
+        # Tier 3: partial payment (payment < remaining, more than zero)
+        for inv in invoices:
+            remaining = float(inv.total_amount) - float(inv.amount_paid)
+            if remaining <= 0:
+                continue
+            if 0 < amount < remaining * 1.02:
                 return inv
 
         return None
+
+    def get_open_for_match(
+        self,
+        db: Session,
+        counterparty_id: int,
+        currency: str,
+        transaction_date: Optional[date] = None,
+    ) -> list[FinanceInvoice]:
+        """
+        Return all open invoices for a counterparty that are eligible for manual matching.
+
+        Ordered oldest-first. Optionally filtered to invoices dated on or before
+        transaction_date (same date-constraint as auto-match).
+        """
+        open_statuses = (InvoiceStatus.APPROVED.value, InvoiceStatus.PARTIALLY_PAID.value)
+
+        query = (
+            db.query(FinanceInvoice)
+            .filter(
+                FinanceInvoice.counterparty_id == counterparty_id,
+                FinanceInvoice.currency == currency,
+                FinanceInvoice.status.in_(open_statuses),
+            )
+        )
+        if transaction_date is not None:
+            query = query.filter(FinanceInvoice.invoice_date <= transaction_date)
+
+        return query.order_by(FinanceInvoice.invoice_date.asc(), FinanceInvoice.id.asc()).all()
+
+    def match_transaction(
+        self,
+        db: Session,
+        invoice_id: int,
+        transaction_id: int,
+        matched_by: str = "manual",
+    ) -> dict:
+        """
+        Manually match a bank transaction against an open invoice.
+
+        Performs the same work as the auto AP knock-off:
+          - Creates payment JE: Dr 2000 AP / Cr bank_coa_code
+          - Calls record_payment to update invoice.amount_paid and status
+          - Marks transaction → MATCHED, links JE
+
+        Raises BadRequestError if the transaction is already matched, not outgoing,
+        or the invoice is not open.
+        Raises NotFoundError if either record does not exist.
+        """
+        from datetime import datetime, UTC
+        from src.models.transaction import FinanceTransaction, TransactionStatus
+        from src.models.bank_account import FinanceBankAccount
+        from src.utils.errors import BadRequestError
+        from src.services.journal_service import journal_service
+
+        invoice = self.get_by_id(db, invoice_id)
+        txn = db.get(FinanceTransaction, transaction_id)
+        if not txn:
+            raise NotFoundError(f"Transaction with ID {transaction_id} not found")
+
+        open_statuses = (InvoiceStatus.APPROVED.value, InvoiceStatus.PARTIALLY_PAID.value)
+        if invoice.status not in open_statuses:
+            raise BadRequestError(
+                f"Invoice {invoice_id} is not open for payment (status: {invoice.status})."
+            )
+
+        if txn.status == TransactionStatus.MATCHED:
+            raise BadRequestError(
+                f"Transaction {transaction_id} is already matched."
+            )
+
+        amount = float(txn.amount) if txn.amount is not None else 0.0
+        if amount >= 0:
+            raise BadRequestError(
+                "Only outgoing payments (negative amount) can be matched against AP invoices."
+            )
+
+        abs_amount = abs(amount)
+        remaining = float(invoice.total_amount) - float(invoice.amount_paid)
+        if remaining <= 0:
+            raise BadRequestError(
+                f"Invoice {invoice_id} has no remaining balance."
+            )
+        if abs_amount > remaining * 1.02:
+            raise BadRequestError(
+                f"Payment amount {abs_amount} exceeds invoice remaining balance "
+                f"{remaining:.2f} (>2% over). Use a credit note for overpayments."
+            )
+
+        bank_account = db.get(FinanceBankAccount, txn.bank_account_id)
+        if not bank_account or not bank_account.coa_account_code:
+            raise BadRequestError(
+                f"Bank account for transaction {transaction_id} has no COA code set."
+            )
+
+        # Dr 2000 AP / Cr Bank
+        inv_ref = f"Invoice {invoice.invoice_number or invoice.id}"
+        entry = journal_service.create(
+            db=db,
+            entity_id=bank_account.entity_id,
+            entry_date=txn.transaction_date,
+            description=f"AP Payment ({matched_by}): {inv_ref}",
+            lines=[
+                {
+                    "account_code": AP_ACCOUNT_CODE,
+                    "debit_amount": abs_amount,
+                    "credit_amount": 0.0,
+                    "description": inv_ref,
+                },
+                {
+                    "account_code": bank_account.coa_account_code,
+                    "debit_amount": 0.0,
+                    "credit_amount": abs_amount,
+                    "description": inv_ref,
+                },
+            ],
+        )
+        entry.source = "ap_manual_match"
+        db.flush()
+
+        self.record_payment(db, invoice.id, abs_amount)
+
+        now = datetime.now(UTC)
+        txn.status = TransactionStatus.MATCHED
+        txn.reconciled_journal_entry_id = entry.id
+        txn.matched_at = now
+        db.commit()
+
+        db.refresh(invoice)
+        db.refresh(txn)
+        return {
+            "invoice_id": invoice.id,
+            "transaction_id": txn.id,
+            "journal_entry_id": entry.id,
+            "amount_applied": abs_amount,
+            "invoice_status": invoice.status,
+        }
 
     def record_payment(self, db: Session, invoice_id: int, amount_paid: float) -> FinanceInvoice:
         """
@@ -425,6 +633,32 @@ class InvoiceService:
             }
 
         # --- Phase 3: approval rules ---
+        # Hard overrides — always require human even if rule says auto_approve
+        if invoice.new_vendor:
+            invoice.status = InvoiceStatus.PENDING_APPROVAL.value
+            db.commit()
+            db.refresh(invoice)
+            return {
+                "assessment": assessment["assessment"],
+                "message": assessment.get("message", ""),
+                "concerns": assessment.get("concerns", []),
+                "invoice": _invoice_dict(invoice),
+                "override_reason": "new_vendor",
+                "status": InvoiceStatus.PENDING_APPROVAL.value,
+            }
+        if invoice.coa_source in ("ai", None):
+            invoice.status = InvoiceStatus.PENDING_APPROVAL.value
+            db.commit()
+            db.refresh(invoice)
+            return {
+                "assessment": assessment["assessment"],
+                "message": assessment.get("message", ""),
+                "concerns": assessment.get("concerns", []),
+                "invoice": _invoice_dict(invoice),
+                "override_reason": "ai_coa",
+                "status": InvoiceStatus.PENDING_APPROVAL.value,
+            }
+
         new_status, auto_approved_by = self._evaluate_approval_rules(db, invoice)
 
         if new_status == InvoiceStatus.APPROVED.value:
@@ -445,6 +679,8 @@ class InvoiceService:
         }
 
     # ── private helpers ────────────────────────────────────────────────────────
+
+
 
     def _ai_contract_review(self, db: Session, invoice: FinanceInvoice) -> dict:
         """

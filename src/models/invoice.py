@@ -91,6 +91,16 @@ class FinanceInvoice(Base):
     ai_confidence_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     contract_matched: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
+    # Vendor + COA source tracking
+    new_vendor: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False,
+        comment="True when counterparty was auto-created from AI extraction",
+    )
+    coa_source: Mapped[Optional[str]] = mapped_column(
+        String(20), nullable=True,
+        comment="db | contract | ai | manual",
+    )
+
     # Approval fields
     approved_by: Mapped[Optional[str]] = mapped_column(
         String(100), nullable=True, comment="Slack user ID or name",

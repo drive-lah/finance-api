@@ -50,6 +50,7 @@ class CategorizationService:
         db: Session,
         entity_id: Optional[int] = None,
         bank_account_id: Optional[int] = None,
+        rule_id: Optional[int] = None,
         limit: int = 100,
     ) -> dict[str, Any]:
         """
@@ -81,6 +82,19 @@ class CategorizationService:
 
         if bank_account_id is not None:
             query = query.filter(FinanceTransaction.bank_account_id == bank_account_id)
+        elif rule_id is not None:
+            # When running a specific rule, scope transactions to the rule's bank_account_ids
+            # so Phase 1/1.5 don't process (and count) unrelated transactions.
+            rule_obj = db.query(FinanceCategorizationRule).filter(
+                FinanceCategorizationRule.id == rule_id
+            ).first()
+            if rule_obj and rule_obj.bank_account_ids:
+                try:
+                    allowed_ids = json.loads(rule_obj.bank_account_ids)
+                    if allowed_ids:
+                        query = query.filter(FinanceTransaction.bank_account_id.in_(allowed_ids))
+                except (json.JSONDecodeError, TypeError):
+                    pass
         elif entity_id is not None:
             bank_account_ids = [
                 row[0] for row in db.query(FinanceBankAccount.id).filter(
@@ -91,13 +105,29 @@ class CategorizationService:
 
         transactions = query.limit(limit).all()
 
-        # ── Phase 1: Counterparty enrichment ──────────────────────────────
-        self._enrich_counterparties(db, transactions)
-
         results: list[dict[str, Any]] = []
         categorized = 0
         uncategorized = 0
         errors = 0
+
+        # ── Step 0: Pair AWAITING_MATCH with incoming counter-transactions ─
+        # Before enrichment: check if any AWAITING_MATCH transactions are waiting
+        # for a bank account in our current scope. Pair them with matching PENDING
+        # transactions immediately, bypassing all other phases.
+        step0_handled_ids: set[int] = set()
+        if transactions:
+            in_scope_ba_ids = {t.bank_account_id for t in transactions}
+            step0_handled_ids, step0_results = self._pair_awaiting_matches(
+                db, in_scope_ba_ids, transactions
+            )
+            results.extend(step0_results)
+            categorized += len(step0_handled_ids)
+
+        # Remove step0-handled transactions from further processing
+        transactions = [t for t in transactions if t.id not in step0_handled_ids]
+
+        # ── Phase 1: Counterparty enrichment ──────────────────────────────
+        self._enrich_counterparties(db, transactions)
 
         # ── Phase 1.5: AP Knock-off ────────────────────────────────────────
         # For any transaction whose counterparty was just enriched, check
@@ -107,13 +137,21 @@ class CategorizationService:
         ap_handled_ids: set[int] = self._try_ap_knockoff(db, transactions, results, categorized)
         categorized += len(ap_handled_ids)
 
+        # ── Phase 2.5: Payroll Knock-off ──────────────────────────────────
+        # Check whether any outgoing transaction matches an unmatched line in
+        # a posted payroll JE (net salary or CPF payment). If so, link the
+        # transaction to the payroll JE instead of running Phase 2 rules.
+        payroll_handled_ids: set[int] = self._try_payroll_knockoff(db, transactions, results)
+        categorized += len(payroll_handled_ids)
+
         # ── Phase 2: Accounting classification ───────────────────────────
-        rules = (
+        rules_query = (
             db.query(FinanceCategorizationRule)
             .filter(FinanceCategorizationRule.status == RuleStatus.ACTIVE)
-            .order_by(FinanceCategorizationRule.priority)
-            .all()
         )
+        if rule_id is not None:
+            rules_query = rules_query.filter(FinanceCategorizationRule.id == rule_id)
+        rules = rules_query.order_by(FinanceCategorizationRule.priority).all()
 
         # Pre-load counterparties that have a default_account_code for the default-account path
         from src.models.counterparty import FinanceCounterparty
@@ -125,8 +163,8 @@ class CategorizationService:
                 cp_map = {cp.id: cp for cp in cps}
 
         for transaction in transactions:
-            if transaction.id in ap_handled_ids:
-                continue  # already handled by AP knock-off
+            if transaction.id in ap_handled_ids or transaction.id in payroll_handled_ids:
+                continue  # already handled by AP or payroll knock-off
 
             try:
                 result = None
@@ -177,6 +215,150 @@ class CategorizationService:
         }
 
     # ------------------------------------------------------------------
+    # Step 0: Pair AWAITING_MATCH internal transfers
+    # ------------------------------------------------------------------
+
+    def _pair_awaiting_matches(
+        self,
+        db: Session,
+        in_scope_ba_ids: set[int],
+        pending_transactions: list[FinanceTransaction],
+    ) -> tuple[set[int], list[dict[str, Any]]]:
+        """
+        Attempt to complete pending AWAITING_MATCH internal transfers.
+
+        Looks for AWAITING_MATCH transactions where expected_counterpart_ba_id is
+        one of the bank accounts in the current scope. For each found, tries to
+        match a PENDING counter-transaction by amount (±2%) and date (±5 days).
+
+        On match: marks both MATCHED, links both to the existing JE, sets matched_at.
+
+        Returns: (set of pending_transaction IDs handled, list of result dicts)
+        """
+        from datetime import timedelta
+
+        handled_ids: set[int] = set()
+        results: list[dict[str, Any]] = []
+
+        # Find all AWAITING_MATCH transactions waiting for our BAs
+        awaiting = db.query(FinanceTransaction).filter(
+            FinanceTransaction.status == TransactionStatus.AWAITING_MATCH,
+            FinanceTransaction.expected_counterpart_ba_id.in_(in_scope_ba_ids),
+        ).all()
+
+        if not awaiting:
+            return handled_ids, results
+
+        # Build lookup: pending transactions keyed by bank_account_id
+        pending_by_ba: dict[int, list[FinanceTransaction]] = {}
+        for txn in pending_transactions:
+            pending_by_ba.setdefault(txn.bank_account_id, []).append(txn)
+
+        for waiting_txn in awaiting:
+            target_ba_id = waiting_txn.expected_counterpart_ba_id
+            candidates = pending_by_ba.get(target_ba_id, [])
+            if not candidates:
+                continue
+
+            waiting_amount = float(waiting_txn.amount)
+            abs_waiting = abs(waiting_amount)
+
+            counter = None
+            for candidate in candidates:
+                if candidate.id in handled_ids:
+                    continue  # already paired in this run
+                cand_amount = float(candidate.amount)
+                # Amounts should be opposite sign and roughly equal magnitude
+                if waiting_amount * cand_amount >= 0:
+                    continue  # same sign — not a counter
+                if abs_waiting == 0:
+                    continue
+                if abs(abs(cand_amount) - abs_waiting) / abs_waiting > 0.02:
+                    continue  # >2% difference
+                date_diff = abs((candidate.transaction_date - waiting_txn.transaction_date).days)
+                if date_diff > 5:
+                    continue
+                counter = candidate
+                break
+
+            if not counter:
+                continue
+
+            # Pair them
+            now = datetime.now(UTC)
+            je_id = waiting_txn.reconciled_journal_entry_id
+
+            waiting_txn.status = TransactionStatus.MATCHED
+            waiting_txn.matched_at = now
+            waiting_txn.expected_counterpart_ba_id = None  # cleared — no longer waiting
+
+            counter.status = TransactionStatus.MATCHED
+            counter.reconciled_journal_entry_id = je_id
+            counter.matched_at = now
+
+            db.commit()
+
+            handled_ids.add(counter.id)
+            results.append({
+                "transaction_id": counter.id,
+                "status": "categorized",
+                "rule_name": f"[step0:paired_with_txn_{waiting_txn.id}]",
+                "journal_entry_id": je_id,
+                "error": None,
+            })
+            results.append({
+                "transaction_id": waiting_txn.id,
+                "status": "categorized",
+                "rule_name": f"[step0:paired_with_txn_{counter.id}]",
+                "journal_entry_id": je_id,
+                "error": None,
+            })
+            logger.info(
+                f"Step 0: paired txn {waiting_txn.id} (AWAITING_MATCH on ba={waiting_txn.bank_account_id}) "
+                f"↔ txn {counter.id} (PENDING on ba={counter.bank_account_id}) via JE {je_id}"
+            )
+
+        return handled_ids, results
+
+    def _find_counter_transaction(
+        self,
+        db: Session,
+        txn: FinanceTransaction,
+        target_ba_id: int,
+    ) -> Optional[FinanceTransaction]:
+        """
+        Look for a PENDING counter-transaction on target_ba_id that mirrors txn.
+
+        Criteria: opposite sign, amount within ±2%, date within ±5 days.
+        Returns the best match or None.
+        """
+        from datetime import timedelta
+
+        abs_amount = abs(float(txn.amount))
+        if abs_amount == 0:
+            return None
+
+        date_low = txn.transaction_date - timedelta(days=5)
+        date_high = txn.transaction_date + timedelta(days=5)
+
+        candidates = db.query(FinanceTransaction).filter(
+            FinanceTransaction.bank_account_id == target_ba_id,
+            FinanceTransaction.status == TransactionStatus.PENDING,
+            FinanceTransaction.transaction_date.between(date_low, date_high),
+        ).all()
+
+        txn_amount = float(txn.amount)
+        for candidate in candidates:
+            cand_amount = float(candidate.amount)
+            if txn_amount * cand_amount >= 0:
+                continue  # same sign
+            if abs(abs(cand_amount) - abs_amount) / abs_amount > 0.02:
+                continue
+            return candidate
+
+        return None
+
+    # ------------------------------------------------------------------
     # Phase 1.5: AP Knock-off
     # ------------------------------------------------------------------
 
@@ -215,7 +397,13 @@ class CategorizationService:
             try:
                 abs_amount = abs(amount)
                 invoice = invoice_service.get_open_for_counterparty(
-                    db, txn.counterparty_id, abs_amount, txn.currency
+                    db,
+                    txn.counterparty_id,
+                    abs_amount,
+                    txn.currency,
+                    description=txn.description or "",
+                    reference_number=txn.reference_number or "",
+                    transaction_date=txn.transaction_date,
                 )
                 if not invoice:
                     continue
@@ -240,9 +428,10 @@ class CategorizationService:
 
                 invoice_service.record_payment(db, invoice.id, abs_amount)
 
+                now = datetime.now(UTC)
                 txn.status = TransactionStatus.MATCHED
                 txn.reconciled_journal_entry_id = je.id
-                txn.reconciled_at = datetime.now(UTC)
+                txn.matched_at = now
                 db.commit()
 
                 results.append({
@@ -265,7 +454,125 @@ class CategorizationService:
         return handled
 
     # ------------------------------------------------------------------
-    # Phase 1: Counterparty enrichment
+    # Phase 2.5: Payroll Knock-off
+    # ------------------------------------------------------------------
+
+    def _try_payroll_knockoff(
+        self,
+        db: Session,
+        transactions: list[FinanceTransaction],
+        results: list[dict[str, Any]],
+    ) -> set[int]:
+        """
+        Match outgoing bank transactions against open payroll run JEs.
+
+        For each outgoing (negative amount) transaction, check whether there is
+        a POSTED payroll run for the same entity where:
+          - net_payment_transaction_id is NULL and the amount matches net_amount (±2%)
+          - OR cpf_payment_transaction_id is NULL and the amount matches cpf_payable_amount (±2%)
+          - run_date is within ±7 days of the transaction date
+
+        On match:
+          - Links the transaction to the payroll JE (reconciled_journal_entry_id)
+          - Sets transaction status → MATCHED
+          - Updates the payroll run's net_ or cpf_payment_transaction_id
+
+        Returns set of transaction IDs handled (skip Phase 2 for these).
+        """
+        from src.models.payroll import FinancePayrollRun
+        from datetime import timedelta
+
+        handled: set[int] = set()
+
+        outgoing = [
+            t for t in transactions
+            if t.amount is not None and float(t.amount) < 0
+        ]
+        if not outgoing:
+            return handled
+
+        # Resolve entity_id for each bank account in one query
+        ba_ids = {t.bank_account_id for t in outgoing}
+        ba_entity_map: dict[int, int] = {
+            ba.id: ba.entity_id
+            for ba in db.query(FinanceBankAccount).filter(
+                FinanceBankAccount.id.in_(ba_ids)
+            ).all()
+        }
+
+        for txn in outgoing:
+            entity_id = ba_entity_map.get(txn.bank_account_id)
+            if not entity_id:
+                continue
+
+            abs_amount = abs(float(txn.amount))
+            txn_date = txn.transaction_date
+            date_low = txn_date - timedelta(days=7)
+            date_high = txn_date + timedelta(days=7)
+
+            try:
+                runs = db.query(FinancePayrollRun).filter(
+                    FinancePayrollRun.entity_id == entity_id,
+                    FinancePayrollRun.status == "POSTED",
+                    FinancePayrollRun.run_date.between(date_low, date_high),
+                ).all()
+
+                matched_run = None
+                match_type = None
+
+                for run in runs:
+                    # Check net salary slot first
+                    if run.net_payment_transaction_id is None:
+                        net = float(run.net_amount)
+                        if net > 0 and abs(abs_amount - net) / net <= 0.02:
+                            matched_run = run
+                            match_type = "net"
+                            break
+
+                    # Check CPF slot
+                    if run.cpf_payment_transaction_id is None:
+                        cpf = float(run.cpf_payable_amount)
+                        if cpf > 0 and abs(abs_amount - cpf) / cpf <= 0.02:
+                            matched_run = run
+                            match_type = "cpf"
+                            break
+
+                if not matched_run or not match_type:
+                    continue
+
+                now = datetime.now(UTC)
+                txn.status = TransactionStatus.MATCHED
+                txn.reconciled_journal_entry_id = matched_run.journal_entry_id
+                txn.matched_at = now
+
+                if match_type == "net":
+                    matched_run.net_payment_transaction_id = txn.id
+                else:
+                    matched_run.cpf_payment_transaction_id = txn.id
+
+                db.commit()
+
+                results.append({
+                    "transaction_id": txn.id,
+                    "status": "categorized",
+                    "rule_name": f"[payroll_knockoff:run_{matched_run.id}:{match_type}]",
+                    "journal_entry_id": matched_run.journal_entry_id,
+                    "error": None,
+                })
+                handled.add(txn.id)
+
+            except Exception as e:
+                logger.warning(
+                    f"Payroll knock-off check failed for transaction {txn.id}: {e}",
+                    exc_info=True,
+                )
+                db.rollback()
+                # Do not add to handled — let Phase 2 handle it normally
+
+        return handled
+
+    # ------------------------------------------------------------------
+    # Phase 1: Counterparty enrichment  (L1 → L2 → L3)
     # ------------------------------------------------------------------
 
     def _enrich_counterparties(
@@ -274,17 +581,28 @@ class CategorizationService:
         transactions: list[FinanceTransaction],
     ) -> None:
         """
-        Match each transaction's raw bank data against the counterparty directory.
+        Three-tier counterparty matching pipeline.
 
-        Matching strategy (in priority order, first match wins):
-          1. Exact: lower(cp.name) == lower(transaction.counterparty_name)
-          2. Substring: lower(cp.name) found inside lower(transaction.description)
-          3. Substring: lower(cp.name) found inside lower(transaction.counterparty_name)
+        L1 — Deterministic (exact / substring / alias):
+          Fast O(n×m) scan. Runs for every transaction.
+          Strategies (first match wins):
+            1. Exact: lower(cp.name) == lower(raw_counterparty_name)
+            2. Substring: lower(cp.name) in lower(description)
+            3. Substring: lower(cp.name) in lower(raw_counterparty_name)
+            4-6. Same three strategies against each alias in cp.aliases
 
-        On match: sets counterparty_id, counterparty_type, and overwrites
-        counterparty_name with the canonical name from the directory.
+        L2 — Fuzzy (rapidfuzz token_set_ratio ≥ L2_THRESHOLD):
+          Tolerates abbreviations, extra tokens, minor typos.
+          Matches raw_counterparty_name and description against cp.name and aliases.
+          Only runs on transactions that L1 could not match.
 
-        Transactions already linked (counterparty_id set) are skipped.
+        L3 — LLM (Claude haiku, single batched call):
+          Sends all remaining unmatched transactions to the LLM in one request.
+          The model chooses the best counterparty from the known list (or UNKNOWN).
+          Only runs when at least one transaction survived L1 and L2.
+
+        On any match: sets counterparty_id, counterparty_type, canonical name.
+        Transactions already linked (counterparty_id set) are always skipped.
         """
         from src.models.counterparty import FinanceCounterparty
 
@@ -300,41 +618,216 @@ class CategorizationService:
         if not counterparties:
             return
 
+        unmatched: list[FinanceTransaction] = []
+
         for txn in transactions:
             if txn.counterparty_id:
                 continue  # already linked
 
-            raw_cp = (txn.counterparty_name or "").lower().strip()
-            raw_desc = (txn.description or "").lower().strip()
-
-            matched = None
-            for cp in counterparties:
-                name_lower = cp.name.lower().strip()
-                if not name_lower:
-                    continue
-
-                # 1. Exact match on raw counterparty name from bank CSV
-                if raw_cp and raw_cp == name_lower:
-                    matched = cp
-                    break
-
-                # 2. Counterparty name appears as substring in transaction description
-                if name_lower in raw_desc:
-                    matched = cp
-                    break
-
-                # 3. Counterparty name appears as substring in raw counterparty field
-                if raw_cp and name_lower in raw_cp:
-                    matched = cp
-                    break
+            matched = self._match_l1(txn, counterparties)
+            if matched is None:
+                matched = self._match_l2(txn, counterparties)
 
             if matched:
                 txn.counterparty_id = matched.id
                 txn.counterparty_type = matched.type
-                txn.counterparty_name = matched.name  # canonical name
+                txn.counterparty_name = matched.name
+            else:
+                unmatched.append(txn)
+
+        # L3: batch LLM call for remaining unmatched transactions
+        if unmatched:
+            self._match_l3_batch(unmatched, counterparties)
 
         # Flush enrichments so the accounting phase sees the updated counterparty_ids
         db.flush()
+
+    # L2 fuzzy threshold: score must be ≥ this to accept a match (0-100)
+    L2_THRESHOLD = 88
+
+    def _match_l1(
+        self,
+        txn: FinanceTransaction,
+        counterparties: list,
+    ) -> Optional[Any]:
+        """
+        L1: deterministic exact/substring matching against name and aliases.
+        Returns the first matching counterparty or None.
+        """
+        raw_cp = (txn.counterparty_name or "").lower().strip()
+        raw_desc = (txn.description or "").lower().strip()
+
+        for cp in counterparties:
+            name_lower = cp.name.lower().strip()
+            if not name_lower:
+                continue
+
+            # 1. Exact match on raw counterparty name from bank CSV
+            if raw_cp and raw_cp == name_lower:
+                return cp
+            # 2. Counterparty name as substring in description
+            if name_lower in raw_desc:
+                return cp
+            # 3. Counterparty name as substring in raw counterparty field
+            if raw_cp and name_lower in raw_cp:
+                return cp
+
+            # 4-6. Same strategies against each alias
+            for alias in [a.lower().strip() for a in (cp.aliases or []) if a]:
+                if not alias:
+                    continue
+                if raw_cp and raw_cp == alias:
+                    return cp
+                if alias in raw_desc:
+                    return cp
+                if raw_cp and alias in raw_cp:
+                    return cp
+
+        return None
+
+    def _match_l2(
+        self,
+        txn: FinanceTransaction,
+        counterparties: list,
+    ) -> Optional[Any]:
+        """
+        L2: fuzzy matching using rapidfuzz token_set_ratio.
+
+        token_set_ratio handles extra tokens and word re-ordering well, making
+        it suitable for bank descriptions like "GRAB SG-TXN-9182736" matching
+        against counterparty name "Grab Singapore".
+
+        Returns the highest-scoring counterparty above L2_THRESHOLD, or None.
+        """
+        try:
+            from rapidfuzz import fuzz
+        except ImportError:
+            logger.warning("rapidfuzz not installed — L2 fuzzy matching skipped")
+            return None
+
+        raw_cp = (txn.counterparty_name or "").strip()
+        raw_desc = (txn.description or "").strip()
+
+        best_cp = None
+        best_score = 0
+
+        for cp in counterparties:
+            # Gather all strings to match against for this counterparty
+            candidates = [cp.name] + [a for a in (cp.aliases or []) if a]
+
+            for candidate in candidates:
+                for raw in [s for s in [raw_desc, raw_cp] if s]:
+                    score = fuzz.token_set_ratio(raw.lower(), candidate.lower())
+                    if score > best_score:
+                        best_score = score
+                        best_cp = cp
+
+        if best_score >= self.L2_THRESHOLD:
+            logger.debug(
+                f"L2 match: txn {txn.id} → '{best_cp.name}' "
+                f"(score={best_score}, desc='{txn.description[:50]}')"
+            )
+            return best_cp
+
+        return None
+
+    def _match_l3_batch(
+        self,
+        unmatched: list[FinanceTransaction],
+        counterparties: list,
+    ) -> None:
+        """
+        L3: batch LLM enrichment for transactions that survived L1 and L2.
+
+        Sends a single Claude API call with all unmatched transaction descriptions
+        and the full counterparty directory. The model returns a JSON mapping of
+        transaction ID → counterparty ID (or null for UNKNOWN).
+
+        Skips gracefully on API errors — transactions simply remain unenriched.
+        """
+        import os
+        import json as json_lib
+
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        if not api_key:
+            logger.debug("ANTHROPIC_API_KEY not set — L3 LLM enrichment skipped")
+            return
+
+        try:
+            import anthropic
+        except ImportError:
+            logger.warning("anthropic package not installed — L3 LLM enrichment skipped")
+            return
+
+        # Build the counterparty directory for the prompt
+        cp_list = "\n".join(
+            f"  {cp.id}: {cp.name} ({cp.type})"
+            for cp in counterparties
+        )
+
+        # Build the transaction list for the prompt
+        txn_list = "\n".join(
+            f"  {txn.id}: desc=\"{txn.description}\" cp_field=\"{txn.counterparty_name or ''}\""
+            for txn in unmatched
+        )
+
+        prompt = f"""You are a financial data enrichment engine. Match each bank transaction to the most likely counterparty from the known directory, based on the raw bank description and counterparty name field.
+
+KNOWN COUNTERPARTIES (id: name (type)):
+{cp_list}
+
+TRANSACTIONS TO MATCH (id: desc="..." cp_field="..."):
+{txn_list}
+
+RULES:
+- Return ONLY a JSON object mapping transaction IDs (as strings) to counterparty IDs (as integers) or null.
+- Use null if no counterparty is a reasonable match.
+- Be conservative — only match when you are confident (>80%).
+- Do not invent or guess counterparties not in the list.
+
+Example output format:
+{{"123": 5, "124": null, "125": 12}}
+
+Return only the JSON object, no explanation."""
+
+        try:
+            client = anthropic.Anthropic(api_key=api_key)
+            message = client.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=512,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            raw_response = message.content[0].text.strip()
+
+            # Parse the JSON response
+            # Strip markdown code fences if present
+            if raw_response.startswith("```"):
+                raw_response = raw_response.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+
+            mapping: dict = json_lib.loads(raw_response)
+
+            # Build a lookup for quick access
+            cp_by_id = {cp.id: cp for cp in counterparties}
+
+            matched_count = 0
+            for txn in unmatched:
+                cp_id = mapping.get(str(txn.id))
+                if cp_id and isinstance(cp_id, int) and cp_id in cp_by_id:
+                    cp = cp_by_id[cp_id]
+                    txn.counterparty_id = cp.id
+                    txn.counterparty_type = cp.type
+                    txn.counterparty_name = cp.name
+                    matched_count += 1
+                    logger.info(
+                        f"L3 match: txn {txn.id} → '{cp.name}' "
+                        f"(desc='{txn.description[:50]}')"
+                    )
+
+            logger.info(f"L3 enrichment: {matched_count}/{len(unmatched)} transactions matched")
+
+        except Exception as e:
+            logger.warning(f"L3 LLM enrichment failed: {e}", exc_info=True)
+            # Fail gracefully — transactions remain unenriched, Phase 2 rules may still match them
 
     # ------------------------------------------------------------------
     # Phase 2A: Default account fallback
@@ -380,7 +873,7 @@ class CategorizationService:
 
         transaction.status = TransactionStatus.MATCHED
         transaction.reconciled_journal_entry_id = entry.id
-        transaction.reconciled_at = datetime.now(UTC)
+        transaction.matched_at = datetime.now(UTC)
 
         db.commit()
 
@@ -524,17 +1017,48 @@ class CategorizationService:
         if rule.counterparty_type:
             transaction.counterparty_type = rule.counterparty_type
 
-        # Categorization engine → MATCHED (awaiting human/AI confirmation → RECONCILED)
-        transaction.status = TransactionStatus.MATCHED
-        transaction.reconciled_journal_entry_id = journal_entry.id
-        transaction.reconciled_at = datetime.now(UTC)
+        # For internal transfers: try to immediately pair with counter-transaction.
+        # If counter not found yet → AWAITING_MATCH; the counter-transaction will
+        # complete the pair when it arrives and Step 0 runs next time.
+        if rule.category == TransactionCategory.INTERNAL_TRANSFER and rule.target_bank_account_id:
+            counter_txn = self._find_counter_transaction(
+                db, transaction, rule.target_bank_account_id
+            )
+            if counter_txn:
+                # Pair both sides right now
+                now = datetime.now(UTC)
+                transaction.status = TransactionStatus.MATCHED
+                transaction.reconciled_journal_entry_id = journal_entry.id
+                transaction.matched_at = now
+                counter_txn.status = TransactionStatus.MATCHED
+                counter_txn.reconciled_journal_entry_id = journal_entry.id
+                counter_txn.matched_at = now
+                logger.info(
+                    f"Internal transfer paired: txn {transaction.id} ↔ txn {counter_txn.id} "
+                    f"via JE {journal_entry.id}"
+                )
+            else:
+                # Counter not yet imported — wait
+                transaction.status = TransactionStatus.AWAITING_MATCH
+                transaction.reconciled_journal_entry_id = journal_entry.id
+                transaction.expected_counterpart_ba_id = rule.target_bank_account_id
+                logger.info(
+                    f"Internal transfer awaiting counter: txn {transaction.id} "
+                    f"waiting for ba={rule.target_bank_account_id}"
+                )
+        else:
+            # Normal expense/deposit → MATCHED immediately
+            transaction.status = TransactionStatus.MATCHED
+            transaction.reconciled_journal_entry_id = journal_entry.id
+            transaction.matched_at = datetime.now(UTC)
 
         self._apply_tags(db, transaction.id, rule.tag_ids)
         db.commit()
 
+        status_label = "awaiting_match" if transaction.status == TransactionStatus.AWAITING_MATCH else "categorized"
         return {
             "transaction_id": transaction.id,
-            "status": "categorized",
+            "status": status_label,
             "rule_name": rule.name,
             "journal_entry_id": journal_entry.id,
             "error": None,

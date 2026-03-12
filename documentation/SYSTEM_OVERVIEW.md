@@ -1,7 +1,7 @@
 # Drive Lah Finance System — System Overview
 
-**Version:** 2.3
-**Date:** 2026-03-10
+**Version:** 2.5
+**Date:** 2026-03-12
 **Status:** Living Document
 
 ---
@@ -287,9 +287,9 @@ The Wise API key itself is stored in the `WISE_API_KEY` environment variable, no
 
 ### 3.3 Categorization Engine
 
-**Status: Built** (331 tests passing)
+**Status: Built** (>330 tests passing)
 
-The categorization engine automatically converts bank transactions into journal entries by applying configurable rules. It is the core of the finance system — without it, every bank transaction would need manual journal entry creation.
+The categorization engine automatically converts bank transactions into journal entries by applying configurable rules and AI-assisted counterparty enrichment. It is the core of the finance system — without it, every bank transaction would need manual journal entry creation.
 
 **How it works:**
 
@@ -300,16 +300,37 @@ Transactions created (status: Pending)
        ↓
 POST /api/finance/categorization/run
        ↓
-Engine loads active rules (ordered by priority)
+─── STEP 0: Internal Transfer Pairing ───────────────────
+For each Pending transaction in scope whose expected_counterpart_ba_id
+matches a known AWAITING_MATCH transaction:
+  └── Pair both sides → both status → Matched
        ↓
-For each Pending transaction:
+─── PHASE 1: Counterparty Enrichment ────────────────────
+For each Pending transaction (not handled in Step 0):
+  ├── L1 (deterministic): exact/substring match on counterparty name + aliases
+  ├── L2 (fuzzy): rapidfuzz token_set_ratio ≥ 88 threshold
+  └── L3 (LLM): single batched Claude Haiku call for remaining unmatched
+       ↓
+─── PHASE 1.5: AP Knock-off ─────────────────────────────
+For enriched outgoing transactions with a counterparty_id:
+  └── Find open AP invoices (same currency, amount ±2%, oldest first)
+  └── Create JE: Dr 2000 AP / Cr bank; record partial/full payment
+       ↓
+─── PHASE 2: Rules Engine ───────────────────────────────
+Engine loads active rules (ordered by priority)
+For each remaining Pending transaction:
   ├── Match against rules (AND logic on all non-null criteria)
   ├── First matching rule wins
-  ├── IF MATCHED:
-  │   ├── Create journal entry (debit/credit based on amount sign)
+  ├── IF MATCHED (expense/deposit):
+  │   ├── Create journal entry
   │   ├── Update transaction counterparty (name, type)
   │   ├── Apply tags from rule
-  │   └── Set status → Matched, link to JE
+  │   └── Set status → Matched, link to JE, stamp matched_at
+  ├── IF MATCHED (internal_transfer):
+  │   ├── Create journal entry (outgoing side only)
+  │   ├── Try to find counter-transaction already in DB
+  │   ├── IF FOUND: both sides → Matched, both linked to JE
+  │   └── IF NOT FOUND: status → Awaiting Match, expected_counterpart_ba_id set
   └── IF NO MATCH:
       └── Leave as Pending (manual review queue)
 ```
@@ -319,10 +340,42 @@ For each Pending transaction:
 | Status | Trigger | Who |
 |--------|---------|-----|
 | `Pending` | Transaction imported from CSV or Stripe | System |
-| `Matched` | Categorization rule applied, journal entry created | System (categorization engine) |
-| `Reconciled` | Confirmed correct | Human reviewer (near-term); AI agent (future) |
+| `Awaiting Match` | Internal transfer rule fired but counter-transaction not yet in DB | System (categorization engine) |
+| `Matched` | Rule applied or both sides of internal transfer paired; journal entry created | System (categorization engine) |
+| `Needs Review` | Reserved for future use (flagged by AI, needs human attention) | System |
+| `Reconciled` | Matched transaction confirmed correct | Human reviewer |
 
 Transactions that remain `Pending` after categorization runs had no matching rule — they sit in a manual review queue.
+
+**Internal Transfer AWAITING_MATCH Flow:**
+
+```
+Day 1: OCBC 3001 sends $5,000 to Wise
+  → Rule fires: INTERNAL_TRANSFER, target = Wise account
+  → JE created (Dr Wise bank / Cr OCBC 3001 bank)
+  → OCBC 3001 transaction: status = Awaiting Match, expected_counterpart_ba_id = Wise ba_id
+
+Day 2: Wise import runs → incoming $5,000 arrives
+  → categorization/run called
+  → Step 0: finds AWAITING_MATCH on OCBC 3001 expecting Wise
+  → finds Pending Wise transaction (±2% amount, ±5 days)
+  → Both sides → Matched, both linked to same JE
+```
+
+**Counterparty Enrichment Pipeline (Phase 1):**
+
+The engine runs three enrichment tiers on every Pending transaction before rule matching. The goal is to link a `counterparty_id` to the transaction so the AP knock-off and rule matching have access to the full counterparty record.
+
+| Tier | Method | Threshold | Notes |
+|------|--------|-----------|-------|
+| **L1** | Deterministic substring/exact match | Exact | Checks `description` and `counterparty_name` against counterparty `name` + `aliases` array (6 strategies) |
+| **L2** | Fuzzy (`rapidfuzz.fuzz.token_set_ratio`) | ≥ 88 | Handles abbreviations, truncated names (e.g. "GRAB SG-9182736" → "Grab Singapore") |
+| **L3** | Claude Haiku (batched, single API call) | AI judgment | Only runs when `ANTHROPIC_API_KEY` is set; all unmatched transactions sent in one prompt; returns `{txn_id → cp_id | null}` |
+
+**Self-Improving Aliases (on transaction approval):**
+When a reviewer approves a Matched transaction (`POST /transactions/:id/approve`), the system calls `_maybe_add_alias()`:
+- If the transaction's raw bank `description` differs from the counterparty's canonical `name` and is not already in `aliases`, it is added automatically
+- Next time the same bank description arrives, L1 enrichment matches it directly (no L2/L3 needed)
 
 **Rule Categories:**
 
@@ -503,52 +556,139 @@ For income/revenue transactions the output tax account (2500) is used instead of
 
 ### 3.5 Invoice Handling — Accounts Payable
 
-**Status: Built (migration 016)**
+**Status: Built (migrations 016–019)**
 
-AI-led invoice intake: upload a PDF → Claude Haiku extracts all fields → human reviews and creates → approve. Approved invoices auto-create a journal entry. Bank transactions are matched against open AP invoices by the categorization engine (AP knock-off, Phase 1.5).
+AI-led invoice intake: upload a PDF → duplicate check → Claude Haiku extracts fields → vendor matching → human reviews → submit (AI contract gate) → approve (COA confirmed by approver). Approved invoices auto-create a journal entry. Bank transactions matched against open AP invoices by the categorization engine (AP knock-off, Phase 1.5).
 
-**Flow:**
-1. PDF uploaded via admin UI → `/api/finance/invoices/extract` extracts fields with AI and stores PDF to S3
-2. Human reviews extracted data (vendor, amount, COA, service period) and clicks Create
-3. Invoice created in `draft` status; auto-matched to a contract if counterparty + amount align
-4. Approval (manual in UI or auto via approval rules) → JE created: Dr contra_account / Cr 2000 AP
-5. Amortization path: if service period > 1 month → Dr 1200 Prepaid / Cr 2000 AP; monthly schedule generated
-6. AP knock-off: categorization engine matches outgoing bank transactions to open invoices → Dr 2000 AP / Cr Bank
+**Full Flow:**
+1. PDF uploaded → SHA-256 hash checked against `pdf_content_hash` — **409 if exact duplicate**
+2. `pdfplumber` extracts text → Claude Haiku returns vendor, amounts, dates, GST, entity hint, COA suggestion
+3. **Vendor matching pipeline** (see below) → counterparty auto-matched or auto-created
+4. Ops person reviews extracted data (entity, dates, amounts, GST, service period — **service period required**) and clicks Create
+5. Invoice created in `draft` — COA assigned via priority chain (see below); `new_vendor` flag set if auto-created vendor
+6. Submit (`POST /submit`) → AI contract review gate: compares invoice vs known contract, returns `pass | flag | no_contract`; if `flag`, human must confirm before proceeding
+7. After submit: approval routing via approval rules. **Override rules apply first:**
+   - `new_vendor = true` → always `pending_approval` regardless of rules
+   - `coa_source = 'ai' or null` → always `pending_approval` regardless of rules
+   - Otherwise: first matching approval rule wins (`auto_approve` or `require_approval`)
+8. **Approval** (manual in UI) → approver confirms/changes COA → JE created
+9. Amortization path: service period > 1 month → Dr 1200 Prepaid / Cr 2000 AP; monthly schedule generated
+10. AP knock-off (auto): categorization engine Phase 1.5 matches outgoing bank transactions → Dr 2000 AP / Cr Bank (see AP Knock-off section below)
+11. AP knock-off (manual): ops user can manually link any unmatched transaction to an open invoice via `POST /invoices/:id/match-transaction`
 
-**Invoice status workflow:**
+**Invoice Status Workflow:**
 ```
-draft → pending_approval → approved → partially_paid / paid
+draft → [submit] → pending_approval → approved → partially_paid / paid
+draft → [submit + auto_approve rule] → approved
 draft / pending_approval → rejected
 draft / pending_approval / rejected → void
 ```
 
-**Data Model (migration 016):**
+**Vendor Matching Pipeline:**
+
+```
+AI extracts vendor_name + vendor_tax_id
+        ↓
+1. Tax ID match (exact) → confidence 1.0
+2. Fuzzy name match:
+   - Normalize: lowercase, strip legal suffixes (Pte Ltd, Pty Ltd, LLC…), strip punctuation
+   - Exact match on normalized → 1.0
+   - Substring match → 0.85
+   - Token overlap ratio
+   - Threshold ≥ 0.80 → accept match
+3. No match → auto-create unverified counterparty (is_verified=False)
+        ↓
+Returns: counterparty_id, is_new_vendor, match_confidence
+```
+
+**COA Priority Chain:**
+
+```
+1. counterparty.default_account_code  → coa_source = 'db'
+2. contract.coa_account_code          → coa_source = 'contract'
+3. AI extraction suggestion           → coa_source = 'ai'
+4. null                               → invoice blocked from approval until COA set
+```
+
+Approver confirms or changes COA at approval time → `coa_source = 'manual'`.
+
+**AP Knock-off — Matching Logic:**
+
+Runs at Phase 1.5 (after counterparty enrichment, before Phase 2 rule matching). Fires only on outgoing transactions (negative amount) that have a `counterparty_id` linked. When matched, creates:
+```
+Dr  2000  Accounts Payable    [payment_amount]
+Cr  100x  Bank COA            [payment_amount]
+```
+`invoice.amount_paid` updated; status → `paid` or `partially_paid`.
+
+**Date constraint:** invoices dated after the transaction date are excluded — a payment cannot precede the invoice.
+
+**Ranked matching (first match wins, FIFO tiebreaker within tier):**
+
+| Tier | Condition | Use Case |
+|------|-----------|----------|
+| 1 — Reference | `invoice_number` found in bank description or reference_number field (case-insensitive) | Most reliable — unambiguous even for same-amount invoices |
+| 2 — Exact amount | `abs(payment - remaining) ≤ 2% of remaining` | Full payment with FX rounding |
+| 3 — Partial | `0 < payment < remaining × 1.02` | Instalment or partial settlement |
+
+**Manual match** (when auto-match fails):
+- `GET /api/finance/invoices/open-for-transaction/<txn_id>` — returns eligible open invoices (same counterparty + currency + invoice_date ≤ txn_date)
+- `POST /api/finance/invoices/<invoice_id>/match-transaction` — creates the payment JE and marks transaction MATCHED; same guards as auto-match (outgoing, not already matched, payment ≤ remaining + 2%)
+
+**GST Treatment on Invoices:**
+
+When `tax_amount > 0` on approval, a 3-line journal entry is created:
+```
+Dr  contra_account_code   net_amount   (expense/asset)
+Dr  1350 GST Input Tax    tax_amount   (recoverable GST)
+Cr  2000 Accounts Payable total_amount
+```
+When no GST: standard 2-line Dr contra / Cr 2000 AP.
+
+**AI Contract Review Gate (`POST /invoices/:id/submit`):**
+- Validates required fields: `entity_id`, `invoice_date`, `total_amount`, `currency`, `service_period_start`, `service_period_end`
+- Loads contract matched to invoice (if any)
+- Calls Claude Haiku: compares invoice details vs contract terms
+- Returns `assessment: pass | flag | no_contract`
+- `flag` → returns `concerns[]` for human review; submit again with `confirmed: true` to override
+- After gate: evaluates approval rules (with `new_vendor` / `coa_source` downgrade applied first)
+
+**Data Model (migrations 016–019):**
 
 ```
 finance_invoices
 ├── id, entity_id, counterparty_id, contract_id
 ├── invoice_number, invoice_date, due_date
-├── total_amount, amount_paid, currency
-├── contra_account_code          ← expense/asset COA code (required for approval)
+├── total_amount, net_amount, tax_amount  ← GST split (018)
+├── amount_paid, currency
+├── contra_account_code          ← set via COA priority chain; confirmed by approver
+├── coa_source                   ← db|contract|ai|manual (019)
+├── new_vendor                   ← true if counterparty auto-created (019)
 ├── status                       ← draft|pending_approval|approved|partially_paid|paid|rejected|void
-├── service_period_start/end     ← triggers amortization if span > 1 month
+├── service_period_start/end     ← required; triggers amortization if span > 1 month
 ├── has_amortization_schedule
 ├── journal_entry_id             ← auto-created on approval
 ├── ai_extraction_raw (JSON)     ← raw Claude Haiku response
 ├── ai_confidence_score
 ├── contract_matched             ← true if auto-matched to a contract
 ├── approved_by, approved_at, rejection_reason
-├── uploaded_by, pdf_s3_key, notes
-├── created_at, updated_at
+├── uploaded_by, pdf_s3_key, pdf_content_hash  ← SHA-256 for duplicate detection (017)
+├── notes, created_at, updated_at
+
+finance_counterparties (relevant fields)
+├── default_account_code         ← first priority in COA chain
+├── is_verified                  ← false for auto-created vendors; true for manually confirmed (019)
+├── aliases                      ← JSON array of alternate bank description strings (021)
+│                                   self-populated on transaction approval (_maybe_add_alias)
 
 finance_contracts
 ├── id, entity_id, counterparty_id
-├── name, contract_type          ← subscription|fixed_term|recurring_expectation
+├── contract_type                ← subscription|fixed_term|recurring_expectation
 ├── frequency                    ← monthly|quarterly|annual|one_off
-├── amount, currency, tolerance_pct
-├── coa_account_code             ← default COA for matched invoices
-├── start_date, end_date, next_expected_date
-├── auto_approve, is_active
+├── expected_amount_min/max, tolerance_pct
+├── coa_account_code             ← second priority in COA chain
+├── start_date, end_date
+├── auto_approve, auto_approve_tolerance_pct
 ├── created_at, updated_at
 
 finance_approval_rules
@@ -569,7 +709,7 @@ finance_amortization_schedules
 ```
 
 **AI Extraction (Claude Haiku):**
-- `pdfplumber` extracts text; Claude Haiku returns vendor, dates, amounts, COA suggestion, confidence score
+- `pdfplumber` extracts text; Claude Haiku returns: `vendor_name`, `vendor_tax_id`, `invoice_number`, `invoice_date`, `due_date`, `total_amount`, `subtotal_amount`, `tax_amount`, `currency`, `bill_to_entity_hint`, `service_period_start/end`, `suggested_coa_account`, `confidence`
 - PDF stored to AWS S3: `invoices/entity_{id}/YYYY/MM/{uuid}_{filename}` (S3 failure is non-blocking)
 - Required env vars: `ANTHROPIC_API_KEY`, `AWS_S3_BUCKET`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
 
@@ -671,6 +811,15 @@ finance_counterparties
 │
 ├── ACCOUNTING DEFAULT
 │   └── default_account_code  (COA code — fallback contra account)
+│
+├── ENRICHMENT
+│   ├── aliases               (JSON array — alternate bank description strings for L1 enrichment)
+│   │                         (e.g. ["AWS PAYMENTS", "AMAZON WEB SERVICES"] for "Amazon Web Services")
+│   │                         (self-populated on transaction approval via _maybe_add_alias)
+│   └── currency              (ISO 4217 — default billing/payment currency; null = entity base currency)
+│
+├── VERIFICATION
+│   └── is_verified           (bool — false for auto-created vendors; true for manually confirmed)
 │
 ├── META
 │   ├── notes
@@ -1036,12 +1185,18 @@ Alembic manages schema migrations in `migrations/versions/`:
 | 013_counterparty_partial_unique_external | Replace full `(name, type)` index with partial `WHERE external_id IS NULL`; add `(external_system, external_id)` unique index for synced records |
 | 014_counterparty_fk_and_rules_cp_id | Add FK constraint from `transactions.counterparty_id` → `finance_counterparties`; add `counterparty_id` match criterion to categorization rules |
 | 015_bank_account_api_credentials | Add `api_credentials` JSONB column to `finance_bank_accounts` — stores Wise `profile_id`, `balance_id`, `sync_from_date`, `last_synced_at` |
+| 016 | Create `finance_invoices` table |
+| 017 | Add `pdf_s3_key`, `pdf_content_hash` to invoices |
+| 018 | Add `net_amount`, `tax_amount` to invoices (GST split) |
+| 019 | Add `coa_source`, `new_vendor`, `is_verified` to invoices/counterparties |
+| 020_awaiting_match | Add `matched_at` (DateTime) and `expected_counterpart_ba_id` (FK → `finance_bank_accounts`) to `finance_transactions`; composite index on `(expected_counterpart_ba_id, status)` |
+| 021_counterparty_aliases | Add `aliases` (JSON array) to `finance_counterparties` — alternate bank description strings for L1 enrichment |
 
 Run migrations: `alembic upgrade head`
 
 ### Testing
 
-- 331 tests passing (pytest)
+- >330 tests passing (pytest)
 - mypy type checking clean (39 source files)
 - Run: `python -m pytest tests/ -x -q`
 - Run mypy: `python -m mypy src/ --ignore-missing-imports`

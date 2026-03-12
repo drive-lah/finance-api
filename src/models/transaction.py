@@ -18,14 +18,21 @@ class TransactionStatus(enum.Enum):
     """
     Status of a bank transaction in the reconciliation workflow.
 
-    - PENDING:     Imported from CSV or Stripe. Awaiting categorization.
-    - MATCHED:     Categorization applied and journal entry created (system-driven).
-                   Represents the system's best guess — not yet approved.
-    - RECONCILED:  Confirmed correct. Initially approved by a human reviewer;
-                   later by an AI agent. Locked for accounting purposes.
+    - PENDING:         Imported from CSV or Stripe. Awaiting categorization.
+    - AWAITING_MATCH:  Internal transfer detected (Step 0). Waiting for the
+                       counter-transaction on the destination bank account.
+                       expected_counterpart_ba_id tells us which account to watch.
+    - MATCHED:         Categorization applied and journal entry created (system-driven).
+                       Represents the system's best guess — not yet approved.
+    - NEEDS_REVIEW:    Categorization attempted but confidence is low or multiple
+                       candidates exist. Requires human review before proceeding.
+    - RECONCILED:      Confirmed correct. Initially approved by a human reviewer;
+                       later by an AI agent. Locked for accounting purposes.
     """
     PENDING = "Pending"
+    AWAITING_MATCH = "Awaiting Match"
     MATCHED = "Matched"
+    NEEDS_REVIEW = "Needs Review"
     RECONCILED = "Reconciled"
 
 
@@ -84,10 +91,21 @@ class FinanceTransaction(Base):
         nullable=True,
         comment="Journal entry this transaction is reconciled with"
     )
+    matched_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime,
+        nullable=True,
+        comment="Timestamp when transaction was matched (categorized + JE created)"
+    )
     reconciled_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime,
         nullable=True,
-        comment="Timestamp when transaction was reconciled"
+        comment="Timestamp when transaction was reconciled (human or AI approved)"
+    )
+    expected_counterpart_ba_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("finance_bank_accounts.id", ondelete="SET NULL"),
+        nullable=True,
+        comment="For AWAITING_MATCH internal transfers: the bank account we expect the counter-transaction from"
     )
     counterparty_name: Mapped[Optional[str]] = mapped_column(
         String(255),
@@ -176,7 +194,9 @@ class FinanceTransaction(Base):
             "import_batch_id": self.import_batch_id,
             "original_csv_row": self.original_csv_row,
             "reconciled_journal_entry_id": self.reconciled_journal_entry_id,
+            "matched_at": self.matched_at.isoformat() if self.matched_at else None,
             "reconciled_at": self.reconciled_at.isoformat() if self.reconciled_at else None,
+            "expected_counterpart_ba_id": self.expected_counterpart_ba_id,
             "counterparty_name": self.counterparty_name,
             "counterparty_type": self.counterparty_type,
             "counterparty_id": self.counterparty_id,

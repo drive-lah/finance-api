@@ -7,7 +7,8 @@ outgoing API responses.
 from datetime import datetime
 from typing import Optional
 from datetime import date as date_type
-from pydantic import BaseModel, Field, field_validator
+from decimal import Decimal
+from pydantic import BaseModel, Field, field_validator, model_validator
 import re
 
 from src.models.entity import EntityStatus
@@ -503,8 +504,23 @@ class RuleResponse(BaseModel):
     status: str
     description: Optional[str] = None
 
-    bank_account_ids: Optional[str] = None
+    bank_account_ids: Optional[list[int]] = None
     direction: str
+
+    @field_validator('bank_account_ids', mode='before')
+    @classmethod
+    def parse_bank_account_ids(cls, v: object) -> Optional[list[int]]:
+        """DB stores bank_account_ids as JSON string; parse to list[int]."""
+        import json
+        if v is None:
+            return None
+        if isinstance(v, str):
+            try:
+                parsed = json.loads(v)
+                return [int(x) for x in parsed] if isinstance(parsed, list) else None
+            except (json.JSONDecodeError, ValueError):
+                return None
+        return v
 
     amount_operator: Optional[str] = None
     amount_value: Optional[float] = None
@@ -539,6 +555,7 @@ class CategorizationRunRequest(BaseModel):
     """Schema for running the categorization engine."""
     entity_id: Optional[int] = Field(None, gt=0, description="Process only this entity (null = all)")
     bank_account_id: Optional[int] = Field(None, gt=0, description="Process only this bank account")
+    rule_id: Optional[int] = Field(None, gt=0, description="Run only this specific rule (null = all active rules)")
     limit: Optional[int] = Field(default=100, gt=0, le=1000, description="Max transactions to process")
 
 
@@ -594,6 +611,7 @@ class CounterpartyCreate(BaseModel):
     is_gst_registered: Optional[bool] = Field(default=False)
     payment_terms_days: Optional[int] = Field(None, gt=0)
     default_account_code: Optional[str] = Field(None, max_length=20)
+    aliases: Optional[list[str]] = Field(None, description="Alternate bank description strings for L1 enrichment matching")
     currency: Optional[str] = Field(None, max_length=3, description="ISO 4217 default billing currency. NULL = entity base currency.")
     notes: Optional[str] = None
     status: Optional[str] = Field(default="active")
@@ -630,6 +648,7 @@ class CounterpartyUpdate(BaseModel):
     is_gst_registered: Optional[bool] = None
     payment_terms_days: Optional[int] = Field(None, gt=0)
     default_account_code: Optional[str] = Field(None, max_length=20)
+    aliases: Optional[list[str]] = Field(None, description="Alternate bank description strings for L1 enrichment matching")
     currency: Optional[str] = Field(None, max_length=3)
     notes: Optional[str] = None
     status: Optional[str] = None
@@ -700,6 +719,7 @@ class InvoiceCreate(BaseModel):
     notes: Optional[str] = Field(None, description="Free-text notes")
     pdf_s3_key: Optional[str] = Field(None, max_length=500, description="S3 key for the PDF")
     pdf_content_hash: Optional[str] = Field(None, max_length=64, description="SHA-256 hash of the PDF")
+    new_vendor: bool = Field(False, description="True when counterparty was auto-created")
 
     @field_validator('currency')
     @classmethod
@@ -759,6 +779,8 @@ class InvoiceResponse(BaseModel):
     uploaded_by: Optional[str] = None
     pdf_s3_key: Optional[str] = None
     pdf_content_hash: Optional[str] = None
+    new_vendor: bool = False
+    coa_source: Optional[str] = None
     notes: Optional[str] = None
     created_at: datetime
     updated_at: datetime
@@ -887,6 +909,67 @@ class AmortizationScheduleResponse(BaseModel):
     start_month: date_type
     entries_posted: int
     posting_mode: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# =============================================================================
+# Payroll Schemas  (System 3)
+# =============================================================================
+
+class PayrollRunCreate(BaseModel):
+    """
+    Schema for submitting a payroll run.
+
+    net_amount and cpf_payable_amount are derived server-side:
+      net_amount        = gross_amount - employee_cpf_amount
+      cpf_payable_amount = employer_cpf_amount + employee_cpf_amount
+    """
+    entity_id: int
+    payroll_period_start: date_type
+    payroll_period_end: date_type
+    run_date: date_type
+    headcount: Optional[int] = None
+    gross_amount: Decimal = Field(..., gt=0, description="Total gross salaries")
+    employer_cpf_amount: Decimal = Field(..., ge=0, description="Employer CPF contribution")
+    employee_cpf_amount: Decimal = Field(..., ge=0, description="Employee CPF deduction")
+    bank_account_id: int
+    description: Optional[str] = None
+    reference_number: Optional[str] = None
+    submitted_by: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_amounts(self) -> "PayrollRunCreate":
+        net = self.gross_amount - self.employee_cpf_amount
+        if net < 0:
+            raise ValueError(
+                "employee_cpf_amount exceeds gross_amount — net payout would be negative"
+            )
+        return self
+
+
+class PayrollRunResponse(BaseModel):
+    """Schema for payroll run API response."""
+    id: int
+    entity_id: int
+    payroll_period_start: date_type
+    payroll_period_end: date_type
+    run_date: date_type
+    headcount: Optional[int]
+    gross_amount: Decimal
+    employer_cpf_amount: Decimal
+    employee_cpf_amount: Decimal
+    net_amount: Decimal
+    cpf_payable_amount: Decimal
+    bank_account_id: int
+    description: Optional[str]
+    reference_number: Optional[str]
+    submitted_by: Optional[str]
+    status: str
+    journal_entry_id: Optional[int]
+    net_payment_transaction_id: Optional[int]
+    cpf_payment_transaction_id: Optional[int]
     created_at: datetime
 
     model_config = {"from_attributes": True}

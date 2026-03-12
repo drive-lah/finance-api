@@ -24,6 +24,9 @@ pdfplumber>=0.10.0
 # AI / LLM
 anthropic>=0.40.0
 
+# Fuzzy string matching (L2 counterparty enrichment)
+rapidfuzz>=3.0.0
+
 # AWS S3
 boto3>=1.34.0
 

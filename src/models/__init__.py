@@ -19,6 +19,7 @@ from src.models.categorization_rule import (
     AmountOperator,
 )
 from src.models.counterparty import FinanceCounterparty, CounterpartyType, CounterpartyStatus
+from src.models.payroll import FinancePayrollRun
 from src.models.schemas import (
     EntityCreate,
     EntityUpdate,
@@ -45,6 +46,8 @@ from src.models.schemas import (
     CategorizationRunRequest,
     CategorizationRunResponse,
     ManualCategorizeRequest,
+    PayrollRunCreate,
+    PayrollRunResponse,
 )
 
 __all__ = [
@@ -107,4 +110,8 @@ __all__ = [
     "CategorizationRunRequest",
     "CategorizationRunResponse",
     "ManualCategorizeRequest",
+    # Payroll model and schemas
+    "FinancePayrollRun",
+    "PayrollRunCreate",
+    "PayrollRunResponse",
 ]
