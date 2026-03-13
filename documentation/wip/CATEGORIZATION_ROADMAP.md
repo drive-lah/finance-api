@@ -88,22 +88,22 @@ Not user-initiated — system-driven only, with audit trail.
 | 1.6 | Bank recon | Counterparty aliases + alias-based L1 matching | ✅ Built (2026-03-12) |
 | 1.7 | Bank recon | Counterparty matching L2 (fuzzy — rapidfuzz token_set_ratio ≥ 88) | ✅ Built (2026-03-12) |
 | 1.8 | Bank recon | Counterparty matching L3 (LLM fallback — Claude Haiku batched) | ✅ Built (2026-03-12) |
-| 1.9 | Bank recon | AP knock-off — cross-entity (bank entity ≠ invoice entity) | ⬜ Not built |
+| 1.9 | Bank recon | AP knock-off — cross-entity (bank entity ≠ invoice entity) | ✅ Built (2026-03-13) |
 | 1.10 | Bank recon | Payroll knock-off step in pipeline | ✅ Built |
-| 1.11 | Bank recon | AI classification fallback + NEEDS_REVIEW status | ⬜ Not built |
+| 1.11 | Bank recon | AI classification fallback + NEEDS_REVIEW status | ✅ Built (2026-03-13) |
 | 1.12 | Bank recon | Cross-entity cost allocation rule type | ⬜ Not built |
 | 2.0 | Invoice | Invoice lifecycle (draft → approved → paid) | ✅ Built |
-| 2.1 | Invoice | Retroactive AP knock-off on approval | ⬜ Not built |
-| 2.2 | Invoice | Retroactive knock-off — cross-entity variant | ⬜ Not built |
-| 2.3 | Invoice | Re-open RECONCILED transaction infrastructure | ⬜ Not built |
+| 2.1 | Invoice | Retroactive AP knock-off on approval | ✅ Built (2026-03-13) |
+| 2.2 | Invoice | Retroactive knock-off — cross-entity variant | ✅ Built (2026-03-13) |
+| 2.3 | Invoice | Re-open RECONCILED transaction infrastructure | ✅ Built (2026-03-13) |
 | 3.0 | Payroll | Payroll JE creation from HR run | ✅ Built |
 | 3.1 | Payroll | Payroll knock-off in bank recon pipeline | ✅ Built |
-| 4.0 | Amortization | COA amortization policy table + trigger | ⬜ Not built |
-| 4.1 | Amortization | Monthly amortization scheduler | ⬜ Not built |
+| 4.0 | Amortization | COA amortization policy table + trigger | ✅ Built (2026-03-13) |
+| 4.1 | Amortization | Monthly amortization scheduler | ✅ Built (2026-03-13) |
 | C.0 | Counterparty | Aliases field on finance_counterparties (migration 021) | ✅ Built (2026-03-12) |
 | C.1 | Counterparty | Alias-based enrichment matching in pipeline | ✅ Built (2026-03-12) |
 | C.2 | Counterparty | Self-improving aliases on transaction approval (_maybe_add_alias) | ✅ Built (2026-03-12) |
-| C.3 | Counterparty | Suggest alias when human resolves NEEDS_REVIEW (UI) | ⬜ Not built |
+| C.3 | Counterparty | NEEDS_REVIEW resolve endpoint + alias suggestion | ✅ Built (2026-03-13) |
 
 ---
 
@@ -469,12 +469,15 @@ Bank transaction arrives → PENDING
              L3: Claude Haiku batched call (skipped if no ANTHROPIC_API_KEY)
              Counterparty has default_account_code? → JE → MATCHED
 
-  Phase 1.5: AP knock-off (forward only — invoice must already exist)
+  Phase 1.5: AP knock-off (forward — invoice must already exist)
              Ranked matching: Tier 1 reference (invoice_number in bank text),
              Tier 2 exact amount (±2%), Tier 3 partial payment.
              Date constraint: invoice_date ≤ transaction_date.
              FIFO tiebreaker within tier.
-             → Dr AP / Cr Bank → invoice paid/partially_paid → MATCHED
+             Cross-entity: if bank_entity ≠ invoice_entity, creates paired IC JEs
+               bank entity: Dr IC Receivable / Cr Bank
+               invoice entity: Dr AP / Cr IC Payable
+               both share intercompany_group_id
              Manual path: GET /invoices/open-for-transaction/:txn_id
                           POST /invoices/:id/match-transaction
 
@@ -486,7 +489,13 @@ Bank transaction arrives → PENDING
                counter-txn in DB? → both MATCHED
                no counter-txn yet? → AWAITING_MATCH, expected_counterpart_ba_id set
 
-  No match → stays PENDING
+  Phase 4:   AI classification fallback (fires only if phases 1.5-3 all miss)
+             Batched Claude Haiku call with COA context
+             Confidence ≥ 0.80 → auto JE → MATCHED
+             Confidence < 0.80 → NEEDS_REVIEW (suggestion stored for human review)
+             No ANTHROPIC_API_KEY → skipped
+
+  No match → stays PENDING (manual queue)
 
 Manual path:  user picks category + counterparty + COA → RECONCILED directly
 MATCHED:      human approves → JE posted → RECONCILED
@@ -494,8 +503,11 @@ MATCHED:      human approves → JE posted → RECONCILED
                                if different from canonical name (_maybe_add_alias)
               human rejects  → JE voided → back to PENDING
 
-Known gaps vs target pipeline:
-  - No retroactive knock-off (2.1): invoice approved after payment → AP stays open
-  - No AI classification fallback (1.11): transactions with no rule stay PENDING
-  - No cross-entity AP knock-off (1.9): only same-entity invoices matched
+Remaining gaps vs target pipeline:
+  - No NEEDS_REVIEW resolve endpoint (C.3): UI cannot mark NEEDS_REVIEW as resolved
+  - No amortization scheduler (4.0/4.1): prepaid amortization not posted monthly
+  - No cross-entity cost allocation rule type (1.12)
+
+System 2 (retroactive knock-off) is fully built including cross-entity variant.
+run_retroactive_knockoff fires on invoice approval and handles PENDING/MATCHED/RECONCILED.
 ```

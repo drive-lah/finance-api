@@ -109,6 +109,19 @@ class TransactionService:
 
         db.commit()
         db.refresh(transaction)
+
+        # COA-policy depreciation/amortization: check if the JE hits an asset account
+        try:
+            from src.services.amortization_service import amortization_service
+            amortization_service.check_and_create_schedule(db, transaction, je)
+            db.commit()
+        except Exception as e:
+            import logging as _logging
+            _logging.getLogger(__name__).warning(
+                f"Depreciation schedule check failed for transaction {transaction_id}: {e}",
+                exc_info=True,
+            )
+
         return transaction
 
     def _maybe_add_alias(self, db: Session, transaction: FinanceTransaction) -> None:
@@ -419,7 +432,94 @@ class TransactionService:
         db.add(transaction)
         db.commit()
         db.refresh(transaction)
-        
+
+        return transaction
+
+    def resolve_needs_review(
+        self,
+        db: Session,
+        transaction_id: int,
+        account_code: str,
+        counterparty_id: Optional[int] = None,
+        resolved_by: Optional[str] = None,
+        add_alias: Optional[str] = None,
+    ) -> FinanceTransaction:
+        """
+        Resolve a NEEDS_REVIEW transaction by accepting or overriding the AI suggestion.
+
+        Creates a journal entry using account_code and transitions the transaction
+        to MATCHED status. The human-provided account_code can confirm the AI
+        suggestion (ai_suggested_account_code) or override it with a different code.
+
+        If add_alias is provided, it is appended to the counterparty's alias list
+        so future transactions with the same description auto-match at L1.
+
+        Raises ValueError if transaction not found or not in NEEDS_REVIEW status.
+        """
+        from src.services.journal_service import journal_service
+        from src.models.bank_account import FinanceBankAccount
+
+        transaction = self.get_by_id(db, transaction_id)
+        if not transaction:
+            raise ValueError(f"Transaction {transaction_id} not found")
+        if transaction.status != TransactionStatus.NEEDS_REVIEW:
+            raise ValueError(
+                f"Transaction must be in Needs Review status to resolve "
+                f"(current: {transaction.status.value})"
+            )
+
+        bank_account = db.get(FinanceBankAccount, transaction.bank_account_id)
+        if not bank_account or not bank_account.coa_account_code:
+            raise ValueError(
+                f"Bank account for transaction {transaction_id} has no COA code set."
+            )
+
+        amount = float(transaction.amount) if transaction.amount is not None else 0.0
+        abs_amount = abs(amount)
+
+        # Build JE lines: outgoing (negative) → Dr account / Cr bank
+        #                 incoming (positive) → Dr bank / Cr account
+        if amount < 0:
+            lines = [
+                {"account_code": account_code,                     "debit_amount": abs_amount, "credit_amount": 0.0,       "description": transaction.description},
+                {"account_code": bank_account.coa_account_code,   "debit_amount": 0.0,        "credit_amount": abs_amount, "description": transaction.description},
+            ]
+        else:
+            lines = [
+                {"account_code": bank_account.coa_account_code,   "debit_amount": abs_amount, "credit_amount": 0.0,       "description": transaction.description},
+                {"account_code": account_code,                    "debit_amount": 0.0,        "credit_amount": abs_amount, "description": transaction.description},
+            ]
+
+        je = journal_service.create(
+            db=db,
+            entity_id=bank_account.entity_id,
+            entry_date=transaction.transaction_date,
+            description=f"Resolved (NEEDS_REVIEW): {transaction.description or transaction.id}",
+            lines=lines,
+            created_by=resolved_by,
+        )
+        je.source = "needs_review_resolution"
+        db.flush()
+
+        if counterparty_id:
+            transaction.counterparty_id = counterparty_id
+
+        now = datetime.utcnow()
+        transaction.status = TransactionStatus.MATCHED
+        transaction.reconciled_journal_entry_id = je.id
+        transaction.matched_at = now
+
+        # Alias suggestion: add add_alias string to counterparty's alias list
+        if add_alias and transaction.counterparty_id:
+            cp = db.get(FinanceCounterparty, transaction.counterparty_id)
+            if cp:
+                alias_clean = add_alias.strip()
+                existing = [a.lower() for a in (cp.aliases or [])]
+                if alias_clean.lower() not in existing and alias_clean.lower() != cp.name.lower():
+                    cp.aliases = list(cp.aliases or []) + [alias_clean]
+
+        db.commit()
+        db.refresh(transaction)
         return transaction
 
 

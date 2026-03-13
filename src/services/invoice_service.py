@@ -9,7 +9,7 @@ import json
 import logging
 import os
 from datetime import datetime, date, UTC
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -21,6 +21,10 @@ from src.models.schemas import InvoiceCreate, InvoiceUpdate
 from src.services.journal_service import journal_service
 from src.utils.errors import NotFoundError
 
+if TYPE_CHECKING:
+    from src.models.bank_account import FinanceBankAccount
+    from src.models.journal_entry import FinanceJournalEntry
+
 logger = logging.getLogger(__name__)
 
 # Standard AP liability account
@@ -29,6 +33,31 @@ AP_ACCOUNT_CODE = "2000"
 PREPAID_ACCOUNT_CODE = "1200"
 # GST / VAT input tax credit (recoverable on purchases)
 GST_INPUT_ACCOUNT_CODE = "1350"
+
+# ── Intercompany AP account codes ─────────────────────────────────────────────
+# Keyed by (bank_entity_short_name, invoice_entity_short_name).
+# Short name = last word of FinanceEntity.name (e.g., "DL SG" → "SG").
+_IC_RECEIVABLE_CODES: dict[tuple[str, str], str] = {
+    ("SG", "AU"):       "8000",  # SG books: IC Due from AU
+    ("SG", "Ventures"): "8001",  # SG books: IC Due from Ventures
+    ("AU", "SG"):       "8010",  # AU books: IC Due from SG
+    ("AU", "Ventures"): "8011",  # AU books: IC Due from Ventures
+    ("Ventures", "SG"): "8020",  # Ventures books: IC Due from SG
+    ("Ventures", "AU"): "8021",  # Ventures books: IC Due from AU
+}
+_IC_PAYABLE_CODES: dict[tuple[str, str], str] = {
+    ("SG", "AU"):       "8100",  # SG books: IC Due to AU
+    ("SG", "Ventures"): "8101",  # SG books: IC Due to Ventures
+    ("AU", "SG"):       "8110",  # AU books: IC Due to SG
+    ("AU", "Ventures"): "8111",  # AU books: IC Due to Ventures
+    ("Ventures", "SG"): "8120",  # Ventures books: IC Due to SG
+    ("Ventures", "AU"): "8121",  # Ventures books: IC Due to AU
+}
+
+
+def _entity_short(name: str) -> str:
+    """Extract the short entity identifier from a full name: 'DL SG' → 'SG'."""
+    return name.strip().rsplit(" ", 1)[-1]
 
 
 def _invoice_dict(invoice: "FinanceInvoice") -> dict:
@@ -527,30 +556,16 @@ class InvoiceService:
                 f"Bank account for transaction {transaction_id} has no COA code set."
             )
 
-        # Dr 2000 AP / Cr Bank
         inv_ref = f"Invoice {invoice.invoice_number or invoice.id}"
-        entry = journal_service.create(
+        entry = self.create_ap_payment_entries(
             db=db,
-            entity_id=bank_account.entity_id,
-            entry_date=txn.transaction_date,
+            bank_account=bank_account,
+            invoice=invoice,
+            txn_date=txn.transaction_date,
+            abs_amount=abs_amount,
+            source="ap_manual_match",
             description=f"AP Payment ({matched_by}): {inv_ref}",
-            lines=[
-                {
-                    "account_code": AP_ACCOUNT_CODE,
-                    "debit_amount": abs_amount,
-                    "credit_amount": 0.0,
-                    "description": inv_ref,
-                },
-                {
-                    "account_code": bank_account.coa_account_code,
-                    "debit_amount": 0.0,
-                    "credit_amount": abs_amount,
-                    "description": inv_ref,
-                },
-            ],
         )
-        entry.source = "ap_manual_match"
-        db.flush()
 
         self.record_payment(db, invoice.id, abs_amount)
 
@@ -566,6 +581,7 @@ class InvoiceService:
             "invoice_id": invoice.id,
             "transaction_id": txn.id,
             "journal_entry_id": entry.id,
+            "cross_entity": bank_account.entity_id != invoice.entity_id,
             "amount_applied": abs_amount,
             "invoice_status": invoice.status,
         }
@@ -731,29 +747,16 @@ class InvoiceService:
                     reason=f"invoice_{invoice.id}_retroactive_knockoff",
                 )
 
-            # Create AP payment JE: Dr 2000 AP / Cr Bank
-            entry = journal_service.create(
+            # Create AP payment JE(s): Dr 2000 AP / Cr Bank (or IC pair)
+            entry = self.create_ap_payment_entries(
                 db=db,
-                entity_id=bank_account.entity_id,
-                entry_date=txn.transaction_date,
+                bank_account=bank_account,
+                invoice=invoice,
+                txn_date=txn.transaction_date,
+                abs_amount=apply_amount,
+                source="ap_knockoff",
                 description=f"AP Payment (retroactive): {inv_ref}",
-                lines=[
-                    {
-                        "account_code": AP_ACCOUNT_CODE,
-                        "debit_amount": apply_amount,
-                        "credit_amount": 0.0,
-                        "description": inv_ref,
-                    },
-                    {
-                        "account_code": bank_account.coa_account_code,
-                        "debit_amount": 0.0,
-                        "credit_amount": apply_amount,
-                        "description": inv_ref,
-                    },
-                ],
             )
-            entry.source = "ap_knockoff"
-            db.flush()
 
             self.record_payment(db, invoice.id, apply_amount)
 
@@ -769,10 +772,167 @@ class InvoiceService:
                 "amount_applied": apply_amount,
                 "journal_entry_id": entry.id,
                 "tier": tier,
+                "cross_entity": bank_account.entity_id != invoice.entity_id,
                 "invoice_status": invoice.status,
             })
 
         return results
+
+    # ── Cross-entity AP helpers ───────────────────────────────────────────────
+
+    def _get_ic_codes(
+        self,
+        db: Session,
+        bank_entity_id: int,
+        invoice_entity_id: int,
+    ) -> Optional[tuple[str, str]]:
+        """
+        Return (ic_receivable_code, ic_payable_code) for a cross-entity AP payment.
+
+        ic_receivable_code: used in the *bank entity* books (Dr — asset increasing)
+        ic_payable_code:    used in the *invoice entity* books (Cr — liability increasing)
+
+        Returns None if the entity pair is not in the lookup table (unsupported combination).
+        """
+        from src.models.entity import FinanceEntity
+
+        bank_entity = db.get(FinanceEntity, bank_entity_id)
+        invoice_entity = db.get(FinanceEntity, invoice_entity_id)
+        if not bank_entity or not invoice_entity:
+            return None
+
+        bank_short = _entity_short(bank_entity.name)
+        inv_short = _entity_short(invoice_entity.name)
+
+        rec_code = _IC_RECEIVABLE_CODES.get((bank_short, inv_short))
+        pay_code = _IC_PAYABLE_CODES.get((inv_short, bank_short))
+
+        if not rec_code or not pay_code:
+            logger.warning(
+                f"No IC codes for entity pair (bank={bank_short}, invoice={inv_short}). "
+                f"Cross-entity AP knock-off skipped."
+            )
+            return None
+        return rec_code, pay_code
+
+    def create_ap_payment_entries(
+        self,
+        db: Session,
+        bank_account: "FinanceBankAccount",
+        invoice: FinanceInvoice,
+        txn_date: date,
+        abs_amount: float,
+        source: str,
+        description: str,
+    ) -> "FinanceJournalEntry":
+        """
+        Create the AP payment journal entry (or entries for cross-entity).
+
+        Same entity:
+          Bank entity JE — Dr 2000 AP / Cr Bank
+
+        Cross-entity (bank_account.entity_id ≠ invoice.entity_id):
+          Bank entity JE  — Dr IC Receivable / Cr Bank
+          Invoice entity JE — Dr 2000 AP / Cr IC Payable
+          Both JEs share an intercompany_group_id.
+
+        Returns the *primary* JE (always the bank entity JE).
+        Raises ValueError if cross-entity codes cannot be resolved.
+        """
+        import uuid
+        from src.models.journal_entry import FinanceJournalEntry
+
+        bank_entity_id = bank_account.entity_id
+        invoice_entity_id = invoice.entity_id
+        bank_coa = bank_account.coa_account_code
+        inv_ref = f"Invoice {invoice.invoice_number or invoice.id}"
+
+        if bank_entity_id == invoice_entity_id:
+            # ── Same-entity: single 2-line JE ──────────────────────────────
+            entry = journal_service.create(
+                db=db,
+                entity_id=bank_entity_id,
+                entry_date=txn_date,
+                description=description,
+                lines=[
+                    {
+                        "account_code": AP_ACCOUNT_CODE,
+                        "debit_amount": abs_amount,
+                        "credit_amount": 0.0,
+                        "description": inv_ref,
+                    },
+                    {
+                        "account_code": bank_coa,
+                        "debit_amount": 0.0,
+                        "credit_amount": abs_amount,
+                        "description": inv_ref,
+                    },
+                ],
+            )
+            entry.source = source
+            db.flush()
+            return entry
+
+        # ── Cross-entity: two paired JEs ────────────────────────────────────
+        ic_codes = self._get_ic_codes(db, bank_entity_id, invoice_entity_id)
+        if not ic_codes:
+            raise ValueError(
+                f"Cannot create cross-entity AP payment: no IC codes found "
+                f"for bank entity {bank_entity_id} / invoice entity {invoice_entity_id}."
+            )
+        ic_receivable, ic_payable = ic_codes
+        ic_group_id = str(uuid.uuid4())
+
+        # Bank entity: Dr IC Receivable / Cr Bank
+        bank_entry = journal_service.create(
+            db=db,
+            entity_id=bank_entity_id,
+            entry_date=txn_date,
+            description=description,
+            lines=[
+                {
+                    "account_code": ic_receivable,
+                    "debit_amount": abs_amount,
+                    "credit_amount": 0.0,
+                    "description": inv_ref,
+                },
+                {
+                    "account_code": bank_coa,
+                    "debit_amount": 0.0,
+                    "credit_amount": abs_amount,
+                    "description": inv_ref,
+                },
+            ],
+        )
+        bank_entry.source = source
+        bank_entry.intercompany_group_id = ic_group_id
+
+        # Invoice entity: Dr 2000 AP / Cr IC Payable
+        inv_entry = journal_service.create(
+            db=db,
+            entity_id=invoice_entity_id,
+            entry_date=txn_date,
+            description=description,
+            lines=[
+                {
+                    "account_code": AP_ACCOUNT_CODE,
+                    "debit_amount": abs_amount,
+                    "credit_amount": 0.0,
+                    "description": inv_ref,
+                },
+                {
+                    "account_code": ic_payable,
+                    "debit_amount": 0.0,
+                    "credit_amount": abs_amount,
+                    "description": inv_ref,
+                },
+            ],
+        )
+        inv_entry.source = source
+        inv_entry.intercompany_group_id = ic_group_id
+
+        db.flush()
+        return bank_entry
 
     def record_payment(self, db: Session, invoice_id: int, amount_paid: float) -> FinanceInvoice:
         """

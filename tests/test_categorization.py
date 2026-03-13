@@ -30,6 +30,7 @@ from src.services.categorization_service import categorization_service, _text_ma
 from src.services.transaction_service import transaction_service
 from src.models.schemas import TagCreate, TagUpdate, RuleCreate, RuleUpdate
 from src.models.counterparty import FinanceCounterparty
+from src.models.depreciation import FinanceCOAAmortizationPolicy, FinanceAssetSchedule  # noqa: F401 — registers tables in metadata
 
 
 # ============================================================================
@@ -1882,6 +1883,182 @@ class TestRetroactiveApKnockoff:
         assert len(results) == 1
         assert results[0]["transaction_id"] == txn_ref.id
         assert results[0]["tier"] == 1
+
+
+# ============================================================================
+# Cross-entity AP Knock-off Tests (1.9)
+# ============================================================================
+
+
+def _make_ic_accounts(db):
+    """Add IC accounts needed for cross-entity AP knock-off tests."""
+    ic_accounts = [
+        FinanceAccount(code="8000", name="IC Due from AU (SG books)",       account_type=AccountType.INTERCOMPANY, normal_balance=NormalBalance.DEBIT,  category="Intercompany", status=AccountStatus.ACTIVE),
+        FinanceAccount(code="8001", name="IC Due from Ventures (SG books)", account_type=AccountType.INTERCOMPANY, normal_balance=NormalBalance.DEBIT,  category="Intercompany", status=AccountStatus.ACTIVE),
+        FinanceAccount(code="8110", name="IC Due to SG (AU books)",         account_type=AccountType.INTERCOMPANY, normal_balance=NormalBalance.CREDIT, category="Intercompany", status=AccountStatus.ACTIVE),
+    ]
+    for acc in ic_accounts:
+        db.add(acc)
+    db.commit()
+
+
+class TestCrossEntityApKnockoff:
+    """invoice_service.create_ap_payment_entries — cross-entity IC JE creation."""
+
+    def test_same_entity_creates_single_je(
+        self, db_session, test_entity, test_accounts, test_bank_account
+    ):
+        """Same bank/invoice entity → single 2-line JE with Dr AP / Cr Bank."""
+        from src.services.invoice_service import invoice_service
+        from src.models.journal_entry import FinanceJournalEntry
+
+        cp = _make_counterparty(db_session, "Same Entity Vendor")
+        inv = _make_invoice(db_session, test_entity.id, cp.id, total_amount=300.0)
+
+        entry = invoice_service.create_ap_payment_entries(
+            db=db_session,
+            bank_account=test_bank_account,
+            invoice=inv,
+            txn_date=date(2026, 2, 10),
+            abs_amount=300.0,
+            source="ap_knockoff",
+            description="AP Payment: Invoice 1",
+        )
+
+        assert entry is not None
+        assert entry.entity_id == test_entity.id
+        assert entry.intercompany_group_id is None  # single-entity — no IC group
+
+        from src.models.journal_line import FinanceJournalLine
+        lines = db_session.query(FinanceJournalLine).filter_by(entry_id=entry.id).all()
+        assert len(lines) == 2
+        debit_codes = {l.account_code for l in lines if float(l.debit_amount) > 0}
+        credit_codes = {l.account_code for l in lines if float(l.credit_amount) > 0}
+        assert "2000" in debit_codes   # AP account debited
+        assert "1000" in credit_codes  # Bank account credited
+
+    def test_cross_entity_creates_paired_jes_with_ic_group(
+        self, db_session, test_entity, test_entity_au, test_accounts, test_bank_account
+    ):
+        """Different entities → two JEs sharing intercompany_group_id."""
+        from src.services.invoice_service import invoice_service
+        from src.models.journal_entry import FinanceJournalEntry
+        from src.models.journal_line import FinanceJournalLine
+
+        # Add IC accounts needed
+        _make_ic_accounts(db_session)
+
+        # bank_account is under test_entity (SG), invoice is under test_entity_au (AU)
+        cp = _make_counterparty(db_session, "Cross-Entity Vendor")
+        inv = _make_invoice(db_session, test_entity_au.id, cp.id, total_amount=500.0)
+
+        # bank_account entity_id = test_entity.id  (SG books, paying for AU invoice)
+        entry = invoice_service.create_ap_payment_entries(
+            db=db_session,
+            bank_account=test_bank_account,
+            invoice=inv,
+            txn_date=date(2026, 2, 10),
+            abs_amount=500.0,
+            source="ap_knockoff",
+            description="AP Payment: Invoice AU",
+        )
+
+        # Primary JE is in bank entity (SG)
+        assert entry.entity_id == test_entity.id
+        assert entry.intercompany_group_id is not None
+
+        # Find the paired JE in invoice entity (AU)
+        paired = (
+            db_session.query(FinanceJournalEntry)
+            .filter(
+                FinanceJournalEntry.intercompany_group_id == entry.intercompany_group_id,
+                FinanceJournalEntry.id != entry.id,
+            )
+            .first()
+        )
+        assert paired is not None
+        assert paired.entity_id == test_entity_au.id
+
+        # Bank entity JE: Dr IC Receivable (8000) / Cr Bank (1000)
+        bank_lines = db_session.query(FinanceJournalLine).filter_by(entry_id=entry.id).all()
+        bank_debit_codes = {l.account_code for l in bank_lines if float(l.debit_amount) > 0}
+        bank_credit_codes = {l.account_code for l in bank_lines if float(l.credit_amount) > 0}
+        assert "8000" in bank_debit_codes   # IC Due from AU (SG books)
+        assert "1000" in bank_credit_codes  # SG bank account
+
+        # Invoice entity JE: Dr AP (2000) / Cr IC Payable (8110)
+        inv_lines = db_session.query(FinanceJournalLine).filter_by(entry_id=paired.id).all()
+        inv_debit_codes = {l.account_code for l in inv_lines if float(l.debit_amount) > 0}
+        inv_credit_codes = {l.account_code for l in inv_lines if float(l.credit_amount) > 0}
+        assert "2000" in inv_debit_codes    # AP account
+        assert "8110" in inv_credit_codes   # IC Due to SG (AU books)
+
+    def test_cross_entity_unknown_pair_raises(
+        self, db_session, test_entity, test_accounts, test_bank_account
+    ):
+        """Unknown entity name combination raises ValueError."""
+        from src.services.invoice_service import invoice_service
+
+        # Create a third entity whose name doesn't fit the lookup table
+        unknown_entity = FinanceEntity(
+            name="Unknown Entity XYZ", country="US",
+            base_currency="USD", status=EntityStatus.ACTIVE,
+        )
+        db_session.add(unknown_entity)
+        db_session.commit()
+        db_session.refresh(unknown_entity)
+
+        # bank_account is SG entity, invoice is under unknown entity
+        cp = _make_counterparty(db_session, "Unknown Vendor")
+        inv = _make_invoice(db_session, unknown_entity.id, cp.id, total_amount=200.0)
+
+        import pytest as _pytest
+        with _pytest.raises(ValueError, match="no IC codes found"):
+            invoice_service.create_ap_payment_entries(
+                db=db_session,
+                bank_account=test_bank_account,
+                invoice=inv,
+                txn_date=date(2026, 2, 10),
+                abs_amount=200.0,
+                source="ap_knockoff",
+                description="AP Payment: cross-entity test",
+            )
+
+    def test_cross_entity_manual_match_returns_cross_entity_flag(
+        self, db_session, test_entity, test_entity_au, test_accounts, test_bank_account
+    ):
+        """match_transaction with cross-entity returns cross_entity=True in result."""
+        from src.services.invoice_service import invoice_service
+        from src.models.transaction import TransactionStatus
+
+        _make_ic_accounts(db_session)
+
+        cp = _make_counterparty(db_session, "AU Cross-Entity Vendor")
+        inv = _make_invoice(db_session, test_entity_au.id, cp.id, total_amount=600.0)
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="AU VENDOR PAYMENT", amount=-600.0,
+        )
+        txn.counterparty_id = cp.id
+        db_session.commit()
+
+        result = invoice_service.match_transaction(
+            db_session, inv.id, txn.id, matched_by="admin@test.com"
+        )
+
+        assert result["cross_entity"] is True
+        assert result["amount_applied"] == 600.0
+
+        db_session.refresh(txn)
+        assert txn.status == TransactionStatus.MATCHED
+
+    def test_entity_short_name_extraction(self):
+        """_entity_short helper correctly extracts trailing identifier."""
+        from src.services.invoice_service import _entity_short
+        assert _entity_short("DL SG") == "SG"
+        assert _entity_short("DL AU") == "AU"
+        assert _entity_short("DL Ventures") == "Ventures"
+        assert _entity_short("Test Company SG") == "SG"
 
 
 # ============================================================================

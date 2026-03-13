@@ -441,16 +441,15 @@ class CategorizationService:
                 if not bank_account or not bank_account.coa_account_code:
                     continue
 
-                # Dr 2000 AP / Cr Bank
-                je = self._create_simple_entry(
+                inv_ref = f"Invoice {invoice.invoice_number or invoice.id}"
+                je = invoice_service.create_ap_payment_entries(
                     db=db,
-                    transaction=txn,
-                    entity_id=bank_account.entity_id,
-                    bank_coa_code=bank_account.coa_account_code,
-                    contra_code="2000",
-                    amount=amount,
+                    bank_account=bank_account,
+                    invoice=invoice,
+                    txn_date=txn.transaction_date,
                     abs_amount=abs_amount,
                     source="ap_knockoff",
+                    description=f"AP Payment: {inv_ref}",
                 )
 
                 invoice_service.record_payment(db, invoice.id, abs_amount)
@@ -466,6 +465,7 @@ class CategorizationService:
                     "status": "categorized",
                     "rule_name": f"[ap_knockoff:invoice_{invoice.id}]",
                     "journal_entry_id": je.id,
+                    "cross_entity": bank_account.entity_id != invoice.entity_id,
                     "error": None,
                 })
                 handled.add(txn.id)

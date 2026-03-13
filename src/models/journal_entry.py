@@ -75,6 +75,12 @@ class FinanceJournalEntry(Base):
         nullable=True,
         comment="Shared UUID linking paired intercompany journal entries across entities"
     )
+    source_schedule_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("finance_asset_schedules.id", ondelete="SET NULL"),
+        nullable=True,
+        comment="Asset schedule that generated this periodic depreciation/amortization JE",
+    )
     source: Mapped[Optional[str]] = mapped_column(
         String(50),
         nullable=True,
@@ -127,6 +133,7 @@ class FinanceJournalEntry(Base):
             "posted_at": self.posted_at.isoformat() if self.posted_at else None,
             "posting_user_id": self.posting_user_id,
             "intercompany_group_id": self.intercompany_group_id,
+            "source_schedule_id": self.source_schedule_id,
             "source": self.source,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,

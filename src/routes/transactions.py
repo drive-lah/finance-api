@@ -181,6 +181,46 @@ def import_transactions():
         return jsonify(result), 200
 
 
+@transactions_bp.route('/<int:transaction_id>/resolve-needs-review', methods=['POST'])
+def resolve_needs_review(transaction_id: int):
+    """
+    Resolve a NEEDS_REVIEW transaction by confirming or overriding the AI suggestion.
+
+    Body:
+      account_code   str   (required) — COA code to apply (may match or differ from AI suggestion)
+      counterparty_id int  (optional) — set/correct the counterparty link
+      resolved_by    str  (optional) — user who resolved
+      add_alias      str  (optional) — add this string to the counterparty's alias list
+
+    Response 200: updated TransactionResponse
+    """
+    data = request.get_json(silent=True) or {}
+    account_code = data.get("account_code")
+    if not account_code:
+        raise BadRequestError("account_code is required")
+
+    counterparty_id = data.get("counterparty_id")
+    resolved_by = data.get("resolved_by")
+    add_alias = data.get("add_alias")
+
+    with db_session() as db:
+        try:
+            transaction = transaction_service.resolve_needs_review(
+                db,
+                transaction_id,
+                account_code=account_code,
+                counterparty_id=counterparty_id,
+                resolved_by=resolved_by,
+                add_alias=add_alias,
+            )
+        except ValueError as e:
+            msg = str(e)
+            if "not found" in msg.lower():
+                raise NotFoundError(msg)
+            raise BadRequestError(msg)
+        return jsonify(TransactionResponse.model_validate(transaction).model_dump()), 200
+
+
 @transactions_bp.route('/stripe', methods=['POST'])
 def create_stripe_transaction():
     """
