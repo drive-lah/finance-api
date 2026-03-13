@@ -1,7 +1,7 @@
 # Drive Lah Finance System — System Overview
 
-**Version:** 2.5
-**Date:** 2026-03-12
+**Version:** 3.0
+**Date:** 2026-03-13
 **Status:** Living Document
 
 ---
@@ -332,7 +332,22 @@ For each remaining Pending transaction:
   │   ├── IF FOUND: both sides → Matched, both linked to JE
   │   └── IF NOT FOUND: status → Awaiting Match, expected_counterpart_ba_id set
   └── IF NO MATCH:
-      └── Leave as Pending (manual review queue)
+      └── Leave as Pending (go to Phase 4) ↓
+       ↓
+─── PHASE 2.5: Payroll Knock-off ────────────────────────
+For each outgoing transaction (negative amount) in scope:
+  ├── Find a POSTED payroll run for same entity within ±7 days
+  ├── Net salary slot free AND amount matches net_amount (±2%)? → link
+  ├── CPF slot free AND amount matches cpf_payable_amount (±2%)? → link
+  └── On match: transaction → Matched, linked to payroll JE; slot filled
+       ↓
+─── PHASE 4: AI Classification Fallback ─────────────────
+For transactions still Pending after all prior phases:
+  ├── Single batched Claude Haiku call with all unmatched transactions
+  ├── Returns: contra_account_code + confidence (0-1) + reasoning
+  ├── confidence ≥ 0.80 → create JE → status → Matched
+  └── confidence < 0.80 → status → Needs Review (suggestion stored,
+      ai_suggested_account_code, ai_confidence, ai_reasoning fields set)
 ```
 
 **Transaction Status Lifecycle:**
@@ -342,7 +357,7 @@ For each remaining Pending transaction:
 | `Pending` | Transaction imported from CSV or Stripe | System |
 | `Awaiting Match` | Internal transfer rule fired but counter-transaction not yet in DB | System (categorization engine) |
 | `Matched` | Rule applied or both sides of internal transfer paired; journal entry created | System (categorization engine) |
-| `Needs Review` | Reserved for future use (flagged by AI, needs human attention) | System |
+| `Needs Review` | AI classification ran but confidence was low (< 0.80); AI suggestion pre-filled, awaiting human resolution | System (AI classifier) |
 | `Reconciled` | Matched transaction confirmed correct | Human reviewer |
 
 Transactions that remain `Pending` after categorization runs had no matching rule — they sit in a manual review queue.
@@ -384,6 +399,7 @@ When a reviewer approves a Matched transaction (`POST /transactions/:id/approve`
 | `expense` | outgoing | Dr contra account / Cr bank |
 | `deposit` | incoming | Dr bank / Cr contra account |
 | `internal_transfer` | either | Single JE (same entity) or paired JEs with `intercompany_group_id` (cross-entity) |
+| `cross_entity_allocation` | outgoing | Bank entity pays on behalf of another entity: Dr IC Receivable / Cr Bank (bank entity) + Dr Expense / Cr IC Payable (allocation entity), paired with `intercompany_group_id` |
 
 **Rule Match Criteria (AND logic — all non-null must match):**
 
@@ -403,6 +419,7 @@ When a reviewer approves a Matched transaction (`POST /transactions/:id/approve`
 |--------|-------------|
 | `contra_account_code` | Required for `expense`/`deposit` — the non-bank side of the JE |
 | `target_bank_account_id` | Required for `internal_transfer` — destination bank account (entity derived from it) |
+| `allocation_entity_id` | Required for `cross_entity_allocation` — the entity that bears the expense cost (`contra_account_code` is the expense account on this entity) |
 | `counterparty_name` | Set on the transaction (e.g., "AWS", "Stripe") |
 | `counterparty_type` | Set on the transaction (vendor, employee, host, guest, bank, other) |
 | `tag_ids` | JSON array of tag IDs to apply to the transaction |
@@ -435,6 +452,15 @@ When source and target bank accounts belong to the **same entity**:
 
 **Manual Categorization:**
 For unmatched transactions, users can manually categorize via `POST /api/finance/categorization/manual` specifying the contra account, counterparty, tags, and optional `gst_override`.
+
+**NEEDS_REVIEW Resolution:**
+When a transaction is in `Needs Review` status, a human reviewer can resolve it via `POST /api/finance/transactions/:id/resolve-needs-review`:
+- `account_code` (required) — confirms or overrides the AI-suggested account
+- `counterparty_id` (optional) — link a counterparty
+- `resolved_by` (optional) — name/ID of reviewer
+- `add_alias` (optional) — string to append to `counterparty.aliases` for future auto-matching
+
+On resolution: creates JE, transitions transaction to `Matched`. Optionally learns the alias to improve future L1 enrichment.
 
 **API Endpoints:**
 
@@ -484,6 +510,7 @@ finance_categorization_rules
 ├── ACTION
 │   ├── contra_account_code  (required for expense/deposit)
 │   ├── target_bank_account_id (required for internal_transfer)
+│   ├── allocation_entity_id (required for cross_entity_allocation — entity bearing the cost)
 │   ├── counterparty_name    (set on transaction when matched)
 │   ├── counterparty_type    (vendor | employee | host | guest | bank | other)
 │   ├── tag_ids              (JSON int array)
@@ -494,10 +521,11 @@ finance_categorization_rules
 ```
 
 **Validation:**
-- `outgoing` → category must be `expense` or `internal_transfer`
+- `outgoing` → category must be `expense`, `internal_transfer`, or `cross_entity_allocation`
 - `incoming` → category must be `deposit` or `internal_transfer`
 - `internal_transfer` → `target_bank_account_id` required; same-entity = 1 JE, cross-entity = paired JEs with `intercompany_group_id`
 - `expense`/`deposit` → `contra_account_code` required and must exist in COA
+- `cross_entity_allocation` → `allocation_entity_id` required (must exist); `contra_account_code` required (expense account on allocation entity); IC codes resolved from built-in entity-pair lookup table (SG/AU/Ventures pairs)
 
 **Example Rules:**
 
@@ -507,11 +535,6 @@ finance_categorization_rules
 | Stripe Payout | in | deposit | 20 | description contains `STRIPE PAYOUT` | COA 2120, counterparty: Stripe |
 | Office Rent | out | expense | 30 | description contains `LANDLORD CORP` | COA 6300, counterparty: Landlord Corp |
 | SG→AU Transfer | out | internal_transfer | 40 | description matches `TRANSFER.*DL AU` | target_bank_account_id: AU account |
-
-**Next Steps:**
-- Populate `coa_account_code` on existing bank accounts
-- Create categorization rules for known transaction patterns
-- Consider scheduled job to run the engine periodically
 
 ---
 
@@ -719,6 +742,21 @@ finance_amortization_schedules
 - On match: creates JE (Dr 2000 AP / Cr bank account), records partial/full payment on invoice
 - Knock-off transactions are excluded from Phase 2 to prevent double-booking
 
+**Cross-Entity AP Knock-off:**
+When the bank account's entity differs from the invoice's entity (e.g., DL SG bank pays a DL AU vendor invoice), the knock-off creates **two paired JEs** with a shared `intercompany_group_id`:
+- Bank entity JE: Dr IC Receivable (8xxx) / Cr Bank
+- Invoice entity JE: Dr 2000 AP / Cr IC Payable (8xxx)
+IC account codes are resolved from a built-in entity-pair lookup table.
+
+**Retroactive AP Knock-off (on invoice approval):**
+When an invoice is approved, the system scans for existing bank transactions that match the counterparty + amount (±2%) within ±30 days. If found:
+- `Pending` transaction → normal knock-off → `Matched`
+- `Matched` transaction (rule JE, not yet reconciled) → void rule JE → knock-off → re-`Matched`
+- `Reconciled` transaction with a plain expense JE → void JE → reopen to `Pending` → knock-off → re-reconcile
+- `Reconciled` through another invoice → conflict flagged, no action
+
+This ensures bank payments recorded before the invoice is created are correctly linked retroactively.
+
 ---
 
 ### 3.6 Stripe Integration
@@ -894,13 +932,140 @@ CASH (bank payment):
 ```
 
 **What's built:**
-- Cash path: CSV upload, fingerprinting, journal entry creation
-- Accrual path: Manual journal entries for accruals
+- Cash path: CSV/PDF/API import, fingerprinting, JE creation
+- Accrual path: Invoice AP system (draft → approved → paid), payroll accrual JEs
+- Depreciation/amortization: COA-policy-driven schedule + monthly scheduler
 
 **What's next:**
-- Invoice/AP system (automates accrual path)
-- Prepayment scheduling (auto-spread payments over periods)
-- Revenue recognition (Stripe-specific, to be defined)
+- Revenue recognition (Stripe-specific, deferred)
+- GST return summary report
+
+---
+
+### 3.9 Payroll
+
+**Status: Built**
+
+Payroll is a three-step process: HR submits a payroll run → Finance API creates the full accrual JE immediately → bank transfers arrive and are matched via Phase 2.5 of the categorization engine.
+
+**Flow:**
+
+1. HR submits payroll run → `POST /api/finance/payroll/run`
+2. Finance API creates complete JE immediately (gross → net + CPF split):
+   ```
+   Dr 6000 Salaries Expense    [gross]
+   Dr 6001 Employer CPF        [employer CPF]
+   Cr 1xxx Bank — OCBC         [net salary]
+   Cr 2300 CPF Payable         [total CPF payable]
+   ```
+3. Net salary bank transaction arrives → Phase 2.5 payroll knock-off matches it (±2% amount, ±7 day window) → `Matched`, linked to payroll JE
+4. CPF payment bank transaction arrives → same knock-off → `Matched`
+
+**Data Model:**
+
+```
+finance_payroll_runs
+├── id, entity_id
+├── run_date                      (payroll period)
+├── gross_amount, net_amount
+├── employee_cpf_amount, employer_cpf_amount, cpf_payable_amount
+├── journal_entry_id              (the accrual JE created on submission)
+├── net_payment_transaction_id    (bank transaction that paid net salary — set by knock-off)
+├── cpf_payment_transaction_id    (bank transaction that paid CPF — set by knock-off)
+├── status                        (DRAFT | POSTED)
+├── notes, created_at, updated_at
+```
+
+**API Endpoints:**
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/finance/payroll/runs` | List payroll runs (filter by entity_id, status) |
+| POST | `/api/finance/payroll/run` | Submit a payroll run (creates JE, status → POSTED) |
+| GET | `/api/finance/payroll/runs/:id` | Get payroll run by ID |
+| GET | `/api/finance/hr/employees` | List employees from counterparties |
+| GET | `/api/finance/hr/employees/:id` | Get employee |
+| POST | `/api/finance/hr/employees` | Create employee record |
+| PUT | `/api/finance/hr/employees/:id` | Update employee |
+
+---
+
+### 3.10 Depreciation & Amortization
+
+**Status: Built**
+
+COA-policy-driven scheduler that automatically creates periodic depreciation and amortization journal entries when a capitalisation event occurs.
+
+**Trigger:** When a bank transaction is approved (`POST /transactions/:id/approve`) and its linked journal entry debits a balance-sheet account covered by an active policy, a schedule is created automatically.
+
+**Policy Model:**
+
+A `finance_coa_amortization_policies` record ties a specific asset/intangible account to its depreciation treatment:
+- `asset_account_code` — the balance-sheet account that triggers the policy (e.g. `1710` Tech Dev)
+- `accumulated_account_code` — contra-asset for accumulated depreciation (e.g. `1810`)
+- `expense_account_code` — P&L account for the periodic charge (e.g. `7400` Amortization Expense)
+- `useful_life_months` — total months to spread the cost
+- `policy_type` — `amortization` (intangibles/prepaid) or `depreciation` (fixed assets)
+- `entity_id` — null = global; set = entity-specific override (entity-specific wins)
+
+**Schedule:**
+
+Each capitalisation event creates one `finance_asset_schedules` record:
+- `total_amount`, `monthly_amount` = `round(total / months, 2)`
+- `start_date` = first day of the month following the transaction date
+- `months_posted` counter prevents double-posting (idempotent)
+- Last month posts `total − (monthly × (months−1))` to absorb rounding drift
+
+**Monthly Scheduler:**
+
+`POST /api/finance/amortization/run` (manual or cron) posts all due months:
+```
+Dr  7400  Amortization Expense     [monthly_amount]
+Cr  1810  Accumulated Amortization [monthly_amount]
+```
+Each posted JE has `source = "amortization_scheduler"` and `source_schedule_id` linking back to the schedule. Running twice for the same date is safe — already-posted months are skipped.
+
+**API Endpoints:**
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/finance/amortization/policies` | List all COA policies |
+| POST | `/api/finance/amortization/policies` | Create policy |
+| PATCH | `/api/finance/amortization/policies/:id` | Update policy (is_active, useful_life_months, account codes, notes) |
+| GET | `/api/finance/amortization/schedules` | List schedules (filter: status, entity_id) |
+| POST | `/api/finance/amortization/run` | Post all due amortization/depreciation JEs |
+
+**Data Model:**
+
+```
+finance_coa_amortization_policies
+├── id
+├── asset_account_code            (e.g. 1710 — triggers policy when debited)
+├── accumulated_account_code      (e.g. 1810 — credited each month)
+├── expense_account_code          (e.g. 7400 — debited each month)
+├── useful_life_months            (integer)
+├── policy_type                   (amortization | depreciation)
+├── method                        (straight_line — only method currently)
+├── entity_id                     (null = global; set = entity-specific override)
+├── is_active, notes
+├── created_at, updated_at
+
+finance_asset_schedules
+├── id
+├── policy_id                     (FK → finance_coa_amortization_policies)
+├── transaction_id                (FK → finance_transactions — the capitalisation event; UNIQUE)
+├── journal_entry_id              (FK → finance_journal_entries — the reconciliation JE)
+├── entity_id
+├── asset_description
+├── total_amount, monthly_amount
+├── months_total, months_posted
+├── start_date                    (first day of month after transaction_date)
+├── status                        (active | completed | cancelled)
+├── created_at, updated_at
+
+finance_journal_entries (added field)
+└── source_schedule_id            (FK → finance_asset_schedules — set on periodic JEs)
+```
 
 ---
 
