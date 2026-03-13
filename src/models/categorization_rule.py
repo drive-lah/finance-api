@@ -34,13 +34,15 @@ class TransactionCategory(enum.Enum):
     High-level classification of what the transaction represents.
 
     Direction constraints (enforced at rule creation):
-      EXPENSE           → outgoing only
-      DEPOSIT           → incoming only
-      INTERNAL_TRANSFER → either direction
+      EXPENSE                   → outgoing only
+      DEPOSIT                   → incoming only
+      INTERNAL_TRANSFER         → either direction
+      CROSS_ENTITY_ALLOCATION   → outgoing only (bank entity pays, allocation_entity_id bears cost)
     """
     EXPENSE = "expense"
     DEPOSIT = "deposit"
     INTERNAL_TRANSFER = "internal_transfer"
+    CROSS_ENTITY_ALLOCATION = "cross_entity_allocation"
 
 
 class MatchOperator(enum.Enum):
@@ -172,6 +174,15 @@ class FinanceCategorizationRule(Base):
         nullable=True,
         comment="Required for internal_transfer — the other bank account in the transfer."
     )
+    allocation_entity_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("finance_entities.id", ondelete="SET NULL"),
+        nullable=True,
+        comment=(
+            "Required for cross_entity_allocation — the entity that bears the expense cost. "
+            "contra_account_code is the expense account on this entity."
+        )
+    )
     counterparty_name: Mapped[Optional[str]] = mapped_column(
         String(255), nullable=True,
         comment="Overwrites the transaction's counterparty_name when the rule matches"
@@ -234,6 +245,7 @@ class FinanceCategorizationRule(Base):
             "category": self.category.value,
             "contra_account_code": self.contra_account_code,
             "target_bank_account_id": self.target_bank_account_id,
+            "allocation_entity_id": self.allocation_entity_id,
             "counterparty_name": self.counterparty_name,
             "counterparty_type": self.counterparty_type,
             "tag_ids": self.tag_ids,

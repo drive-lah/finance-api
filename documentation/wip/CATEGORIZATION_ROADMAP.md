@@ -91,7 +91,7 @@ Not user-initiated — system-driven only, with audit trail.
 | 1.9 | Bank recon | AP knock-off — cross-entity (bank entity ≠ invoice entity) | ✅ Built (2026-03-13) |
 | 1.10 | Bank recon | Payroll knock-off step in pipeline | ✅ Built |
 | 1.11 | Bank recon | AI classification fallback + NEEDS_REVIEW status | ✅ Built (2026-03-13) |
-| 1.12 | Bank recon | Cross-entity cost allocation rule type | ⬜ Not built |
+| 1.12 | Bank recon | Cross-entity cost allocation rule type | ✅ Built (2026-03-13) |
 | 2.0 | Invoice | Invoice lifecycle (draft → approved → paid) | ✅ Built |
 | 2.1 | Invoice | Retroactive AP knock-off on approval | ✅ Built (2026-03-13) |
 | 2.2 | Invoice | Retroactive knock-off — cross-entity variant | ✅ Built (2026-03-13) |

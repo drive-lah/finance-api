@@ -457,9 +457,10 @@ class RuleCreate(BaseModel):
     match_currency: Optional[str] = Field(None, max_length=3)
 
     # Action
-    category: TransactionCategory = Field(..., description="expense | deposit | internal_transfer")
-    contra_account_code: Optional[str] = Field(None, max_length=20, description="Required for expense/deposit")
+    category: TransactionCategory = Field(..., description="expense | deposit | internal_transfer | cross_entity_allocation")
+    contra_account_code: Optional[str] = Field(None, max_length=20, description="Required for expense/deposit/cross_entity_allocation")
     target_bank_account_id: Optional[int] = Field(None, gt=0, description="Required for internal_transfer")
+    allocation_entity_id: Optional[int] = Field(None, gt=0, description="Required for cross_entity_allocation — entity that bears the cost")
     counterparty_name: Optional[str] = Field(None, max_length=255)
     counterparty_type: Optional[str] = Field(None, max_length=50)
     tag_ids: Optional[list[int]] = None
@@ -490,6 +491,7 @@ class RuleUpdate(BaseModel):
     category: Optional[TransactionCategory] = None
     contra_account_code: Optional[str] = Field(None, max_length=20)
     target_bank_account_id: Optional[int] = Field(None, gt=0)
+    allocation_entity_id: Optional[int] = Field(None, gt=0)
     counterparty_name: Optional[str] = Field(None, max_length=255)
     counterparty_type: Optional[str] = Field(None, max_length=50)
     tag_ids: Optional[list[int]] = None
@@ -536,6 +538,7 @@ class RuleResponse(BaseModel):
     category: str
     contra_account_code: Optional[str] = None
     target_bank_account_id: Optional[int] = None
+    allocation_entity_id: Optional[int] = None
     counterparty_name: Optional[str] = None
     counterparty_type: Optional[str] = None
     tag_ids: Optional[str] = None

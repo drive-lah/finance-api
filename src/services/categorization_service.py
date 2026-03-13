@@ -1025,6 +1025,10 @@ Return only the JSON object, no explanation."""
             journal_entry = self._create_internal_transfer_entries(
                 db, transaction, rule, bank_account, amount, abs_amount
             )
+        elif rule.category == TransactionCategory.CROSS_ENTITY_ALLOCATION:
+            journal_entry = self._create_cross_entity_allocation_entries(
+                db, transaction, rule, bank_account, abs_amount
+            )
         else:
             journal_entry = self._create_simple_entry(
                 db=db,
@@ -1273,6 +1277,98 @@ Return only the JSON object, no explanation."""
 
             db.flush()
             return source_entry
+
+    def _create_cross_entity_allocation_entries(
+        self,
+        db: Session,
+        transaction: FinanceTransaction,
+        rule: FinanceCategorizationRule,
+        bank_account: FinanceBankAccount,
+        abs_amount: float,
+    ) -> Any:
+        """
+        Create paired intercompany JEs for a cross-entity cost allocation.
+
+        Scenario: Entity A (bank) pays an expense that economically belongs to Entity B.
+          Entity A (bank entity):      Dr IC Receivable / Cr Bank
+          Entity B (allocation entity): Dr Expense       / Cr IC Payable
+
+        rule.contra_account_code  → expense account code on Entity B
+        rule.allocation_entity_id → Entity B's ID
+        IC codes are resolved via the same lookup table used by invoice_service.
+        """
+        from src.services.invoice_service import _IC_RECEIVABLE_CODES, _IC_PAYABLE_CODES, _entity_short
+        from src.models.entity import FinanceEntity
+
+        if not rule.allocation_entity_id:
+            raise ValueError("cross_entity_allocation rule missing allocation_entity_id")
+        if not rule.contra_account_code:
+            raise ValueError("cross_entity_allocation rule missing contra_account_code")
+
+        bank_entity = db.query(FinanceEntity).filter(
+            FinanceEntity.id == bank_account.entity_id
+        ).first()
+        alloc_entity = db.query(FinanceEntity).filter(
+            FinanceEntity.id == rule.allocation_entity_id
+        ).first()
+
+        if not bank_entity:
+            raise ValueError(f"Bank entity {bank_account.entity_id} not found")
+        if not alloc_entity:
+            raise ValueError(f"Allocation entity {rule.allocation_entity_id} not found")
+
+        bank_short = _entity_short(bank_entity.name)
+        alloc_short = _entity_short(alloc_entity.name)
+        pair = (bank_short, alloc_short)
+
+        ic_recv_code = _IC_RECEIVABLE_CODES.get(pair)
+        ic_pay_code = _IC_PAYABLE_CODES.get((alloc_short, bank_short))
+
+        if not ic_recv_code or not ic_pay_code:
+            raise ValueError(
+                f"No IC account codes defined for entity pair ({bank_short}, {alloc_short}). "
+                f"Add entries to _IC_RECEIVABLE_CODES / _IC_PAYABLE_CODES in invoice_service.py"
+            )
+
+        je_description = transaction.description or "Cross-entity cost allocation"
+        ic_group_id = str(uuid.uuid4())
+
+        # Bank entity: pays out cash → Dr IC Receivable (asset: they are owed by alloc entity)
+        #                             Cr Bank
+        bank_lines = [
+            {"account_code": ic_recv_code,               "debit_amount": abs_amount, "credit_amount": 0.0,        "description": je_description},
+            {"account_code": bank_account.coa_account_code, "debit_amount": 0.0,      "credit_amount": abs_amount, "description": je_description},
+        ]
+
+        # Allocation entity: bears the cost → Dr Expense (contra_account_code)
+        #                                      Cr IC Payable (they owe the bank entity)
+        alloc_lines = [
+            {"account_code": rule.contra_account_code, "debit_amount": abs_amount, "credit_amount": 0.0,        "description": je_description},
+            {"account_code": ic_pay_code,              "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
+        ]
+
+        bank_entry = journal_service.create(
+            db=db,
+            entity_id=bank_account.entity_id,
+            entry_date=transaction.transaction_date,
+            description=je_description,
+            lines=bank_lines,
+        )
+        bank_entry.source = "categorization_engine"
+        bank_entry.intercompany_group_id = ic_group_id
+
+        alloc_entry = journal_service.create(
+            db=db,
+            entity_id=rule.allocation_entity_id,
+            entry_date=transaction.transaction_date,
+            description=je_description,
+            lines=alloc_lines,
+        )
+        alloc_entry.source = "categorization_engine"
+        alloc_entry.intercompany_group_id = ic_group_id
+
+        db.flush()
+        return bank_entry
 
     # ------------------------------------------------------------------
     # GST helpers
