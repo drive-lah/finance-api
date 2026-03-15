@@ -41,8 +41,14 @@ Return ONLY a JSON object with these exact fields (use null for missing fields):
 
 Rules:
 - vendor_name: the company SENDING the invoice (not us)
-- bill_to_entity_hint: look for our entity names in the Bill To section. Return the exact entity name if matched, or null
-- For service period: look for "for the period", "subscription period", "billing period", "invoice for [month]", month names, or date ranges. If invoice says "for February 2026" or "February 2026 subscription", set service_period_start = first day of that month, service_period_end = last day of that month.
+- bill_to_entity_hint: look for our entity names in the Bill To section AND apply these rules:
+  * If invoice mentions "Drive mate" or similar variant spellings, return "Drive lah Australia Pty Ltd"
+  * If currency is AUD, return "Drive lah Australia Pty Ltd"
+  * Otherwise return the exact entity name if matched, or null
+- For service period:
+  * Look for "for the period", "subscription period", "billing period", "invoice for [month]", month names, or date ranges
+  * If invoice says "for February 2026" or "February 2026 subscription", set service_period_start = first day of that month, service_period_end = last day of that month
+  * If NO explicit service period found, use invoice_date as BOTH service_period_start AND service_period_end
 - For COA: AWS/GCP/Azure/Cloudflare/Digital Ocean/GitHub → 6700. Legal/accounting → 6500. Office rent → 6300. Payroll/salary → 6000. Marketing/ads → 6100. Bank charges → 6600.
 - tax_amount: extract the GST/VAT line item amount (not the total). Look for "GST", "VAT", "Tax" line. If no tax line exists, set to null — do NOT guess.
 - subtotal_amount: the pre-tax amount if shown separately, otherwise null
@@ -87,15 +93,87 @@ class AIExtractionService:
             "confidence": 0.0, "raw_text": raw_text, "extraction_error": error or None,
         }
 
-    def extract_invoice_data(self, pdf_bytes: bytes, entity_names: list[str] | None = None) -> dict:
+    def extract_invoice_data_from_image(self, image_bytes: bytes, media_type: str, entity_names: list[str] | None = None) -> dict:
         """
-        Extract structured invoice data from PDF bytes.
+        Extract structured invoice data from image bytes using Claude vision API.
 
+        image_bytes: JPEG image bytes
+        media_type: MIME type (e.g., "image/jpeg")
         entity_names: list of entity names to pass to the prompt for Bill-To matching.
-        Returns a dict with extracted fields plus raw_text and extraction_error.
+        Returns a dict with extracted fields (raw_text will be "(image — no raw text)").
         """
         try:
-            raw_text = self.extract_text_from_pdf(pdf_bytes)
+            import base64
+
+            logger.info(f"Extracting invoice from image. Size: {len(image_bytes)} bytes, MIME: {media_type}")
+
+            entity_list = "\n".join(f"- {n}" for n in (entity_names or [])) or "- (none provided)"
+            client = self._get_client()
+
+            # Strip the "Invoice text:" section since vision model reads image directly
+            # Get the part before invoice_text placeholder
+            vision_prompt = EXTRACTION_PROMPT.replace("{invoice_text}", "").replace("{entity_list}", entity_list)
+            vision_prompt = vision_prompt.replace("Invoice text:\n", "")
+            vision_prompt += "\nExtract the invoice data from the image above."
+
+            logger.info(f"Vision prompt length: {len(vision_prompt)} chars")
+
+            logger.info("Calling Claude vision API...")
+            message = client.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=1024,
+                messages=[{"role": "user", "content": [
+                    {"type": "image", "source": {
+                        "type": "base64",
+                        "media_type": media_type,
+                        "data": base64.standard_b64encode(image_bytes).decode("utf-8"),
+                    }},
+                    {"type": "text", "text": vision_prompt},
+                ]}],
+            )
+
+            response_text = message.content[0].text.strip()
+            logger.info(f"Claude vision API responded. Response length: {len(response_text)} chars")
+
+            if response_text.startswith("```"):
+                lines = response_text.split("\n")
+                response_text = "\n".join(lines[1:-1] if lines[-1] == "```" else lines[1:])
+                logger.info(f"Stripped markdown code blocks. New length: {len(response_text)} chars")
+
+            extracted = json.loads(response_text)
+            logger.info(f"Successfully parsed JSON response. Keys: {list(extracted.keys())}")
+
+            extracted["raw_text"] = "(image — no raw text)"
+            extracted["extraction_error"] = None
+            return extracted
+
+        except json.JSONDecodeError as e:
+            logger.error(f"AI returned invalid JSON: {e}. Response was: {response_text[:500]}")
+            return self._empty_result("", "AI extraction failed: invalid JSON response")
+        except Exception as e:
+            logger.error(f"AI extraction error: {e}", exc_info=True)
+            return self._empty_result("", str(e))
+
+    def extract_invoice_data(self, file_bytes: bytes, entity_names: list[str] | None = None, file_extension: str = ".pdf") -> dict:
+        """
+        Extract structured invoice data from file bytes (PDF or image).
+
+        file_bytes: bytes of the file (PDF, JPEG, PNG)
+        entity_names: list of entity names to pass to the prompt for Bill-To matching.
+        file_extension: extension including dot (e.g., ".pdf", ".jpg", ".jpeg", ".png")
+        Returns a dict with extracted fields plus raw_text and extraction_error.
+        """
+        logger.info(f"extract_invoice_data called. file_extension={file_extension}, file_size={len(file_bytes)} bytes")
+
+        # Handle image files via vision API
+        if file_extension in ('.jpg', '.jpeg', '.png'):
+            media_type = "image/jpeg" if file_extension in ('.jpg', '.jpeg') else "image/png"
+            logger.info(f"Detected image file ({file_extension}), using vision API with media_type={media_type}")
+            return self.extract_invoice_data_from_image(file_bytes, media_type, entity_names)
+
+        # Handle PDF via text extraction
+        try:
+            raw_text = self.extract_text_from_pdf(file_bytes)
             if not raw_text.strip():
                 return self._empty_result(
                     raw_text,
