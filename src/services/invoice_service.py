@@ -260,33 +260,45 @@ class InvoiceService:
             )
 
         # COA priority at approval time:
-        # 1. Manual override from approver (contra_account_code parameter)
-        # 2. Counterparty default (if coa_source is 'ai', which means AI suggested, not manually set)
-        # 3. Existing invoice COA (contract, manual, or other)
+        # 1. Manual override from approver (contra_account_code parameter) — highest priority
+        # 2. For VERIFIED counterparties: ALWAYS use default_account_code (ignores AI suggestion)
+        # 3. For UNVERIFIED counterparties: use default if available, else AI suggestion
+        from src.models.counterparty import FinanceCounterparty
+
         if contra_account_code:
+            # Approver explicitly provided a COA
             invoice.contra_account_code = contra_account_code
             invoice.coa_source = "manual"
-        elif invoice.counterparty_id and invoice.coa_source == "ai":
-            # If AI suggested a COA, prefer counterparty's actual default
-            from src.models.counterparty import FinanceCounterparty
+        elif invoice.counterparty_id:
             counterparty = db.get(FinanceCounterparty, invoice.counterparty_id)
-            if counterparty and counterparty.default_account_code:
-                invoice.contra_account_code = counterparty.default_account_code
-                invoice.coa_source = "db"
-        elif not invoice.contra_account_code:
-            # Try to use counterparty's default if no COA is set
-            if invoice.counterparty_id:
-                from src.models.counterparty import FinanceCounterparty
-                counterparty = db.get(FinanceCounterparty, invoice.counterparty_id)
-                if counterparty and counterparty.default_account_code:
-                    invoice.contra_account_code = counterparty.default_account_code
-                    invoice.coa_source = "db"
+            if counterparty:
+                if counterparty.is_verified:
+                    # Verified counterparties MUST have a default COA
+                    # Always use it, ignoring any AI suggestion
+                    if counterparty.default_account_code:
+                        invoice.contra_account_code = counterparty.default_account_code
+                        invoice.coa_source = "db"
+                    else:
+                        # Should not happen — verified vendors must have COA
+                        from src.utils.errors import BadRequestError
+                        raise BadRequestError(
+                            f"Verified vendor '{counterparty.name}' is missing default_account_code. "
+                            f"Update vendor configuration before approving invoices."
+                        )
+                else:
+                    # Unverified/auto-created counterparty
+                    # Use default if available, else AI suggestion is acceptable
+                    if counterparty.default_account_code:
+                        invoice.contra_account_code = counterparty.default_account_code
+                        invoice.coa_source = "db"
+                    # else: keep AI suggestion (coa_source = 'ai')
 
         if not invoice.contra_account_code:
             from src.utils.errors import BadRequestError
             raise BadRequestError(
                 "Cannot approve invoice without a contra_account_code. "
-                "Set a default account on the vendor, or provide the expense account in the approval request."
+                "For pre-registered vendors, update their default_account_code. "
+                "For new vendors, set default_account_code or provide COA in approval request."
             )
 
         total = float(invoice.total_amount)

@@ -54,6 +54,15 @@ class CounterpartyService:
         existing = self.get_by_name_type(db, data.get("name", ""), data.get("type", ""))
         if existing:
             raise ValueError(f"Counterparty '{data['name']}' already exists as type '{data['type']}' (id={existing.id})")
+
+        # Enforce COA requirement for vendor-type counterparties
+        if data.get("type") == CounterpartyType.VENDOR.value:
+            if not data.get("default_account_code"):
+                raise ValueError(
+                    "default_account_code is required for all vendor counterparties. "
+                    "Vendors must have a pre-configured expense/asset account for AP entries."
+                )
+
         cp = FinanceCounterparty(**data)
         db.add(cp)
         db.commit()
