@@ -6,7 +6,7 @@ from flask import Blueprint, request, jsonify
 
 from src.database import db_session
 from src.models.schemas import InvoiceCreate, InvoiceUpdate, InvoiceResponse
-from src.services.invoice_service import invoice_service
+from src.services.invoice_service import invoice_service, _invoice_dict
 from src.utils.errors import NotFoundError, ConflictError
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ def list_invoices():
         invoices = invoice_service.get_all(
             db, entity_id=entity_id, status=status, counterparty_id=counterparty_id,
         )
-        return jsonify([InvoiceResponse.model_validate(inv).model_dump() for inv in invoices]), 200
+        return jsonify([_invoice_dict(inv, db) for inv in invoices]), 200
 
 
 @invoices_bp.route("", methods=["POST"])
@@ -36,7 +36,7 @@ def create_invoice():
 
     with db_session() as db:
         invoice = invoice_service.create(db, invoice_data)
-        return jsonify(InvoiceResponse.model_validate(invoice).model_dump()), 201
+        return jsonify(_invoice_dict(invoice, db)), 201
 
 
 @invoices_bp.route("/<int:invoice_id>", methods=["GET"])
@@ -44,7 +44,7 @@ def get_invoice(invoice_id: int):
     """Get an invoice by ID."""
     with db_session() as db:
         invoice = invoice_service.get_by_id(db, invoice_id)
-        return jsonify(InvoiceResponse.model_validate(invoice).model_dump()), 200
+        return jsonify(_invoice_dict(invoice, db)), 200
 
 
 @invoices_bp.route("/<int:invoice_id>", methods=["PUT"])
@@ -55,7 +55,7 @@ def update_invoice(invoice_id: int):
 
     with db_session() as db:
         invoice = invoice_service.update(db, invoice_id, update_data)
-        return jsonify(InvoiceResponse.model_validate(invoice).model_dump()), 200
+        return jsonify(_invoice_dict(invoice, db)), 200
 
 
 @invoices_bp.route("/<int:invoice_id>/approve", methods=["POST"])
@@ -74,7 +74,7 @@ def approve_invoice(invoice_id: int):
 
     with db_session() as db:
         invoice = invoice_service.approve(db, invoice_id, approved_by, contra_account_code=contra_account_code)
-        return jsonify(InvoiceResponse.model_validate(invoice).model_dump()), 200
+        return jsonify(_invoice_dict(invoice, db)), 200
 
 
 @invoices_bp.route("/<int:invoice_id>/reject", methods=["POST"])
@@ -87,7 +87,7 @@ def reject_invoice(invoice_id: int):
 
     with db_session() as db:
         invoice = invoice_service.reject(db, invoice_id, rejection_reason)
-        return jsonify(InvoiceResponse.model_validate(invoice).model_dump()), 200
+        return jsonify(_invoice_dict(invoice, db)), 200
 
 
 @invoices_bp.route("/<int:invoice_id>/void", methods=["POST"])
@@ -95,7 +95,7 @@ def void_invoice(invoice_id: int):
     """Void an invoice."""
     with db_session() as db:
         invoice = invoice_service.void(db, invoice_id)
-        return jsonify(InvoiceResponse.model_validate(invoice).model_dump()), 200
+        return jsonify(_invoice_dict(invoice, db)), 200
 
 
 @invoices_bp.route("/<int:invoice_id>/submit", methods=["POST"])
@@ -103,62 +103,73 @@ def submit_invoice(invoice_id: int):
     """
     Submit a draft invoice for approval.
 
-    Runs the AI contract review gate:
+    Evaluates approval rules to determine routing:
     - Validates required fields are present
-    - Compares invoice against known contract (if any)
-    - Returns assessment: pass | flag | no_contract
+    - Applies override rules (new_vendor, ai/unset COA) → pending_approval
+    - Evaluates approval rules: auto_approve or require_approval
+    - Defaults to pending_approval if no rule matches
 
-    Body (optional):
-      { "confirmed": true }  — human override after seeing a flag
+    Body: {} (empty)
 
     Response 200:
       {
-        "assessment": "pass" | "flag" | "no_contract",
+        "status": "pending_approval" | "approved",
         "message": "Human-readable explanation",
-        "concerns": ["..."],           # only when assessment = flag
-        "invoice": { ...InvoiceResponse... }  # populated when status changed
+        "invoice": { ...InvoiceResponse... }
       }
     """
     data = request.get_json() or {}
-    confirmed = bool(data.get("confirmed", False))
 
     with db_session() as db:
-        result = invoice_service.submit(db, invoice_id, confirmed=confirmed)
+        result = invoice_service.submit(db, invoice_id, confirmed=False)
         return jsonify(result), 200
 
 
 @invoices_bp.route('/extract', methods=['POST'])
 def extract_invoice():
     """
-    Extract structured data from an uploaded invoice PDF using AI.
+    Extract structured data from an uploaded invoice PDF or image using AI.
 
-    - Checks PDF hash against existing invoices (blocks exact duplicates)
+    - Checks file hash against existing invoices (blocks exact duplicates)
     - Passes entity names to AI for Bill-To matching
-    - Uploads PDF to S3 (best-effort)
+    - Uploads file to S3 (best-effort)
     - Returns extracted fields + pdf_s3_key + pdf_content_hash for frontend review
 
-    Request: multipart/form-data, field 'file' = PDF
+    Request: multipart/form-data, field 'file' = PDF or image (JPEG, PNG)
     Response 200: extracted invoice data dict
-    Response 409: duplicate PDF already exists in system
-    Response 400: no file / not PDF
+    Response 409: duplicate file already exists in system
+    Response 400: no file / unsupported file type
     """
+    import os
+
+    logger.info(f"Invoice extract request received. Files: {request.files.keys()}")
+
     if 'file' not in request.files:
+        logger.error("No 'file' field in request")
         return jsonify({"error": "No file provided"}), 400
 
     file = request.files['file']
-    if not file.filename or not file.filename.lower().endswith('.pdf'):
-        return jsonify({"error": "File must be a PDF"}), 400
+    logger.info(f"File received: filename={file.filename}, content_type={file.content_type}")
 
-    pdf_bytes = file.read()
+    ALLOWED_EXTENSIONS = {'.pdf', '.jpg', '.jpeg', '.png'}
+    ext = os.path.splitext(file.filename.lower())[1] if file.filename else ''
+    logger.info(f"File extension extracted: '{ext}' from filename '{file.filename}'")
 
-    # --- Duplicate detection: exact PDF hash check ---
-    pdf_hash = hashlib.sha256(pdf_bytes).hexdigest()
+    if not ext or ext not in ALLOWED_EXTENSIONS:
+        logger.error(f"Invalid extension. ext='{ext}', allowed={ALLOWED_EXTENSIONS}")
+        return jsonify({"error": "File must be a PDF or image (JPEG, PNG)"}), 400
+
+    file_bytes = file.read()
+    logger.info(f"File read successfully. Size: {len(file_bytes)} bytes")
+
+    # --- Duplicate detection: exact file hash check ---
+    file_hash = hashlib.sha256(file_bytes).hexdigest()
     with db_session() as db:
-        existing = invoice_service.find_by_pdf_hash(db, pdf_hash)
-        if existing:
+        existing = invoice_service.find_by_pdf_hash(db, file_hash)
+        if existing and existing.status != 'void':
             return jsonify({
                 "error": "Duplicate invoice",
-                "detail": f"This PDF has already been uploaded (Invoice #{existing.invoice_number or existing.id}, status: {existing.status}).",
+                "detail": f"This file has already been uploaded (Invoice #{existing.invoice_number or existing.id}, status: {existing.status}).",
                 "existing_invoice_id": existing.id,
             }), 409
 
@@ -171,7 +182,9 @@ def extract_invoice():
         entities = db.query(FinanceEntity).filter(FinanceEntity.status == "active").all()
         entity_names = [e.name for e in entities]
 
-    result = ai_extraction_service.extract_invoice_data(pdf_bytes, entity_names=entity_names)
+    logger.info(f"Calling AI extraction service with file_extension={ext}...")
+    result = ai_extraction_service.extract_invoice_data(file_bytes, entity_names=entity_names, file_extension=ext)
+    logger.info(f"AI extraction complete. Result keys: {list(result.keys())}, extraction_error: {result.get('extraction_error')}")
 
     # Vendor matching — find or prepare auto-create
     vendor_match = {"counterparty_id": None, "counterparty_name": None,
@@ -192,10 +205,13 @@ def extract_invoice():
     result["vendor_match"] = vendor_match
 
     # Upload to S3 (best-effort)
-    s3_key = s3_service.upload_invoice_pdf(pdf_bytes, filename=file.filename or "invoice.pdf")
+    logger.info("Starting S3 upload...")
+    s3_key = s3_service.upload_invoice_pdf(file_bytes, filename=file.filename or "invoice.pdf")
     result["pdf_s3_key"] = s3_key
-    result["pdf_content_hash"] = pdf_hash
+    result["pdf_content_hash"] = file_hash
+    logger.info(f"S3 upload complete. s3_key={s3_key}")
 
+    logger.info(f"Returning extraction result. Keys: {list(result.keys())}")
     return jsonify(result), 200
 
 
@@ -259,5 +275,31 @@ def list_open_for_transaction(transaction_id: int):
         return jsonify({
             "transaction_id": transaction_id,
             "counterparty_id": txn.counterparty_id,
-            "invoices": [InvoiceResponse.model_validate(inv).model_dump() for inv in invoices],
+            "invoices": [_invoice_dict(inv, db) for inv in invoices],
+        }), 200
+
+
+@invoices_bp.route("/<int:invoice_id>/download", methods=["GET"])
+def download_invoice(invoice_id: int):
+    """
+    Download the uploaded invoice file (PDF or image).
+
+    Returns a pre-signed URL for the S3 object if available.
+    If S3 is not configured, returns a 404.
+    """
+    with db_session() as db:
+        invoice = invoice_service.get_by_id(db, invoice_id)
+        if not invoice.pdf_s3_key:
+            return jsonify({"error": "No file attached to this invoice"}), 404
+
+        from src.services.s3_service import s3_service
+        presigned_url = s3_service.get_presigned_url(invoice.pdf_s3_key, expiration_seconds=3600)
+
+        if not presigned_url:
+            return jsonify({"error": "Cannot generate download link — S3 not configured"}), 503
+
+        return jsonify({
+            "download_url": presigned_url,
+            "invoice_id": invoice_id,
+            "file_key": invoice.pdf_s3_key,
         }), 200

@@ -452,6 +452,7 @@ class RuleCreate(BaseModel):
     description_value: Optional[str] = Field(None, max_length=500)
     transaction_type_operator: Optional[MatchOperator] = None
     transaction_type_value: Optional[str] = Field(None, max_length=50)
+    counterparty_id: Optional[int] = Field(None, description="FK to finance_counterparties — rules condition on resolved counterparty ID")
     counterparty_operator: Optional[MatchOperator] = None
     counterparty_value: Optional[str] = Field(None, max_length=255)
     match_currency: Optional[str] = Field(None, max_length=3)
@@ -484,6 +485,7 @@ class RuleUpdate(BaseModel):
     description_value: Optional[str] = Field(None, max_length=500)
     transaction_type_operator: Optional[MatchOperator] = None
     transaction_type_value: Optional[str] = Field(None, max_length=50)
+    counterparty_id: Optional[int] = Field(None, description="FK to finance_counterparties — rules condition on resolved counterparty ID")
     counterparty_operator: Optional[MatchOperator] = None
     counterparty_value: Optional[str] = Field(None, max_length=255)
     match_currency: Optional[str] = Field(None, max_length=3)
@@ -531,6 +533,7 @@ class RuleResponse(BaseModel):
     description_value: Optional[str] = None
     transaction_type_operator: Optional[str] = None
     transaction_type_value: Optional[str] = None
+    counterparty_id: Optional[int] = None
     counterparty_operator: Optional[str] = None
     counterparty_value: Optional[str] = None
     match_currency: Optional[str] = None
@@ -782,6 +785,7 @@ class InvoiceResponse(BaseModel):
     uploaded_by: Optional[str] = None
     pdf_s3_key: Optional[str] = None
     pdf_content_hash: Optional[str] = None
+    invoice_url: Optional[str] = None
     new_vendor: bool = False
     coa_source: Optional[str] = None
     notes: Optional[str] = None

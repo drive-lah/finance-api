@@ -60,9 +60,28 @@ def _entity_short(name: str) -> str:
     return name.strip().rsplit(" ", 1)[-1]
 
 
-def _invoice_dict(invoice: "FinanceInvoice") -> dict:
+def _invoice_dict(invoice: "FinanceInvoice", db: Optional[Session] = None) -> dict:
     from src.models.schemas import InvoiceResponse
-    return InvoiceResponse.model_validate(invoice).model_dump()
+    from src.services.s3_service import s3_service
+
+    result = InvoiceResponse.model_validate(invoice).model_dump()
+
+    # Add pre-signed URL if S3 file exists
+    if invoice.pdf_s3_key:
+        presigned_url = s3_service.get_presigned_url(invoice.pdf_s3_key, expiration_seconds=3600)
+        result["invoice_url"] = presigned_url
+
+    # Add counterparty data if available (for COA defaults in approval modal)
+    if db and invoice.counterparty_id:
+        counterparty = db.get(FinanceCounterparty, invoice.counterparty_id)
+        if counterparty:
+            result["counterparty"] = {
+                "id": counterparty.id,
+                "name": counterparty.name,
+                "default_account_code": counterparty.default_account_code,
+            }
+
+    return result
 
 
 def _months_between(start: date, end: date) -> int:
@@ -240,16 +259,34 @@ class InvoiceService:
                 f"Only draft or pending_approval invoices can be approved."
             )
 
-        # Approver can provide / override the COA code at time of approval
+        # COA priority at approval time:
+        # 1. Manual override from approver (contra_account_code parameter)
+        # 2. Counterparty default (if coa_source is 'ai', which means AI suggested, not manually set)
+        # 3. Existing invoice COA (contract, manual, or other)
         if contra_account_code:
             invoice.contra_account_code = contra_account_code
             invoice.coa_source = "manual"
+        elif invoice.counterparty_id and invoice.coa_source == "ai":
+            # If AI suggested a COA, prefer counterparty's actual default
+            from src.models.counterparty import FinanceCounterparty
+            counterparty = db.get(FinanceCounterparty, invoice.counterparty_id)
+            if counterparty and counterparty.default_account_code:
+                invoice.contra_account_code = counterparty.default_account_code
+                invoice.coa_source = "db"
+        elif not invoice.contra_account_code:
+            # Try to use counterparty's default if no COA is set
+            if invoice.counterparty_id:
+                from src.models.counterparty import FinanceCounterparty
+                counterparty = db.get(FinanceCounterparty, invoice.counterparty_id)
+                if counterparty and counterparty.default_account_code:
+                    invoice.contra_account_code = counterparty.default_account_code
+                    invoice.coa_source = "db"
 
         if not invoice.contra_account_code:
             from src.utils.errors import BadRequestError
             raise BadRequestError(
                 "Cannot approve invoice without a contra_account_code. "
-                "Provide the expense account in the approval request."
+                "Set a default account on the vendor, or provide the expense account in the approval request."
             )
 
         total = float(invoice.total_amount)
@@ -963,16 +1000,13 @@ class InvoiceService:
         Phase 1 — Validation:
           Checks entity_id, counterparty_id, contra_account_code are all set.
 
-        Phase 2 — AI Contract Review Gate:
-          Compares invoice amount/currency/period against the linked contract.
-          Returns assessment: pass | flag | no_contract
-          If assessment is "flag" and confirmed=False → return to human for confirmation.
-          If confirmed=True (human override) → proceed regardless.
-
-        Phase 3 — Approval Rules:
+        Phase 2 — Approval Rules:
           Evaluates active rules ordered by priority.
-          auto_approve → status = approved, JE created.
-          require_approval or no match → status = pending_approval.
+          - new_vendor or coa_source='ai'/null → always pending_approval
+          - Otherwise: first matching rule wins (auto_approve or require_approval)
+          - No match → defaults to pending_approval
+          - auto_approve → status = approved, JE created.
+          - require_approval or no match → status = pending_approval.
         """
         invoice = self.get_by_id(db, invoice_id)
 
@@ -996,61 +1030,44 @@ class InvoiceService:
                 f"Cannot submit invoice — missing required fields: {', '.join(missing)}"
             )
 
-        # --- Phase 2: AI contract review gate ---
-        assessment = self._ai_contract_review(db, invoice)
-
-        if assessment["assessment"] == "flag" and not confirmed:
-            # Return to human for confirmation — do NOT change status
-            return {
-                "assessment": "flag",
-                "message": assessment["message"],
-                "concerns": assessment.get("concerns", []),
-                "invoice": None,  # status not changed yet
-            }
-
-        # --- Phase 3: approval rules ---
+        # --- Phase 2: approval rules ---
         # Hard overrides — always require human even if rule says auto_approve
         if invoice.new_vendor:
             invoice.status = InvoiceStatus.PENDING_APPROVAL.value
             db.commit()
             db.refresh(invoice)
             return {
-                "assessment": assessment["assessment"],
-                "message": assessment.get("message", ""),
-                "concerns": assessment.get("concerns", []),
-                "invoice": _invoice_dict(invoice),
-                "override_reason": "new_vendor",
                 "status": InvoiceStatus.PENDING_APPROVAL.value,
+                "message": "Invoice marked for approval (new vendor)",
+                "invoice": _invoice_dict(invoice, db),
             }
         if invoice.coa_source in ("ai", None):
             invoice.status = InvoiceStatus.PENDING_APPROVAL.value
             db.commit()
             db.refresh(invoice)
             return {
-                "assessment": assessment["assessment"],
-                "message": assessment.get("message", ""),
-                "concerns": assessment.get("concerns", []),
-                "invoice": _invoice_dict(invoice),
-                "override_reason": "ai_coa",
                 "status": InvoiceStatus.PENDING_APPROVAL.value,
+                "message": "Invoice marked for approval (AI/unset COA requires verification)",
+                "invoice": _invoice_dict(invoice, db),
             }
 
         new_status, auto_approved_by = self._evaluate_approval_rules(db, invoice)
 
         if new_status == InvoiceStatus.APPROVED.value:
-            db.commit()  # flush assessment fields before approve()
+            db.commit()  # flush before approve()
             updated = self.approve(db, invoice_id, approved_by=auto_approved_by or "auto")
+            message = "Invoice auto-approved via approval rule"
         else:
             invoice.status = new_status
             db.commit()
             db.refresh(invoice)
             updated = invoice
+            message = "Invoice marked for approval (no matching auto-approve rule)"
 
         from src.models.schemas import InvoiceResponse
         return {
-            "assessment": assessment["assessment"],
-            "message": assessment["message"],
-            "concerns": assessment.get("concerns", []),
+            "status": new_status,
+            "message": message,
             "invoice": InvoiceResponse.model_validate(updated).model_dump(),
         }
 
