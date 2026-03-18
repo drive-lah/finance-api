@@ -54,14 +54,22 @@ class CategorizationService:
         limit: int = 100,
     ) -> dict[str, Any]:
         """
-        Run the two-phase categorization pipeline on pending transactions.
+        Run the four-phase categorization pipeline on pending transactions.
 
         Phase 1 — Counterparty Enrichment:
             Match each transaction's raw counterparty_name / description against
             the finance_counterparties directory. Sets counterparty_id FK,
             canonical counterparty_name, and counterparty_type.
 
-        Phase 2 — Accounting Classification:
+        Phase 2 — AP Invoice Knock-off:
+            Match transaction to open AP invoices. If matched, create payment JE
+            and mark handled so Phase 4 does not double-book.
+
+        Phase 3 — Payroll Knock-off:
+            Match transaction to unmatched payroll JE lines. If matched, link
+            and mark handled so Phase 4 does not double-book.
+
+        Phase 4 — Accounting Classification:
             A) If transaction has a counterparty with default_account_code →
                auto-create the journal entry (no rule needed).
             B) Otherwise walk active rules in priority order (first match wins).
@@ -84,7 +92,7 @@ class CategorizationService:
             query = query.filter(FinanceTransaction.bank_account_id == bank_account_id)
         elif rule_id is not None:
             # When running a specific rule, scope transactions to the rule's bank_account_ids
-            # so Phase 1/1.5 don't process (and count) unrelated transactions.
+            # so Phase 0/1 don't process (and count) unrelated transactions.
             rule_obj = db.query(FinanceCategorizationRule).filter(
                 FinanceCategorizationRule.id == rule_id
             ).first()
@@ -110,7 +118,7 @@ class CategorizationService:
         uncategorized = 0
         errors = 0
 
-        # ── Step 0: Pair AWAITING_MATCH with incoming counter-transactions ─
+        # ── Phase 0: Pair AWAITING_MATCH with incoming counter-transactions ─
         # Before enrichment: check if any AWAITING_MATCH transactions are waiting
         # for a bank account in our current scope. Pair them with matching PENDING
         # transactions immediately, bypassing all other phases.
@@ -129,22 +137,22 @@ class CategorizationService:
         # ── Phase 1: Counterparty enrichment ──────────────────────────────
         self._enrich_counterparties(db, transactions)
 
-        # ── Phase 1.5: AP Knock-off ────────────────────────────────────────
+        # ── Phase 2: AP Knock-off ────────────────────────────────────────
         # For any transaction whose counterparty was just enriched, check
         # whether it matches an open AP invoice. If so, create the payment
-        # JE (Dr AP / Cr Bank) and mark the transaction handled so Phase 2
+        # JE (Dr AP / Cr Bank) and mark the transaction handled so Phase 4
         # does not double-book the expense.
         ap_handled_ids: set[int] = self._try_ap_knockoff(db, transactions, results, categorized)
         categorized += len(ap_handled_ids)
 
-        # ── Phase 2.5: Payroll Knock-off ──────────────────────────────────
+        # ── Phase 3: Payroll Knock-off ──────────────────────────────────
         # Check whether any outgoing transaction matches an unmatched line in
         # a posted payroll JE (net salary or CPF payment). If so, link the
-        # transaction to the payroll JE instead of running Phase 2 rules.
+        # transaction to the payroll JE instead of running Phase 4 rules.
         payroll_handled_ids: set[int] = self._try_payroll_knockoff(db, transactions, results)
         categorized += len(payroll_handled_ids)
 
-        # ── Phase 2: Accounting classification ───────────────────────────
+        # ── Phase 4: Accounting classification ───────────────────────────
         rules_query = (
             db.query(FinanceCategorizationRule)
             .filter(FinanceCategorizationRule.status == RuleStatus.ACTIVE)
@@ -169,13 +177,13 @@ class CategorizationService:
             try:
                 result = None
 
-                # Phase 2A: default_account_code from linked counterparty
+                # Phase 4A: default_account_code from linked counterparty
                 if transaction.counterparty_id and transaction.counterparty_id in cp_map:
                     cp = cp_map[transaction.counterparty_id]
                     if cp.default_account_code:
                         result = self._apply_default_account(db, transaction, cp)
 
-                # Phase 2B: rule-based matching
+                # Phase 4B: rule-based matching
                 if result is None:
                     matched_rule = self._match_transaction(transaction, rules)
                     if matched_rule:
@@ -242,7 +250,7 @@ class CategorizationService:
         }
 
     # ------------------------------------------------------------------
-    # Step 0: Pair AWAITING_MATCH internal transfers
+    # Phase 0: Pair AWAITING_MATCH internal transfers
     # ------------------------------------------------------------------
 
     def _pair_awaiting_matches(
@@ -341,7 +349,7 @@ class CategorizationService:
                 "error": None,
             })
             logger.info(
-                f"Step 0: paired txn {waiting_txn.id} (AWAITING_MATCH on ba={waiting_txn.bank_account_id}) "
+                f"Phase 0: paired txn {waiting_txn.id} (AWAITING_MATCH on ba={waiting_txn.bank_account_id}) "
                 f"↔ txn {counter.id} (PENDING on ba={counter.bank_account_id}) via JE {je_id}"
             )
 
@@ -386,7 +394,7 @@ class CategorizationService:
         return None
 
     # ------------------------------------------------------------------
-    # Phase 1.5: AP Knock-off
+    # Phase 2: AP Knock-off
     # ------------------------------------------------------------------
 
     def _try_ap_knockoff(
@@ -408,7 +416,7 @@ class CategorizationService:
         - Updates invoice.amount_paid; sets status → paid or partially_paid
         - Sets transaction → MATCHED, links JE
 
-        Returns a set of transaction IDs that were handled (skip Phase 2 for these).
+        Returns a set of transaction IDs that were handled (skip Phase 4 for these).
         """
         from src.services.invoice_service import invoice_service
 
@@ -476,12 +484,12 @@ class CategorizationService:
                     exc_info=True,
                 )
                 db.rollback()
-                # Do not add to handled — let Phase 2 handle it normally
+                # Do not add to handled — let Phase 4 handle it normally
 
         return handled
 
     # ------------------------------------------------------------------
-    # Phase 2.5: Payroll Knock-off
+    # Phase 3: Payroll Knock-off
     # ------------------------------------------------------------------
 
     def _try_payroll_knockoff(
@@ -504,7 +512,7 @@ class CategorizationService:
           - Sets transaction status → MATCHED
           - Updates the payroll run's net_ or cpf_payment_transaction_id
 
-        Returns set of transaction IDs handled (skip Phase 2 for these).
+        Returns set of transaction IDs handled (skip Phase 4 for these).
         """
         from src.models.payroll import FinancePayrollRun
         from datetime import timedelta
@@ -594,7 +602,7 @@ class CategorizationService:
                     exc_info=True,
                 )
                 db.rollback()
-                # Do not add to handled — let Phase 2 handle it normally
+                # Do not add to handled — let Phase 4 handle it normally
 
         return handled
 
@@ -854,10 +862,10 @@ Return only the JSON object, no explanation."""
 
         except Exception as e:
             logger.warning(f"L3 LLM enrichment failed: {e}", exc_info=True)
-            # Fail gracefully — transactions remain unenriched, Phase 2 rules may still match them
+            # Fail gracefully — transactions remain unenriched, Phase 4 rules may still match them
 
     # ------------------------------------------------------------------
-    # Phase 2A: Default account fallback
+    # Phase 4A: Default account fallback
     # ------------------------------------------------------------------
 
     def _apply_default_account(
