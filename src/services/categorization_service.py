@@ -14,7 +14,7 @@ from decimal import Decimal
 from typing import Optional, Any
 from sqlalchemy.orm import Session
 
-from src.models.transaction import FinanceTransaction, TransactionStatus
+from src.models.transaction import FinanceTransaction, TransactionStatus, CategorizationType
 from src.models.bank_account import FinanceBankAccount
 from src.models.categorization_rule import (
     FinanceCategorizationRule,
@@ -665,7 +665,6 @@ class CategorizationService:
 
             if matched:
                 txn.counterparty_id = matched.id
-                txn.counterparty_type = matched.type
                 txn.counterparty_name = matched.name
             else:
                 unmatched.append(txn)
@@ -850,7 +849,6 @@ Return only the JSON object, no explanation."""
                 if cp_id and isinstance(cp_id, int) and cp_id in cp_by_id:
                     cp = cp_by_id[cp_id]
                     txn.counterparty_id = cp.id
-                    txn.counterparty_type = cp.type
                     txn.counterparty_name = cp.name
                     matched_count += 1
                     logger.info(
@@ -909,6 +907,7 @@ Return only the JSON object, no explanation."""
         transaction.status = TransactionStatus.MATCHED
         transaction.reconciled_journal_entry_id = entry.id
         transaction.matched_at = datetime.now(UTC)
+        transaction.coa_account_code = counterparty.default_account_code
 
         db.commit()
 
@@ -1053,8 +1052,20 @@ Return only the JSON object, no explanation."""
         # Update transaction metadata
         if rule.counterparty_name:
             transaction.counterparty_name = rule.counterparty_name
-        if rule.counterparty_type:
-            transaction.counterparty_type = rule.counterparty_type
+
+        # Set COA account code for non-internal-transfer categorizations
+        if rule.category != TransactionCategory.INTERNAL_TRANSFER:
+            transaction.coa_account_code = rule.contra_account_code
+
+        # Set categorization type from rule category
+        category_map = {
+            TransactionCategory.EXPENSE: CategorizationType.EXPENSE,
+            TransactionCategory.DEPOSIT: CategorizationType.DEPOSIT,
+            TransactionCategory.INTERNAL_TRANSFER: CategorizationType.INTERNAL_TRANSFER,
+            TransactionCategory.CROSS_ENTITY_ALLOCATION: CategorizationType.EXPENSE,  # Cross-entity is a specialized expense
+        }
+        if rule.category in category_map:
+            transaction.categorization_type = category_map[rule.category]
 
         # For internal transfers: try to immediately pair with counter-transaction.
         # If counter not found yet → AWAITING_MATCH; the counter-transaction will
@@ -1501,19 +1512,17 @@ Return only the JSON object, no explanation."""
             if cp:
                 transaction.counterparty_id = cp.id
                 transaction.counterparty_name = cp.name
-                transaction.counterparty_type = cp.type
                 # Optionally persist this account as the counterparty's default
                 if save_as_default:
                     cp.default_account_code = contra_account_code
         else:
             if counterparty_name:
                 transaction.counterparty_name = counterparty_name
-            if counterparty_type:
-                transaction.counterparty_type = counterparty_type
 
         # Manual categorization = human confirmation → RECONCILED directly
         transaction.status = TransactionStatus.RECONCILED
         transaction.reconciled_journal_entry_id = entry.id
+        transaction.coa_account_code = contra_account_code
         transaction.reconciled_at = datetime.now(UTC)
 
         if tag_ids:
@@ -1692,6 +1701,7 @@ Rules:
                     txn.status = TransactionStatus.MATCHED
                     txn.reconciled_journal_entry_id = je.id
                     txn.matched_at = now
+                    txn.coa_account_code = account_code
                     db.commit()
 
                     results[txn.id] = {

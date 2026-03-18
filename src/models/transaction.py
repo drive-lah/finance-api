@@ -36,6 +36,19 @@ class TransactionStatus(enum.Enum):
     RECONCILED = "Reconciled"
 
 
+class CategorizationType(enum.Enum):
+    """
+    Accounting category of a matched transaction.
+
+    - EXPENSE:           Money flowing OUT to pay for something (vendor, contractor, etc.)
+    - DEPOSIT:           Money flowing IN from revenue/sales/investment
+    - INTERNAL_TRANSFER: Money moving between bank accounts of the same or different entities
+    """
+    EXPENSE = "expense"
+    DEPOSIT = "deposit"
+    INTERNAL_TRANSFER = "internal_transfer"
+
+
 class FinanceTransaction(Base):
     """
     Model representing an imported bank transaction.
@@ -112,11 +125,6 @@ class FinanceTransaction(Base):
         nullable=True,
         comment="Name of the counterparty (who the money went to/came from)"
     )
-    counterparty_type: Mapped[Optional[str]] = mapped_column(
-        String(50),
-        nullable=True,
-        comment="Type of counterparty: vendor, employee, host, guest, bank, other"
-    )
     counterparty_id: Mapped[Optional[int]] = mapped_column(
         Integer,
         ForeignKey("finance_counterparties.id", ondelete="SET NULL"),
@@ -143,10 +151,20 @@ class FinanceTransaction(Base):
         nullable=True,
         comment="Source of the transaction (e.g., 'csv_import', 'stripe_automation')"
     )
-    stripe_transaction_id: Mapped[Optional[str]] = mapped_column(
+    source_external_id: Mapped[Optional[str]] = mapped_column(
         String(100),
         nullable=True,
-        comment="Stripe transaction ID for automated imports"
+        comment="External source transaction ID (Stripe, Wise, Xero, etc.) for deduplication"
+    )
+    coa_account_code: Mapped[Optional[str]] = mapped_column(
+        String(20),
+        nullable=True,
+        comment="COA account code this transaction was categorized to (set when matched)",
+    )
+    categorization_type: Mapped[Optional[CategorizationType]] = mapped_column(
+        SQLEnum(CategorizationType, name="categorization_type", native_enum=False),
+        nullable=True,
+        comment="Accounting category (expense, deposit, internal_transfer) set when matched",
     )
     ai_suggested_account_code: Mapped[Optional[str]] = mapped_column(
         String(20),
@@ -197,8 +215,8 @@ class FinanceTransaction(Base):
         Index('ix_finance_transactions_date', 'transaction_date'),
         # Index for batch queries
         Index('ix_finance_transactions_batch', 'import_batch_id'),
-        # Unique index for Stripe transaction IDs
-        Index('ix_finance_transactions_stripe_id', 'stripe_transaction_id', unique=True),
+        # Unique index for external source transaction IDs (Stripe, Wise, Xero, etc)
+        Index('ix_finance_transactions_source_external_id', 'source', 'source_external_id', unique=True),
     )
     
     def __repr__(self) -> str:
@@ -223,13 +241,17 @@ class FinanceTransaction(Base):
             "reconciled_at": self.reconciled_at.isoformat() if self.reconciled_at else None,
             "expected_counterpart_ba_id": self.expected_counterpart_ba_id,
             "counterparty_name": self.counterparty_name,
-            "counterparty_type": self.counterparty_type,
             "counterparty_id": self.counterparty_id,
             "value_date": self.value_date.isoformat() if self.value_date else None,
             "transaction_type": self.transaction_type,
             "running_balance": float(self.running_balance) if self.running_balance is not None else None,
             "source": self.source,
-            "stripe_transaction_id": self.stripe_transaction_id,
+            "source_external_id": self.source_external_id,
+            "coa_account_code": self.coa_account_code,
+            "categorization_type": self.categorization_type.value if self.categorization_type else None,
+            "ai_suggested_account_code": self.ai_suggested_account_code,
+            "ai_confidence": float(self.ai_confidence) if self.ai_confidence is not None else None,
+            "ai_reasoning": self.ai_reasoning,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

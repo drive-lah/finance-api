@@ -168,20 +168,22 @@ class BankAccountCreate(BaseModel):
     account_number: str = Field(..., min_length=1, max_length=50, description="Bank account number")
     account_name: str = Field(..., min_length=1, max_length=255, description="Account holder name")
     currency: str = Field(..., min_length=3, max_length=3, description="ISO 4217 currency code")
-    csv_format: Optional[str] = Field(
+    file_adapter: Optional[str] = Field(
         None,
         min_length=1,
         max_length=50,
         description=(
-            "CSV adapter key for CSV-import bank accounts (e.g. 'ocbc'). "
-            "Leave None for API-connected accounts (e.g. Wise)."
+            "File import adapter key (e.g. 'ocbc', 'cba', 'dbs'). "
+            "Handles CSV and PDF automatically via smart adapters. "
+            "Leave None for API-only accounts (e.g. Wise)."
         ),
     )
     coa_account_code: Optional[str] = Field(None, max_length=20, description="COA account code this bank account maps to")
-    api_credentials: Optional[dict] = Field(
+    api_config: Optional[dict] = Field(
         None,
         description=(
-            "API integration credentials. For Wise: {\"profile_id\": 123, \"balance_id\": 456}. "
+            "Static API connection config. For Wise: "
+            "{\"provider\": \"wise\", \"profile_id\": 123, \"balance_id\": 456, \"sync_from_date\": \"YYYY-MM-DD\"}. "
             "API keys are stored in environment variables, not here."
         ),
     )
@@ -198,10 +200,10 @@ class BankAccountCreate(BaseModel):
             raise ValueError('Currency must be a 3-letter ISO 4217 code')
         return v.upper()
 
-    @field_validator('csv_format')
+    @field_validator('file_adapter')
     @classmethod
-    def validate_csv_format(cls, v: Optional[str]) -> Optional[str]:
-        """Validate csv_format is a registered adapter key (only if provided)."""
+    def validate_file_adapter(cls, v: Optional[str]) -> Optional[str]:
+        """Validate file_adapter is a registered adapter key (only if provided)."""
         if v is None:
             return v
         from src.services.csv_adapters.registry import ADAPTER_REGISTRY
@@ -209,7 +211,7 @@ class BankAccountCreate(BaseModel):
         if normalised not in ADAPTER_REGISTRY:
             supported = sorted(ADAPTER_REGISTRY.keys())
             raise ValueError(
-                f"csv_format '{v}' is not a registered adapter. Supported values: {supported}"
+                f"file_adapter '{v}' is not a registered adapter. Supported values: {supported}"
             )
         return normalised
 
@@ -220,7 +222,7 @@ class BankAccountUpdate(BaseModel):
     account_number: Optional[str] = Field(None, min_length=1, max_length=50)
     account_name: Optional[str] = Field(None, min_length=1, max_length=255)
     currency: Optional[str] = Field(None, min_length=3, max_length=3)
-    csv_format: Optional[str] = Field(None, min_length=1, max_length=50)
+    file_adapter: Optional[str] = Field(None, min_length=1, max_length=50)
     coa_account_code: Optional[str] = Field(None, max_length=20, description="COA account code this bank account maps to")
     status: Optional[BankAccountStatus] = None
 
@@ -233,6 +235,20 @@ class BankAccountUpdate(BaseModel):
             raise ValueError('Currency must be a 3-letter ISO 4217 code')
         return v.upper()
 
+    @field_validator('file_adapter')
+    @classmethod
+    def validate_file_adapter(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        from src.services.csv_adapters.registry import ADAPTER_REGISTRY
+        normalised = v.strip().lower()
+        if normalised not in ADAPTER_REGISTRY:
+            supported = sorted(ADAPTER_REGISTRY.keys())
+            raise ValueError(
+                f"file_adapter '{v}' is not a registered adapter. Supported values: {supported}"
+            )
+        return normalised
+
 
 class BankAccountResponse(BaseModel):
     """Schema for bank account response."""
@@ -242,14 +258,24 @@ class BankAccountResponse(BaseModel):
     account_number: str
     account_name: str
     currency: str
-    csv_format: Optional[str] = None
+    file_adapter: Optional[str] = None
     coa_account_code: Optional[str] = None
-    api_credentials: Optional[dict] = None
+    api_config: Optional[dict] = None
+    api_sync_state: Optional[dict] = None
+    import_methods: list[str] = []
     status: str
     created_at: datetime
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+    @classmethod
+    def model_validate(cls, obj, **kwargs):
+        """Override to populate import_methods from the model's computed property."""
+        instance = super().model_validate(obj, **kwargs)
+        if hasattr(obj, 'get_import_methods'):
+            instance.import_methods = obj.get_import_methods()
+        return instance
 
 
 # =============================================================================
@@ -278,7 +304,7 @@ class TransactionCreate(BaseModel):
     transaction_type: Optional[str] = Field(None, max_length=50, description="Bank classification (TRANSFER, CARD, etc.)")
     running_balance: Optional[float] = Field(None, description="Running balance after transaction")
     source: Optional[str] = Field(None, max_length=50, description="Source of the transaction")
-    stripe_transaction_id: Optional[str] = Field(None, max_length=100, description="Stripe transaction ID")
+    source_external_id: Optional[str] = Field(None, max_length=100, description="External source ID (Stripe, Wise, Xero, etc.)")
 
 
 class TransactionResponse(BaseModel):
@@ -295,7 +321,6 @@ class TransactionResponse(BaseModel):
     import_batch_id: Optional[str]
     original_csv_row: Optional[str]
     counterparty_name: Optional[str]
-    counterparty_type: Optional[str]
     counterparty_id: Optional[int]
     value_date: Optional[date_type]
     transaction_type: Optional[str]
@@ -303,17 +328,22 @@ class TransactionResponse(BaseModel):
     reconciled_journal_entry_id: Optional[int]
     reconciled_at: Optional[datetime]
     source: Optional[str]
-    stripe_transaction_id: Optional[str]
+    source_external_id: Optional[str]
+    coa_account_code: Optional[str] = Field(None, max_length=20, description="COA account code for matched transactions")
+    categorization_type: Optional[str] = Field(None, description="Accounting category: expense, deposit, or internal_transfer")
+    ai_suggested_account_code: Optional[str] = Field(None, max_length=20, description="AI-suggested COA account code")
+    ai_confidence: Optional[float] = Field(None, description="AI confidence score (0-1)")
+    ai_reasoning: Optional[str] = Field(None, description="AI reasoning for suggestion")
     created_at: datetime
     updated_at: datetime
-    
+
     model_config = {"from_attributes": True}
 
 
 class StripeTransactionCreate(BaseModel):
     """Schema for creating a transaction from Stripe webhook."""
     bank_account_id: int = Field(..., gt=0, description="ID of the bank account")
-    stripe_transaction_id: str = Field(..., min_length=1, max_length=100, description="Stripe transaction ID")
+    source_external_id: str = Field(..., min_length=1, max_length=100, description="Stripe transaction ID")
     transaction_date: date_type = Field(..., description="Date of the transaction")
     description: str = Field(..., min_length=1, max_length=500, description="Transaction description")
     amount: float = Field(..., description="Transaction amount (positive for credit, negative for debit)")
