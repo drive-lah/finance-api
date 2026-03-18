@@ -1,7 +1,7 @@
 # Drive Lah Finance System — System Overview
 
-**Version:** 3.0
-**Date:** 2026-03-13
+**Version:** 3.1
+**Date:** 2026-03-18
 **Status:** Living Document
 
 ---
@@ -139,52 +139,72 @@ Transactions can enter the system via three paths depending on the bank: CSV upl
 
 **Import Architecture:**
 
-| Bank | Import Method | Source |
-|------|--------------|--------|
-| OCBC | CSV upload | Admin → Bank Accounts tab → Import CSV row action |
-| CBA (Commonwealth Bank AU) | CSV upload | Admin → Bank Accounts tab → Import CSV row action |
+| Bank | Import Methods | Source |
+|------|----------------|--------|
+| OCBC | CSV + PDF upload | Admin → Bank Accounts tab → Import CSV/PDF row action |
+| CBA (Commonwealth Bank AU) | CSV + PDF upload | Admin → Bank Accounts tab → Import CSV/PDF row action |
 | DBS | PDF upload | Admin → Bank Accounts tab → Import PDF row action |
 | Wise | API sync | Admin → Bank Accounts tab → Sync row action |
+| Stripe | (Not yet implemented) | Reserved for future API sync |
 
 All import/sync actions are surfaced **per-row in the Bank Accounts tab** based on bank type. The Transactions tab is view-only (no import actions there).
 
+**Frontend Bank Type Selector (v3.1):**
+
+The Bank Accounts creation form now uses a single **Bank Type** dropdown instead of separate "Bank Name" + "File Adapter" fields. This eliminates user mismatch risk and auto-derives the internal adapter configuration:
+
+| Bank Type | Auto-set Values | Modes |
+|-----------|-----------------|-------|
+| OCBC | `bank_name="OCBC Bank"`, `file_adapter="ocbc"` | CSV, PDF |
+| CBA / Commonwealth | `bank_name="Commonwealth Bank"`, `file_adapter="cba"` | CSV, PDF |
+| DBS | `bank_name="DBS"`, `file_adapter="dbs"` | PDF only |
+| Wise | `bank_name="Wise"`, opens WiseConnectModal | API sync only |
+| Stripe | `bank_name="Stripe"`, `file_adapter=null` | (Reserved; no import yet) |
+
+The `file_adapter` field is never shown to users — it is derived and stored on account creation.
+
 ---
 
-#### 3.2.1 CSV Import (OCBC, CBA)
+#### 3.2.1 CSV & PDF Import (OCBC, CBA)
 
-Upload bank statement CSVs to import transactions. Each transaction gets a SHA256 fingerprint for duplicate detection. The fingerprint fields are **adapter-owned** — each bank adapter declares which fields uniquely identify a row in its own CSV format.
+Upload bank statement files (CSV or PDF) to import transactions. Each transaction gets a SHA256 fingerprint for duplicate detection. The fingerprint fields are **adapter-owned** — each bank adapter declares which fields uniquely identify a row in its own file format.
 
 **Flow:**
-1. User selects a bank account row and clicks **Import CSV**
-2. System selects the correct adapter based on the bank account's `csv_format` field
-3. Adapter normalizes the bank's raw CSV columns into the standard transaction schema
-4. Adapter supplies fingerprint fields; SHA256 hash computed — duplicates skipped
-5. New transactions created with status **Pending**
-6. Normalized row stored in `original_csv_row` (JSON) for audit trail
+1. User selects a bank account row and clicks **Import CSV** or **Import PDF**
+2. System selects the correct adapter based on the bank account's `file_adapter` field (auto-derived from Bank Type)
+3. Adapter auto-detects file format (CSV vs PDF magic bytes) and dispatches to correct parser
+4. Adapter normalizes the bank's raw columns/text into the standard transaction schema
+5. Adapter supplies fingerprint fields; SHA256 hash computed — duplicates skipped
+6. New transactions created with status **Pending**
+7. Normalized row stored in `original_csv_row` (JSON) for audit trail
 
 **Duplicate detection design:**
-- Re-uploading the same CSV row produces the same fingerprint → blocked as duplicate.
-- Two genuine transactions that share the same date and amount (e.g. two purchases on the same day for the same price) produce **different** fingerprints because the adapter includes a disambiguating field (e.g. `running_balance` for OCBC, which is unique per row in an ordered bank statement).
+- Re-uploading the same file row produces the same fingerprint → blocked as duplicate.
+- Two genuine transactions that share the same date and amount (e.g. two purchases on the same day for the same price) produce **different** fingerprints because the adapter includes a disambiguating field (e.g. `running_balance` for OCBC/CBA, which is unique per row in an ordered bank statement).
 - Within-batch dedup: a `seen_in_batch` set catches duplicate fingerprints within a single import call (prevents UniqueViolation from SQLAlchemy `autoflush=False` sessions).
 
 | Bank | Fingerprint fields |
 |------|--------------------|
-| OCBC | `account_id` + `post_date` + `amount` + `our_ref` + `closing_book_balance` |
+| OCBC | `date` + `amount` + `description` + `running_balance` |
+| CBA | `date` + `amount` + `description` + `running_balance` |
 | DBS | `transaction_date` + `amount` + `description` + `running_balance` |
 | Wise | `source_id` (Wise `referenceNumber` — globally unique per transfer) |
 
 **Bank Adapter System:**
 
-There is no generic CSV format. Each bank has a dedicated adapter in `src/services/csv_adapters/` that knows the bank's exact column layout, date format, and amount encoding. The adapter is selected from the `csv_format` field on the bank account record — set explicitly at account creation and validated against the adapter registry.
+There is no generic CSV/PDF format. Each bank has a dedicated adapter in `src/services/csv_adapters/` that knows the bank's exact column/table layout, date format, and amount encoding. The adapter is selected from the `file_adapter` field on the bank account record — auto-derived from Bank Type at account creation and validated against the adapter registry.
 
-| Bank | `csv_format` value | Adapter file | Input type | Amount encoding |
-|------|--------------------|-------------|-----------|----------------|
-| OCBC | `ocbc` | `ocbc.py` | CSV | Separate `Debit Amount` / `Credit Amount` columns |
-| DBS | `dbs_pdf` | `dbs_pdf.py` | PDF | Balance-change sign detection (see 3.2.2) |
+**Adapter Wrappers (v3.1):** Some banks (OCBC, CBA) now have wrapper adapters that auto-detect CSV vs PDF format and dispatch to the appropriate parser (e.g., `OCBCAdapter` wraps `OCBCCsvAdapter` + `OCBCPdfAdapter`).
 
-**`csv_format` is required when creating a bank account** for CSV/PDF import paths. It is validated against `ADAPTER_REGISTRY` at creation time. Wise accounts use `api_credentials` instead (no `csv_format` needed for sync).
+| Bank | `file_adapter` value | Adapter file | Input types | CSV format | PDF format |
+|------|--------------------|-------------|-----------|-----------|-----------|
+| OCBC | `ocbc` | `ocbc.py` + `ocbc_pdf.py` | CSV + PDF | Separate Debit/Credit columns | Separate Withdrawal/Deposit columns |
+| CBA | `cba` | `cba.py` + `cba.py` (same file) | CSV + PDF | 4-column: Date, Amount, Desc, Balance | Date (DD MMM), Desc, Debit, Credit, Balance |
+| DBS | `dbs` | `dbs_pdf.py` | PDF only | — | Multi-currency section extraction |
 
-**To add a new bank:** Create `src/services/csv_adapters/<bank>.py` implementing `BankCSVAdapter.parse()`, register it in `registry.py`, add a row to the table above.
+**`file_adapter` is auto-set from Bank Type** when creating a bank account and validated against `ADAPTER_REGISTRY` at creation time. Wise accounts use `api_credentials` instead (no `file_adapter` needed for sync).
+
+**To add a new bank:** Create `src/services/csv_adapters/<bank>.py` and/or `<bank>_pdf.py` implementing `BankCSVAdapter.parse()`, register in `registry.py`, add a row to the table above.
 
 **Standardized Transaction Fields (output of every adapter):**
 
@@ -202,6 +222,18 @@ There is no generic CSV format. Each bank has a dedicated adapter in `src/servic
 | transaction_type | No | Bank's own transaction classification code |
 | running_balance | No | Running balance after transaction (from bank statement) |
 | source_id | No | External unique ID — used by Wise as sole fingerprint |
+
+**Data Fix (Migration 029, v3.1):**
+
+Migration 027 (`import_methods_schema`) inadvertently set `api_config = {provider: "wise", ...}` on all bank accounts with `api_credentials`, including file-only accounts (DBS, CBA, OCBC, Stripe) that have no Wise configuration. This caused these accounts to incorrectly appear in the `import_methods=["api_sync"]` list.
+
+Migration 029 fixes this by:
+1. Identifying corrupted rows: where `api_config->>'provider' = 'wise'` AND `api_config->>'profile_id' IS NULL` (indicating missing real Wise configuration)
+2. Clearing `api_config` and `api_sync_state` for DBS, CBA, OCBC, Stripe accounts
+3. Setting correct `file_adapter` values for accounts missing them (DBS → `'dbs'`, CBA → `'cba'`)
+4. Preserving real Wise configs (which always have valid `profile_id` values)
+
+After migration 029, these accounts correctly show only their supported import methods: OCBC/CBA/DBS show Upload buttons (file import); Wise shows Sync buttons (API).
 
 **Counterparty linking:** `counterparty_name` is populated from the raw bank CSV during import (adapter-specific field). The categorization engine overwrites it with the canonical counterparty name when a rule matches. `counterparty_type` and `counterparty_id` are set by the categorization engine only.
 
@@ -224,7 +256,11 @@ There is no generic CSV format. Each bank has a dedicated adapter in `src/servic
 
 ---
 
-#### 3.2.2 DBS PDF Import (Multi-Currency)
+#### 3.2.2 PDF Import (DBS, CBA, OCBC)
+
+PDF statements are parsed using `pdfplumber` to extract structured transaction data from unstructured bank documents.
+
+##### DBS PDF (Multi-Currency)
 
 DBS provides a single consolidated PDF statement covering multiple currencies (SGD, EUR, USD, etc.). One upload imports transactions into all matching DBS bank accounts automatically.
 
@@ -244,7 +280,36 @@ DBS provides a single consolidated PDF statement covering multiple currencies (S
 - Skips non-transaction lines: Balance Brought Forward, Balance Carried Forward, Total, NO TRANSACTIONS AVAILABLE, section headers
 - Fingerprint: `[transaction_date, amount, description, running_balance]` (four fields make the hash collision-resistant even if same date+amount+description appears twice)
 
-**Dependency:** `pdfplumber>=0.10.0` (in `requirements.txt`). Run Flask via venv: `venv/bin/python -m flask --app src/app.py run --port 8082 --debug`.
+##### CBA & OCBC PDF
+
+Commonwealth Bank (Australia) and OCBC (Singapore) provide table-formatted PDF statements. Both are parsed with special handling for **multi-year statement periods** (e.g., October 2023 → January 2024).
+
+**Year Inference Logic (v3.1):**
+
+PDF statements may span two calendar years. For example, CBA statement "31 Oct 2023 - 31 Jan 2024" contains Oct/Nov/Dec 2023 transactions and Jan 2024 transactions. The adapter extracts the full period range from the header and assigns each transaction's year based on its month:
+
+```
+Statement period: "31 Oct 2023 - 31 Jan 2024"
+  ↓ parses to: {start_month: 10, start_year: 2023, end_month: 1, end_year: 2024}
+  ↓ for transaction "15 Nov": month=11 >= start_month=10 → use 2023 → date(2023, 11, 15)
+  ↓ for transaction "15 Jan": month=1 < start_month=10 → use 2024 → date(2024, 1, 15)
+```
+
+**CBA PDF Parsing:**
+- Statement period format: "31 Oct 2023 - 31 Jan 2024" (extracted via regex)
+- Date format in transactions: "DD MMM" (e.g., "18 Apr")
+- Columns: Date, Value Date, Description, Debit, Credit, Balance
+- Amount calculation: `credit - debit` (sign determines direction)
+- Supports both same-year and multi-year statements
+
+**OCBC PDF Parsing:**
+- Statement period format: "1 APR 2022 TO 30 APR 2022" (uppercase "TO", extracted via regex)
+- Date format in transactions: "DD MMM" (e.g., "04 APR")
+- Columns: Date, Value Date, Description, Cheque, Withdrawal, Deposit, Balance
+- Amount calculation: `deposit - withdrawal` (Withdrawal > 0 makes amount negative; Deposit > 0 makes amount positive)
+- Currency: Hardcoded to SGD
+
+**Dependency:** `pdfplumber>=0.10.0` (in `requirements.txt`). Run Flask via venv: `venv/bin/python -m flask --app src/app.py run --port 8081 --debug`.
 
 ---
 
@@ -291,7 +356,7 @@ The Wise API key itself is stored in the `WISE_API_KEY` environment variable, no
 
 The categorization engine automatically converts bank transactions into journal entries by applying configurable rules and AI-assisted counterparty enrichment. It is the core of the finance system — without it, every bank transaction would need manual journal entry creation.
 
-**How it works:**
+**How it works (4-phase pipeline):**
 
 ```
 Bank CSV uploaded
@@ -300,54 +365,46 @@ Transactions created (status: Pending)
        ↓
 POST /api/finance/categorization/run
        ↓
-─── STEP 0: Internal Transfer Pairing ───────────────────
+─── PHASE 0: Internal Transfer Pairing ──────────────────
 For each Pending transaction in scope whose expected_counterpart_ba_id
 matches a known AWAITING_MATCH transaction:
-  └── Pair both sides → both status → Matched
+  ├── Find matching Pending transaction (±2% amount, ±5 days)
+  └── Pair both sides → both status → Matched, linked to same JE
        ↓
-─── PHASE 1: Counterparty Enrichment ────────────────────
-For each Pending transaction (not handled in Step 0):
+─── PHASE 1: Counterparty Enrichment ─────────────────────
+For each Pending transaction (not handled in Phase 0):
   ├── L1 (deterministic): exact/substring match on counterparty name + aliases
   ├── L2 (fuzzy): rapidfuzz token_set_ratio ≥ 88 threshold
   └── L3 (LLM): single batched Claude Haiku call for remaining unmatched
        ↓
-─── PHASE 1.5: AP Knock-off ─────────────────────────────
+─── PHASE 2: AP Invoice Knock-off ───────────────────────
 For enriched outgoing transactions with a counterparty_id:
-  └── Find open AP invoices (same currency, amount ±2%, oldest first)
-  └── Create JE: Dr 2000 AP / Cr bank; record partial/full payment
+  ├── Find open AP invoices (same currency, amount ±2%, oldest first)
+  ├── On match: create JE (Dr 2000 AP / Cr bank), record partial/full payment
+  └── Mark transaction Matched to prevent Phase 4 double-booking
        ↓
-─── PHASE 2: Rules Engine ───────────────────────────────
-Engine loads active rules (ordered by priority)
-For each remaining Pending transaction:
-  ├── Match against rules (AND logic on all non-null criteria)
-  ├── First matching rule wins
-  ├── IF MATCHED (expense/deposit):
-  │   ├── Create journal entry
-  │   ├── Update transaction counterparty (name, type)
-  │   ├── Apply tags from rule
-  │   └── Set status → Matched, link to JE, stamp matched_at
-  ├── IF MATCHED (internal_transfer):
-  │   ├── Create journal entry (outgoing side only)
-  │   ├── Try to find counter-transaction already in DB
-  │   ├── IF FOUND: both sides → Matched, both linked to JE
-  │   └── IF NOT FOUND: status → Awaiting Match, expected_counterpart_ba_id set
-  └── IF NO MATCH:
-      └── Leave as Pending (go to Phase 4) ↓
-       ↓
-─── PHASE 2.5: Payroll Knock-off ────────────────────────
+─── PHASE 3: Payroll Knock-off ──────────────────────────
 For each outgoing transaction (negative amount) in scope:
   ├── Find a POSTED payroll run for same entity within ±7 days
   ├── Net salary slot free AND amount matches net_amount (±2%)? → link
   ├── CPF slot free AND amount matches cpf_payable_amount (±2%)? → link
-  └── On match: transaction → Matched, linked to payroll JE; slot filled
+  └── On match: transaction → Matched, linked to payroll JE; mark to skip Phase 4
        ↓
-─── PHASE 4: AI Classification Fallback ─────────────────
-For transactions still Pending after all prior phases:
-  ├── Single batched Claude Haiku call with all unmatched transactions
-  ├── Returns: contra_account_code + confidence (0-1) + reasoning
-  ├── confidence ≥ 0.80 → create JE → status → Matched
-  └── confidence < 0.80 → status → Needs Review (suggestion stored,
-      ai_suggested_account_code, ai_confidence, ai_reasoning fields set)
+─── PHASE 4: Accounting Classification (Rules + AI Fallback) ───
+Engine loads active rules (ordered by priority)
+For each remaining Pending transaction:
+  ├── Phase 4A: If counterparty has default_account_code → auto-create JE
+  ├── Phase 4B: Match against rules (AND logic on all non-null criteria)
+  │   ├── First matching rule wins
+  │   ├── Create journal entry (expense/deposit/transfer)
+  │   ├── Update transaction counterparty (name, type)
+  │   ├── Apply tags from rule
+  │   └── Set status → Matched, link to JE, stamp matched_at
+  └── Phase 4C: If still Pending, run AI classification fallback
+      ├── Single batched Claude Haiku call with all unmatched transactions
+      ├── Returns: contra_account_code + confidence (0-1) + reasoning
+      ├── confidence ≥ 0.80 → create JE → status → Matched
+      └── confidence < 0.80 → status → Needs Review (AI suggestion pre-filled)
 ```
 
 **Transaction Status Lifecycle:**
@@ -581,28 +638,30 @@ For income/revenue transactions the output tax account (2500) is used instead of
 
 **Status: Built (migrations 016–019)**
 
-AI-led invoice intake: upload a PDF → duplicate check → Claude Haiku extracts fields → vendor matching → human reviews → submit (AI contract gate) → approve (COA confirmed by approver). Approved invoices auto-create a journal entry. Bank transactions matched against open AP invoices by the categorization engine (AP knock-off, Phase 1.5).
+AI-led invoice intake: upload a PDF → duplicate check → Claude Haiku extracts fields → vendor matching → human reviews and submits → approval routing via rules or manual approval (COA confirmed by approver). Approved invoices auto-create a journal entry. Bank transactions matched against open AP invoices by the categorization engine (AP knock-off, Phase 2).
 
 **Full Flow:**
-1. PDF uploaded → SHA-256 hash checked against `pdf_content_hash` — **409 if exact duplicate**
-2. `pdfplumber` extracts text → Claude Haiku returns vendor, amounts, dates, GST, entity hint, COA suggestion
+1. PDF or image (JPEG, PNG) uploaded → SHA-256 hash checked against `pdf_content_hash` — **409 if exact duplicate**
+2. File processing:
+   - **PDF**: `pdfplumber` extracts text → Claude Haiku processes extracted text
+   - **Image (JPEG/PNG)**: Claude vision API analyzes image directly (base64 encoded)
+   - Returns vendor, amounts, dates, GST, entity hint, COA suggestion
 3. **Vendor matching pipeline** (see below) → counterparty auto-matched or auto-created
 4. Ops person reviews extracted data (entity, dates, amounts, GST, service period — **service period required**) and clicks Create
 5. Invoice created in `draft` — COA assigned via priority chain (see below); `new_vendor` flag set if auto-created vendor
-6. Submit (`POST /submit`) → AI contract review gate: compares invoice vs known contract, returns `pass | flag | no_contract`; if `flag`, human must confirm before proceeding
-7. After submit: approval routing via approval rules. **Override rules apply first:**
+6. Submit (`POST /submit`) → Approval routing via approval rules. **Override rules apply first:**
    - `new_vendor = true` → always `pending_approval` regardless of rules
    - `coa_source = 'ai' or null` → always `pending_approval` regardless of rules
    - Otherwise: first matching approval rule wins (`auto_approve` or `require_approval`)
-8. **Approval** (manual in UI) → approver confirms/changes COA → JE created
-9. Amortization path: service period > 1 month → Dr 1200 Prepaid / Cr 2000 AP; monthly schedule generated
-10. AP knock-off (auto): categorization engine Phase 1.5 matches outgoing bank transactions → Dr 2000 AP / Cr Bank (see AP Knock-off section below)
-11. AP knock-off (manual): ops user can manually link any unmatched transaction to an open invoice via `POST /invoices/:id/match-transaction`
+   - If no rule matches → defaults to `pending_approval`
+7. **Approval** (manual in UI) → approver confirms/changes COA → JE created
+8. AP knock-off (auto): categorization engine Phase 2 matches outgoing bank transactions → Dr 2000 AP / Cr Bank (see AP Knock-off section below)
+9. AP knock-off (manual): ops user can manually link any unmatched transaction to an open invoice via `POST /invoices/:id/match-transaction`
 
 **Invoice Status Workflow:**
 ```
-draft → [submit] → pending_approval → approved → partially_paid / paid
-draft → [submit + auto_approve rule] → approved
+draft → [submit] → pending_approval → [approve] → approved → partially_paid / paid
+draft → [submit + auto_approve rule] → approved → [payment] → partially_paid / paid
 draft / pending_approval → rejected
 draft / pending_approval / rejected → void
 ```
@@ -637,7 +696,7 @@ Approver confirms or changes COA at approval time → `coa_source = 'manual'`.
 
 **AP Knock-off — Matching Logic:**
 
-Runs at Phase 1.5 (after counterparty enrichment, before Phase 2 rule matching). Fires only on outgoing transactions (negative amount) that have a `counterparty_id` linked. When matched, creates:
+Runs at Phase 2 (after Phase 1 counterparty enrichment, before Phase 4 rule matching). Fires only on outgoing transactions (negative amount) that have a `counterparty_id` linked. When matched, creates:
 ```
 Dr  2000  Accounts Payable    [payment_amount]
 Cr  100x  Bank COA            [payment_amount]
@@ -668,13 +727,14 @@ Cr  2000 Accounts Payable total_amount
 ```
 When no GST: standard 2-line Dr contra / Cr 2000 AP.
 
-**AI Contract Review Gate (`POST /invoices/:id/submit`):**
+**Submit and Approval Routing (`POST /invoices/:id/submit`):**
 - Validates required fields: `entity_id`, `invoice_date`, `total_amount`, `currency`, `service_period_start`, `service_period_end`
-- Loads contract matched to invoice (if any)
-- Calls Claude Haiku: compares invoice details vs contract terms
-- Returns `assessment: pass | flag | no_contract`
-- `flag` → returns `concerns[]` for human review; submit again with `confirmed: true` to override
-- After gate: evaluates approval rules (with `new_vendor` / `coa_source` downgrade applied first)
+- Evaluates approval rules with override logic applied first:
+  - `new_vendor = true` → forces `pending_approval` status
+  - `coa_source = 'ai' or null` → forces `pending_approval` status
+  - Otherwise: first matching approval rule determines action (`auto_approve` or `require_approval`)
+  - If no rule matches → defaults to `pending_approval` status
+- Returns `{ status, invoice, message }` — invoice object includes new status if it changed
 
 **Data Model (migrations 016–019):**
 
@@ -688,8 +748,7 @@ finance_invoices
 ├── coa_source                   ← db|contract|ai|manual (019)
 ├── new_vendor                   ← true if counterparty auto-created (019)
 ├── status                       ← draft|pending_approval|approved|partially_paid|paid|rejected|void
-├── service_period_start/end     ← required; triggers amortization if span > 1 month
-├── has_amortization_schedule
+├── service_period_start/end     ← required for invoice lifecycle tracking
 ├── journal_entry_id             ← auto-created on approval
 ├── ai_extraction_raw (JSON)     ← raw Claude Haiku response
 ├── ai_confidence_score
@@ -736,11 +795,11 @@ finance_amortization_schedules
 - PDF stored to AWS S3: `invoices/entity_{id}/YYYY/MM/{uuid}_{filename}` (S3 failure is non-blocking)
 - Required env vars: `ANTHROPIC_API_KEY`, `AWS_S3_BUCKET`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
 
-**AP Knock-off (Phase 1.5 of categorization engine):**
-- Runs after counterparty enrichment (Phase 1), before rules engine (Phase 2)
+**AP Knock-off (Phase 2 of categorization engine):**
+- Runs after Phase 1 counterparty enrichment, before Phase 4 accounting rules
 - For outgoing transactions with a known `counterparty_id`, finds open AP invoices with matching currency and amount (±2% tolerance, oldest first)
 - On match: creates JE (Dr 2000 AP / Cr bank account), records partial/full payment on invoice
-- Knock-off transactions are excluded from Phase 2 to prevent double-booking
+- Matched transactions are excluded from Phase 4 to prevent double-booking
 
 **Cross-Entity AP Knock-off:**
 When the bank account's entity differs from the invoice's entity (e.g., DL SG bank pays a DL AU vendor invoice), the knock-off creates **two paired JEs** with a shared `intercompany_group_id`:
@@ -946,7 +1005,7 @@ CASH (bank payment):
 
 **Status: Built**
 
-Payroll is a three-step process: HR submits a payroll run → Finance API creates the full accrual JE immediately → bank transfers arrive and are matched via Phase 2.5 of the categorization engine.
+Payroll is a three-step process: HR submits a payroll run → Finance API creates the full accrual JE immediately → bank transfers arrive and are matched via Phase 3 of the categorization engine.
 
 **Flow:**
 
@@ -958,7 +1017,7 @@ Payroll is a three-step process: HR submits a payroll run → Finance API create
    Cr 1xxx Bank — OCBC         [net salary]
    Cr 2300 CPF Payable         [total CPF payable]
    ```
-3. Net salary bank transaction arrives → Phase 2.5 payroll knock-off matches it (±2% amount, ±7 day window) → `Matched`, linked to payroll JE
+3. Net salary bank transaction arrives → Phase 3 payroll knock-off matches it (±2% amount, ±7 day window) → `Matched`, linked to payroll JE
 4. CPF payment bank transaction arrives → same knock-off → `Matched`
 
 **Data Model:**
