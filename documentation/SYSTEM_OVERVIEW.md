@@ -350,6 +350,61 @@ The Wise API key itself is stored in the `WISE_API_KEY` environment variable, no
 
 ---
 
+#### 3.2.4 Transaction Schema
+
+**Status: Built**
+
+All bank transactions—regardless of source (CSV, PDF, API)—normalize to the same `FinanceTransaction` model with these fields:
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `id` | int | Primary key |
+| `bank_account_id` | FK | Which bank account this transaction belongs to |
+| `transaction_date` | date | Date the bank posted the transaction |
+| `currency` | str(3) | ISO 4217 code (e.g., SGD) — from bank statement |
+| `description` | str(500) | Raw transaction description from the bank |
+| `amount` | Decimal | Transaction amount (±) — sign determines direction |
+| `reference_number` | str(100) | Optional reference or check number from bank |
+| `fingerprint` | str(64) | SHA256(bank_account_id + date + amount + reference) — for dedup |
+| `status` | enum | Workflow state: Pending → Matched → Reconciled (or Needs Review for low-confidence AI) |
+| `source` | str(50) | How transaction entered system: `csv_import`, `stripe_automation`, `wise_sync`, etc. |
+| `source_external_id` | str(100) | Dedup key for API sources (Stripe txn ID, Wise transfer ID, etc.) — null for CSV |
+| **Enrichment Phase** | | |
+| `counterparty_id` | FK | Link to `FinanceCounterparty` after L1/L2/L3 matching (Phase 1) |
+| `counterparty_name` | str(255) | Canonical counterparty name (cache for display; derivable from FK) |
+| **Categorization Phase** | | |
+| `reconciled_journal_entry_id` | FK | The journal entry created during matching (Phase 4) |
+| `coa_account_code` | str(20) | COA code this transaction was matched to (set when MATCHED) |
+| `categorization_type` | enum | Accounting category (EXPENSE, DEPOSIT, INTERNAL_TRANSFER) — set when matched via rules or defaults |
+| `expected_counterpart_ba_id` | FK | For AWAITING_MATCH internal transfers: which bank account we're waiting for the counter-transaction from |
+| **Bank Data** | | |
+| `transaction_type` | str(50) | Bank's own classification (e.g., `TRANSFER`, `CARD`, `DIRECT_DEBIT`) — not the accounting category |
+| `value_date` | date | Settlement date (from bank data if available — CBA CSV doesn't provide it) |
+| `running_balance` | Decimal | Balance after this transaction (from bank statement if available) |
+| `original_csv_row` | JSON | Full raw CSV/PDF row for audit trail |
+| **AI Classification** | | |
+| `ai_suggested_account_code` | str(20) | AI's suggested COA code (stored regardless of confidence level) |
+| `ai_confidence` | float(0-1) | AI's confidence in the suggestion |
+| `ai_reasoning` | text | AI's plain-English explanation of why it chose that account |
+| **Reopening** | | |
+| `reopen_reason` | text | Why the system reopened a transaction back to Pending |
+| `reopened_at` | datetime | When it was reopened |
+| **Timestamps** | | |
+| `matched_at` | datetime | When transaction was matched (categorized + JE created) |
+| `reconciled_at` | datetime | When approved by human or system (set to RECONCILED) |
+| `created_at`, `updated_at` | datetime | Audit trail |
+
+**Key Design Notes:**
+
+1. **Amount sign**: Positive = money into bank (Debit bank / Credit contra); Negative = money out (Debit contra / Credit bank)
+2. **`transaction_type` is NOT the accounting category**: This is the bank's own classification (e.g., TRANSFER, CARD, DIRECT_DEBIT). The **accounting category** (Expense, Deposit, Internal Transfer) is determined by which **rule** matches the transaction and is now stored in `categorization_type` for direct frontend display.
+3. **`categorization_type` population**: Set during matching via rules (highest priority), counterparty defaults, or AI classification fallback. Null for Pending/Needs Review/Awaiting Match. This replaces needing to infer category from journal entry or rule.
+4. **`coa_account_code` population**: Set during matching in ALL paths (rules, counterparty defaults, AI classification) as of latest release. Null for Pending/Needs Review.
+5. **`source_external_id` usage**: For deduplication of API-sourced transactions. CSV imports use fingerprint instead.
+6. **Fingerprinting**: All transactions get a fingerprint, but for CSV imports it's the primary dedup key. For API sources, `source_external_id` is primary; fingerprint is secondary.
+
+---
+
 ### 3.3 Categorization Engine
 
 **Status: Built** (>330 tests passing)
