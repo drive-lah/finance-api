@@ -55,13 +55,9 @@ class CounterpartyService:
         if existing:
             raise ValueError(f"Counterparty '{data['name']}' already exists as type '{data['type']}' (id={existing.id})")
 
-        # Enforce COA requirement for vendor-type counterparties
-        if data.get("type") == CounterpartyType.VENDOR.value:
-            if not data.get("default_account_code"):
-                raise ValueError(
-                    "default_account_code is required for all vendor counterparties. "
-                    "Vendors must have a pre-configured expense/asset account for AP entries."
-                )
+        # default_account_code is OPTIONAL for vendors
+        # Vendors without a default account will use categorization rules or asset parking in Phase 4
+        # (No strict validation — allows vendors with NULL default_account_code)
 
         cp = FinanceCounterparty(**data)
         db.add(cp)

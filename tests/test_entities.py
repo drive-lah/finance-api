@@ -29,8 +29,11 @@ def test_session_factory(test_engine):
 @pytest.fixture
 def app(test_engine, test_session_factory):
     """Create a test Flask app with in-memory database"""
-    # Patch get_db to use our test session
-    def mock_get_db():
+    from contextlib import contextmanager
+
+    # Patch db_session to use our test session
+    @contextmanager
+    def mock_db_session():
         session = test_session_factory()
         try:
             yield session
@@ -40,8 +43,8 @@ def app(test_engine, test_session_factory):
             raise
         finally:
             session.close()
-    
-    with patch('src.routes.entities.get_db', mock_get_db):
+
+    with patch('src.routes.entities.db_session', mock_db_session):
         # Create app with test config
         app = create_app(config={'TESTING': True})
         yield app

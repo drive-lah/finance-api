@@ -14,7 +14,7 @@ from datetime import date
 from decimal import Decimal
 
 from src.utils.fingerprint import generate_fingerprint
-from src.services.csv_adapters.ocbc import OCBCAdapter
+from src.services.csv_adapters.registry import OCBCAdapter
 from src.services.csv_adapters.base import NormalizedRow
 
 

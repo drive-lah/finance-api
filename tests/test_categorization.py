@@ -64,9 +64,12 @@ def db_session():
 
 @pytest.fixture
 def mock_get_db(db_session):
-    def _get_db():
+    from contextlib import contextmanager
+
+    @contextmanager
+    def _mock():
         yield db_session
-    return _get_db
+    return _mock
 
 
 @pytest.fixture
@@ -265,27 +268,27 @@ class TestTagService:
 
 class TestTagRoutes:
     def test_create_tag_route(self, client, db_session, mock_get_db):
-        with patch('src.routes.tags.get_db', mock_get_db):
+        with patch('src.routes.tags.db_session', mock_get_db):
             resp = client.post('/api/finance/tags', json={"name": "TestTag", "color": "#123456"})
             assert resp.status_code == 201
             assert resp.get_json()["name"] == "TestTag"
 
     def test_list_tags_route(self, client, db_session, mock_get_db):
         tag_service.create(db_session, TagCreate(name="RouteTag"))
-        with patch('src.routes.tags.get_db', mock_get_db):
+        with patch('src.routes.tags.db_session', mock_get_db):
             resp = client.get('/api/finance/tags')
             assert resp.status_code == 200
 
     def test_update_tag_route(self, client, db_session, mock_get_db):
         tag = tag_service.create(db_session, TagCreate(name="Before"))
-        with patch('src.routes.tags.get_db', mock_get_db):
+        with patch('src.routes.tags.db_session', mock_get_db):
             resp = client.put(f'/api/finance/tags/{tag.id}', json={"name": "After"})
             assert resp.status_code == 200
             assert resp.get_json()["name"] == "After"
 
     def test_delete_tag_route(self, client, db_session, mock_get_db):
         tag = tag_service.create(db_session, TagCreate(name="DeleteMe"))
-        with patch('src.routes.tags.get_db', mock_get_db):
+        with patch('src.routes.tags.db_session', mock_get_db):
             resp = client.delete(f'/api/finance/tags/{tag.id}')
             assert resp.status_code == 200
 
@@ -423,7 +426,7 @@ class TestRuleService:
 class TestRuleRoutes:
 
     def test_create_rule_route(self, client, db_session, mock_get_db, test_accounts):
-        with patch('src.routes.categorization_rules.get_db', mock_get_db):
+        with patch('src.routes.categorization_rules.db_session', mock_get_db):
             resp = client.post('/api/finance/categorization/rules', json={
                 "name": "Test Rule",
                 "direction": "outgoing",
@@ -435,19 +438,19 @@ class TestRuleRoutes:
 
     def test_list_rules_route(self, client, db_session, mock_get_db, test_accounts):
         rule_service.create(db_session, _expense_rule(name="RouteRule"))
-        with patch('src.routes.categorization_rules.get_db', mock_get_db):
+        with patch('src.routes.categorization_rules.db_session', mock_get_db):
             resp = client.get('/api/finance/categorization/rules')
             assert resp.status_code == 200
 
     def test_get_rule_route(self, client, db_session, mock_get_db, test_accounts):
         rule = rule_service.create(db_session, _expense_rule(name="Single"))
-        with patch('src.routes.categorization_rules.get_db', mock_get_db):
+        with patch('src.routes.categorization_rules.db_session', mock_get_db):
             resp = client.get(f'/api/finance/categorization/rules/{rule.id}')
             assert resp.status_code == 200
             assert resp.get_json()["name"] == "Single"
 
     def test_get_rule_not_found(self, client, db_session, mock_get_db):
-        with patch('src.routes.categorization_rules.get_db', mock_get_db):
+        with patch('src.routes.categorization_rules.db_session', mock_get_db):
             resp = client.get('/api/finance/categorization/rules/999')
             assert resp.status_code == 404
 
@@ -901,14 +904,14 @@ class TestCategorizationRoutes:
 
     def test_run_route(self, client, db_session, mock_get_db, test_accounts, test_bank_account, test_entity):
         _make_transaction(db_session, test_bank_account, description="Route test", amount=-10.0)
-        with patch('src.routes.categorization.get_db', mock_get_db):
+        with patch('src.routes.categorization.db_session', mock_get_db):
             resp = client.post('/api/finance/categorization/run', json={})
             assert resp.status_code == 200
             assert resp.get_json()["total_processed"] == 1
 
     def test_manual_route(self, client, db_session, mock_get_db, test_accounts, test_bank_account, test_entity):
         txn = _make_transaction(db_session, test_bank_account, description="Manual route", amount=-25.0)
-        with patch('src.routes.categorization.get_db', mock_get_db):
+        with patch('src.routes.categorization.db_session', mock_get_db):
             resp = client.post('/api/finance/categorization/manual', json={
                 "transaction_id": txn.id,
                 "contra_account_code": "5000",
@@ -918,7 +921,7 @@ class TestCategorizationRoutes:
             assert resp.get_json()["status"] == "categorized"
 
     def test_manual_route_invalid_transaction(self, client, db_session, mock_get_db, test_accounts):
-        with patch('src.routes.categorization.get_db', mock_get_db):
+        with patch('src.routes.categorization.db_session', mock_get_db):
             resp = client.post('/api/finance/categorization/manual', json={
                 "transaction_id": 999,
                 "contra_account_code": "5000",
@@ -1405,7 +1408,7 @@ class TestApKnockoffMatching:
     def test_tier3_partial_payment_accepted(
         self, db_session, test_entity
     ):
-        """Payment less than invoice remaining is accepted as partial (Tier 3)."""
+        """Payment less than invoice remaining → Case 3 (no auto-match, asset-park to 1300)."""
         from src.services.invoice_service import invoice_service
         cp = _make_counterparty(db_session, "Big Supplier")
 
@@ -1414,13 +1417,13 @@ class TestApKnockoffMatching:
             total_amount=1200.0, currency="SGD",
         )
 
-        # $600 bank payment against $1200 invoice — partial payment
+        # $600 bank payment against $1200 invoice — Case 3: amount mismatch
+        # Should NOT auto-match; will be asset-parked to 1300 Prepayments in Phase 4
         result = invoice_service.get_open_for_counterparty(
             db_session, cp.id, 600.0, "SGD",
             description="BIG SUPPLIER PAYMENT",
         )
-        assert result is not None
-        assert result.id == inv.id
+        assert result is None  # Partial amounts skip auto-match (Case 3)
 
     def test_tier3_partial_creates_partially_paid_status(
         self, db_session, test_entity

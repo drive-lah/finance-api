@@ -560,9 +560,11 @@ class TestTransactionStatus:
     def test_enum_members(self):
         """Test that TransactionStatus has all expected members."""
         members = list(TransactionStatus)
-        assert len(members) == 3
+        assert len(members) == 5
         assert TransactionStatus.PENDING in members
+        assert TransactionStatus.AWAITING_MATCH in members
         assert TransactionStatus.MATCHED in members
+        assert TransactionStatus.NEEDS_REVIEW in members
         assert TransactionStatus.RECONCILED in members
 
 
@@ -863,13 +865,13 @@ class TestBankAccountSchemas:
             account_number="12345678",
             account_name="Operating Account",
             currency="SGD",
-            csv_format="ocbc",
+            file_adapter="ocbc",
         )
         assert data.entity_id == 1
         assert data.bank_name == "OCBC"
         assert data.account_number == "12345678"
         assert data.currency == "SGD"
-        assert data.csv_format == "ocbc"
+        assert data.file_adapter == "ocbc"
         assert data.status == BankAccountStatus.ACTIVE
 
     def test_bank_account_create_lowercase_currency(self):
@@ -880,7 +882,7 @@ class TestBankAccountSchemas:
             account_number="111",
             account_name="Account",
             currency="sgd",
-            csv_format="ocbc",
+            file_adapter="ocbc",
         )
         assert data.currency == "SGD"
     

@@ -35,7 +35,10 @@ def db_session():
 
 
 def mock_get_db(session):
-    """Mock get_db function that yields our test session."""
+    """Mock db_session context manager that yields our test session."""
+    from contextlib import contextmanager
+
+    @contextmanager
     def _mock():
         yield session
     return _mock
@@ -43,7 +46,7 @@ def mock_get_db(session):
 
 def test_list_bank_accounts_empty(client, db_session):
     """Test listing bank accounts when none exist."""
-    with patch('src.routes.bank_accounts.get_db', mock_get_db(db_session)):
+    with patch('src.routes.bank_accounts.db_session', mock_get_db(db_session)):
         response = client.get('/api/finance/bank-accounts')
         assert response.status_code == 200
         assert response.json == []
@@ -81,7 +84,7 @@ def test_list_bank_accounts_with_data(client, db_session):
     db_session.add_all([ba1, ba2])
     db_session.commit()
     
-    with patch('src.routes.bank_accounts.get_db', mock_get_db(db_session)):
+    with patch('src.routes.bank_accounts.db_session', mock_get_db(db_session)):
         response = client.get('/api/finance/bank-accounts')
         assert response.status_code == 200
         data = response.json
@@ -133,7 +136,7 @@ def test_list_bank_accounts_filtered_by_entity(client, db_session):
     db_session.add_all([ba1, ba2])
     db_session.commit()
     
-    with patch('src.routes.bank_accounts.get_db', mock_get_db(db_session)):
+    with patch('src.routes.bank_accounts.db_session', mock_get_db(db_session)):
         # Filter by entity1
         response = client.get(f'/api/finance/bank-accounts?entity_id={entity1_id}')
         assert response.status_code == 200
@@ -169,10 +172,10 @@ def test_create_bank_account_success(client, db_session):
         "account_number": "123-456-789",
         "account_name": "Operating Account",
         "currency": "SGD",
-        "csv_format": "ocbc",
+        "file_adapter": "ocbc",
     }
 
-    with patch('src.routes.bank_accounts.get_db', mock_get_db(db_session)):
+    with patch('src.routes.bank_accounts.db_session', mock_get_db(db_session)):
         response = client.post('/api/finance/bank-accounts', json=bank_account_data)
         assert response.status_code == 201
         data = response.json
@@ -180,7 +183,7 @@ def test_create_bank_account_success(client, db_session):
         assert data['account_number'] == "123-456-789"
         assert data['account_name'] == "Operating Account"
         assert data['currency'] == "SGD"
-        assert data['csv_format'] == "ocbc"
+        assert data['file_adapter'] == "ocbc"
         assert data['status'] == "active"
         assert 'id' in data
         assert 'created_at' in data
@@ -204,11 +207,11 @@ def test_create_bank_account_with_status(client, db_session):
         "account_number": "999-888-777",
         "account_name": "Dormant Account",
         "currency": "SGD",
-        "csv_format": "ocbc",
+        "file_adapter": "ocbc",
         "status": "inactive",
     }
     
-    with patch('src.routes.bank_accounts.get_db', mock_get_db(db_session)):
+    with patch('src.routes.bank_accounts.db_session', mock_get_db(db_session)):
         response = client.post('/api/finance/bank-accounts', json=bank_account_data)
         assert response.status_code == 201
         data = response.json
@@ -223,10 +226,10 @@ def test_create_bank_account_invalid_entity(client, db_session):
         "account_number": "123-456-789",
         "account_name": "Operating Account",
         "currency": "SGD",
-        "csv_format": "ocbc",
+        "file_adapter": "ocbc",
     }
     
-    with patch('src.routes.bank_accounts.get_db', mock_get_db(db_session)):
+    with patch('src.routes.bank_accounts.db_session', mock_get_db(db_session)):
         response = client.post('/api/finance/bank-accounts', json=bank_account_data)
         assert response.status_code == 409
         data = response.json
@@ -243,7 +246,7 @@ def test_create_bank_account_validation_errors(client, db_session):
         # Missing account_number, account_name, currency
     }
     
-    with patch('src.routes.bank_accounts.get_db', mock_get_db(db_session)):
+    with patch('src.routes.bank_accounts.db_session', mock_get_db(db_session)):
         response = client.post('/api/finance/bank-accounts', json=bank_account_data)
         assert response.status_code == 400
         data = response.json
@@ -279,7 +282,7 @@ def test_create_bank_account_invalid_currency(client, db_session):
         "currency": "INVALID"  # Not a valid ISO 4217 code
     }
     
-    with patch('src.routes.bank_accounts.get_db', mock_get_db(db_session)):
+    with patch('src.routes.bank_accounts.db_session', mock_get_db(db_session)):
         response = client.post('/api/finance/bank-accounts', json=bank_account_data)
         assert response.status_code == 400
         data = response.json
@@ -310,7 +313,7 @@ def test_get_bank_account_by_id_success(client, db_session):
     db_session.add(bank_account)
     db_session.commit()
     
-    with patch('src.routes.bank_accounts.get_db', mock_get_db(db_session)):
+    with patch('src.routes.bank_accounts.db_session', mock_get_db(db_session)):
         response = client.get(f'/api/finance/bank-accounts/{bank_account.id}')
         assert response.status_code == 200
         data = response.json
@@ -321,7 +324,7 @@ def test_get_bank_account_by_id_success(client, db_session):
 
 def test_get_bank_account_by_id_not_found(client, db_session):
     """Test getting a bank account that doesn't exist."""
-    with patch('src.routes.bank_accounts.get_db', mock_get_db(db_session)):
+    with patch('src.routes.bank_accounts.db_session', mock_get_db(db_session)):
         response = client.get('/api/finance/bank-accounts/9999')
         assert response.status_code == 404
         data = response.json
@@ -339,13 +342,13 @@ def test_create_mvp_bank_accounts(client, db_session):
     
     # MVP bank accounts from PRD
     mvp_accounts = [
-        {"entity_id": dl_ventures.id, "bank_name": "OCBC", "account_number": "XXX-1", "account_name": "DL Ventures Operating", "currency": "SGD", "csv_format": "ocbc"},
-        {"entity_id": dl_ventures.id, "bank_name": "Wise", "account_number": "XXX-2", "account_name": "DL Ventures Multi-Currency", "currency": "USD", "csv_format": "ocbc"},
-        {"entity_id": dl_sg.id, "bank_name": "DBS", "account_number": "XXX-3", "account_name": "DL SG Operating", "currency": "SGD", "csv_format": "ocbc"},
-        {"entity_id": dl_au.id, "bank_name": "NAB", "account_number": "XXX-4", "account_name": "DL AU Operating", "currency": "AUD", "csv_format": "ocbc"},
+        {"entity_id": dl_ventures.id, "bank_name": "OCBC", "account_number": "XXX-1", "account_name": "DL Ventures Operating", "currency": "SGD", "file_adapter": "ocbc"},
+        {"entity_id": dl_ventures.id, "bank_name": "Wise", "account_number": "XXX-2", "account_name": "DL Ventures Multi-Currency", "currency": "USD", "file_adapter": "ocbc"},
+        {"entity_id": dl_sg.id, "bank_name": "DBS", "account_number": "XXX-3", "account_name": "DL SG Operating", "currency": "SGD", "file_adapter": "ocbc"},
+        {"entity_id": dl_au.id, "bank_name": "NAB", "account_number": "XXX-4", "account_name": "DL AU Operating", "currency": "AUD", "file_adapter": "ocbc"},
     ]
     
-    with patch('src.routes.bank_accounts.get_db', mock_get_db(db_session)):
+    with patch('src.routes.bank_accounts.db_session', mock_get_db(db_session)):
         for account_data in mvp_accounts:
             response = client.post('/api/finance/bank-accounts', json=account_data)
             assert response.status_code == 201, f"Failed to create {account_data['bank_name']} account"

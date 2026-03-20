@@ -116,6 +116,8 @@ All errors return:
 | Bank name (`bank_name`) | Adapter | Date format | Amount columns |
 |-------------------------|---------|-------------|----------------|
 | `OCBC` | `OCBCAdapter` | `YYYYMMDD` (no separators) | Separate `Debit Amount` (−) and `Credit Amount` (+) |
+| `CBA` / `Commonwealth` / `Commonwealth Bank` | `CBAAdapter` | `DD/MM/YYYY` (CSV) or `DD MMM` (PDF) | Signed `Amount` column (CSV) or separate `Debit`/`Credit` (PDF) |
+| `DBS` | `DBSPDFAdapter` | PDF statement format | Separate Debit/Credit from PDF extraction |
 
 **OCBC CSV required columns:** `Post Date`, `Statement Details Info`, `Debit Amount`, `Credit Amount`
 
@@ -364,7 +366,7 @@ Manual categorization (`/manual`) sets status → `Reconciled` directly (human c
 | POST | `/api/finance/invoices/:id/void` | — | — | 200 `Invoice` |
 | POST | `/api/finance/invoices/:id/match-transaction` | — | `{ transaction_id*, matched_by? }` | 200 `MatchResult` |
 | GET | `/api/finance/invoices/open-for-transaction/:txn_id` | — | — | 200 `{ invoices[], counterparty_id }` |
-| POST | `/api/finance/invoices/extract` | — | `multipart/form-data` field `file` (PDF) | 200 `AIExtractionResult` / 409 duplicate |
+| POST | `/api/finance/invoices/extract` | — | `multipart/form-data` field `file` (PDF, JPEG, or PNG) | 200 `AIExtractionResult` / 409 duplicate |
 
 **InvoiceCreate fields:**
 
@@ -374,8 +376,8 @@ Manual categorization (`/manual`) sets status → `Reconciled` directly (human c
 | `invoice_date` | ✓ | Date on invoice (YYYY-MM-DD) |
 | `total_amount` | ✓ | Invoice total (in invoice currency) |
 | `currency` | ✓ | 3-letter ISO code (SGD, USD, AUD…) |
-| `service_period_start` | ✓ (UI enforced) | Start of billing period; span > 1 month triggers amortization |
-| `service_period_end` | ✓ (UI enforced) | End of billing period |
+| `service_period_start` | ✓ (UI enforced) | Start of billing/service period |
+| `service_period_end` | ✓ (UI enforced) | End of billing/service period |
 | `counterparty_id` | — | Links to `finance_counterparties` (auto-set from vendor matching on extract) |
 | `contract_id` | — | Explicit contract link (auto-matched if omitted + counterparty set) |
 | `invoice_number` | — | Vendor invoice number |
@@ -397,25 +399,27 @@ Manual categorization (`/manual`) sets status → `Reconciled` directly (human c
 | `net_amount` | Amount excluding GST |
 | `tax_amount` | GST/VAT component |
 
-**`POST /invoices/:id/submit` — AI Contract Review Gate:**
+**`POST /invoices/:id/submit` — Approval Routing:**
 
-Validates required fields, then calls Claude Haiku to compare invoice vs contract.
+Evaluates approval rules to determine invoice status. No contract comparison performed.
 
-Request body: `{ "confirmed": false }` (set `true` to override a flag)
+Request body: `{}` (empty)
 
 Response `InvoiceSubmitResult`:
 
 | Field | Description |
 |-------|-------------|
-| `assessment` | `pass` \| `flag` \| `no_contract` |
-| `message` | Human-readable explanation |
-| `concerns` | Array of concern strings (only when `assessment = flag`) |
-| `invoice` | Full `Invoice` object if status changed; `null` if flagged and awaiting confirmation |
+| `status` | New invoice status: `pending_approval` or `approved` |
+| `message` | Human-readable explanation of routing decision |
+| `invoice` | Full `Invoice` object with updated status |
 
-**Auto-approve downgrade rules (applied before approval rules):**
-- `new_vendor = true` → always `pending_approval`, rule is bypassed
-- `coa_source = 'ai'` or `null` → always `pending_approval`, rule is bypassed
-- Only `coa_source = 'db'` or `'contract'` can trigger `auto_approve`
+**Approval Routing Logic:**
+- `new_vendor = true` → always `pending_approval` (override)
+- `coa_source = 'ai'` or `null` → always `pending_approval` (override)
+- Otherwise: first matching approval rule wins:
+  - `action = 'auto_approve'` → status becomes `approved`
+  - `action = 'require_approval'` → status becomes `pending_approval`
+  - No matching rule → defaults to `pending_approval`
 
 **`POST /invoices/:id/approve` body:**
 
@@ -427,7 +431,6 @@ Response `InvoiceSubmitResult`:
 **Approval journal entry:**
 - No GST: `Dr contra_account_code / Cr 2000 AP` (2-line)
 - With GST (`tax_amount > 0`): `Dr contra_account_code (net) + Dr 1350 GST Input (tax) / Cr 2000 AP (total)` (3-line)
-- Amortization: service period > 1 month → `Dr 1200 Prepaid / Cr 2000 AP`; monthly schedule generated
 
 **Retroactive AP Knock-off (fired on approval):**
 
@@ -474,9 +477,11 @@ Response `MatchResult`:
 
 Returns all open invoices that could be manually matched against the given transaction (same counterparty, same currency, `invoice_date ≤ transaction_date`). Use this to populate a match-picker UI. Returns `{ transaction_id, counterparty_id, invoices[] }`.
 
-**`POST /invoices/extract` — PDF AI Extraction:**
+**`POST /invoices/extract` — Invoice AI Extraction (PDF / JPEG / PNG):**
 
-- Returns 409 `{ error, detail, existing_invoice_id }` if an identical PDF (same SHA-256) already exists
+- Accepts PDF files (text extracted via `pdfplumber`) or images (JPEG/PNG analyzed via Claude vision API)
+- Returns 409 `{ error, detail, existing_invoice_id }` if an identical file (same SHA-256) already exists
+- Returns 400 if file is not PDF, JPEG, or PNG
 - On success returns `AIExtractionResult`:
 
 | Field | Description |
@@ -494,8 +499,8 @@ Returns all open invoices that could be manually matched against the given trans
 | `service_period_start/end` | Billing period (YYYY-MM-DD) if found or inferred ("invoice for February" → Feb 01–28) |
 | `suggested_coa_account` | COA code suggestion (e.g. `6700`) — used in COA priority chain, not shown to ops |
 | `confidence` | 0–1 AI confidence score |
-| `pdf_s3_key` | S3 key of uploaded PDF (null if S3 not configured) |
-| `pdf_content_hash` | SHA-256 hex — pass back in `InvoiceCreate` for duplicate tracking |
+| `pdf_s3_key` | S3 key of uploaded file (PDF, JPEG, or PNG; null if S3 not configured) |
+| `pdf_content_hash` | SHA-256 hex of file bytes — pass back in `InvoiceCreate` for duplicate tracking |
 | `extraction_error` | Error message or null |
 | `vendor_match` | `{ counterparty_id, counterparty_name, is_new_vendor, match_confidence }` |
 

@@ -40,12 +40,13 @@ class FinanceBankAccount(Base):
     account_number: Mapped[str] = mapped_column(String(50), nullable=False)
     account_name: Mapped[str] = mapped_column(String(255), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), nullable=False)  # ISO 4217
-    csv_format: Mapped[Optional[str]] = mapped_column(
+    file_adapter: Mapped[Optional[str]] = mapped_column(
         String(50),
         nullable=True,
         comment=(
-            "CSV adapter key for this bank account. Must match a key in "
-            "ADAPTER_REGISTRY (e.g. 'ocbc'). Required for CSV imports."
+            "File import adapter key. Must match a key in ADAPTER_REGISTRY "
+            "(e.g. 'ocbc', 'cba', 'dbs'). Handles CSV and PDF via smart adapters. "
+            "NULL means no file import supported."
         ),
     )
     coa_account_code: Mapped[Optional[str]] = mapped_column(
@@ -53,13 +54,21 @@ class FinanceBankAccount(Base):
         nullable=True,
         comment="COA account code this bank account maps to (e.g., 1000 for OCBC Current)"
     )
-    api_credentials: Mapped[Optional[dict]] = mapped_column(
+    api_config: Mapped[Optional[dict]] = mapped_column(
         JSON,
         nullable=True,
         comment=(
-            "API credentials for bank integrations. "
-            "For Wise: {\"profile_id\": 123, \"balance_id\": 456}. "
+            "Static API connection config, set once at connection time. "
+            "Wise: {provider, profile_id, balance_id, sync_from_date}. "
             "API keys are NOT stored here — use environment variables."
+        ),
+    )
+    api_sync_state: Mapped[Optional[dict]] = mapped_column(
+        JSON,
+        nullable=True,
+        comment=(
+            "Runtime sync tracking state, updated on every successful sync. "
+            "Wise: {last_synced_at: 'YYYY-MM-DD'}."
         ),
     )
     status: Mapped[BankAccountStatus] = mapped_column(
@@ -89,7 +98,16 @@ class FinanceBankAccount(Base):
     
     def __repr__(self) -> str:
         return f"<FinanceBankAccount(id={self.id}, bank='{self.bank_name}', account='{self.account_number}')>"
-    
+
+    def get_import_methods(self) -> list[str]:
+        """Return the list of supported import methods based on configured fields."""
+        methods = []
+        if self.file_adapter:
+            methods.append("file")
+        if self.api_config:
+            methods.append("api_sync")
+        return methods
+
     def to_dict(self) -> dict:
         """Convert model to dictionary for JSON serialization."""
         return {
@@ -99,9 +117,11 @@ class FinanceBankAccount(Base):
             "account_number": self.account_number,
             "account_name": self.account_name,
             "currency": self.currency,
-            "csv_format": self.csv_format,
+            "file_adapter": self.file_adapter,
             "coa_account_code": self.coa_account_code,
-            "api_credentials": self.api_credentials,
+            "api_config": self.api_config,
+            "api_sync_state": self.api_sync_state,
+            "import_methods": self.get_import_methods(),
             "status": self.status.value,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,

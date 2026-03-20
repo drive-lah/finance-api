@@ -3,7 +3,6 @@ import logging
 from datetime import date, timedelta
 
 from flask import Blueprint, request, jsonify
-from sqlalchemy.orm.attributes import flag_modified
 
 from src.database import db_session
 from src.models.bank_account import FinanceBankAccount
@@ -11,7 +10,7 @@ from src.services.bank_account_service import bank_account_service
 from src.services.transaction_service import transaction_service
 from src.services.categorization_service import categorization_service
 from src.services.wise_service import wise_service
-from src.services.csv_adapters.dbs_pdf import dbs_pdf_adapter
+from src.services.csv_adapters.registry import ADAPTER_REGISTRY, ADAPTER_META, get_adapter
 from src.models.schemas import BankAccountCreate, BankAccountResponse
 from src.utils.errors import NotFoundError, ConflictError
 
@@ -98,6 +97,31 @@ def get_bank_account(bank_account_id: int):
 
         response_data = BankAccountResponse.model_validate(bank_account).model_dump()
         return jsonify(response_data), 200
+
+
+@bank_accounts_bp.route('/file-adapters', methods=['GET'])
+def list_file_adapters():
+    """
+    List all registered file import adapters with their labels and accepted file types.
+
+    Used by the frontend to populate the file_adapter dropdown in the
+    bank account create/edit form and set the file input's accept attribute.
+
+    Returns:
+        200: List of { key, label, accepts } objects (unique adapters only).
+    """
+    seen = set()
+    adapters = []
+    for key, meta in ADAPTER_META.items():
+        label = meta["label"]
+        if label not in seen:
+            seen.add(label)
+            adapters.append({
+                "key": key,
+                "label": label,
+                "accepts": meta["accepts"],
+            })
+    return jsonify(adapters), 200
 
 
 @bank_accounts_bp.route('/wise/profiles', methods=['GET'])
@@ -203,12 +227,12 @@ def wise_connect():
                 account_number=account_number,
                 account_name=f"Wise {currency}",
                 currency=currency,
-                csv_format=None,
-                api_credentials={
+                file_adapter=None,
+                api_config={
+                    "provider": "wise",
                     "profile_id": profile_id,
                     "balance_id": balance_id,
                     "sync_from_date": sync_from_date.isoformat(),
-                    "last_synced_at": None,
                 },
             )
 
@@ -262,9 +286,10 @@ def sync_bank_account(bank_account_id: int):
         if not bank_account:
             raise NotFoundError(f"Bank account with ID {bank_account_id} not found")
 
-        creds = bank_account.api_credentials or {}
-        profile_id = creds.get("profile_id")
-        balance_id = creds.get("balance_id")
+        api_config = bank_account.api_config or {}
+        api_sync_state = bank_account.api_sync_state or {}
+        profile_id = api_config.get("profile_id")
+        balance_id = api_config.get("balance_id")
 
         if not profile_id or not balance_id:
             return jsonify({
@@ -280,11 +305,11 @@ def sync_bank_account(bank_account_id: int):
                 date_from = date.fromisoformat(date_from_str)
             except ValueError:
                 return jsonify({"error": "Invalid date_from — use YYYY-MM-DD"}), 400
-        elif creds.get("last_synced_at"):
+        elif api_sync_state.get("last_synced_at"):
             # Overlap by 1 day to catch transactions that post a day late
-            date_from = date.fromisoformat(creds["last_synced_at"]) - timedelta(days=1)
-        elif creds.get("sync_from_date"):
-            date_from = date.fromisoformat(creds["sync_from_date"])
+            date_from = date.fromisoformat(api_sync_state["last_synced_at"]) - timedelta(days=1)
+        elif api_config.get("sync_from_date"):
+            date_from = date.fromisoformat(api_config["sync_from_date"])
         else:
             date_from = date_to - timedelta(days=_WISE_DEFAULT_HISTORY_DAYS)
 
@@ -313,9 +338,8 @@ def sync_bank_account(bank_account_id: int):
             extra_errors=parse_errors,
         )
 
-        # ── Update last_synced_at in credentials ──────────────────────────────
-        bank_account.api_credentials = {**creds, "last_synced_at": date_to.isoformat()}
-        flag_modified(bank_account, "api_credentials")
+        # ── Update last_synced_at in sync state ───────────────────────────────
+        bank_account.api_sync_state = {"last_synced_at": date_to.isoformat()}
         db.commit()
 
         # ── Auto-categorize new transactions ──────────────────────────────────
@@ -379,13 +403,14 @@ def dbs_import():
 
     pdf_bytes = file.read()
 
-    # ── Parse PDF ─────────────────────────────────────────────────────────────
+    # ── Parse PDF via registry adapter ────────────────────────────────────────
     try:
-        sections = dbs_pdf_adapter.parse_pdf(pdf_bytes)
+        dbs_adapter = get_adapter("dbs")
+        sections = dbs_adapter.parse_pdf(pdf_bytes)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
-    parse_warnings = list(dbs_pdf_adapter.errors)
+    parse_warnings = list(dbs_adapter.errors)
     currencies_found = list(sections.keys())
 
     # ── Route each currency section to the matching bank account ──────────────
@@ -421,7 +446,7 @@ def dbs_import():
                 db=db,
                 bank_account=bank_account,
                 normalized_rows=rows,
-                fingerprint_fn=dbs_pdf_adapter.fingerprint_fields,
+                fingerprint_fn=dbs_adapter.fingerprint_fields,
                 source="dbs_pdf_import",
             )
 

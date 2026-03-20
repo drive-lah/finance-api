@@ -135,11 +135,24 @@ class DBSPDFAdapter(BankCSVAdapter):
             f"{row.running_balance:.2f}" if row.running_balance is not None else "",
         ]
 
-    def parse(self, csv_content: str) -> list[NormalizedRow]:
-        """Not applicable for DBS — use parse_pdf() instead."""
-        raise NotImplementedError(
-            "DBS uses PDF statements, not CSV. Use parse_pdf(pdf_bytes)."
-        )
+    def parse(self, content: str | bytes) -> list[NormalizedRow]:
+        """
+        Parse DBS PDF statement bytes into a flat list of NormalizedRow.
+
+        Accepts bytes (PDF file content). Returns all transactions across all
+        currency sections as a flat list with .currency set on each row.
+
+        For multi-currency entity-level routing (one PDF → multiple accounts),
+        use parse_pdf() which returns a dict keyed by currency.
+        """
+        if isinstance(content, str):
+            content = content.encode('latin-1')
+
+        sections = self.parse_pdf(content)
+        rows: list[NormalizedRow] = []
+        for section_rows in sections.values():
+            rows.extend(section_rows)
+        return rows
 
     # ── PDF parsing ───────────────────────────────────────────────────────────
 

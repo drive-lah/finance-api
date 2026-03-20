@@ -36,11 +36,14 @@ def mock_db(test_engine):
 @pytest.fixture
 def app(mock_db):
     """Create a test Flask app with in-memory database"""
-    # Patch get_db to return our shared test session
-    def mock_get_db():
+    from contextlib import contextmanager
+
+    # Patch db_session to return our shared test session
+    @contextmanager
+    def mock_db_session():
         yield mock_db
-    
-    with patch('src.routes.transactions.get_db', mock_get_db):
+
+    with patch('src.routes.transactions.db_session', mock_db_session):
         # Create app with test config
         app = create_app(config={'TESTING': True})
         yield app
@@ -76,7 +79,8 @@ def sample_bank_account(mock_db, sample_entity):
         account_number="123456789",
         account_name="Test Account",
         currency="SGD",
-        csv_format="ocbc",
+        file_adapter="ocbc",
+        coa_account_code="1000",
         status=BankAccountStatus.ACTIVE
     )
     mock_db.add(bank_account)
@@ -510,7 +514,7 @@ def test_stripe_webhook_success(client, mock_db, sample_bank_account):
     """Test creating transaction from Stripe webhook - success."""
     data = {
         "bank_account_id": sample_bank_account.id,
-        "stripe_transaction_id": "txn_abc123",
+        "source_external_id": "txn_abc123",
         "transaction_date": "2024-02-14",
         "description": "Stripe payment from customer",
         "amount": 100.50,
@@ -521,7 +525,7 @@ def test_stripe_webhook_success(client, mock_db, sample_bank_account):
     
     assert response.status_code == 201
     result = response.get_json()
-    assert result['stripe_transaction_id'] == "txn_abc123"
+    assert result['source_external_id'] == "txn_abc123"
     assert result['source'] == 'stripe_automation'
     assert result['status'] == 'Pending'
     assert result['amount'] == 100.50
@@ -535,7 +539,7 @@ def test_stripe_webhook_without_reference(client, mock_db, sample_bank_account):
     """Test creating Stripe transaction without reference number."""
     data = {
         "bank_account_id": sample_bank_account.id,
-        "stripe_transaction_id": "txn_xyz789",
+        "source_external_id": "txn_xyz789",
         "transaction_date": "2024-02-14",
         "description": "Stripe payment",
         "amount": 50.00
@@ -545,7 +549,7 @@ def test_stripe_webhook_without_reference(client, mock_db, sample_bank_account):
     
     assert response.status_code == 201
     result = response.get_json()
-    assert result['stripe_transaction_id'] == "txn_xyz789"
+    assert result['source_external_id'] == "txn_xyz789"
     assert result['source'] == 'stripe_automation'
     assert result['reference_number'] is None
 
@@ -555,7 +559,7 @@ def test_stripe_webhook_duplicate_stripe_id(client, mock_db, sample_bank_account
     # Create first transaction
     data = {
         "bank_account_id": sample_bank_account.id,
-        "stripe_transaction_id": "txn_duplicate",
+        "source_external_id": "txn_duplicate",
         "transaction_date": "2024-02-14",
         "description": "First payment",
         "amount": 100.00
@@ -567,7 +571,7 @@ def test_stripe_webhook_duplicate_stripe_id(client, mock_db, sample_bank_account
     # Try to create duplicate
     data2 = {
         "bank_account_id": sample_bank_account.id,
-        "stripe_transaction_id": "txn_duplicate",
+        "source_external_id": "txn_duplicate",
         "transaction_date": "2024-02-15",
         "description": "Second payment",
         "amount": 200.00
@@ -584,7 +588,7 @@ def test_stripe_webhook_duplicate_fingerprint(client, mock_db, sample_bank_accou
     # Create first transaction
     data = {
         "bank_account_id": sample_bank_account.id,
-        "stripe_transaction_id": "txn_first",
+        "source_external_id": "txn_first",
         "transaction_date": "2024-02-14",
         "description": "Payment",
         "amount": 100.00,
@@ -597,7 +601,7 @@ def test_stripe_webhook_duplicate_fingerprint(client, mock_db, sample_bank_accou
     # Try to create transaction with same fingerprint (same bank account, date, amount, reference)
     data2 = {
         "bank_account_id": sample_bank_account.id,
-        "stripe_transaction_id": "txn_second",  # Different Stripe ID
+        "source_external_id": "txn_second",  # Different Stripe ID
         "transaction_date": "2024-02-14",
         "description": "Different description",
         "amount": 100.00,
@@ -614,7 +618,7 @@ def test_stripe_webhook_invalid_bank_account(client, mock_db):
     """Test Stripe webhook with nonexistent bank account."""
     data = {
         "bank_account_id": 99999,
-        "stripe_transaction_id": "txn_invalid",
+        "source_external_id": "txn_invalid",
         "transaction_date": "2024-02-14",
         "description": "Payment",
         "amount": 100.00
@@ -628,7 +632,7 @@ def test_stripe_webhook_invalid_bank_account(client, mock_db):
 
 def test_stripe_webhook_missing_required_fields(client, mock_db, sample_bank_account):
     """Test Stripe webhook with missing required fields."""
-    # Missing stripe_transaction_id
+    # Missing source_external_id
     data = {
         "bank_account_id": sample_bank_account.id,
         "transaction_date": "2024-02-14",
@@ -640,14 +644,14 @@ def test_stripe_webhook_missing_required_fields(client, mock_db, sample_bank_acc
     assert response.status_code == 400
     result = response.get_json()
     assert result['error'] == "Validation error"
-    assert 'stripe_transaction_id' in str(result['details'])
+    assert 'source_external_id' in str(result['details'])
 
 
 def test_stripe_webhook_invalid_amount(client, mock_db, sample_bank_account):
     """Test Stripe webhook with invalid amount."""
     data = {
         "bank_account_id": sample_bank_account.id,
-        "stripe_transaction_id": "txn_bad_amount",
+        "source_external_id": "txn_bad_amount",
         "transaction_date": "2024-02-14",
         "description": "Payment",
         "amount": "not_a_number"
@@ -663,7 +667,7 @@ def test_stripe_webhook_invalid_date(client, mock_db, sample_bank_account):
     """Test Stripe webhook with invalid date format."""
     data = {
         "bank_account_id": sample_bank_account.id,
-        "stripe_transaction_id": "txn_bad_date",
+        "source_external_id": "txn_bad_date",
         "transaction_date": "not-a-date",
         "description": "Payment",
         "amount": 100.00
@@ -693,7 +697,7 @@ def test_stripe_service_create_from_stripe(mock_db, sample_bank_account):
     transaction = transaction_service.create_from_stripe(
         db=mock_db,
         bank_account_id=sample_bank_account.id,
-        stripe_transaction_id="txn_service_test",
+        source_external_id="txn_service_test",
         transaction_date=date(2024, 2, 14),
         description="Service test",
         amount=Decimal("75.50"),
@@ -701,7 +705,7 @@ def test_stripe_service_create_from_stripe(mock_db, sample_bank_account):
     )
     
     assert transaction.id is not None
-    assert transaction.stripe_transaction_id == "txn_service_test"
+    assert transaction.source_external_id == "txn_service_test"
     assert transaction.source == 'stripe_automation'
     assert transaction.status == TransactionStatus.PENDING
     assert transaction.amount == Decimal("75.50")

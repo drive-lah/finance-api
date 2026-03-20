@@ -147,8 +147,8 @@ def import_transactions():
     except ValueError:
         raise BadRequestError("bank_account_id must be an integer")
 
-    # Read CSV content
-    csv_content = file.read().decode('utf-8')
+    # Read file as raw bytes — adapter handles decoding (works for CSV and PDF)
+    file_bytes = file.read()
 
     # Optional import_batch_id
     import_batch_id = request.form.get('import_batch_id')
@@ -156,10 +156,10 @@ def import_transactions():
     # Process import
     with db_session() as db:
         try:
-            result = transaction_service.import_csv(
+            result = transaction_service.import_file(
                 db=db,
                 bank_account_id=bank_account_id,
-                csv_content=csv_content,
+                file_bytes=file_bytes,
                 import_batch_id=import_batch_id
             )
         except ValueError as e:
@@ -229,7 +229,7 @@ def create_stripe_transaction():
     Expected JSON body:
     {
         "bank_account_id": 1,
-        "stripe_transaction_id": "txn_abc123",
+        "source_external_id": "txn_abc123",
         "transaction_date": "2024-02-14",
         "description": "Stripe payment from customer",
         "amount": 100.50,
@@ -256,7 +256,7 @@ def create_stripe_transaction():
             transaction = transaction_service.create_from_stripe(
                 db=db,
                 bank_account_id=stripe_data.bank_account_id,
-                stripe_transaction_id=stripe_data.stripe_transaction_id,
+                source_external_id=stripe_data.source_external_id,
                 transaction_date=stripe_data.transaction_date,
                 description=stripe_data.description,
                 amount=Decimal(str(stripe_data.amount)),

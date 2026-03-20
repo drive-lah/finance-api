@@ -53,15 +53,18 @@ def mock_db(test_engine, test_session_factory):
 
 
 def mock_get_db(db: Session):
-    """Mock get_db to return our test session"""
-    def _get_db():
+    """Mock db_session context manager to return our test session"""
+    from contextlib import contextmanager
+
+    @contextmanager
+    def _mock():
         yield db
-    return _get_db
+    return _mock
 
 
 def test_list_journal_entries_empty(client, mock_db):
     """Test listing journal entries when none exist"""
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         response = client.get('/api/finance/journal-entries')
         assert response.status_code == 200
         assert response.json == []
@@ -125,7 +128,7 @@ def test_list_journal_entries_with_data(client, mock_db):
     mock_db.add_all([line1, line2])
     mock_db.commit()
     
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         response = client.get('/api/finance/journal-entries')
         assert response.status_code == 200
         data = response.json
@@ -178,7 +181,7 @@ def test_list_journal_entries_filter_by_entity(client, mock_db):
     
     entity1_id = entity1.id
     
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         response = client.get(f'/api/finance/journal-entries?entity_id={entity1_id}')
         assert response.status_code == 200
         data = response.json
@@ -228,7 +231,7 @@ def test_list_journal_entries_filter_by_status(client, mock_db):
     mock_db.add_all([draft, posted])
     mock_db.commit()
     
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         response = client.get('/api/finance/journal-entries?status=draft')
         assert response.status_code == 200
         data = response.json
@@ -238,7 +241,7 @@ def test_list_journal_entries_filter_by_status(client, mock_db):
 
 def test_list_journal_entries_invalid_status(client, mock_db):
     """Test listing with invalid status filter"""
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         response = client.get('/api/finance/journal-entries?status=invalid')
         assert response.status_code == 400
         assert 'Invalid status' in response.json['error']
@@ -246,7 +249,7 @@ def test_list_journal_entries_invalid_status(client, mock_db):
 
 def test_list_journal_entries_invalid_entity_id(client, mock_db):
     """Test listing with invalid entity_id"""
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         response = client.get('/api/finance/journal-entries?entity_id=-1')
         assert response.status_code == 400
         assert 'positive integer' in response.json['error']
@@ -284,7 +287,7 @@ def test_create_journal_entry_success(client, mock_db):
     
     entity_id = entity.id
     
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         data = {
             "entity_id": entity_id,
             "entry_date": "2024-01-15",
@@ -334,7 +337,7 @@ def test_create_journal_entry_posted_status(client, mock_db):
     
     entity_id = entity.id
     
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         data = {
             "entity_id": entity_id,
             "entry_date": "2024-01-15",
@@ -369,7 +372,7 @@ def test_create_journal_entry_unbalanced(client, mock_db):
     
     entity_id = entity.id
     
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         data = {
             "entity_id": entity_id,
             "entry_date": "2024-01-15",
@@ -402,7 +405,7 @@ def test_create_journal_entry_invalid_account(client, mock_db):
     
     entity_id = entity.id
     
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         data = {
             "entity_id": entity_id,
             "entry_date": "2024-01-15",
@@ -436,7 +439,7 @@ def test_create_journal_entry_too_few_lines(client, mock_db):
     
     entity_id = entity.id
     
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         data = {
             "entity_id": entity_id,
             "entry_date": "2024-01-15",
@@ -459,7 +462,7 @@ def test_create_journal_entry_too_few_lines(client, mock_db):
 
 def test_create_journal_entry_invalid_entity(client, mock_db):
     """Test creating entry with non-existent entity"""
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         data = {
             "entity_id": 999,
             "entry_date": "2024-01-15",
@@ -482,7 +485,7 @@ def test_create_journal_entry_invalid_entity(client, mock_db):
 
 def test_create_journal_entry_validation_errors(client, mock_db):
     """Test creating entry with validation errors"""
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         # Missing required fields
         data = {
             "entity_id": 1,
@@ -516,7 +519,7 @@ def test_get_journal_entry_by_id(client, mock_db):
     
     entry_id = entry.id
     
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         response = client.get(f'/api/finance/journal-entries/{entry_id}')
         assert response.status_code == 200
         assert response.json['id'] == entry_id
@@ -525,7 +528,7 @@ def test_get_journal_entry_by_id(client, mock_db):
 
 def test_get_journal_entry_not_found(client, mock_db):
     """Test retrieving non-existent journal entry"""
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         response = client.get('/api/finance/journal-entries/999')
         assert response.status_code == 404
         assert 'not found' in response.json['error']
@@ -549,7 +552,7 @@ def test_create_complex_journal_entry(client, mock_db):
     
     entity_id = entity.id
     
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         data = {
             "entity_id": entity_id,
             "entry_date": "2024-01-15",
@@ -640,7 +643,7 @@ def test_post_journal_entry_success(client, mock_db):
     mock_db.add_all([line1, line2])
     mock_db.commit()
     
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         response = client.post(f'/api/finance/journal-entries/{entry_id}/post')
         assert response.status_code == 200
         result = response.json
@@ -712,7 +715,7 @@ def test_post_journal_entry_with_user_id(client, mock_db):
     mock_db.add_all([line1, line2])
     mock_db.commit()
     
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         data = {"posting_user_id": "user123"}
         response = client.post(
             f'/api/finance/journal-entries/{entry_id}/post',
@@ -789,7 +792,7 @@ def test_post_journal_entry_already_posted(client, mock_db):
     mock_db.add_all([line1, line2])
     mock_db.commit()
     
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         response = client.post(f'/api/finance/journal-entries/{entry_id}/post')
         assert response.status_code == 400
         assert "Only Draft entries can be posted" in response.json['error']
@@ -797,7 +800,7 @@ def test_post_journal_entry_already_posted(client, mock_db):
 
 def test_post_journal_entry_not_found(client, mock_db):
     """Test posting a journal entry that doesn't exist"""
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         response = client.post('/api/finance/journal-entries/999/post')
         assert response.status_code == 400
         assert "not found" in response.json['error']
@@ -866,7 +869,7 @@ def test_post_journal_entry_unbalanced(client, mock_db):
     mock_db.add_all([line1, line2])
     mock_db.commit()
     
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         response = client.post(f'/api/finance/journal-entries/{entry_id}/post')
         assert response.status_code == 400
         assert "does not balance" in response.json['error']
@@ -935,7 +938,7 @@ def test_post_journal_entry_atomic(client, mock_db):
     mock_db.add_all([line1, line2])
     mock_db.commit()
     
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         # Post the entry
         response = client.post(f'/api/finance/journal-entries/{entry_id}/post')
         assert response.status_code == 200
@@ -1012,7 +1015,7 @@ def test_verify_posted_entry_has_timestamp(client, mock_db):
     mock_db.add_all([line1, line2])
     mock_db.commit()
     
-    with patch('src.routes.journal_entries.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.journal_entries.db_session', mock_get_db(mock_db)):
         # Before posting, verify no posted_at timestamp
         response = client.get(f'/api/finance/journal-entries/{entry_id}')
         assert response.status_code == 200

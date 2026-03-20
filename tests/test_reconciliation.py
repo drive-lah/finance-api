@@ -42,7 +42,10 @@ def mock_db():
 
 
 def mock_get_db(session):
-    """Mock get_db generator for testing."""
+    """Mock db_session context manager for testing."""
+    from contextlib import contextmanager
+
+    @contextmanager
     def _mock():
         yield session
     return _mock
@@ -619,7 +622,7 @@ class TestReconciliationEndpoint:
         mock_db.add(line)
         mock_db.commit()
 
-        with patch("src.routes.reconciliation.get_db", mock_get_db(mock_db)):
+        with patch("src.routes.reconciliation.db_session", mock_get_db(mock_db)):
             response = client.get(
                 f"/api/finance/reconciliation/suggestions?bank_account_id={bank_account_id}"
             )
@@ -633,7 +636,7 @@ class TestReconciliationEndpoint:
 
     def test_missing_bank_account_id(self, client, mock_db):
         """Test error when bank_account_id is missing."""
-        with patch("src.routes.reconciliation.get_db", mock_get_db(mock_db)):
+        with patch("src.routes.reconciliation.db_session", mock_get_db(mock_db)):
             response = client.get("/api/finance/reconciliation/suggestions")
 
         assert response.status_code == 400
@@ -642,7 +645,7 @@ class TestReconciliationEndpoint:
 
     def test_invalid_bank_account_id(self, client, mock_db):
         """Test error when bank_account_id is invalid."""
-        with patch("src.routes.reconciliation.get_db", mock_get_db(mock_db)):
+        with patch("src.routes.reconciliation.db_session", mock_get_db(mock_db)):
             response = client.get(
                 "/api/finance/reconciliation/suggestions?bank_account_id=invalid"
             )
@@ -711,7 +714,7 @@ class TestReconciliationEndpoint:
         mock_db.add(line)
         mock_db.commit()
 
-        with patch("src.routes.reconciliation.get_db", mock_get_db(mock_db)):
+        with patch("src.routes.reconciliation.db_session", mock_get_db(mock_db)):
             response = client.post(
                 "/api/finance/reconciliation/confirm",
                 json={"transaction_id": transaction_id, "journal_entry_id": entry_id},
@@ -726,7 +729,7 @@ class TestReconciliationEndpoint:
 
     def test_confirm_transaction_not_found(self, client, mock_db):
         """Test error when transaction not found."""
-        with patch("src.routes.reconciliation.get_db", mock_get_db(mock_db)):
+        with patch("src.routes.reconciliation.db_session", mock_get_db(mock_db)):
             response = client.post(
                 "/api/finance/reconciliation/confirm",
                 json={"transaction_id": 99999, "journal_entry_id": 1},
@@ -766,7 +769,7 @@ class TestReconciliationEndpoint:
         mock_db.commit()
         transaction_id = transaction.id
 
-        with patch("src.routes.reconciliation.get_db", mock_get_db(mock_db)):
+        with patch("src.routes.reconciliation.db_session", mock_get_db(mock_db)):
             response = client.post(
                 "/api/finance/reconciliation/confirm",
                 json={"transaction_id": transaction_id, "journal_entry_id": 99999},
@@ -832,7 +835,7 @@ class TestReconciliationEndpoint:
         mock_db.commit()
         entry_id = entry.id
 
-        with patch("src.routes.reconciliation.get_db", mock_get_db(mock_db)):
+        with patch("src.routes.reconciliation.db_session", mock_get_db(mock_db)):
             response = client.post(
                 "/api/finance/reconciliation/confirm",
                 json={"transaction_id": transaction_id, "journal_entry_id": entry_id},
@@ -844,7 +847,7 @@ class TestReconciliationEndpoint:
 
     def test_confirm_missing_transaction_id(self, client, mock_db):
         """Test error when transaction_id is missing."""
-        with patch("src.routes.reconciliation.get_db", mock_get_db(mock_db)):
+        with patch("src.routes.reconciliation.db_session", mock_get_db(mock_db)):
             response = client.post(
                 "/api/finance/reconciliation/confirm",
                 json={"journal_entry_id": 1},
@@ -856,7 +859,7 @@ class TestReconciliationEndpoint:
 
     def test_confirm_missing_journal_entry_id(self, client, mock_db):
         """Test error when journal_entry_id is missing."""
-        with patch("src.routes.reconciliation.get_db", mock_get_db(mock_db)):
+        with patch("src.routes.reconciliation.db_session", mock_get_db(mock_db)):
             response = client.post(
                 "/api/finance/reconciliation/confirm",
                 json={"transaction_id": 1},
@@ -868,7 +871,7 @@ class TestReconciliationEndpoint:
 
     def test_confirm_not_json(self, client, mock_db):
         """Test error when request is not JSON."""
-        with patch("src.routes.reconciliation.get_db", mock_get_db(mock_db)):
+        with patch("src.routes.reconciliation.db_session", mock_get_db(mock_db)):
             response = client.post(
                 "/api/finance/reconciliation/confirm",
                 data="not json",

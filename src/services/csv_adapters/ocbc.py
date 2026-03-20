@@ -57,8 +57,8 @@ def _parse_decimal(value: str) -> Optional[Decimal]:
         return None
 
 
-class OCBCAdapter(BankCSVAdapter):
-    """Adapter for OCBC e-Statement CSV exports."""
+class OCBCCsvAdapter(BankCSVAdapter):
+    """Adapter for OCBC e-Statement CSV exports (CSV format only)."""
 
     REQUIRED_COLUMNS = {
         "Post Date",

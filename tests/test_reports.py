@@ -41,8 +41,11 @@ def test_session_factory(test_engine):
 @pytest.fixture
 def app(test_engine, test_session_factory):
     """Create a test Flask app with in-memory database"""
-    # Patch get_db to use our test session
-    def mock_get_db():
+    from contextlib import contextmanager
+
+    # Patch db_session to use our test session
+    @contextmanager
+    def mock_db_session():
         session = test_session_factory()
         try:
             yield session
@@ -52,15 +55,15 @@ def app(test_engine, test_session_factory):
             raise
         finally:
             session.close()
-    
+
     # Create test app
     test_app = create_app({
         'TESTING': True,
         'DATABASE_URL': 'sqlite:///:memory:'
     })
-    
-    # Patch all route modules to use mock_get_db
-    with patch('src.routes.reports.get_db', mock_get_db):
+
+    # Patch all route modules to use mock_db_session
+    with patch('src.routes.reports.db_session', mock_db_session):
         yield test_app
 
 
@@ -79,7 +82,10 @@ def mock_db(test_session_factory):
 
 
 def mock_get_db(session):
-    """Mock get_db generator that yields the test session"""
+    """Mock db_session context manager that yields the test session"""
+    from contextlib import contextmanager
+
+    @contextmanager
     def _mock_get_db():
         yield session
     return _mock_get_db
@@ -98,7 +104,7 @@ def test_trial_balance_empty(client, mock_db):
     mock_db.commit()
     entity_id = entity.id
     
-    with patch('src.routes.reports.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.reports.db_session', mock_get_db(mock_db)):
         response = client.get(f'/api/finance/reports/trial-balance?entity_id={entity_id}')
     
     assert response.status_code == 200
@@ -205,7 +211,7 @@ def test_trial_balance_with_posted_entries(client, mock_db):
     mock_db.add_all([line2_1, line2_2])
     mock_db.commit()
     
-    with patch('src.routes.reports.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.reports.db_session', mock_get_db(mock_db)):
         response = client.get(f'/api/finance/reports/trial-balance?entity_id={entity_id}')
     
     assert response.status_code == 200
@@ -311,7 +317,7 @@ def test_trial_balance_filters_draft_entries(client, mock_db):
     mock_db.add_all([line1, line2])
     mock_db.commit()
     
-    with patch('src.routes.reports.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.reports.db_session', mock_get_db(mock_db)):
         response = client.get(f'/api/finance/reports/trial-balance?entity_id={entity_id}')
     
     assert response.status_code == 200
@@ -410,7 +416,7 @@ def test_trial_balance_with_as_of_date(client, mock_db):
     mock_db.commit()
     
     # Get trial balance as of Jan 31
-    with patch('src.routes.reports.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.reports.db_session', mock_get_db(mock_db)):
         response = client.get(f'/api/finance/reports/trial-balance?entity_id={entity_id}&as_of_date=2026-01-31')
     
     assert response.status_code == 200
@@ -426,7 +432,7 @@ def test_trial_balance_with_as_of_date(client, mock_db):
 
 def test_trial_balance_missing_entity_id(client, mock_db):
     """Test trial balance returns 400 when entity_id is missing"""
-    with patch('src.routes.reports.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.reports.db_session', mock_get_db(mock_db)):
         response = client.get('/api/finance/reports/trial-balance')
     
     assert response.status_code == 400
@@ -437,7 +443,7 @@ def test_trial_balance_missing_entity_id(client, mock_db):
 
 def test_trial_balance_invalid_entity_id(client, mock_db):
     """Test trial balance returns 400 when entity_id is not an integer"""
-    with patch('src.routes.reports.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.reports.db_session', mock_get_db(mock_db)):
         response = client.get('/api/finance/reports/trial-balance?entity_id=invalid')
     
     assert response.status_code == 400
@@ -459,7 +465,7 @@ def test_trial_balance_invalid_date_format(client, mock_db):
     mock_db.commit()
     entity_id = entity.id
     
-    with patch('src.routes.reports.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.reports.db_session', mock_get_db(mock_db)):
         response = client.get(f'/api/finance/reports/trial-balance?entity_id={entity_id}&as_of_date=01/31/2026')
     
     assert response.status_code == 400
@@ -528,7 +534,7 @@ def test_trial_balance_multiple_entries_same_account(client, mock_db):
         mock_db.add_all([line1, line2])
         mock_db.commit()
     
-    with patch('src.routes.reports.get_db', mock_get_db(mock_db)):
+    with patch('src.routes.reports.db_session', mock_get_db(mock_db)):
         response = client.get(f'/api/finance/reports/trial-balance?entity_id={entity_id}')
     
     assert response.status_code == 200

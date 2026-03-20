@@ -122,8 +122,12 @@ Phase 1  Counterparty enrichment:
            L2 — rapidfuzz.fuzz.token_set_ratio ≥ 88
            L3 — Claude Haiku batched call (when ANTHROPIC_API_KEY set)
            Self-improving: _maybe_add_alias fires on transaction approval
-Phase 1.5 AP knock-off — outgoing + counterparty_id → open AP invoice (ranked 3-tier match, FIFO)
-           Same-entity: Dr AP / Cr Bank
+Phase 1.5 AP knock-off — outgoing + counterparty_id → open AP invoice (3-case match):
+           CASE 1: Reference+Amount+Date → match invoice (invoice COA wins)
+           CASE 2: Amount+Date, no reference → match oldest FIFO (invoice COA wins)
+           CASE 3: Amount mismatch → skip, asset-park to 1300 Prepayments in Phase 4
+           No invoices → skip Phase 2 entirely
+           Same-entity: Dr AP / Cr Bank or Dr 1300 / Cr Bank
            Cross-entity: paired JEs with intercompany_group_id
 Phase 2  Rules engine — priority-ordered, first match wins:
            expense        Dr contra / Cr bank
@@ -211,6 +215,86 @@ the multi-COA mapping -- no separate table needed.
 When SG bank pays an AU vendor's invoice, cross-entity logic is triggered by the
 bank entity (SG) != invoice entity (AU) mismatch. The AP knock-off scans open invoices
 across ALL entities for a matching counterparty + amount.
+
+---
+
+## Deployment Checklist
+
+Run in this order before going live.
+
+### Step 1 — Run pending migrations
+
+```bash
+# Bring main chain from 021_counterparty_aliases → 026_cross_entity_alloc
+venv/bin/python -m alembic upgrade 026_cross_entity_alloc
+
+# Run payroll branch independently (branches off 020_awaiting_match)
+venv/bin/python -m alembic upgrade 022_hr_payroll
+
+# Merge all three heads into one so future `upgrade head` works
+venv/bin/python -m alembic merge -m "merge_all_heads" \
+  019_vendor_coa_src 022_hr_payroll 026_cross_entity_alloc
+
+venv/bin/python -m alembic upgrade head
+```
+
+**Why:** DB is currently at `019_vendor_coa_src` + `021_counterparty_aliases`. Missing: `023_transaction_reopen`, `024_transaction_ai_fields`, `025_coa_depreciation`, `026_cross_entity_alloc`, `020_payroll`, `022_hr_payroll`.
+
+### Step 2 — Add `ANTHROPIC_API_KEY` to `.env`
+
+```
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+**Why:** Without it, L3 counterparty enrichment (1.8) and AI classification fallback (1.11) are silently disabled. Unmatched transactions never reach `NEEDS_REVIEW` — they stay `PENDING` forever.
+
+### Step 3 — Run COA seed (if IC accounts missing)
+
+```bash
+venv/bin/python -m src.seed_coa
+```
+
+**Why:** IC accounts `8000`, `8010`, `8100`, `8110` must exist for cross-entity JEs (AP knock-off + cost allocation). Both throw `ValueError` if the COA codes are absent.
+
+### Step 4 — Fix `csv_format` on ba=18
+
+```sql
+UPDATE finance_bank_accounts SET csv_format = 'OCBC' WHERE id = 18;
+```
+
+**Why:** ba=18 (OCBC 3001) has no `csv_format` set → CSV import returns 400.
+
+### Step 5 — Create amortization policies (per asset account)
+
+```bash
+POST /api/finance/amortization/policies
+{
+  "account_code": "1500",
+  "months": 12,
+  "expense_account_code": "5100",
+  "accumulated_account_code": "1501",
+  "entity_id": null
+}
+```
+
+**Why:** System 4 is trigger-based — a policy row must exist before any transaction debit to that account creates a depreciation schedule. No policies = no schedules auto-created.
+
+### Step 6 — Create cross-entity allocation rules
+
+```bash
+POST /api/finance/rules
+{
+  "name": "SG pays AWS for AU",
+  "direction": "OUTGOING",
+  "category": "CROSS_ENTITY_ALLOCATION",
+  "description_value": "AWS",
+  "description_operator": "CONTAINS",
+  "contra_account_code": "5100",
+  "allocation_entity_id": <AU entity id>
+}
+```
+
+**Why:** 1.12 engine is built but has no rules yet. One rule per known cross-entity expense pattern.
 
 ---
 

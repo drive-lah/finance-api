@@ -411,7 +411,7 @@ All bank transactions—regardless of source (CSV, PDF, API)—normalize to the 
 
 The categorization engine automatically converts bank transactions into journal entries by applying configurable rules and AI-assisted counterparty enrichment. It is the core of the finance system — without it, every bank transaction would need manual journal entry creation.
 
-**How it works (4-phase pipeline):**
+**How it works (5-phase pipeline):**
 
 ```
 Bank CSV uploaded
@@ -432,31 +432,60 @@ For each Pending transaction (not handled in Phase 0):
   ├── L2 (fuzzy): rapidfuzz token_set_ratio ≥ 88 threshold
   └── L3 (LLM): single batched Claude Haiku call for remaining unmatched
        ↓
-─── PHASE 2: AP Invoice Knock-off ───────────────────────
+─── PHASE 1.5: AP Invoice Knock-off ───────────────────────
 For enriched outgoing transactions with a counterparty_id:
-  ├── Find open AP invoices (same currency, amount ±2%, oldest first)
-  ├── On match: create JE (Dr 2000 AP / Cr bank), record partial/full payment
-  └── Mark transaction Matched to prevent Phase 4 double-booking
+  ├── Check if counterparty has ANY open invoices
+  ├── If no invoices → skip Phase 1.5, let Phase 4 handle
+  ├── If has invoices, apply 3-case matching:
+  │   ├── CASE 1: Invoice ref in description + amount ≈ remaining (±2%) + date OK?
+  │   │   └── Match invoice; use invoice.account_code (INVOICE COA WINS)
+  │   ├── CASE 2: NO ref + amount ≈ remaining (±2%) + date OK?
+  │   │   └── Match OLDEST invoice (FIFO); use invoice.account_code
+  │   └── CASE 3: Amount doesn't match any invoice?
+  │       └── Skip; let Phase 4 asset-park to 1300 Prepayments
+  └── On Case 1/2 match: create JE (Dr 2000 AP / Cr bank), record payment
        ↓
-─── PHASE 3: Payroll Knock-off ──────────────────────────
+─── PHASE 2.5: Payroll Knock-off ──────────────────────────
 For each outgoing transaction (negative amount) in scope:
-  ├── Find a POSTED payroll run for same entity within ±7 days
+  ├── Find a POSTED payroll run within ±7 days (any entity, not just transaction entity)
   ├── Net salary slot free AND amount matches net_amount (±2%)? → link
   ├── CPF slot free AND amount matches cpf_payable_amount (±2%)? → link
-  └── On match: transaction → Matched, linked to payroll JE; mark to skip Phase 4
+  ├── On match: call payroll_service.create_payroll_payment_entries()
+  │
+  ├─ SAME-ENTITY (transaction bank entity = payroll entity):
+  │  └── Returns existing payroll JE (created by payroll_service.create_run)
+  │
+  ├─ CROSS-ENTITY (transaction bank entity ≠ payroll entity):
+  │  ├── Creates paired JEs with shared intercompany_group_id:
+  │  ├── Bank entity:    Dr 8000/8010 IC Receivable / Cr Bank
+  │  └── Payroll entity: Dr 6000 Salary / Dr 6001 CPF / Cr 8100/8110 IC Payable / Cr 2300 CPF Payable
+  │     (Same mechanism as Phase 1.5 AP knock-off cross-entity logic)
+  │
+  ├── Transaction → Matched, linked to primary JE; mark to skip Phase 4
+  └── Continue to Phase 4 only if no knock-off match found
        ↓
-─── PHASE 4: Accounting Classification (Rules + AI Fallback) ───
+─── PHASE 4: Accounting Classification ───────────────────────────────
 Engine loads active rules (ordered by priority)
 For each remaining Pending transaction:
-  ├── Phase 4A: If counterparty has default_account_code → auto-create JE
-  ├── Phase 4B: Match against rules (AND logic on all non-null criteria)
+  ├── Phase 4A: Rules Engine (most specific conditions)
+  │   ├── Match against rules (AND logic on all non-null criteria)
   │   ├── First matching rule wins
+  │   ├── **Employee constraint:** For outgoing employee payments with NO rule match → PENDING (don't default to salary_expense_code)
   │   ├── Create journal entry (expense/deposit/transfer)
   │   ├── Update transaction counterparty (name, type)
   │   ├── Apply tags from rule
   │   └── Set status → Matched, link to JE, stamp matched_at
-  └── Phase 4C: If still Pending, run AI classification fallback
-      ├── Single batched Claude Haiku call with all unmatched transactions
+  ├── Phase 4B: Default Account (more generic fallback)
+  │   ├── For vendors: If counterparty has default_account_code AND no rule matched → Use default
+  │   └── For employees: Do NOT use salary_expense_code as fallback
+  │       ├── **Constraint:** Outgoing employee payments with no explicit rule → PENDING, not auto-salary
+  │       ├── Reason: Not all employee payments are salaries (reimbursements, advances, bonuses)
+  │       └── Only use salary_expense_code if explicit Phase 4A rule matched it
+  ├── Phase 4C: Asset Parking for Mismatched Amounts
+  │   └── For AP knock-off Case 3 (amount mismatch with invoices)
+  │       └── Dr 1300 Prepayments / Cr Bank (defers categorization to vendor reconciliation)
+  └── Phase 4D: AI Classification Fallback
+      ├── Single batched Claude Haiku call with all remaining Pending transactions
       ├── Returns: contra_account_code + confidence (0-1) + reasoning
       ├── confidence ≥ 0.80 → create JE → status → Matched
       └── confidence < 0.80 → status → Needs Review (AI suggestion pre-filled)
@@ -468,11 +497,11 @@ For each remaining Pending transaction:
 |--------|---------|-----|
 | `Pending` | Transaction imported from CSV or Stripe | System |
 | `Awaiting Match` | Internal transfer rule fired but counter-transaction not yet in DB | System (categorization engine) |
-| `Matched` | Rule applied or both sides of internal transfer paired; journal entry created | System (categorization engine) |
+| `Matched` | Rule applied, invoice knocked off, default account used, or asset-parked to 1300; journal entry created | System (categorization engine) |
 | `Needs Review` | AI classification ran but confidence was low (< 0.80); AI suggestion pre-filled, awaiting human resolution | System (AI classifier) |
 | `Reconciled` | Matched transaction confirmed correct | Human reviewer |
 
-Transactions that remain `Pending` after categorization runs had no matching rule — they sit in a manual review queue.
+Transactions that remain `Pending` after categorization runs had no matching rule, no default account, no invoices, and confidence < 0.80 on AI classification — they sit in a manual review queue. Asset-parked transactions (Phase 1.5 Case 3) are marked `Matched` with a deferred categorization account (1300 Prepayments).
 
 **Internal Transfer AWAITING_MATCH Flow:**
 
@@ -518,6 +547,7 @@ When a reviewer approves a Matched transaction (`POST /transactions/:id/approve`
 | Criterion | Operators | Notes |
 |-----------|-----------|-------|
 | `bank_account_ids` | — (scope filter) | JSON array; null = all accounts |
+| `match_counterparty_type` | — (match condition) | Filter rule by counterparty type (EMPLOYEE, VENDOR, etc.). Requires counterparty enrichment to run first. Prevents employee salary rules from misfiring on vendor transactions. |
 | `direction` | — (required field) | `incoming` or `outgoing` checked first |
 | `amount_operator` + `amount_value` | `equals` · `not_equals` · `greater_than` · `less_than` · `between` | `between` also requires `amount_value_max` |
 | `description_operator` + `description_value` | `contains` · `not_contains` · `is_exactly` · `matches_regex` | Case-insensitive |
@@ -742,12 +772,30 @@ Returns: counterparty_id, is_new_vendor, match_confidence
 
 ```
 1. counterparty.default_account_code  → coa_source = 'db'
+   └─ For vendors: use if set
+   └─ For employees: use if set; do NOT default to salary_expense_code
+
 2. contract.coa_account_code          → coa_source = 'contract'
-3. AI extraction suggestion           → coa_source = 'ai'
-4. null                               → invoice blocked from approval until COA set
+   └─ If invoice is linked to a contract, use contract's account code
+
+3. Phase 4 Rules match                → coa_source = 'rule' (NEW)
+   └─ Apply Phase 4 categorization rules (same logic as transaction categorization)
+   └─ Most specific rule conditions first (counterparty attributes, amount, description)
+   └─ If rule matches: use rule's account code
+
+4. AI extraction suggestion           → coa_source = 'ai'
+   └─ Claude Haiku suggestion from PDF extraction
+
+5. null                               → invoice blocked from approval until COA set
 ```
 
 Approver confirms or changes COA at approval time → `coa_source = 'manual'`.
+
+**Note on Employee Invoices:** For employee counterparties (e.g., expense reimbursements):
+- Do NOT assume salary_expense_code (6000) automatically
+- Check Phase 4 rules first (reimbursement → 1300, bonus → 5800, etc.)
+- If no rule matches, require approver to manually set COA
+- This ensures non-salary employee payments are correctly categorized
 
 **AP Knock-off — Matching Logic:**
 
@@ -760,13 +808,14 @@ Cr  100x  Bank COA            [payment_amount]
 
 **Date constraint:** invoices dated after the transaction date are excluded — a payment cannot precede the invoice.
 
-**Ranked matching (first match wins, FIFO tiebreaker within tier):**
+**Three-Case Matching Framework (cleaner logic, no partial payments):**
 
-| Tier | Condition | Use Case |
-|------|-----------|----------|
-| 1 — Reference | `invoice_number` found in bank description or reference_number field (case-insensitive) | Most reliable — unambiguous even for same-amount invoices |
-| 2 — Exact amount | `abs(payment - remaining) ≤ 2% of remaining` | Full payment with FX rounding |
-| 3 — Partial | `0 < payment < remaining × 1.02` | Instalment or partial settlement |
+| Case | Condition | Action | Result |
+|------|-----------|--------|--------|
+| **1** — Reference + Amount + Date | Invoice number in description/reference AND amount ≈ remaining (±2% FX) AND txn_date > invoice_date | Match invoice; use `invoice.account_code` | Dr 2000 AP / Cr Bank; Status MATCHED |
+| **2** — Amount + Date (FIFO) | NO invoice number in description AND amount ≈ remaining (±2% FX) AND txn_date > invoice_date | Match OLDEST invoice for this counterparty | Dr 2000 AP / Cr Bank; Status MATCHED |
+| **3** — Amount Mismatch | Amount doesn't match any open invoice for this counterparty | Skip knock-off; use 1300 Prepayments in Phase 4 | Dr 1300 Prepaid / Cr Bank; Status MATCHED (asset-parked) |
+| **No Invoices** | Counterparty has NO open invoices | Skip Phase 2 entirely; use Phase 4 (rules/default/AI) | Handled by Phase 4; no JE created yet |
 
 **Manual match** (when auto-match fails):
 - `GET /api/finance/invoices/open-for-transaction/<txn_id>` — returns eligible open invoices (same counterparty + currency + invoice_date ≤ txn_date)
@@ -800,7 +849,7 @@ finance_invoices
 ├── total_amount, net_amount, tax_amount  ← GST split (018)
 ├── amount_paid, currency
 ├── contra_account_code          ← set via COA priority chain; confirmed by approver
-├── coa_source                   ← db|contract|ai|manual (019)
+├── coa_source                   ← db|contract|rule|ai|manual (019)
 ├── new_vendor                   ← true if counterparty auto-created (019)
 ├── status                       ← draft|pending_approval|approved|partially_paid|paid|rejected|void
 ├── service_period_start/end     ← required for invoice lifecycle tracking
@@ -852,9 +901,13 @@ finance_amortization_schedules
 
 **AP Knock-off (Phase 2 of categorization engine):**
 - Runs after Phase 1 counterparty enrichment, before Phase 4 accounting rules
-- For outgoing transactions with a known `counterparty_id`, finds open AP invoices with matching currency and amount (±2% tolerance, oldest first)
-- On match: creates JE (Dr 2000 AP / Cr bank account), records partial/full payment on invoice
+- For outgoing transactions with a known `counterparty_id`:
+  - **Case 1 & 2:** Finds matching open AP invoices using 3-case logic (reference+amount, or amount+FIFO)
+  - **Case 3:** If amount doesn't match any invoice → parks in 1300 Prepayments asset account for later vendor-level reconciliation
+  - **No Invoices:** Skips Phase 2 entirely; lets Phase 4 (rules/default/AI) decide
+- On Case 1/2 match: creates JE (Dr 2000 AP / Cr bank), records payment on invoice, uses `invoice.account_code` (INVOICE COA WINS over counterparty default)
 - Matched transactions are excluded from Phase 4 to prevent double-booking
+- **Invoice COA Priority:** When an invoice is knocked off, the COA is determined by the invoice's `account_code` field (set by approver), NOT the counterparty's `default_account_code`. This ensures the invoice's categorization is respected.
 
 **Cross-Entity AP Knock-off:**
 When the bank account's entity differs from the invoice's entity (e.g., DL SG bank pays a DL AU vendor invoice), the knock-off creates **two paired JEs** with a shared `intercompany_group_id`:
@@ -962,7 +1015,8 @@ finance_counterparties
 │   └── payment_terms_days       (int — for AP aging)
 │
 ├── ACCOUNTING DEFAULT
-│   └── default_account_code  (COA code — fallback contra account)
+│   └── default_account_code  (COA code — fallback contra account; NULLABLE)
+│                              (NOT all counterparties have this set; see Phase 4 behavior)
 │
 ├── ENRICHMENT
 │   ├── aliases               (JSON array — alternate bank description strings for L1 enrichment)
@@ -1015,6 +1069,494 @@ Returns: `{ "message": "Employee sync complete", "created": N, "updated": N }`
 - `counterparty_id` FK on transactions → rich counterparty linking beyond free-text name
 - `counterparty_payroll_details` table → salary, bank account for payment (employees)
 - `counterparty_invoices` → AP/AR invoice records
+
+**Relationship with Categorization (Phase 4 behavior):**
+
+When a transaction reaches Phase 4 (after enrichment, AP knock-off, and payroll knock-off):
+
+| Scenario | default_account_code | Open Invoices? | Phase 4A Rule Match? | Phase 4B Decision | Result |
+|----------|-----|-----|-----|-----|-----|
+| Standard vendor | set (e.g., 6700 Software) | No | No | Use default → Dr 6700 / Cr Bank | **MATCHED** via default |
+| Standard vendor | set | Yes | No | Skipped; already knocked off in Phase 1.5 | **MATCHED** via invoice |
+| No default, no invoices | NULL | No | Yes | Use rule → Dr contra / Cr Bank | **MATCHED** via rule |
+| No default, no invoices | NULL | No | No | AI fallback Phase 4D | **MATCHED** (if conf ≥ 0.80) or **NEEDS_REVIEW** |
+| Partial payment, invoices | set | Yes | No | Asset parking → Dr 1300 / Cr Bank | **MATCHED** via asset (Case 3) |
+| No default, no rules, no AI match | NULL | No | No | — | **PENDING** (manual review) |
+
+**Key Rules:**
+- **Rule Priority (Phase 4A):** Most specific conditions match first. Rule can override default_account_code.
+- **Default as Fallback (Phase 4B):** Only if no rule matched AND default_account_code is set.
+- **Asset Parking (Phase 1.5 Case 3):** When counterparty has open invoices but amount doesn't match any → park to 1300 Prepayments, deferring categorization to vendor-level reconciliation.
+- **NULL default_account_code:** NOT all counterparties have this. When NULL, the engine must match via rules or AI; otherwise transaction remains PENDING.
+
+---
+
+### 3.7.1 Employee Architecture (Source of Truth: Users Table)
+
+**Status: Built** (Migration 034 adds onboarding fields to users table)
+
+#### Overview
+
+Employees are the single most important counterparty type for payroll systems. Unlike vendors (global across entities) or customers (entity-scoped), **employees are managed from a single source of truth: the `users` table** (synced from Google Workspace). The employee sync flow extends user records into HR payroll configuration via the HrEmployee table.
+
+**Key principle:** `users` table is authoritative. Employees exist as counterparties in `finance_counterparties` (type="employee"), but all payroll config is driven from `users`.
+
+#### Employee Onboarding Flow
+
+```
+Step 1: User exists in users table (Google Workspace synced)
+         ↓
+Step 2: HR fills in HR_ONBOARDING_COMPLETE.csv
+         - employee_type (FULL_TIME, PART_TIME, CONTRACTOR)
+         - tax_treatment (SELF_MANAGED, EMPLOYER_WITHHOLD)
+         - gross_amount, pay_type, currency
+         - bank_account_number, bank_code
+         - default_deductions (e.g., "CPF_EMPLOYEE:20%|CPF_EMPLOYER:17%")
+         ↓
+Step 3: Onboarding endpoints
+         - POST /api/hr/onboard/bulk — bulk onboarding from CSV
+         - POST /api/hr/onboard/{user_id} — individual onboarding
+         ↓
+Step 4: For each user:
+         a) Update user record with employee_type, bank_account_number, bank_code
+         b) Create HrEmployee record (ties user to payroll entity, determines salary_expense_code)
+         c) Create HrCompensation record (salary, pay frequency, effective date)
+         d) Create HrDeductionRule records (CPF/Super + custom deductions)
+         e) Create finance_counterparty employee entry (synced employee in accounting module)
+         ↓
+Step 5: Offboarding
+         - POST /api/hr/offboard/{user_id} — mark employee as terminated, archive records
+
+Step 6: Sync job runs daily (manual trigger: POST /api/jobs/sync-employees)
+         - Picks up new employees (is_employee=true, date_of_joining set)
+         - Updates changed fields (teams → salary_expense_code recalc, region changes)
+         - Handles terminations (is_employee=false triggers offboarding)
+```
+
+#### Data Flow: Users → HrEmployee → Payroll
+
+| Table | Fields | Purpose | Authority |
+|-------|--------|---------|-----------|
+| `users` | user_id, email, name, address, country, date_of_joining, org_role, manager_id, phone_number, region, teams, slack_id, **employee_type, is_employee, employment_end_date, bank_account_number, bank_code** | Core employee identity + onboarding data | ⭐ **Authoritative** |
+| `hr_employee` | hr_employee_id, user_id, entity_id, employee_type, tax_treatment, employment_end_date, salary_expense_code | Payroll entity scoping + COA determination | Synced from users |
+| `hr_compensation` | hr_compensation_id, hr_employee_id, effective_date, gross_amount, pay_type, currency | Salary & frequency | From HR onboarding CSV |
+| `hr_deduction_rule` | hr_deduction_rule_id, hr_employee_id, deduction_type, rate_or_amount, cap_amount | Taxes, CPF, Super, custom | From HR + auto-defaults |
+| `finance_counterparties` | id, name, type="employee", entity_id, default_account_code | Accounting party record | Synced from HrEmployee |
+
+#### Salary Account Code Determination (Dynamic, Not Fixed)
+
+**Q: Which account should salary expense hit?**
+
+**Answer: Depends on teams array + employee_type + entity.**
+
+```python
+# Salary expense COA mapping
+SALARY_ACCOUNT_MAPPING = {
+    "Customer Support": 5063,  # COA 5063: Customer Support Salary
+    "On-Ground": 5061,         # COA 5061: On-Ground Team Salary
+    # Default: 6000            # COA 6000: Salaries & Wages
+}
+
+# Logic at HrEmployee creation:
+salary_expense_code = SALARY_ACCOUNT_MAPPING.get(first_team_in_array, 6000)
+
+# Example:
+# Employee teams = ["Engineering"]           → salary_expense_code = 6000
+# Employee teams = ["Customer Support"]      → salary_expense_code = 5063
+# Employee teams = ["On-Ground", "Support"]  → salary_expense_code = 5061 (first match)
+```
+
+This is **NOT** a fixed field in HrEmployee. It's **computed at creation time** from the teams array, and **recalculated if teams change** (sync job updates it).
+
+#### Payroll Run (COA Override)
+
+When a payroll run is created, it has a **pre-determined** salary_expense_code per employee:
+
+```python
+payroll_run = PayrollRun(
+    entity_id=2,  # SG
+    payroll_period="2026-03",
+    # For each employee in run:
+    # - Look up HrEmployee.salary_expense_code
+    # - Use that for JE: Dr salary_expense_code / Cr liabilities
+)
+```
+
+This JE is **deterministic** and **not subject to Phase 4 rule matching**. Payroll is the source of truth for employee payments.
+
+**Cross-entity payroll knock-off (Phase 2.5):**
+- If payroll run in entity SG but bank payment from entity AU → creates paired intercompany JEs
+- Same mechanism as AP knock-off (Phase 1.5)
+- Both JEs share `intercompany_group_id`
+
+#### Historical Transactions (Phase 4 Rules)
+
+For historical transactions (before payroll runs existed), employees are categorized via Phase 4 rules:
+
+```
+Transaction: "$8,000 outgoing from SG bank, description = 'Monthly salary - John Tan'"
+
+Phase 0-3: Enrichment, AP knock-off, payroll knock-off (no employee match yet)
+         ↓
+Phase 4A: Rules matching
+         - Rule: "If counterparty type = EMPLOYEE, use salary_expense_code"
+         - Salary code determined from employee's team (via HrEmployee.salary_expense_code)
+         ↓
+Phase 4B: If no rule, PENDING (don't default to salary_expense_code)
+         ↓
+Result: Dr 5063 (Customer Support Salary) / Cr Bank
+```
+
+**Key principle:** Rules don't override determined COA. They apply when COA is undetermined. For payroll transactions with explicit employee links, the salary_expense_code is primary.
+
+#### Entity Scoping for Employees
+
+Unlike vendors (global, entity_id=NULL), **employees are entity-scoped by payroll**:
+
+```python
+# When creating HrEmployee:
+entity_id = {
+    "Singapore": 2,
+    "Australia": 3,
+}[user.region]
+
+# Same employee cannot work for both entities
+# (If they move regions, create new HrEmployee record or migrate existing)
+```
+
+#### Employee Counterparty Record
+
+Yes, **employees DO exist as counterparties** (`finance_counterparties.type="employee"`):
+
+```
+finance_counterparties:
+├── id: 999
+├── name: "John Tan"
+├── type: "employee"
+├── entity_id: 2  # SG only
+├── default_account_code: 5063  # Inherited from HrEmployee.salary_expense_code
+├── external_id: null  # No external sync (user_id is the key)
+├── status: "active"
+└── metadata: {"user_id": 123}  # Link back to users table
+```
+
+**Purpose of employee counterparty:**
+- Phase 1 enrichment can match "John Tan" in transaction description
+- Rules can reference employee counterparties
+- Historical transactions can be linked to employee for payroll analytics
+
+**Sync:** When HrEmployee is created, a matching `finance_counterparties` record is auto-created. If employee is terminated, counterparty status is set to "inactive" (not deleted).
+
+#### Offboarding Flow
+
+```
+Step 1: User.employment_end_date set to 2026-03-31
+Step 2: is_employee flag set to false
+         ↓
+Step 3: HrEmployee marked with employment_end_date
+Step 4: Final payroll run (2026-01 → 2026-03-31)
+Step 5: finance_counterparty status set to "inactive"
+         ↓
+Step 6: No new payroll runs will include this employee
+Step 7: Historical transactions & payroll runs remain intact
+```
+
+#### Deduction Rules (Per Employee)
+
+Deductions are **per-employee**, auto-set by region, customizable:
+
+**Singapore defaults:**
+```python
+HrDeductionRule:
+  - deduction_type: "CPF_EMPLOYEE", rate: "20%", cap: 6000
+  - deduction_type: "CPF_EMPLOYER", rate: "17%", cap: 6000
+```
+
+**Australia defaults:**
+```python
+HrDeductionRule:
+  - deduction_type: "SUPERANNUATION", rate: "11.5%"
+```
+
+**Custom deductions** (from CSV `default_deductions` field):
+```
+INCOME_TAX:8.5%|HEALTH_INSURANCE:150|CONTRACTOR_LEVY:0.5%
+```
+
+Parsed and created as individual HrDeductionRule records.
+
+#### Sync Job (Daily)
+
+Runs at 2am UTC, keeps HrEmployee in sync with users table:
+
+```python
+# Find all users with is_employee=true AND date_of_joining ≠ null
+for user in eligible_users:
+    if not HrEmployee.exists(user_id=user.id):
+        # New employee → create HrEmployee
+        create_hr_employee(user)
+    else:
+        # Existing employee → sync changed fields
+        hr_emp.teams = user.teams
+        hr_emp.salary_expense_code = determine_salary_coa(user.teams)
+        hr_emp.region = user.region
+        db.commit()
+```
+
+Result: HrEmployee always reflects current user state.
+
+#### Answer: Employees as Counterparties
+
+**Q: Employees will exist as counterparties? yes?**
+
+**A: YES.** Employees exist as counterparties (`finance_counterparties.type="employee"`), but:
+
+1. **Users table is the single source of truth** (Google Workspace synced)
+2. **HrEmployee extends user with payroll config** (entity_id, salary_expense_code, deductions)
+3. **Finance counterparty is a **read copy** synced from HrEmployee** (used for enrichment, rules, analytics)
+4. **Salary expense code is dynamic**, computed from teams at HrEmployee creation time
+5. **Payroll runs override** all categorization logic with pre-determined salary accounts
+
+This design avoids duplication (users table authoritative) while keeping payroll config together (HrEmployee) and enabling rich accounting integration (finance_counterparties).
+
+---
+
+### 3.7.1 Categorization Cases and Decision Tree
+
+**Status: Documented**
+
+This section details how transactions flow through categorization based on counterparty state, invoice status, and rule matches.
+
+**Case 1: Standard Vendor with Default Account (No Invoices)**
+
+Vendor: "AWS" with `default_account_code = 6700` (Software expense)
+Transaction: `$500 outgoing to AWS`
+Open invoices: None
+
+Flow:
+1. **Phase 1:** Counterparty enriched → linked to AWS
+2. **Phase 1.5:** No open invoices → skip
+3. **Phase 4A:** Check rules → no matching rule
+4. **Phase 4B:** `default_account_code = 6700` is set → auto-create JE
+   - Dr 6700 Software / Cr Bank
+   - Status → MATCHED
+
+**Result:** Automatic, fast path. Most transactions use this flow.
+
+---
+
+**Case 2: Vendor with Default Account + Open Invoices (CASE 1 or 2 Match)**
+
+Vendor: "Big Supplier" with `default_account_code = 6100` (Services)
+Transaction: `$10,000 outgoing to Big Supplier`
+Open invoices: INV-2024-001 for $10,000
+
+Flow:
+1. **Phase 1:** Counterparty enriched → linked to Big Supplier
+2. **Phase 1.5 CASE 1:** Invoice reference in description + amount matches → knock-off
+   - Dr 2000 AP / Cr Bank
+   - Status → MATCHED
+   - **Invoice COA wins:** Uses `invoice.account_code` (set by approver), not `default_account_code`
+3. **Result:** Payment immediately linked to invoice; bypasses Phase 4 entirely
+
+**Key point:** Invoice COA has absolute priority. Even if vendor's `default_account_code = 6100 Services`, if the invoice was approved with `account_code = 6200 Office`, the JE uses 6200.
+
+---
+
+**Case 3: Vendor with Default Account + Open Invoices (CASE 3 — Amount Mismatch)**
+
+Vendor: "Big Supplier" with `default_account_code = 6100` (Services)
+Transaction: `$600 outgoing to Big Supplier`
+Open invoices: INV-2024-001 for $10,000
+
+Flow:
+1. **Phase 1:** Counterparty enriched → linked to Big Supplier
+2. **Phase 1.5 CASE 3:** Amount $600 doesn't match any invoice (amount mismatch)
+   - Skip knock-off; don't use default_account_code
+   - Let Phase 4 handle with asset parking
+3. **Phase 4B:** Asset parking for mismatched amounts
+   - Dr 1300 Prepayments / Cr Bank
+   - Status → MATCHED (deferred)
+   - **Note:** Transaction categorized to asset, NOT expense. This defers the true categorization to vendor-level reconciliation later.
+
+**Why asset parking?** Without it, the $600 would automatically expense to `6100 Services` via default account, creating an orphaned P&L entry separate from the invoice. The asset preserves the transactional linkage for later reconciliation.
+
+---
+
+**Case 4: Vendor with Rule Override (No Default)**
+
+Vendor: "Uber" with `default_account_code = NULL`
+Rule: "Uber rides → 6400 Travel"
+Transaction: `$45 outgoing to Uber`
+
+Flow:
+1. **Phase 1:** Counterparty enriched → linked to Uber
+2. **Phase 1.5:** No open invoices for Uber → skip
+3. **Phase 4A:** Rule match on "Uber rides" → rule fires
+   - Dr 6400 Travel / Cr Bank
+   - Status → MATCHED
+   - **Result:** Even though Uber has no `default_account_code`, the rule provides categorization
+
+**Why NULL default?** Some vendors are matched via rules instead. This is cleaner than storing a default that might not apply to all transaction types.
+
+---
+
+**Case 5: No Rule, No Default, AI Fallback**
+
+Vendor: "New Vendor Corp" with `default_account_code = NULL`
+Transaction: `$2,000 outgoing; description: "office supplies order"`
+Rules: No matching rule
+
+Flow:
+1. **Phase 1:** Counterparty enriched → linked to New Vendor Corp
+2. **Phase 1.5:** No invoices → skip
+3. **Phase 4A:** No matching rule
+4. **Phase 4B:** `default_account_code = NULL` → skip
+5. **Phase 4D:** AI fallback
+   - Claude Haiku analyzes transaction
+   - Returns confidence 0.85 for 6013 (Office Supplies)
+   - Dr 6013 / Cr Bank
+   - Status → MATCHED
+
+**Result:** AI-powered classification fills the gap when no rule or default exists.
+
+---
+
+**Case 6: No Rule, No Default, AI Uncertain**
+
+Vendor: "Mystery Corp" with `default_account_code = NULL`
+Transaction: `$5,000 outgoing; vague description: "consulting"`
+Rules: No matching rule
+
+Flow:
+1. **Phase 1:** Enriched → Mystery Corp
+2. **Phase 1.5:** No invoices → skip
+3. **Phase 4A:** No rule
+4. **Phase 4B:** No default
+5. **Phase 4D:** AI fallback
+   - Claude Haiku analyzes
+   - Returns confidence 0.65 for "Consulting" (too low)
+   - Status → NEEDS_REVIEW
+   - AI suggestion pre-filled; human picks correct account
+
+**Result:** Flagged for manual review; AI provides suggestion to speed up approval.
+
+---
+
+**Case 7: Internal Transfers (No Counterparty Logic)**
+
+Transaction: OCBC outgoing $5,000 to Wise
+Rule: Internal transfer to Wise
+
+Flow:
+1. **Phase 0:** No Phase 1 enrichment needed for internal transfers
+2. **Phase 0 rule:** Internal transfer rule fires
+   - Dr Wise bank / Cr OCBC bank
+   - Status → AWAITING_MATCH
+   - Expects matching Wise incoming within ±5 days
+3. **When Wise import runs:** Phase 0 pairs both sides
+   - Both status → MATCHED
+   - Linked to same JE
+
+**Result:** Counterparty and default_account_code irrelevant for internal transfers; rules control these.
+
+---
+
+### 3.3.1 Categorization Audit Trail
+
+**Status: Built** (Migration 030)
+
+Every transaction is tracked with complete audit information, allowing you to:
+- Retrace why a transaction was categorized a certain way
+- Override automatic categorizations manually
+- Audit all categorization decisions for compliance
+
+**Tracking Fields (added to `finance_transactions`):**
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `categorized_by_rule_id` | Integer FK | Which rule (Phase 4A) was used, if any |
+| `categorized_by_logic` | String | Logic path: `rule` \| `default_account` \| `asset_parking` \| `invoice_knockoff` \| `payroll_knockoff` \| `ai_fallback` \| `manual` \| `internal_transfer_pairing` |
+| `manually_reconciled` | Boolean | True if human manually overrode automatic categorization |
+| `manually_reconciled_by` | String | User/system that performed the override |
+| `manually_reconciled_at` | DateTime | Timestamp of manual override |
+| `categorization_notes` | Text | Notes explaining the decision or override reason |
+
+**Examples:**
+
+Query to find which rule categorized a transaction:
+```sql
+SELECT t.id, t.description, r.name as rule_name, t.matched_at
+FROM finance_transactions t
+LEFT JOIN finance_categorization_rules r ON t.categorized_by_rule_id = r.id
+WHERE t.categorized_by_logic = 'rule' AND t.bank_account_id = 17
+ORDER BY t.transaction_date DESC LIMIT 20;
+```
+
+Find asset-parked transactions (Case 3: amount mismatch):
+```sql
+SELECT id, description, amount, categorization_notes
+FROM finance_transactions
+WHERE categorized_by_logic = 'asset_parking'
+ORDER BY transaction_date DESC;
+```
+
+Find manual overrides:
+```sql
+SELECT id, description, manually_reconciled_by, manually_reconciled_at, categorization_notes
+FROM finance_transactions
+WHERE manually_reconciled = true
+ORDER BY manually_reconciled_at DESC;
+```
+
+Categorization breakdown by logic path:
+```sql
+SELECT
+    categorized_by_logic,
+    COUNT(*) as total,
+    COUNT(CASE WHEN manually_reconciled THEN 1 END) as manual_overrides,
+    ROUND(100.0 * COUNT(CASE WHEN manually_reconciled THEN 1 END) / COUNT(*), 2) as override_pct
+FROM finance_transactions
+WHERE bank_account_id = 17 AND transaction_date >= '2026-03-01'
+GROUP BY categorized_by_logic
+ORDER BY total DESC;
+```
+
+This report shows effectiveness of each logic path. High override rate on AI fallback suggests rules need refinement.
+
+---
+
+**Decision Tree (Simplified):**
+
+```
+Transaction arrives in categorization engine
+       ↓
+Phase 0: Internal transfer pairing? → MATCHED (if pair found)
+       ↓
+Phase 1: Enrich counterparty (L1/L2/L3)
+       ↓
+Phase 1.5: Counterparty has open invoices?
+       └─ YES → 3-case matching
+                 ├─ CASE 1/2 (amount matches) → MATCHED via invoice
+                 └─ CASE 3 (amount mismatch) → skip to Phase 4
+       └─ NO  → skip Phase 1.5
+       ↓
+Phase 2.5: Payroll knock-off? → MATCHED (if match found)
+       ↓
+Phase 4A: Rule match (AND logic)?
+       └─ YES → MATCHED via rule
+       └─ NO  → continue
+       ↓
+Phase 4B: Has default_account_code?
+       └─ YES → MATCHED via default (or asset if Case 3)
+       └─ NO  → continue
+       ↓
+Phase 4D: AI classification (confidence ≥ 0.80)?
+       └─ YES → MATCHED via AI
+       └─ NO (< 0.80) → NEEDS_REVIEW (AI suggestion pre-filled)
+       ↓
+If still Pending → Manual review queue
+```
 
 ---
 
