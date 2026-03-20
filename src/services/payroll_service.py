@@ -12,6 +12,7 @@ Bank recon Step 2.5 later matches bank payments to this run.
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
+import uuid
 
 from sqlalchemy.orm import Session
 
@@ -19,6 +20,29 @@ from src.models.payroll import FinancePayrollRun
 from src.models.bank_account import FinanceBankAccount
 from src.models.journal_entry import JournalEntryStatus
 from src.services.journal_service import journal_service
+
+# IC (Intercompany) Account Codes for cross-entity payroll transfers
+_IC_RECEIVABLE_CODES: dict[tuple[str, str], str] = {
+    ("SG", "AU"):       "8000",  # SG books: IC Due from AU
+    ("SG", "Ventures"): "8001",  # SG books: IC Due from Ventures
+    ("AU", "SG"):       "8010",  # AU books: IC Due from SG
+    ("AU", "Ventures"): "8011",  # AU books: IC Due from Ventures
+    ("Ventures", "SG"): "8020",  # Ventures books: IC Due from SG
+    ("Ventures", "AU"): "8021",  # Ventures books: IC Due from AU
+}
+_IC_PAYABLE_CODES: dict[tuple[str, str], str] = {
+    ("SG", "AU"):       "8100",  # SG books: IC Due to AU
+    ("SG", "Ventures"): "8101",  # SG books: IC Due to Ventures
+    ("AU", "SG"):       "8110",  # AU books: IC Due to SG
+    ("AU", "Ventures"): "8111",  # AU books: IC Due to Ventures
+    ("Ventures", "SG"): "8120",  # Ventures books: IC Due to SG
+    ("Ventures", "AU"): "8121",  # Ventures books: IC Due to AU
+}
+
+
+def _entity_short(name: str) -> str:
+    """Extract the short entity identifier from a full name: 'DL SG' → 'SG'."""
+    return name.strip().rsplit(" ", 1)[-1]
 
 SALARY_ACCOUNT = "6000"        # Salaries & Wages
 CPF_EMPLOYER_ACCOUNT = "6001"  # Employer CPF
@@ -149,6 +173,161 @@ class PayrollService:
         return db.query(FinancePayrollRun).filter(
             FinancePayrollRun.id == run_id
         ).first()
+
+    def create_payroll_payment_entries(
+        self,
+        db: Session,
+        bank_account: FinanceBankAccount,
+        payroll_run: FinancePayrollRun,
+        txn_date: date,
+        abs_amount: Decimal,
+        match_type: str,
+    ) -> "FinanceJournalEntry":
+        """
+        Create payroll payment journal entry(ies) for a matching transaction.
+
+        Same-entity: Returns the existing payroll JE (already created by create_run).
+
+        Cross-entity: Creates paired JEs with intercompany accounts:
+          Payroll entity: Dr 6000 Salary / Dr 6001 CPF / Cr 8100 IC Payable / Cr 2300 CPF Payable
+          Bank entity: Dr 8000 IC Receivable / Cr Bank
+
+        Both JEs share an intercompany_group_id when cross-entity.
+
+        Args:
+            db: Database session
+            bank_account: Bank account making the payment
+            payroll_run: Payroll run being matched
+            txn_date: Date of transaction
+            abs_amount: Absolute payment amount
+            match_type: "net" or "cpf"
+
+        Returns:
+            Primary journal entry (payroll JE if same-entity, bank JE if cross-entity)
+
+        Raises:
+            ValueError: If cross-entity codes cannot be resolved
+        """
+        from src.models.journal_entry import FinanceJournalEntry
+
+        bank_entity_id = bank_account.entity_id
+        payroll_entity_id = payroll_run.entity_id
+        bank_coa = bank_account.coa_account_code
+        run_ref = f"Payroll run {payroll_run.id}"
+
+        if bank_entity_id == payroll_entity_id:
+            # Same-entity: return existing payroll JE
+            from src.models.journal_entry import FinanceJournalEntry
+            return db.get(FinanceJournalEntry, payroll_run.journal_entry_id)
+
+        # ── Cross-entity: Create paired JEs ───────────────────────────
+        ic_codes = self._get_ic_codes(db, bank_entity_id, payroll_entity_id)
+        if not ic_codes:
+            raise ValueError(
+                f"Cannot create cross-entity payroll payment: "
+                f"no IC codes found for bank entity {bank_entity_id} / payroll entity {payroll_entity_id}."
+            )
+
+        ic_receivable, ic_payable = ic_codes
+        ic_group_id = str(uuid.uuid4())
+
+        # Payroll entity JE: Dr Salary / Dr CPF / Cr IC Payable / Cr CPF Payable
+        payroll_entry = journal_service.create(
+            db=db,
+            entity_id=payroll_entity_id,
+            entry_date=txn_date,
+            description=f"Payroll payment (IC) — {run_ref}",
+            lines=[
+                {
+                    "account_code": SALARY_ACCOUNT,
+                    "debit_amount": float(payroll_run.gross_amount),
+                    "credit_amount": 0.0,
+                    "description": run_ref,
+                },
+                {
+                    "account_code": CPF_EMPLOYER_ACCOUNT,
+                    "debit_amount": float(payroll_run.employer_cpf_amount),
+                    "credit_amount": 0.0,
+                    "description": "Employer CPF",
+                },
+                {
+                    "account_code": ic_payable,
+                    "debit_amount": 0.0,
+                    "credit_amount": float(payroll_run.net_amount),
+                    "description": f"IC Due to entity {bank_entity_id}",
+                },
+                {
+                    "account_code": CPF_PAYABLE_ACCOUNT,
+                    "debit_amount": 0.0,
+                    "credit_amount": float(payroll_run.cpf_payable_amount),
+                    "description": "CPF Payable",
+                },
+            ],
+        )
+        payroll_entry.source = "payroll_knockoff_cross_entity"
+        payroll_entry.intercompany_group_id = ic_group_id
+
+        # Bank entity JE: Dr IC Receivable / Cr Bank
+        bank_entry = journal_service.create(
+            db=db,
+            entity_id=bank_entity_id,
+            entry_date=txn_date,
+            description=f"Payroll payment (IC) — {run_ref}",
+            lines=[
+                {
+                    "account_code": ic_receivable,
+                    "debit_amount": float(abs_amount),
+                    "credit_amount": 0.0,
+                    "description": f"IC Due from entity {payroll_entity_id}",
+                },
+                {
+                    "account_code": bank_coa,
+                    "debit_amount": 0.0,
+                    "credit_amount": float(abs_amount),
+                    "description": run_ref,
+                },
+            ],
+        )
+        bank_entry.source = "payroll_knockoff_cross_entity"
+        bank_entry.intercompany_group_id = ic_group_id
+
+        db.flush()
+        return bank_entry  # Return primary (bank) JE
+
+    def _get_ic_codes(
+        self,
+        db: Session,
+        from_entity_id: int,
+        to_entity_id: int,
+    ) -> Optional[tuple[str, str]]:
+        """
+        Get IC receivable and payable account codes for an entity pair.
+
+        Args:
+            from_entity_id: Entity making the payment (bank entity)
+            to_entity_id: Entity receiving the payment (payroll entity)
+
+        Returns:
+            Tuple of (ic_receivable_code, ic_payable_code) or None if codes not found
+        """
+        from src.models.entity import FinanceEntity
+
+        from_entity = db.get(FinanceEntity, from_entity_id)
+        to_entity = db.get(FinanceEntity, to_entity_id)
+
+        if not from_entity or not to_entity:
+            return None
+
+        from_short = _entity_short(from_entity.name)
+        to_short = _entity_short(to_entity.name)
+
+        rec_code = _IC_RECEIVABLE_CODES.get((from_short, to_short))
+        pay_code = _IC_PAYABLE_CODES.get((to_short, from_short))
+
+        if not rec_code or not pay_code:
+            return None
+
+        return (rec_code, pay_code)
 
 
 # Singleton instance
