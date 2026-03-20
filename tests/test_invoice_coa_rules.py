@@ -1,19 +1,19 @@
 """
 Tests for invoice COA determination with Phase 4 rules integration.
 
-Priority order (from memory):
+Priority order (CORRECT):
 1. Manual override (highest) -- tested in approve()
-2. Counterparty default_account_code
-3. Phase 4 Rules (apply same matching logic as transactions)
-4. Contract COA (if invoice linked to contract)
+2. Phase 4 Rules (apply TEXT/TYPE-based matching, NOT ID-based)
+3. Contract COA (if invoice linked to contract)
+4. Counterparty default_account_code
 5. AI suggestion (if provided in contra_account_code)
 6. NEEDS_REVIEW (lowest)
 
 These tests verify:
-- Rules are evaluated after counterparty default but before contract COA
-- Rule matching uses counterparty_id, amount, currency criteria
+- Rules are evaluated FIRST (before defaults, contracts, AI)
+- Rule matching uses TEXT (counterparty_value) and TYPE (match_counterparty_type), not ID
 - coa_source is correctly set to "rule" when a rule matches
-- Existing priorities (db > rule > contract > ai) are preserved
+- Counterparty defaults do NOT override rules
 - No false matches when rules don't apply
 """
 import json
@@ -125,14 +125,15 @@ def counterparty_with_default(db_session, entity):
 
 @pytest.fixture
 def rule_by_counterparty(db_session, counterparty_no_default):
-    """Rule that matches by counterparty_id -> maps to 5100 (Marketing)."""
+    """Rule that matches by counterparty TEXT/TYPE -> maps to 5100 (Marketing)."""
     rule = FinanceCategorizationRule(
-        name="Acme -> Marketing",
+        name="Acme (text match) -> Marketing",
         priority=10,
         status=RuleStatus.ACTIVE,
         direction=TransactionDirection.OUTGOING,
         category=TransactionCategory.EXPENSE,
-        counterparty_id=counterparty_no_default.id,
+        counterparty_operator=MatchOperator.IS_EXACTLY,
+        counterparty_value="Acme Corp",  # TEXT-based matching on vendor name
         contra_account_code="5100",
     )
     db_session.add(rule)
@@ -185,14 +186,14 @@ def rule_by_currency(db_session):
 class TestMatchInvoiceToRule:
     """Test the new match_invoice_to_rule method on categorization_service."""
 
-    def test_match_by_counterparty_id(self, db_session, entity, accounts,
-                                       counterparty_no_default, rule_by_counterparty):
-        """Rule matching by counterparty_id should return contra_account_code."""
+    def test_match_by_counterparty_text(self, db_session, entity, accounts,
+                                        counterparty_no_default, rule_by_counterparty):
+        """Rule matching by counterparty TEXT should return contra_account_code."""
         from src.services.categorization_service import categorization_service
 
         result = categorization_service.match_invoice_to_rule(
             db=db_session,
-            counterparty_id=counterparty_no_default.id,
+            counterparty_id=counterparty_no_default.id,  # Still pass ID to fetch name/type
             amount=500.0,
             currency="SGD",
         )
@@ -276,7 +277,8 @@ class TestMatchInvoiceToRule:
             status=RuleStatus.INACTIVE,
             direction=TransactionDirection.OUTGOING,
             category=TransactionCategory.EXPENSE,
-            counterparty_id=counterparty_no_default.id,
+            counterparty_operator=MatchOperator.IS_EXACTLY,
+            counterparty_value="Acme Corp",
             contra_account_code="5100",
         )
         db_session.add(rule)
@@ -289,6 +291,34 @@ class TestMatchInvoiceToRule:
             currency="SGD",
         )
         assert result is None
+
+    def test_match_by_counterparty_type(self, db_session, entity, accounts,
+                                        counterparty_no_default):
+        """Rule matching by counterparty TYPE should work (e.g., vendor, employee)."""
+        from src.services.categorization_service import categorization_service
+
+        # Create rule that matches "vendor" type
+        rule = FinanceCategorizationRule(
+            name="All vendors -> Office",
+            priority=1,
+            status=RuleStatus.ACTIVE,
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.EXPENSE,
+            match_counterparty_type="vendor",
+            contra_account_code="5000",
+        )
+        db_session.add(rule)
+        db_session.commit()
+
+        # Should match because counterparty_no_default.type == "vendor"
+        result = categorization_service.match_invoice_to_rule(
+            db=db_session,
+            counterparty_id=counterparty_no_default.id,
+            amount=500.0,
+            currency="SGD",
+        )
+        assert result is not None
+        assert result.contra_account_code == "5000"
 
     def test_only_expense_rules_match(self, db_session, entity, accounts, bank_account):
         """Deposit and internal_transfer rules should be skipped for invoices."""
@@ -329,9 +359,9 @@ class TestMatchInvoiceToRule:
 class TestInvoiceCreateCOAPriority:
     """Test the full COA priority chain during invoice creation."""
 
-    def test_counterparty_default_beats_rule(self, db_session, entity, accounts,
+    def test_rule_beats_counterparty_default(self, db_session, entity, accounts,
                                               counterparty_with_default):
-        """Counterparty default_account_code should take priority over rules."""
+        """Phase 4 rules should take priority over counterparty default_account_code."""
         # Create a rule for this counterparty pointing to a DIFFERENT account
         rule = FinanceCategorizationRule(
             name="Rule for BigVendor",
@@ -339,7 +369,8 @@ class TestInvoiceCreateCOAPriority:
             status=RuleStatus.ACTIVE,
             direction=TransactionDirection.OUTGOING,
             category=TransactionCategory.EXPENSE,
-            counterparty_id=counterparty_with_default.id,
+            counterparty_operator=MatchOperator.IS_EXACTLY,
+            counterparty_value="BigVendor Inc",  # TEXT-based matching
             contra_account_code="5100",  # Marketing (different from default 5000)
         )
         db_session.add(rule)
@@ -354,8 +385,8 @@ class TestInvoiceCreateCOAPriority:
         )
         invoice = invoice_service.create(db_session, data)
 
-        assert invoice.contra_account_code == "5000"  # counterparty default wins
-        assert invoice.coa_source == "db"
+        assert invoice.contra_account_code == "5100"  # rule wins (not default 5000)
+        assert invoice.coa_source == "rule"
 
     def test_rule_beats_ai_suggestion(self, db_session, entity, accounts,
                                       counterparty_no_default, rule_by_counterparty):

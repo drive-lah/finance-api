@@ -172,30 +172,35 @@ class InvoiceService:
             status=InvoiceStatus.DRAFT.value,
         )
 
-        # ── COA priority chain ──────────────────────────────────────────
-        # 1. Counterparty default_account_code  (source: "db")
+        # ── COA priority chain at invoice upload ────────────────────────
+        # 1. Phase 4 categorization rules       (source: "rule")      ← RULES FIRST
         # 2. Contract COA                       (source: "contract")
-        # 3. Phase 4 categorization rules       (source: "rule")
+        # 3. Counterparty default_account_code  (source: "db")
         # 4. AI suggestion                      (source: "ai")
-        # ───────────────────────────────────────────────────────────────
+        # ────────────────────────────────────────────────────────────
+        # Manual override at approval time overrides all.
         coa_code: Optional[str] = None
         coa_source: Optional[str] = None
 
-        # 1. Counterparty default_account_code
-        if data.counterparty_id:
-            cp = db.get(FinanceCounterparty, data.counterparty_id)
-            if cp and cp.default_account_code:
-                coa_code = cp.default_account_code
-                coa_source = "db"
-
-        # 2. Contract COA (after contract matching below)
-        # will be applied post-match
-
-        # AI suggestion (used as fallback after rules)
+        # AI suggestion (used as fallback after all else)
         ai_coa = data.contra_account_code
 
-        # ── Contract matching ──
-        if data.counterparty_id and not data.contract_id:
+        # 1. Phase 4 categorization rules ← Apply FIRST (rules are smarter than defaults)
+        from src.services.categorization_service import categorization_service
+        matched_rule = categorization_service.match_invoice_to_rule(
+            db=db,
+            counterparty_id=data.counterparty_id,
+            counterparty_name=None,  # Will be fetched if needed
+            amount=data.total_amount,
+            currency=data.currency,
+            description=data.notes,
+        )
+        if matched_rule and matched_rule.contra_account_code:
+            coa_code = matched_rule.contra_account_code
+            coa_source = "rule"
+
+        # 2. Contract matching (only if no rule matched)
+        if not coa_code and data.counterparty_id and not data.contract_id:
             from src.services.contract_service import contract_service
             contract = contract_service.find_for_invoice(
                 db, data.counterparty_id, data.entity_id, data.total_amount, data.currency,
@@ -203,23 +208,16 @@ class InvoiceService:
             if contract:
                 invoice.contract_id = contract.id
                 invoice.contract_matched = True
-                if not coa_code and contract.coa_account_code:
+                if contract.coa_account_code:
                     coa_code = contract.coa_account_code
                     coa_source = "contract"
 
-        # 3. Phase 4 categorization rules
-        if not coa_code:
-            from src.services.categorization_service import categorization_service
-            matched_rule = categorization_service.match_invoice_to_rule(
-                db=db,
-                counterparty_id=data.counterparty_id,
-                amount=data.total_amount,
-                currency=data.currency,
-                description=data.notes,
-            )
-            if matched_rule and matched_rule.contra_account_code:
-                coa_code = matched_rule.contra_account_code
-                coa_source = "rule"
+        # 3. Counterparty default_account_code (fallback if no rule/contract)
+        if not coa_code and data.counterparty_id:
+            cp = db.get(FinanceCounterparty, data.counterparty_id)
+            if cp and cp.default_account_code:
+                coa_code = cp.default_account_code
+                coa_source = "db"
 
         # 4. Fall back to AI suggestion
         if not coa_code and ai_coa:

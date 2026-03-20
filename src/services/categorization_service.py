@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from src.models.transaction import FinanceTransaction, TransactionStatus, CategorizationType
 from src.models.bank_account import FinanceBankAccount
+from src.models.counterparty import FinanceCounterparty
 from src.models.categorization_rule import (
     FinanceCategorizationRule,
     RuleStatus,
@@ -1108,24 +1109,25 @@ Return only the JSON object, no explanation."""
         amount: float,
         currency: str,
         description: Optional[str] = None,
+        counterparty_name: Optional[str] = None,
     ) -> Optional[FinanceCategorizationRule]:
         """
         Match an invoice against active EXPENSE/OUTGOING categorization rules.
 
         Used during invoice creation to determine the contra_account_code
-        (expense account) when the counterparty has no default_account_code
-        and no contract COA is available.
+        (expense account). Rules are evaluated BEFORE vendor default, contract COA,
+        or AI suggestions.
 
         Only EXPENSE rules (direction=OUTGOING, category=EXPENSE) are considered,
         since invoices represent outgoing payments. Deposit, internal_transfer,
         and cross_entity_allocation rules are skipped.
 
         Matching criteria evaluated (same logic as transaction matching):
-          - counterparty_id (exact FK match)
+          - counterparty_value (text matching by vendor name)
+          - match_counterparty_type (type matching: "vendor", "employee", etc.)
           - amount (absolute value comparison)
           - currency (exact match)
           - description (text matching against invoice notes/number)
-          - counterparty name/value matching
 
         Args:
             db: Database session
@@ -1133,10 +1135,21 @@ Return only the JSON object, no explanation."""
             amount: The invoice total_amount (always positive for AP invoices)
             currency: ISO 4217 currency code
             description: Optional text to match against description rules
+            counterparty_name: Optional counterparty name (fetched if not provided)
 
         Returns:
             The first matching rule, or None if no rules match.
         """
+        # Fetch counterparty name and type if needed
+        counterparty_type: Optional[str] = None
+        if counterparty_id and not counterparty_name:
+            cp = db.query(FinanceCounterparty).filter(
+                FinanceCounterparty.id == counterparty_id
+            ).first()
+            if cp:
+                counterparty_name = cp.name
+                counterparty_type = cp.type
+
         rules = (
             db.query(FinanceCategorizationRule)
             .filter(
@@ -1150,7 +1163,7 @@ Return only the JSON object, no explanation."""
 
         for rule in rules:
             if self._invoice_rule_matches(
-                rule, counterparty_id, amount, currency, description
+                rule, counterparty_name, counterparty_type, amount, currency, description
             ):
                 return rule
 
@@ -1159,7 +1172,8 @@ Return only the JSON object, no explanation."""
     def _invoice_rule_matches(
         self,
         rule: FinanceCategorizationRule,
-        counterparty_id: Optional[int],
+        counterparty_name: Optional[str],
+        counterparty_type: Optional[str],
         amount: float,
         currency: str,
         description: Optional[str] = None,
@@ -1167,12 +1181,21 @@ Return only the JSON object, no explanation."""
         """
         Check if ALL non-null criteria on the rule match the invoice data.
 
-        Mirrors _rule_matches() logic but adapted for invoice fields instead
-        of transaction fields. Bank account scope is ignored for invoices.
+        Rules match invoices by TEXT and TYPE, not by numeric ID.
+        - counterparty_value: text matching against vendor name
+        - match_counterparty_type: type matching against vendor type (vendor, employee, etc.)
+
+        This mirrors _rule_matches() logic but adapted for invoice fields.
+        Bank account scope and transaction type are ignored for invoices.
         """
-        # 0. Counterparty ID (exact FK match)
-        if rule.counterparty_id is not None:
-            if counterparty_id != rule.counterparty_id:
+        # 0. Counterparty name matching (TEXT-based, not ID-based)
+        if rule.counterparty_value is not None and rule.counterparty_operator is not None:
+            if not _text_matches(counterparty_name, rule.counterparty_operator, rule.counterparty_value):
+                return False
+
+        # 0b. Counterparty type matching (e.g., "vendor", "employee")
+        if rule.match_counterparty_type is not None:
+            if counterparty_type != rule.match_counterparty_type:
                 return False
 
         # 1. Bank account scope — not applicable for invoices, skip
@@ -1204,10 +1227,7 @@ Return only the JSON object, no explanation."""
 
         # 5. Transaction type — not applicable for invoices, skip
 
-        # 6. Counterparty name — skip for invoices (we use counterparty_id instead)
-        # Invoices already have resolved counterparty_id from creation
-
-        # 7. Currency
+        # 6. Currency
         if rule.match_currency is not None:
             if currency != rule.match_currency:
                 return False
