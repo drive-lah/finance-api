@@ -197,24 +197,23 @@ class TransactionService:
         """Check if bank account exists."""
         return db.query(FinanceBankAccount).filter(FinanceBankAccount.id == bank_account_id).first() is not None
 
-    def import_csv(
+    def import_file(
         self,
         db: Session,
         bank_account_id: int,
-        csv_content: str,
+        file_bytes: bytes,
         import_batch_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Import transactions from CSV content using a bank-specific adapter.
+        Import transactions from a file (CSV or PDF) using a bank-specific adapter.
 
-        The adapter is selected automatically from the bank account's bank_name.
-        Each bank has its own adapter in src/services/csv_adapters/ that knows
-        how to parse that bank's column layout and normalize it into our schema.
+        The adapter is selected from the bank account's file_adapter field.
+        Smart adapters (e.g. CBAAdapter) auto-detect CSV vs PDF from content.
 
         Args:
             db: Database session
             bank_account_id: ID of the bank account
-            csv_content: CSV file content as string
+            file_bytes: Raw file bytes (CSV or PDF)
             import_batch_id: Optional batch ID for grouping imports
 
         Returns:
@@ -223,28 +222,21 @@ class TransactionService:
         Raises:
             ValueError: If bank account not found or no adapter exists for the bank.
         """
-        # Load bank account to get bank_name for adapter selection
         bank_account = db.get(FinanceBankAccount, bank_account_id)
         if not bank_account:
             raise ValueError(f"Bank account with id {bank_account_id} not found")
 
-        # Select adapter from registry using the explicit csv_format field.
-        # csv_format is set when the bank account is created and validated against
-        # ADAPTER_REGISTRY at that point, so this lookup should never fail for
-        # properly created accounts.
-        if not bank_account.csv_format:
+        if not bank_account.file_adapter:
             raise ValueError(
-                f"Bank account {bank_account_id} has no csv_format set. "
-                f"Update the bank account with a csv_format value before importing."
+                f"Bank account {bank_account_id} has no file_adapter set. "
+                f"Update the bank account with a file_adapter value before importing."
             )
-        adapter = get_adapter(bank_account.csv_format)
+        adapter = get_adapter(bank_account.file_adapter)
 
-        # Generate batch ID if not provided
         if import_batch_id is None:
             import_batch_id = datetime.utcnow().strftime('%Y%m%d%H%M%S')
 
-        # Parse CSV via adapter — adapter records its own row-level errors
-        normalized_rows = adapter.parse(csv_content)
+        normalized_rows = adapter.parse(file_bytes)
         parse_errors = list(adapter.errors)
 
         return self.import_from_rows(
@@ -253,9 +245,23 @@ class TransactionService:
             normalized_rows=normalized_rows,
             fingerprint_fn=adapter.fingerprint_fields,
             import_batch_id=import_batch_id,
-            source="csv_import",
+            source="file_import",
             extra_errors=parse_errors,
         )
+
+    def import_csv(
+        self,
+        db: Session,
+        bank_account_id: int,
+        csv_content: str,
+        import_batch_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Backwards-compatible wrapper for import_file. Accepts str content."""
+        if isinstance(csv_content, str):
+            file_bytes = csv_content.encode('utf-8')
+        else:
+            file_bytes = csv_content
+        return self.import_file(db, bank_account_id, file_bytes, import_batch_id)
 
     def import_from_rows(
         self,
@@ -359,7 +365,7 @@ class TransactionService:
         self,
         db: Session,
         bank_account_id: int,
-        stripe_transaction_id: str,
+        source_external_id: str,
         transaction_date: date,
         description: str,
         amount: Decimal,
@@ -367,36 +373,36 @@ class TransactionService:
     ) -> FinanceTransaction:
         """
         Create a transaction from Stripe webhook data.
-        
+
         Args:
             db: Database session
             bank_account_id: ID of the bank account
-            stripe_transaction_id: Stripe transaction ID
+            source_external_id: External source transaction ID (Stripe, Wise, etc.)
             transaction_date: Date of the transaction
             description: Transaction description
             amount: Transaction amount
             reference_number: Optional reference number
-            
+
         Returns:
             Created transaction
-            
+
         Raises:
-            ValueError: If bank account doesn't exist or duplicate Stripe transaction ID
+            ValueError: If bank account doesn't exist or duplicate source transaction ID
         """
         # Validate bank account exists
         if not self.validate_bank_account_exists(db, bank_account_id):
             raise ValueError(f"Bank account with id {bank_account_id} not found")
-        
-        # Check for duplicate Stripe transaction ID
+
+        # Check for duplicate Stripe transaction ID (source_external_id)
         existing_stripe = db.query(FinanceTransaction).filter(
-            FinanceTransaction.stripe_transaction_id == stripe_transaction_id
+            FinanceTransaction.source_external_id == source_external_id
         ).first()
-        
+
         if existing_stripe:
-            raise ValueError(f"Transaction with Stripe ID {stripe_transaction_id} already exists")
+            raise ValueError(f"Transaction with Stripe ID {source_external_id} already exists")
         
         # Generate fingerprint for Stripe transactions.
-        # Stripe has stripe_transaction_id as the primary dedup key,
+        # Stripe has source_external_id as the primary dedup key,
         # but we also fingerprint on date + amount + reference as a
         # secondary check. No running_balance for Stripe.
         fingerprint = generate_fingerprint(
@@ -426,7 +432,7 @@ class TransactionService:
             fingerprint=fingerprint,
             status=TransactionStatus.PENDING,
             source='stripe_automation',
-            stripe_transaction_id=stripe_transaction_id
+            source_external_id=source_external_id
         )
         
         db.add(transaction)

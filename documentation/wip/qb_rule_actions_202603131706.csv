@@ -1,0 +1,705 @@
+"id","rule_id","action_type","action_value","created_at"
+466,179,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+467,179,5,Twilio,2025-06-22 12:29:52.091
+468,180,0,Operating Expenses:Marketing - Advertising (new customers),2025-06-22 12:29:52.091
+469,180,5,Google,2025-06-22 12:29:52.091
+470,180,11,[],2025-06-22 12:29:52.091
+471,181,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+472,181,5,Google,2025-06-22 12:29:52.091
+473,182,0,Operating Expenses:Corporate - Office Rent,2025-06-22 12:29:52.091
+474,182,5,Justco,2025-06-22 12:29:52.091
+475,182,9,FAST PAYMENT BEXP JUSTCO (SINGAP SG-JCS-030914 SG-JCS-030914,2025-06-22 12:29:52.091
+476,182,11,[],2025-06-22 12:29:52.091
+477,183,0,Operating Expenses:Corporate - Bank Fees,2025-06-22 12:29:52.091
+478,183,5,OCBC,2025-06-22 12:29:52.091
+479,184,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+480,184,5,zendesk,2025-06-22 12:29:52.091
+481,185,0,Operating Expenses:Marketing - Advertising (new customers),2025-06-22 12:29:52.091
+482,185,5,Facebook,2025-06-22 12:29:52.091
+483,186,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+484,186,5,Godaddy,2025-06-22 12:29:52.091
+485,187,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+486,187,5,Sharetribe,2025-06-22 12:29:52.091
+487,188,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+488,188,5,CIRCLE BUILDS,2025-06-22 12:29:52.091
+489,189,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+490,189,5,AWS,2025-06-22 12:29:52.091
+491,190,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+492,190,5,INTERCOM,2025-06-22 12:29:52.091
+493,191,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+494,191,5,Github,2025-06-22 12:29:52.091
+495,192,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+496,192,5,Surveymonkey,2025-06-22 12:29:52.091
+497,193,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+498,193,5,OCTOPODS,2025-06-22 12:29:52.091
+499,194,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+500,194,5,Xero,2025-06-22 12:29:52.091
+501,195,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+502,195,5,Calendly,2025-06-22 12:29:52.091
+503,196,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+504,196,5,Zepier,2025-06-22 12:29:52.091
+505,197,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+506,197,5,Docusign,2025-06-22 12:29:52.091
+507,198,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+508,198,5,docsend,2025-06-22 12:29:52.091
+509,199,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+510,199,5,slack,2025-06-22 12:29:52.091
+511,200,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+512,200,5,Canva,2025-06-22 12:29:52.091
+513,201,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+514,201,5,Hotjar,2025-06-22 12:29:52.091
+515,202,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+516,202,5,Birthdaybot,2025-06-22 12:29:52.091
+517,203,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+518,203,5,type form,2025-06-22 12:29:52.091
+519,204,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+520,204,5,lucidchart,2025-06-22 12:29:52.091
+521,205,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+522,205,5,Papertrail,2025-06-22 12:29:52.091
+523,206,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+524,206,5,Bitly,2025-06-22 12:29:52.091
+525,207,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+526,207,5,Adobe,2025-06-22 12:29:52.091
+527,208,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+528,208,5,Notion,2025-06-22 12:29:52.091
+529,209,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+530,209,5,Notionforms,2025-06-22 12:29:52.091
+531,210,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+532,210,5,Hellosign,2025-06-22 12:29:52.091
+533,211,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+534,211,5,Timetastic,2025-06-22 12:29:52.091
+535,212,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+536,212,5,Finger Print,2025-06-22 12:29:52.091
+537,213,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+538,213,5,Voucherify,2025-06-22 12:29:52.091
+539,214,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+540,214,5,Trust Pilot,2025-06-22 12:29:52.091
+541,215,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+542,215,5,Google,2025-06-22 12:29:52.091
+543,216,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+544,216,5,Sentry,2025-06-22 12:29:52.091
+545,217,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+546,217,5,Uptime,2025-06-22 12:29:52.091
+547,218,0,Wise NEW,2025-06-22 12:29:52.091
+1248,529,0,Stripe - Customer Deposits,2025-06-30 07:11:25.952
+549,219,0,Due from Fleet,2025-06-22 12:29:52.091
+550,219,5,LoK,2025-06-22 12:29:52.091
+551,220,0,Operating Expenses:Corporate - Bookkeeping Fees,2025-06-22 12:29:52.091
+552,220,5,INTUIT,2025-06-22 12:29:52.091
+1251,532,0,Stripe - Verification Deposits,2025-06-30 07:11:27.031
+556,222,0,Due from Fleet,2025-06-22 12:29:52.091
+557,222,5,Eurokars,2025-06-22 12:29:52.091
+558,222,9,FAST PAYMENT BEXP EUROKARS RMS PAYMENT drive lah pte ltd,2025-06-22 12:29:52.091
+559,222,11,[],2025-06-22 12:29:52.091
+560,223,0,Due from Fleet,2025-06-22 12:29:52.091
+561,223,9,FAST PAYMENT BEXP ALPINE RMS PAYMENT drive lah pte ltd,2025-06-22 12:29:52.091
+562,223,11,[],2025-06-22 12:29:52.091
+563,224,0,Due from Fleet,2025-06-22 12:29:52.091
+564,224,5,Komoco,2025-06-22 12:29:52.091
+565,224,1,FAST PAYMENT BEXP KOMOCO CAR REN RMS APRIL23 DRIVE LAH PTE LTD,2025-06-22 12:29:52.091
+566,224,11,[],2025-06-22 12:29:52.091
+567,225,0,Cost of Overhead Related to Service:Market -Asset Creation,2025-06-22 12:29:52.091
+568,225,9,FAST PAYMENT BEXP CHUAN QUAN KOH PHOTOGRAPHER Drive lah pte ltd,2025-06-22 12:29:52.091
+569,225,11,[],2025-06-22 12:29:52.091
+570,226,0,Due to Fleet,2025-06-22 12:29:52.091
+571,226,9,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P XBrN,2025-06-22 12:29:52.091
+572,226,11,[],2025-06-22 12:29:52.091
+573,227,0,Gross Revenue -Other Income,2025-06-22 12:29:52.091
+574,227,9,PAYMENT/TRANSFER OTHR S$ MOHAMAD SHAFIE BIN via PayNow: KIA STONIC - SMU457B,2025-06-22 12:29:52.091
+575,227,11,[],2025-06-22 12:29:52.091
+576,228,0,Due to Ventures,2025-06-22 12:29:52.091
+577,228,1,PAYMENT/TRANSFER BEXP DRIVE LAH VENTURES EBGPP30417159254,2025-06-22 12:29:52.091
+578,228,11,[],2025-06-22 12:29:52.091
+579,229,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+580,229,5,Google,2025-06-22 12:29:52.091
+581,229,1,xx-6882 Google CLOUD 42F3Q4    SIN DEBIT PURCHASE,2025-06-22 12:29:52.091
+582,229,11,[],2025-06-22 12:29:52.091
+583,230,0,Due from Fleet,2025-06-22 12:29:52.091
+584,230,5,ABWIN LEASING,2025-06-22 12:29:52.091
+585,230,1,FAST PAYMENT BEXP ABWIN LEASING ABWIN LEASING GBL1750A,2025-06-22 12:29:52.091
+586,230,11,[],2025-06-22 12:29:52.091
+587,231,0,Due from Fleet,2025-06-22 12:29:52.091
+588,231,9,FAST PAYMENT BEXP SAM CHAN RMS APRIL23 DRIVE LAH PTE LTD,2025-06-22 12:29:52.091
+589,231,11,[],2025-06-22 12:29:52.091
+590,232,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+591,232,5,docsend,2025-06-22 12:29:52.091
+592,232,1,xx-1128 DROPBOX SIGN MONTHLY   SAN DEBIT PURCHASE,2025-06-22 12:29:52.091
+593,232,11,[],2025-06-22 12:29:52.091
+594,233,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+595,233,5,Zoom,2025-06-22 12:29:52.091
+596,233,1,xx-0429 ZOOM.US 888-799-9666   SAN DEBIT PURCHASE,2025-06-22 12:29:52.091
+597,233,11,[],2025-06-22 12:29:52.091
+598,234,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+599,234,5,Miro,2025-06-22 12:29:52.091
+600,234,1,xx-4960 MIRO.COM               SAN DEBIT PURCHASE,2025-06-22 12:29:52.091
+601,234,11,[],2025-06-22 12:29:52.091
+602,235,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+603,235,1,xx-6882 MIDJOURNEY INC.        SOU DEBIT PURCHASE,2025-06-22 12:29:52.091
+604,235,11,[],2025-06-22 12:29:52.091
+605,236,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+606,236,1,xx-6882 ONELINK.TO             JAR DEBIT PURCHASE,2025-06-22 12:29:52.091
+607,236,11,[],2025-06-22 12:29:52.091
+608,237,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+609,237,1,xx-6882 TECHCRUNCH             EVE DEBIT PURCHASE,2025-06-22 12:29:52.091
+610,237,11,[],2025-06-22 12:29:52.091
+611,238,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+612,238,5,Overflow.io,2025-06-22 12:29:52.091
+613,238,1,xx-6882 OVERFLOW.IO  PROTOIO   415 DEBIT PURCHASE,2025-06-22 12:29:52.091
+614,238,11,[],2025-06-22 12:29:52.091
+615,239,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+616,239,1,xx-6882 HEROKU MAR-80444646    866 DEBIT PURCHASE,2025-06-22 12:29:52.091
+617,239,11,[],2025-06-22 12:29:52.091
+618,240,0,Operating Expenses:Marketing Asset Creation,2025-06-22 12:29:52.091
+619,240,1,FAST PAYMENT BEXP ARENA DETAILIN INV-1020 REPAIRS DRIVE LAH PTE LTD,2025-06-22 12:29:52.091
+620,240,11,[],2025-06-22 12:29:52.091
+621,241,0,Due from Fleet,2025-06-22 12:29:52.091
+622,241,5,CDG,2025-06-22 12:29:52.091
+623,241,9,FAST PAYMENT BEXP COMFORT DELGRO REPAIR DRIVE LAH PTE LTD,2025-06-22 12:29:52.091
+624,241,11,[],2025-06-22 12:29:52.091
+625,242,0,Cost of Overhead Related to Service:Other operating expenses,2025-06-22 12:29:52.091
+626,242,5,Cheng Chuan,2025-06-22 12:29:52.091
+627,242,1,FAST PAYMENT BEXP CHENG CHUAN MO INV 58846 Drive lah Pte Ltd,2025-06-22 12:29:52.091
+628,242,11,[],2025-06-22 12:29:52.091
+629,243,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+630,243,1,xx-7313 ATLASSIAN              SAN DEBIT PURCHASE,2025-06-22 12:29:52.091
+631,243,11,[],2025-06-22 12:29:52.091
+632,244,0,Cost of Overhead Related to Service:Other operating expenses,2025-06-22 12:29:52.091
+633,244,1,FAST PAYMENT BEXP NG CHENG LENG TOWING drive lah pte ltd,2025-06-22 12:29:52.091
+634,244,11,[],2025-06-22 12:29:52.091
+635,245,0,Operating Expenses:Human Resource - Salary Expense,2025-06-22 12:29:52.091
+636,245,1,FAST PAYMENT SALA SARALA D/O LET SARAH SALARY DRIVE LAH PTE. LTD.,2025-06-22 12:29:52.091
+637,245,11,[],2025-06-22 12:29:52.091
+638,246,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+639,246,1,xx-6882 MURF.AI                SAL DEBIT PURCHASE,2025-06-22 12:29:52.091
+640,246,11,[],2025-06-22 12:29:52.091
+641,247,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+642,247,9,xx-6882 DRIVE LAH PTE. LTD.    SIN DEBIT PURCHASE,2025-06-22 12:29:52.091
+643,247,11,[],2025-06-22 12:29:52.091
+644,248,0,Other Income-Refund,2025-06-22 12:29:52.091
+645,248,9,xx-6882 DRIVE LAH PTE. LTD.    SIN DEBIT CREDIT,2025-06-22 12:29:52.091
+646,248,11,[],2025-06-22 12:29:52.091
+647,249,0,Operating Expenses:Human Resource - Salary Expense,2025-06-22 12:29:52.091
+648,249,5,Jay Balan,2025-06-22 12:29:52.091
+649,249,1,FUND TRANSFER Fund Transfer to account 6218104856 SGD 2 400.00@1 DRIVE LAH PTE LTD,2025-06-22 12:29:52.091
+650,249,11,[],2025-06-22 12:29:52.091
+651,250,0,Cost of Overhead Related to Service:Other operating expenses,2025-06-22 12:29:52.091
+652,250,5,Cheng Auto Body works,2025-06-22 12:29:52.091
+653,250,1,FUND TRANSFER Fund Transfer to account 552852873001 SGD 3 240.00@1 DRIVE LAH PTE LTD,2025-06-22 12:29:52.091
+654,250,11,[],2025-06-22 12:29:52.091
+655,251,0,Cost of Overhead Related to Service:Other operating expenses,2025-06-22 12:29:52.091
+656,251,5,Elite car,2025-06-22 12:29:52.091
+657,251,1,FUND TRANSFER Fund Transfer to account 511283640001 SGD 3 542.40@1 drive lah pte ltd,2025-06-22 12:29:52.091
+658,251,11,[],2025-06-22 12:29:52.091
+659,252,0,Cost of Overhead Related to Service:Other operating expenses,2025-06-22 12:29:52.091
+660,252,5,YS Auto works,2025-06-22 12:29:52.091
+661,252,1,FUND TRANSFER Fund Transfer to account 601344831001 SGD 580.00@1 DRIVE LAH PTE LTD,2025-06-22 12:29:52.091
+662,252,11,[],2025-06-22 12:29:52.091
+663,253,0,Due From Australian Account,2025-06-22 12:29:52.091
+664,253,5,SEON1,2025-06-22 12:29:52.091
+665,253,1,xx-6882 SEON TECHNOLOGIES KFT  BUD DEBIT PURCHASE,2025-06-22 12:29:52.091
+666,253,11,[],2025-06-22 12:29:52.091
+667,254,0,Cost of Overhead Related to Service:Other operating expenses,2025-06-22 12:29:52.091
+668,254,1,FAST PAYMENT BEXP WASHNGO INV 100 drive lah pte ltd,2025-06-22 12:29:52.091
+669,254,11,[],2025-06-22 12:29:52.091
+670,255,0,Gross Revenue -Other Income,2025-06-22 12:29:52.091
+671,256,0,Operating Expenses:Human Resource - CPF Contribution,2025-06-22 12:29:52.091
+672,256,5,CPF,2025-06-22 12:29:52.091
+673,256,1,BIZ GIRO,2025-06-22 12:29:52.091
+674,256,11,[],2025-06-22 12:29:52.091
+675,257,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+676,257,5,Google,2025-06-22 12:29:52.091
+677,257,1,xx-6882 GOOGLE*GSUITE DRIVELAH SIN DEBIT PURCHASE,2025-06-22 12:29:52.091
+678,257,11,[],2025-06-22 12:29:52.091
+679,258,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+680,258,5,Loom,2025-06-22 12:29:52.091
+681,258,1,xx-0706 LOOM SUBSCRIPTION      SAN DEBIT PURCHASE,2025-06-22 12:29:52.091
+682,258,11,[],2025-06-22 12:29:52.091
+683,259,0,Operating Expenses:Travel-Transportation,2025-06-22 12:29:52.091
+684,259,1,xx-6882 PARKING.SG BILL_C1A7B4 SIN DEBIT PURCHASE,2025-06-22 12:29:52.091
+685,259,11,[],2025-06-22 12:29:52.091
+686,260,0,Other Income-Cash Rebate,2025-06-22 12:29:52.091
+687,260,1,CASH REBATE CASH REBATE,2025-06-22 12:29:52.091
+688,260,11,[],2025-06-22 12:29:52.091
+689,261,0,Due from Fleet,2025-06-22 12:29:52.091
+690,261,1,FAST PAYMENT BEXP CYCLE & CARRIA RDI23030004 DRIVE LAH PTE LTD,2025-06-22 12:29:52.091
+691,261,11,[],2025-06-22 12:29:52.091
+692,262,0,Other Income,2025-06-22 12:29:52.091
+693,262,1,PROGRESSIVE WAGE CREDIT SCHEME IBG GIRO,2025-06-22 12:29:52.091
+694,262,11,[],2025-06-22 12:29:52.091
+695,263,0,Cost of Overhead Related to Service:Market -Asset Creation,2025-06-22 12:29:52.091
+696,263,1,FUND TRANSFER Fund Transfer to account 565251121001 SGD 270.00@1 DRIVE LAH PTE LTD,2025-06-22 12:29:52.091
+697,263,11,[],2025-06-22 12:29:52.091
+698,264,0,Cost of Overhead Related to Service:Other operating expenses,2025-06-22 12:29:52.091
+699,264,5,Kaolin,2025-06-22 12:29:52.091
+700,264,1,FUND TRANSFER Fund Transfer to account 712452515001 SGD 50.00@1 DRIVE LAH PTE LTD,2025-06-22 12:29:52.091
+701,264,11,[],2025-06-22 12:29:52.091
+702,265,0,Cost of Overhead Related to Service:Market -Asset Creation,2025-06-22 12:29:52.091
+703,265,5,Battery Company,2025-06-22 12:29:52.091
+704,265,1,FUND TRANSFER Fund Transfer to account 687690933001 SGD 42.80@1 DRIVE LAH PTE LTD,2025-06-22 12:29:52.091
+705,265,11,[],2025-06-22 12:29:52.091
+706,266,0,Cost of Overhead Related to Service:Market -Asset Creation,2025-06-22 12:29:52.091
+707,266,5,City Auto,2025-06-22 12:29:52.091
+708,266,1,FUND TRANSFER Fund Transfer to account 656433778001 SGD 1 382.40@1 DRIVE LAG PTE LTD,2025-06-22 12:29:52.091
+709,266,11,[],2025-06-22 12:29:52.091
+710,267,0,Operating Expenses:Human Resource - Salary Expense,2025-06-22 12:29:52.091
+711,267,5,Jay Balan,2025-06-22 12:29:52.091
+712,267,1,FUND TRANSFER Fund Transfer to account 6218104856 SGD 1 600.00@1 DRIVE LAH PTE LTD,2025-06-22 12:29:52.091
+713,267,11,[],2025-06-22 12:29:52.091
+714,268,0,Cost of Overhead Related to Service:Market -Asset Creation,2025-06-22 12:29:52.091
+715,268,1,FAST PAYMENT BEXP CHRISTIAN ALVA CHRISTIAN PHOTO DRIVE LAH PTE LTD,2025-06-22 12:29:52.091
+716,268,11,[],2025-06-22 12:29:52.091
+717,269,0,Cost of Overhead Related to Service:Other operating expenses,2025-06-22 12:29:52.091
+718,269,5,Apex Credit,2025-06-22 12:29:52.091
+719,269,1,FAST PAYMENT BEXP APEX CREDIT MA APEX CREDIT DRIVE LAH PTE LTD,2025-06-22 12:29:52.091
+720,269,11,[],2025-06-22 12:29:52.091
+721,270,0,Operating Expenses:Marketing - Advertising (new customers),2025-06-22 12:29:52.091
+722,270,1,xx-6078 CAROUSELL              SIN DEBIT PURCHASE,2025-06-22 12:29:52.091
+723,270,11,[],2025-06-22 12:29:52.091
+724,271,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+725,271,1,xx-5710 MSFT *<E0500MD8FA>     MSB DEBIT PURCHASE,2025-06-22 12:29:52.091
+726,271,11,[],2025-06-22 12:29:52.091
+727,272,0,Cost of Overhead Related to Service:In-car devices - running/maintenance costs,2025-06-22 12:29:52.091
+728,272,1,FAST PAYMENT BEXP LIBERTY WIRELE INV 220202010552 DRIVE LAH PTE LTD,2025-06-22 12:29:52.091
+729,272,11,[],2025-06-22 12:29:52.091
+730,273,0,Cost of Overhead Related to Service:Salary Expense Ops Contractor Basic,2025-06-22 12:29:52.091
+731,274,0,Cost of Overhead Related to Service:Salary Expense Ops Contractor Basic,2025-06-22 12:29:52.091
+732,275,0,Cost of Overhead Related to Service:Salary Expense Ops Contractor Basic,2025-06-22 12:29:52.091
+733,276,0,Cost of Overhead Related to Service:Salary Expense Ops Contractor Basic,2025-06-22 12:29:52.091
+734,277,0,Cost of Overhead Related to Service:Salary Expense Ops Contractor Basic,2025-06-22 12:29:52.091
+735,278,0,Due From Australian Account,2025-06-22 12:29:52.091
+736,279,0,Operating Expenses:Corporate - Bank Fees,2025-06-22 12:29:52.091
+737,280,0,Director's Remuneration Payable,2025-06-22 12:29:52.091
+738,280,5,GS,2025-06-22 12:29:52.091
+739,281,0,Operating Expenses:Human Resource - Salary Expense,2025-06-22 12:29:52.091
+740,282,0,Operating Expenses:Human Resource - Salary Expense,2025-06-22 12:29:52.091
+741,283,0,Operating Expenses:Human Resource - Salary Expense,2025-06-22 12:29:52.091
+742,284,0,Operating Expenses:Human Resource - Salary Expense,2025-06-22 12:29:52.091
+743,285,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+744,285,5,Aircall,2025-06-22 12:29:52.091
+745,286,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+746,286,5,Moengage,2025-06-22 12:29:52.091
+747,287,0,Operating Expenses:Corporate - Bookkeeping Fees,2025-06-22 12:29:52.091
+748,287,5,Ridhi Karan,2025-06-22 12:29:52.091
+749,288,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+750,289,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+751,289,1,xx-6882 METABASE INC           SPR DEBIT PURCHASE,2025-06-22 12:29:52.091
+752,289,11,[],2025-06-22 12:29:52.091
+753,290,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+754,290,1,xx-6882 Semrush Inc            Bos DEBIT PURCHASE,2025-06-22 12:29:52.091
+755,290,11,[],2025-06-22 12:29:52.091
+756,291,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+757,291,1,xx-6882 RECRUITEE* BTU1XGTFEPH AMS DEBIT PURCHASE,2025-06-22 12:29:52.091
+758,291,11,[],2025-06-22 12:29:52.091
+759,292,0,Operating Expenses:Human Resource - Salary Expense,2025-06-22 12:29:52.091
+760,293,0,Operating Expenses:Human Resource - Salary Expense,2025-06-22 12:29:52.091
+761,294,0,Operating Expenses:Human Resource - Salary Expense,2025-06-22 12:29:52.091
+762,295,0,Cost of Overhead Related to Service:Other operating expenses,2025-06-22 12:29:52.091
+763,295,1,Ng cheng leng INV 1818,2025-06-22 12:29:52.091
+764,295,11,[],2025-06-22 12:29:52.091
+765,296,0,Cost of Overhead Related to Service:Salary Expense Ops Contractor Basic,2025-06-22 12:29:52.091
+879,336,1,Sabrina Lin Yan Xiu,2025-06-22 12:29:52.091
+766,296,1,Gem C. Rey-Hipolito Aug 16-31 Salary,2025-06-22 12:29:52.091
+767,296,11,[],2025-06-22 12:29:52.091
+768,297,0,Cost of Overhead Related to Service:In-car devices - running/maintenance costs,2025-06-22 12:29:52.091
+769,297,11,[],2025-06-22 12:29:52.091
+770,298,0,Operating Expenses:Corporate - Legal Fees,2025-06-22 12:29:52.091
+771,298,1,Pier Counsel ,2025-06-22 12:29:52.091
+772,298,11,[],2025-06-22 12:29:52.091
+773,299,0,Prepaid Insurance,2025-06-22 12:29:52.091
+774,300,0,Prepaid Insurance,2025-06-22 12:29:52.091
+775,301,0,Cost of Overhead Related to Service:Other operating expenses,2025-06-22 12:29:52.091
+776,301,9,Tow Lah SG Recovery,2025-06-22 12:29:52.091
+777,301,11,[],2025-06-22 12:29:52.091
+778,302,0,Operating Expenses:Human Resource - Salary Expense,2025-06-22 12:29:52.091
+779,302,9,Syed Sharim Iqbal,2025-06-22 12:29:52.091
+780,302,11,[],2025-06-22 12:29:52.091
+781,303,0,Prepaid Insurance,2025-06-22 12:29:52.091
+782,303,9,Tokio Marine Insurance Singapore,2025-06-22 12:29:52.091
+783,303,11,[],2025-06-22 12:29:52.091
+784,304,0,Due From Australian Account,2025-06-22 12:29:52.091
+785,304,9,Focussed claims management,2025-06-22 12:29:52.091
+786,304,11,[],2025-06-22 12:29:52.091
+787,305,0,Due From Australian Account,2025-06-22 12:29:52.091
+788,305,1,illion Australia Pty Ltd,2025-06-22 12:29:52.091
+789,305,11,[],2025-06-22 12:29:52.091
+790,306,0,Due To Australia,2025-06-22 12:29:52.091
+791,306,1,Drive lah Australia Pty Ltd,2025-06-22 12:29:52.091
+792,306,11,[],2025-06-22 12:29:52.091
+793,307,0,Due From Australian Account,2025-06-22 12:29:52.091
+794,307,5,SEON1,2025-06-22 12:29:52.091
+795,307,1,SEON Technologies Kft,2025-06-22 12:29:52.091
+796,307,11,[],2025-06-22 12:29:52.091
+797,308,0,Technology Development,2025-06-22 12:29:52.091
+798,308,1,GPS Fleet Sdn Bhd,2025-06-22 12:29:52.091
+799,308,11,[],2025-06-22 12:29:52.091
+800,309,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+801,309,1,Gupshup Inc,2025-06-22 12:29:52.091
+802,309,11,[],2025-06-22 12:29:52.091
+803,310,0,Prepaid Insurance,2025-06-22 12:29:52.091
+804,310,5,NTUC,2025-06-22 12:29:52.091
+805,310,1,INCOME INSURANCE LIMITED,2025-06-22 12:29:52.091
+806,310,11,[],2025-06-22 12:29:52.091
+807,311,0,Cost of Overhead Related to Service:Salary Expense Ops Contractor Basic,2025-06-22 12:29:52.091
+808,311,1,Trixie Mauricio Coronel,2025-06-22 12:29:52.091
+809,311,11,[],2025-06-22 12:29:52.091
+810,312,0,Cost of Overhead Related to Service:Salary Expense Ops Contractor Basic,2025-06-22 12:29:52.091
+811,312,1,Sandra C. Ramos,2025-06-22 12:29:52.091
+812,312,11,[],2025-06-22 12:29:52.091
+813,313,0,Cost of Overhead Related to Service:Salary Expense Ops Contractor Basic,2025-06-22 12:29:52.091
+814,313,1,Randolf Mercado,2025-06-22 12:29:52.091
+815,313,11,[],2025-06-22 12:29:52.091
+816,314,0,Technology Development,2025-06-22 12:29:52.091
+817,314,1,JourneyHorizon Pty. Ltd.,2025-06-22 12:29:52.091
+818,314,11,[],2025-06-22 12:29:52.091
+819,315,0,Operating Expenses:Human Resource - Salary Expense,2025-06-22 12:29:52.091
+820,315,9,Jay Balan,2025-06-22 12:29:52.091
+821,315,11,[],2025-06-22 12:29:52.091
+822,316,0,Due From Australian Account,2025-06-22 12:29:52.091
+823,316,1,Digital Matter Pty Ltd,2025-06-22 12:29:52.091
+824,316,11,[],2025-06-22 12:29:52.091
+825,317,0,Operating Expenses:Human Resource - Salary Expense,2025-06-22 12:29:52.091
+826,317,1,Ho Sze Yie,2025-06-22 12:29:52.091
+827,317,11,[],2025-06-22 12:29:52.091
+828,318,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+829,318,1,KORE Wireless Inc.,2025-06-22 12:29:52.091
+830,318,11,[],2025-06-22 12:29:52.091
+831,319,0,Cost of Overhead Related to Service:Market -Asset Creation,2025-06-22 12:29:52.091
+832,319,1,Christian Alvarez,2025-06-22 12:29:52.091
+833,319,11,[],2025-06-22 12:29:52.091
+834,320,0,Cost of Overhead Related to Service:Market -Asset Creation,2025-06-22 12:29:52.091
+835,320,1,Benjamin Lai,2025-06-22 12:29:52.091
+836,320,11,[],2025-06-22 12:29:52.091
+837,321,0,Cost of Overhead Related to Service:Market -Asset Creation,2025-06-22 12:29:52.091
+838,321,1,Chuan Quan Koh,2025-06-22 12:29:52.091
+839,321,11,[],2025-06-22 12:29:52.091
+840,322,0,Due from Fleet,2025-06-22 12:29:52.091
+841,322,1,Das Diganta Kumar,2025-06-22 12:29:52.091
+842,322,11,[],2025-06-22 12:29:52.091
+843,323,0,Cost of Overhead Related to Service:Salary Expense Ops Contractor Basic,2025-06-22 12:29:52.091
+844,323,1,Marjorie Melendrez,2025-06-22 12:29:52.091
+845,323,11,[],2025-06-22 12:29:52.091
+846,324,0,Cost of Overhead Related to Service:Other operating expenses,2025-06-22 12:29:52.091
+847,324,1,MAXICARE HEALTHCARE CORPORATION,2025-06-22 12:29:52.091
+848,324,11,[],2025-06-22 12:29:52.091
+849,325,0,Cost of Overhead Related to Service:Other operating expenses,2025-06-22 12:29:52.091
+850,326,0,Due from Fleet,2025-06-22 12:29:52.091
+851,326,1,Mohamed Emnazkhan Bin Salahudin,2025-06-22 12:29:52.091
+852,326,11,[],2025-06-22 12:29:52.091
+853,327,0,Due from Fleet,2025-06-22 12:29:52.091
+854,327,1,Poh Yang Shan,2025-06-22 12:29:52.091
+855,327,11,[],2025-06-22 12:29:52.091
+856,328,0,Operating Expenses:Human Resource - Salary Expense,2025-06-22 12:29:52.091
+857,328,1,Rahul Moitra,2025-06-22 12:29:52.091
+858,328,11,[],2025-06-22 12:29:52.091
+859,329,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+860,329,1,Onfido PTE Ltd,2025-06-22 12:29:52.091
+861,329,11,[],2025-06-22 12:29:52.091
+862,330,0,Due from Fleet,2025-06-22 12:29:52.091
+863,330,1,Tan Chun Peng (Chen Junbin),2025-06-22 12:29:52.091
+864,330,11,[],2025-06-22 12:29:52.091
+865,331,0,Cost of Overhead Related to Service:Market -Asset Creation,2025-06-22 12:29:52.091
+866,331,1,Sapna Prakash Dabade,2025-06-22 12:29:52.091
+867,331,11,[],2025-06-22 12:29:52.091
+868,332,0,Operating Expenses:Human Resource - Salary Expense,2025-06-22 12:29:52.091
+869,332,1,Shreyanka Saha,2025-06-22 12:29:52.091
+870,332,11,[],2025-06-22 12:29:52.091
+871,333,0,Due from Fleet,2025-06-22 12:29:52.091
+872,334,0,Due From Australian Account,2025-06-22 12:29:52.091
+873,334,1,DELWYN L WRIGHT,2025-06-22 12:29:52.091
+874,334,11,[],2025-06-22 12:29:52.091
+875,335,0,Cost of Service:Host Earnings,2025-06-22 12:29:52.091
+876,335,1,Quang Vu Nguyen,2025-06-22 12:29:52.091
+877,335,11,[],2025-06-22 12:29:52.091
+878,336,0,Cost of Service:Host Earnings,2025-06-22 12:29:52.091
+880,336,11,[],2025-06-22 12:29:52.091
+881,337,0,Cost of Service:Host Earnings,2025-06-22 12:29:52.091
+882,337,1,Shannon Yeo,2025-06-22 12:29:52.091
+883,337,11,[],2025-06-22 12:29:52.091
+884,338,0,Cost of Service:Host Earnings,2025-06-22 12:29:52.091
+885,338,1,Tan Lay Suan Judy,2025-06-22 12:29:52.091
+886,338,11,[],2025-06-22 12:29:52.091
+887,339,0,Due from Fleet,2025-06-22 12:29:52.091
+888,340,0,Operating Expenses:Human Resource - Salary Expense,2025-06-22 12:29:52.091
+889,341,0,Due From Australian Account,2025-06-22 12:29:52.091
+890,341,1,THE FLEET DR,2025-06-22 12:29:52.091
+891,341,11,[],2025-06-22 12:29:52.091
+892,342,0,Due From Australian Account,2025-06-22 12:29:52.091
+893,342,1,xx-4180 DRIVE MATE             MEL DEBIT CREDIT,2025-06-22 12:29:52.091
+894,342,11,[],2025-06-22 12:29:52.091
+895,343,0,Due From Australian Account,2025-06-22 12:29:52.091
+896,343,1,xx-4180 DRIVE MATE             MEL DEBIT PURCHASE,2025-06-22 12:29:52.091
+897,343,11,[],2025-06-22 12:29:52.091
+1174,492,0,Due from Singapore,2025-06-30 06:16:27.564
+1175,492,5,Google,2025-06-30 06:16:27.564
+902,345,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+903,346,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+904,347,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+905,348,0,Operating Expenses:Technology System Cost,2025-06-22 12:29:52.091
+906,348,5,Hubspot,2025-06-22 12:29:52.091
+1178,494,0,Accrued Expense,2025-06-30 06:16:27.564
+1179,494,5,Apple.com,2025-06-30 06:16:27.564
+1180,494,1,APPLE.COM/BILL SYDNEY AU Card xx0338 Value Date: 04/05/2022,2025-06-30 06:16:27.564
+1181,495,0,Operating Expenses:Technology System Costs,2025-06-30 06:16:27.564
+911,351,0,Cost of Overhead Related to Service:Salary Expense Ops Contractor Basic,2025-06-22 12:29:52.091
+912,351,1,Ana Ash,2025-06-22 12:29:52.091
+913,351,11,[],2025-06-22 12:29:52.091
+914,351,8,True,2025-06-22 12:29:52.091
+915,352,0,Cost of Overhead Related to Service:Salary Expense Ops Contractor Basic,2025-06-22 12:29:52.091
+916,352,1,Annabelle Gayda Luching,2025-06-22 12:29:52.091
+917,352,11,[],2025-06-22 12:29:52.091
+918,352,8,True,2025-06-22 12:29:52.091
+919,353,0,Cost of Service:Host Earnings,2025-06-22 12:29:52.091
+920,353,1,Antron Lim Hong Ru,2025-06-22 12:29:52.091
+921,353,11,[],2025-06-22 12:29:52.091
+922,353,8,True,2025-06-22 12:29:52.091
+923,354,0,Cost of Service:Host Earnings,2025-06-22 12:29:52.091
+924,354,1,Ashley Ng,2025-06-22 12:29:52.091
+925,354,11,[],2025-06-22 12:29:52.091
+926,354,8,True,2025-06-22 12:29:52.091
+1182,495,5,Glocksoft.com,2025-06-30 06:16:27.564
+1183,496,0,Due from Singapore,2025-06-30 06:16:27.564
+1184,496,5,Facebook,2025-06-30 06:16:27.564
+1185,497,0,Cost of Service:Insurance,2025-06-30 06:16:27.564
+1186,497,5,Insuret Premium,2025-06-30 06:16:27.564
+548,218,7,"26",2025-06-22 12:29:52.091
+1189,499,0,Operating Expenses,2025-06-30 06:16:27.564
+1190,499,5,Linkt Melbourne,2025-06-30 06:16:27.564
+1191,500,0,Due from Singapore,2025-06-30 06:16:27.564
+1192,500,5,Adjust,2025-06-30 06:16:27.564
+1193,500,1,ADJUST GMBH BERLIN DE Card xx0338 USD 600.00 Value Date: 16/01/2023,2025-06-30 06:16:27.564
+1194,501,0,Operating Expenses:Telephone & internet expenses,2025-06-30 06:16:27.564
+1195,501,5,Aussie Broadband,2025-06-30 06:16:27.564
+1196,501,1,Direct Debit 344508 AUSSIE BROADBAND 6383256CN8202541,2025-06-30 06:16:27.564
+938,370,0,Operating Expenses:Human Resource - Salary Expense,2025-06-25 01:51:37.061
+940,373,0,Operating Expenses:Human Resource - Salary Expense,2025-06-25 02:04:06.809
+941,374,0,Operating Expenses:Human Resource - Salary Expense,2025-06-25 02:04:06.809
+942,375,0,Operating Expenses:Human Resource - Salary Expense,2025-06-25 02:04:06.809
+943,376,0,Operating Expenses:Human Resource - Salary Expense,2025-06-25 02:04:06.809
+944,377,0,Operating Expenses:Human Resource - Salary Expense,2025-06-25 02:04:06.809
+945,378,0,Operating Expenses:Human Resource - Salary Expense,2025-06-25 02:04:06.809
+946,379,0,Operating Expenses:Human Resource - Salary Expense,2025-06-25 02:04:06.809
+947,380,0,Operating Expenses:Human Resource - Salary Expense,2025-06-25 02:04:06.809
+948,381,0,Operating Expenses:Human Resource - Salary Expense,2025-06-25 02:04:06.809
+949,382,0,Operating Expenses:Human Resource - Salary Expense,2025-06-25 02:04:06.809
+950,383,0,Operating Expenses:Human Resource - Salary Expense,2025-06-25 02:04:06.809
+951,384,0,Operating Expenses:Human Resource - Salary Expense,2025-06-25 02:04:06.809
+952,385,0,Operating Expenses:Human Resource - Salary Expense,2025-06-25 02:04:06.809
+953,386,0,Operating Expenses:Human Resource - Salary Expense,2025-06-25 02:04:06.809
+954,387,0,Operating Expenses:Human Resource - Salary Expense,2025-06-25 02:04:06.809
+955,388,0,Operating Expenses:Human Resource - Salary Expense,2025-06-25 02:04:06.809
+957,390,0,Operating Expenses:Technology System Cost,2025-06-25 02:04:06.809
+958,391,0,Operating Expenses:Technology System Cost,2025-06-25 02:04:06.809
+959,392,0,Operating Expenses:Technology System Cost,2025-06-25 02:04:06.809
+960,393,0,Operating Expenses:Technology System Cost,2025-06-25 02:04:06.809
+961,394,0,Operating Expenses:Technology System Cost,2025-06-25 02:36:38.158
+962,395,0,Operating Expenses:Technology System Cost,2025-06-25 02:36:39.033
+963,396,0,Operating Expenses:Technology System Cost,2025-06-25 02:36:39.447
+964,397,0,Operating Expenses:Technology System Cost,2025-06-25 02:36:39.821
+965,398,0,Operating Expenses:Technology System Cost,2025-06-25 02:36:40.190
+966,399,0,Operating Expenses:Technology System Cost,2025-06-25 02:36:40.550
+988,426,7,transfer_pending,2025-06-25 03:05:23.672
+989,427,7,transfer_pending,2025-06-25 03:05:23.672
+990,428,7,transfer_pending,2025-06-25 03:05:23.672
+991,429,7,transfer_pending,2025-06-25 03:05:23.672
+992,430,7,transfer_pending,2025-06-25 03:05:23.672
+993,431,7,transfer_pending,2025-06-25 03:05:23.672
+994,432,7,transfer_pending,2025-06-25 03:05:23.672
+995,433,7,transfer_pending,2025-06-25 03:05:23.672
+996,434,7,transfer_pending,2025-06-25 03:05:23.672
+997,435,7,transfer_pending,2025-06-25 03:05:23.672
+1197,502,0,Operating Expenses:Bank Fees,2025-06-30 06:16:27.564
+1198,502,1,International Transaction Fee Value Date: 02/05/2023,2025-06-30 06:16:27.564
+1199,503,0,Operating Expenses:Travel Expense,2025-06-30 06:16:27.564
+1200,503,1,DidiChuxing DIDI MOBILITY Sydney AU Card xx0338 Value Date: 10/02/2023,2025-06-30 06:16:27.564
+1201,504,0,Operating Expenses:Bank Fees,2025-06-30 06:16:27.564
+1202,504,1,International Transaction Fee Value Date: 10/01/2023,2025-06-30 06:16:27.564
+1203,505,0,Cost of Overhead Related to Service:In-car Running Costs,2025-06-30 06:16:27.564
+1204,505,5,Digital Matter,2025-06-30 06:16:27.564
+1205,505,1,WWW.DIGITALMATTER.COM SUBIACO AU Card xx0338 Value Date: 10/01/2023,2025-06-30 06:16:27.564
+1206,506,0,Operating Expenses:Travel Expense,2025-06-30 06:16:27.564
+1207,506,5,Transportfornsw,2025-06-30 06:16:27.564
+1208,506,1,TRANSPORTFORNSW TAP SYDNEY AU Card xx0338 Value Date: 01/03/2023,2025-06-30 06:16:27.564
+1209,507,0,Operating Expenses:Technology System Costs,2025-06-30 06:16:27.564
+1210,507,5,Superblog,2025-06-30 06:16:27.564
+1211,507,1,Transfer to xx3529 CommBank app Superblog payment,2025-06-30 06:16:27.564
+1212,508,0,Operating Expenses:Technology System Costs,2025-06-30 06:16:27.564
+1213,508,5,STONLY.COM,2025-06-30 06:16:27.564
+1214,508,1,STONLY.COM STONLY.COM NY US Card xx0338 USD 124.00 Value Date: 14/02/2023,2025-06-30 06:16:27.564
+1215,509,0,Operating Expenses:Technology System Costs,2025-06-30 06:16:27.564
+1216,509,5,TECHCRUNCH EVELEIGH,2025-06-30 06:16:27.564
+1217,509,1,TECHCRUNCH EVELEIGH AU Card xx0338 Value Date: 14/01/2023,2025-06-30 06:16:27.564
+1218,510,0,Other Income,2025-06-30 06:16:27.564
+1219,510,1,Direct Credit 012721 ATO ATO005000017565777,2025-06-30 06:16:27.564
+1220,511,0,Accounting and bookkeeping,2025-06-30 06:16:27.564
+1221,511,5,Quickbooks,2025-06-30 06:16:27.564
+1222,511,1,Intuit Quickbooks Sydney AU Card xx0338 Value Date: 09/01/2023,2025-06-30 06:16:27.564
+1223,512,0,Operating Expenses:Technology System Costs,2025-06-30 06:16:27.564
+1224,512,1,CHATGPT SUBSCRIPTION OPENAI.COM CA US Card xx0338 USD 22.00 Value Date: 19/04/2023,2025-06-30 06:16:27.564
+1225,513,0,Tax Paid,2025-06-30 06:16:27.564
+1226,513,5,ATO,2025-06-30 06:16:27.564
+1227,514,0,Due to Ventures,2025-06-30 06:16:27.564
+1228,515,0,Other Income,2025-06-30 06:16:27.564
+1229,515,1,Transfer from NetBank VSR,2025-06-30 06:16:27.564
+1230,516,0,Operating Expenses:Corporate-Other Corporate Expense,2025-06-30 06:16:27.564
+1231,517,0,Operating Expenses:Corporate-Other Corporate Expense,2025-06-30 06:16:27.564
+1232,518,0,Operating Expenses:Corporate-Other Corporate Expense,2025-06-30 06:16:27.564
+1233,519,0,Other Income,2025-06-30 06:16:27.564
+1234,520,0,Other Income,2025-06-30 06:16:27.564
+1235,521,0,Due from Singapore,2025-06-30 06:16:27.564
+1236,521,7,"26",2025-06-30 06:16:27.564
+1237,521,1,Transfer To Wise Australia Pty Ltd PayID Email from CommBank App Wise,2025-06-30 06:16:27.564
+1238,522,0,Operating Expenses:Corporate - Legal and professional fees,2025-06-30 06:16:27.564
+1239,523,0,Operating Expenses:Technology System Costs,2025-06-30 06:16:27.564
+1240,523,5,Rightworks Www Rightwork Nh Us,2025-06-30 06:16:27.564
+1241,524,0,Operating Expenses:Travel Expense,2025-06-30 06:16:27.564
+1242,524,5,Uber.com,2025-06-30 06:16:27.564
+1243,525,0,Meals and entertainment,2025-06-30 06:16:27.564
+1244,525,5,Starbucks,2025-06-30 06:16:27.564
+1245,526,0,Cost of Overhead Related to Service:Refunds,2025-06-30 06:16:27.564
+1246,527,0,Due from Singapore,2025-06-30 06:16:27.564
+1249,530,0,Stripe - Customer Deposits,2025-06-30 07:11:26.306
+1258,539,0,Stripe - Trip Refunds,2025-06-30 07:11:29.471
+1260,541,0,Stripe - Invoice Refunds,2025-06-30 07:11:30.146
+1262,543,0,Stripe - Chargeback Expenses,2025-06-30 07:11:30.862
+1266,546,12,true,2025-06-30 07:54:15.524
+1267,546,10,Stripe - Deferred Trip Revenue,2025-06-30 07:54:15.524
+1268,546,11,Stripe - Trip Revenue,2025-06-30 07:54:15.524
+1272,548,12,true,2025-06-30 07:54:16.343
+1274,548,11,Stripe - Incidentals Revenue,2025-06-30 07:54:16.343
+1278,550,12,true,2025-06-30 07:54:17.153
+1279,550,10,Stripe - Host Cleanliness Expenses,2025-06-30 07:54:17.153
+1280,550,11,Stripe - Host Payables,2025-06-30 07:54:17.153
+1284,552,12,true,2025-06-30 07:54:17.914
+1285,552,10,Stripe - Host Fuel Expenses,2025-06-30 07:54:17.914
+1286,552,11,Stripe - Host Payables,2025-06-30 07:54:17.914
+1290,554,12,true,2025-06-30 07:54:18.718
+1291,554,10,Stripe - Host Tolls Expenses,2025-06-30 07:54:18.718
+1292,554,11,Stripe - Host Payables,2025-06-30 07:54:18.718
+1296,556,12,true,2025-06-30 07:54:19.541
+1297,556,10,Stripe - Host Referral Expenses,2025-06-30 07:54:19.541
+1298,556,11,Stripe - Host Payables,2025-06-30 07:54:19.541
+1302,558,12,true,2025-06-30 07:54:20.352
+1308,560,12,true,2025-06-30 07:54:21.125
+1252,533,0,Stripe - Deferred Trip Revenue,2025-06-30 07:11:27.411
+1363,562,12,true,2025-07-02 10:15:08.960
+1273,548,10,Receivable from Guests,2025-06-30 07:54:16.343
+1303,558,10,Stripe - Host Payables,2025-06-30 07:54:20.352
+1304,558,11,Stripe - Host Fuel Revenue,2025-06-30 07:54:20.352
+1309,560,10,Stripe - Host Payables,2025-06-30 07:54:21.125
+1310,560,11,Stripe - Host Misc Revenue,2025-06-30 07:54:21.125
+1346,535,0,Stripe - Accounts Receivable,2025-07-01 07:49:39.497
+1347,536,0,Stripe - Accounts Receivable,2025-07-01 07:49:39.497
+1348,537,0,Stripe - Accounts Receivable,2025-07-01 07:49:39.497
+1356,498,7,transfer_pending,2025-07-01 23:37:31.092
+1357,498,1,Large transfer pending pair matching,2025-07-01 23:37:31.092
+1358,491,7,transfer_pending,2025-07-01 23:37:31.092
+1359,491,1,Stripe payout to business bank account,2025-07-01 23:37:31.092
+1364,562,10,Stripe - Accounts Receivable SGD,2025-07-02 10:15:08.960
+1365,562,11,Stripe - Incidentals Revenue SGD,2025-07-02 10:15:08.960
+1369,564,12,true,2025-07-02 10:15:09.958
+1370,564,10,Stripe - Host Trip Expenses SGD,2025-07-02 10:15:09.958
+1371,564,11,Stripe - Host Payables SGD,2025-07-02 10:15:09.958
+1375,566,12,true,2025-07-02 10:15:10.919
+1376,566,10,Stripe - Host Fuel Expenses SGD,2025-07-02 10:15:10.919
+1377,566,11,Stripe - Host Payables SGD,2025-07-02 10:15:10.919
+1381,568,12,true,2025-07-02 10:15:11.737
+1382,568,10,Stripe - Host Misc Expenses SGD,2025-07-02 10:15:11.737
+1383,568,11,Stripe - Host Payables SGD,2025-07-02 10:15:11.737
+1387,570,12,true,2025-07-02 10:15:12.641
+1388,570,10,Stripe - Host Superhost Expenses SGD,2025-07-02 10:15:12.641
+1247,528,0,Stripe - Processing Fees,2025-06-30 07:11:25.579
+1250,531,0,Stripe - Verification Deposits,2025-06-30 07:11:26.666
+1253,534,0,Stripe - Trip Revenue,2025-06-30 07:11:27.762
+1257,538,0,Stripe - Fuel Refunds,2025-06-30 07:11:29.115
+1259,540,0,Stripe - Subscription Refunds,2025-06-30 07:11:29.803
+1261,542,0,Stripe - Host Payables,2025-06-30 07:11:30.515
+1263,545,12,true,2025-06-30 07:34:52.942
+1264,545,10,Stripe - Host Trip Expenses,2025-06-30 07:34:52.942
+1265,545,11,Stripe - Host Payables,2025-06-30 07:34:52.942
+1269,547,12,true,2025-06-30 07:54:15.940
+1271,547,11,Stripe - Trip Revenue,2025-06-30 07:54:15.940
+1275,549,12,true,2025-06-30 07:54:16.748
+1277,549,11,Stripe - Subscription Revenue,2025-06-30 07:54:16.748
+1281,551,12,true,2025-06-30 07:54:17.532
+1282,551,10,Stripe - Host Damage Expenses,2025-06-30 07:54:17.532
+1283,551,11,Stripe - Host Payables,2025-06-30 07:54:17.532
+1152,472,0,Operating Expenses:Technology System Cost,2025-06-30 01:50:46.851
+1153,472,5,AWS,2025-06-30 01:50:46.851
+1287,553,12,true,2025-06-30 07:54:18.315
+1288,553,10,Stripe - Host Excess Mileage Expenses,2025-06-30 07:54:18.315
+1289,553,11,Stripe - Host Payables,2025-06-30 07:54:18.315
+1293,555,12,true,2025-06-30 07:54:19.139
+1294,555,10,Stripe - Host Misc Expenses,2025-06-30 07:54:19.139
+1295,555,11,Stripe - Host Payables,2025-06-30 07:54:19.139
+1299,557,12,true,2025-06-30 07:54:19.937
+1300,557,10,Stripe - Host Flexplus Expenses,2025-06-30 07:54:19.937
+1301,557,11,Stripe - Host Payables,2025-06-30 07:54:19.937
+1305,559,12,true,2025-06-30 07:54:20.745
+1306,559,10,Stripe - Host Subscription Revenue,2025-06-30 07:54:20.745
+1307,559,11,Stripe - Host Payables,2025-06-30 07:54:20.745
+1393,572,0,Stripe - Deferred Trip Revenue SGD,2025-07-02 10:16:14.075
+1270,547,10,Receivable from Guests,2025-06-30 07:54:15.940
+1276,549,10,Receivable from Guests,2025-06-30 07:54:16.748
+1349,493,0,Due to Aus Fleet,2025-07-01 23:18:38.088
+1360,561,12,true,2025-07-02 10:15:08.521
+1361,561,10,Stripe - Deferred Trip Revenue SGD,2025-07-02 10:15:08.521
+1362,561,11,Stripe - Trip Revenue SGD,2025-07-02 10:15:08.521
+1366,563,12,true,2025-07-02 10:15:09.548
+1367,563,10,Stripe - Accounts Receivable SGD,2025-07-02 10:15:09.548
+1368,563,11,Stripe - Subscription Revenue SGD,2025-07-02 10:15:09.548
+1372,565,12,true,2025-07-02 10:15:10.376
+1373,565,10,Stripe - Host Vehicle Damage SGD,2025-07-02 10:15:10.376
+1374,565,11,Stripe - Host Payables SGD,2025-07-02 10:15:10.376
+1378,567,12,true,2025-07-02 10:15:11.339
+1379,567,10,Stripe - Host Excess Mileage Expenses SGD,2025-07-02 10:15:11.339
+1380,567,11,Stripe - Host Payables SGD,2025-07-02 10:15:11.339
+1384,569,12,true,2025-07-02 10:15:12.225
+1385,569,10,Stripe - Host Flexplus Expenses SGD,2025-07-02 10:15:12.225
+1386,569,11,Stripe - Host Payables SGD,2025-07-02 10:15:12.225
+1389,570,11,Stripe - Host Payables SGD,2025-07-02 10:15:12.641
+1390,571,12,true,2025-07-02 10:15:13.046
+1391,571,10,Stripe - Host Sticker Expenses SGD,2025-07-02 10:15:13.046
+1392,571,11,Stripe - Host Payables SGD,2025-07-02 10:15:13.046
+1396,575,0,Stripe - Accounts Receivable SGD,2025-07-02 10:16:15.318
+1397,576,0,Stripe - Accounts Receivable SGD,2025-07-02 10:16:15.861
+1398,577,0,Stripe - Trip Refunds SGD,2025-07-02 10:16:16.229
+1399,578,0,Stripe - Customer Deposits SGD,2025-07-02 10:16:16.670
+1400,579,0,Stripe - Subscription Refunds SGD,2025-07-02 10:16:17.021
+1401,580,0,Stripe - Invoice Refunds SGD,2025-07-02 10:16:17.420
+1402,581,0,Stripe - Host Payables SGD,2025-07-02 10:16:17.858
+1403,582,0,Stripe - Processing Fees SGD,2025-07-02 10:16:18.238
+1404,583,0,Stripe - Chargeback Expenses SGD,2025-07-02 10:16:18.604
+1394,573,0,Stripe - Trip Revenue SGD,2025-07-02 10:16:14.498
+1395,574,0,Stripe - Customer Deposits SGD,2025-07-02 10:16:14.870
+1406,584,1,Stripe payout to business bank account,2025-07-02 11:00:21.384
+1407,584,7,transfer_pending,2025-07-02 11:00:21.384
+1408,584,0,Stripe - Bank Account SGD,2025-07-02 12:22:58.448
+1409,585,0,Due from Singapore,2025-07-04 01:03:24.328
+1410,585,1,"FAST PAYMENT
+EBGPP30329616176 EBGPP30329616176
+OCBC:713147601001:IDEAL
+BUSINESS EXPENSES
+SGD 22000",2025-07-04 01:03:24.328
+1411,585,11,[],2025-07-04 01:03:24.328
+1420,588,0,Due From Australian Account,2025-07-04 01:03:24.328
+1421,588,9,"000000  EBOTT31019653619 0016OT7472459 DRIVE LAH PTE LTD                   USD 75000   UETR Ref:37285a78-f0a7-43ea-85c5-74b6b6b34bc5",2025-07-04 01:03:24.328
+1422,588,11,[],2025-07-04 01:03:24.328
+1428,592,0,Operating Expenses:Corporate - Bank Fees,2025-07-04 01:51:31.504
+1426,590,0,Operating Expenses:Corporate - Bank Fees,2025-07-04 01:51:31.504
+1427,591,0,Operating Expenses:Corporate - Bank Fees,2025-07-04 01:51:31.504
+1429,593,7,transfer_pending,2025-07-04 02:08:17.324
+1430,594,7,transfer_pending,2025-07-04 02:08:17.324
+1431,595,0,Operating Expenses:Corporate - Legal Fees,2025-07-04 11:33:01.440
+1432,596,0,Due from Fleet,2025-07-04 11:33:01.878
+1433,597,0,Due From Australian Account,2025-07-04 11:33:02.471
+1434,598,0,Operating Expenses:Marketing Asset Creation,2025-07-04 11:33:03.093
+1435,599,0,Cost of Overhead Related to Service:Salary Expense Ops Contractor Basic,2025-07-04 11:33:03.538
+1436,600,0,Operating Expenses:Human Resource - Directors' Salary,2025-07-04 11:33:04.131
+1437,601,0,Operating Expenses:Human Resource - Salary Expense,2025-07-04 11:33:04.617
+1438,602,0,Cost of Service:Insurance,2025-07-04 11:33:05.192
+1439,603,0,Cost of Overhead Related to Service:Other operating expenses:Towing,2025-07-04 11:33:05.646
+1440,604,0,Cost of Overhead Related to Service:Other operating expenses,2025-07-04 11:33:06.137
+1441,605,0,Operating Expenses:Corporate - Bookkeeping Fees,2025-07-04 11:33:06.702
+1442,606,0,Operating Expenses:Technology System Cost,2025-07-04 11:33:07.191
+1443,607,0,Cost of Overhead Related to Service:Other operating expenses:Damage,2025-07-04 11:33:07.761
+1444,608,0,Operating Expenses:Marketing - Advertising (new customers),2025-07-04 11:33:08.187

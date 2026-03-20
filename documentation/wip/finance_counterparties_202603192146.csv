@@ -1,0 +1,305 @@
+id,name,type,entity_id
+3,1ST CLASS TOWING PTY LTD,vendor,
+5,AAI Ltd,vendor,
+23,1 Key Locksmiths,vendor,
+25,AAAC Towing Pty Ltd,vendor,
+27,Abwin Leasing,vendor,
+28,ACE,vendor,
+29,ACT Collision Management,vendor,
+30,Action Towing Pty Ltd,vendor,
+31,Aircall,vendor,
+32,Alpine Car Rental,vendor,
+33,Amazon.in,vendor,
+34,Anytime Towing Service Pty Ltd,vendor,
+35,APIA,vendor,
+36,ARENA DETAILING PTE. LTD,vendor,
+37,Astute Autoworks,vendor,
+38,ATO direct,vendor,
+39,Auto Tech Locksmiths,vendor,
+40,Automotive Glass Works Pte Ltd,vendor,
+41,Autorola,vendor,
+42,AWS,vendor,
+43,Bastian's Towing,vendor,
+44,Bird & Bird,vendor,
+45,Blackcoffer,vendor,
+46,BM Precision Paint works,vendor,
+47,Body Fix,vendor,
+48,Bris Towing,vendor,
+49,Bytchenkov Pty Ltd,vendor,
+50,Car mobile detailing,vendor,
+51,Cashify,vendor,
+52,CDC Australia,vendor,
+53,Cedar towing,vendor,
+54,checked.com.au,vendor,
+55,CHENG CHUAN MOTOR SERVICES,vendor,
+56,Christopher J Malan,vendor,
+57,Clayton Towing,vendor,
+58,Collision Towing & Recovery Services,vendor,
+59,ComfortDelGro Rent-A-Car Pte Ltd,vendor,
+60,Common Design Pty Ltd,vendor,
+61,Connect Repair Logistics,vendor,
+63,Cycle and Carriage,vendor,
+64,Defiant,vendor,
+65,Digital matter,vendor,
+66,Drive Accident Solutions,vendor,
+67,Elite Car Ventures,vendor,
+62,Conquer technologies,vendor,
+68,Eventila Technologies Pvt Ltd,vendor,
+70,Fixedlah,vendor,
+71,FLM,vendor,
+72,Focussed Assessing Pty Ltd,vendor,
+73,Gardenstate Towing,vendor,
+74,GPS Fleet,vendor,
+75,Granville Collision Centre,vendor,
+76,GT insurance,vendor,
+77,Gupshup,vendor,
+78,GWS CHADSTONE PTY LTD,vendor,
+79,Harveys Towing Service,vendor,
+80,HDB,vendor,
+81,Hello Travel Pte Ltd,vendor,
+82,Humax,vendor,
+83,Illion,vendor,
+84,Incrementors,vendor,
+85,Inner West Towing,vendor,
+86,Insuret,vendor,
+87,Intercom,vendor,
+88,J&D Quality Smash Repairs,vendor,
+89,JD Windscreen,vendor,
+90,Jims car detailing,vendor,
+91,John Clough Auto Trim,vendor,
+92,Jui teck trading company,vendor,
+93,JustCo,vendor,
+94,Kang Car Repairers,vendor,
+95,Keydup Locksmiths,vendor,
+96,kiwi.com,vendor,
+97,Klean Air Aus Decontamination,vendor,
+98,KORE Wireless Inc.,vendor,
+99,Kwee Repair Services,vendor,
+100,Local towing,vendor,
+102,MELBOURNE PRESTIGE CENTRE,vendor,
+103,Mill Park Towing Service,vendor,
+104,MoEngage,vendor,
+105,Monash Storage and Towing,vendor,
+106,Mova Automotive Pte Ltd,vendor,
+107,MSJ Logistics,vendor,
+108,Mycar,vendor,
+110,NEW POS NETWORK(S) PTE LTD,vendor,
+111,NORMAN CHAN,vendor,
+112,North Shore & City Towing Pty Ltd,vendor,
+113,Nova Smash Repairs,vendor,
+114,NTUC,vendor,
+115,Oakleigh Garage,vendor,
+116,Onfido,vendor,
+117,Pack & Send,vendor,
+118,Palms Bistro,vendor,
+119,Penguin Risk Solutions,vendor,
+120,Pier Counsel,vendor,
+122,Provident fund Malaysia,vendor,
+123,RACQ,vendor,
+125,Ridhi Karan,vendor,
+127,Roobykon,vendor,
+128,SELECTE PTE LTD,vendor,
+129,SEMITS SMASH REPAIRS PTY LTD,vendor,
+130,SentriLock,vendor,
+132,SHARPS,vendor,
+133,SHEENGROUP TOWING PTY LTD,vendor,
+134,Singapore Network Information Centre,vendor,
+135,South East Smash,vendor,
+121,Pro - Jex v2d,vendor,
+69,Faculty of Management Studies,vendor,
+131,SEVEN POUNDS CREATIVE SDN BHD,vendor,
+101,Melbourne comedy festi,vendor,
+109,NCIS,vendor,
+124,Rebel Print Studio,vendor,
+136,Springfield gates,vendor,
+137,SSN Smash repairs,vendor,
+138,Stephen Inner West Smash Repairs Pty Ltd,vendor,
+139,Stuttgart Autos,vendor,
+140,Sydney Transport Provider,vendor,
+141,The Fleet Dr Pty Ltd,vendor,
+142,Thinxtra,vendor,
+143,TNA Towing Pty Ltd,vendor,
+144,Tokio Marine,vendor,
+145,Top Dents,vendor,
+146,Tow lah,vendor,
+147,Tweed Byron Towing,vendor,
+148,Twilio,vendor,
+149,U R Drive,vendor,
+150,URA,vendor,
+151,VALLETTA SOFTWARE,vendor,
+152,Value car health system,vendor,
+153,Venture Haven,vendor,
+154,Vin's Motor Pte Ltd,vendor,
+155,VR Graphics,vendor,
+156,Wash and Go,vendor,
+157,Watterson,vendor,
+158,WeCorporate Global Consultancy,vendor,
+159,Wells O'Callaghan Watterson Pty Limited,vendor,
+160,West Melbourne Smash Repairs,vendor,
+161,WP Towing,vendor,
+162,YUEN LAW LLC,vendor,
+163,Craig Anthony Letters,employee,3
+164,Jabez Jun Jie Lim,employee,2
+165,Fiona Smith,employee,NA
+166,Rose Ann Ferrer Naredo,employee,2
+167,Geraldine Austin,employee,3
+168,Muhammad Uzair Tanveer,employee,3
+169,Drive mate Tolls Management,employee,NA
+170,Terrence Dimagan Genetiano,employee,2
+171,Drive mate Support,employee,NA
+172,Stella Jones,employee,NA
+173,Xyron Bunquin Manongsong,employee,2
+174,Rimsha Khan,employee,3
+176,Rheazel Martinez Adolfo,employee,2
+177,Resya Satya Pradhana Harahap,employee,3
+178,Drive mate Resolutions,employee,NA
+179,Raymund Jay Juliano Recto,employee,2
+180,Randolf Macardo,employee,2
+181,Patrick Leonard Mojica,employee,2
+182,Drive mate Ops,employee,NA
+183,Drive mate no-reply,employee,NA
+184,Melvin Verona Magro,employee,2
+185,DM Melbourne Ops,employee,NA
+186,Mary Rose Bernal Yap,employee,2
+187,Matheus Johannes van der Kooi,employee,3
+188,Mark Manson,employee,NA
+189,Marijoy Manalo Riomalos,employee,2
+190,Drive mate Legal,employee,NA
+191,Kate Smith,employee,NA
+192,Karen Kathleen Belen Rosado,employee,2
+193,Julie Ann Macuha Cenedoza,employee,2
+194,Joel Wecker,employee,3
+195,Jirah Jean Bautista Vito,employee,2
+196,Jennilyn Palacol Labajos,employee,2
+197,Jen Reyes,employee,2
+198,Jacob Hyde,employee,3
+199,Drive mate team,employee,NA
+200,Godielou Petipet Quero,employee,2
+201,Gabriel John Limjoco,employee,2
+202,Farhan Ahmed Chowdhury,employee,3
+203,Evelyn Chua Aquino,employee,2
+204,Ernie Javines Biason,employee,2
+205,Eric De Jesus Ramos,employee,2
+206,Diana Kelly,employee,2
+207,Decemberlyn Muyuela Sumagaysay,employee,2
+208,Cindy Smith,employee,NA
+209,BYOD Drive mate,employee,NA
+210,Ben Gotto Smith,employee,NA
+211,Au Host,employee,NA
+212,Anas Ashfaq,employee,3
+213,Annabelle Gayda Luching,employee,2
+214,Alexcess Libiran Car,employee,2
+215,Accounts Drive mate,employee,NA
+216,Zilla Marie,employee,2
+217,Yash Mimani,employee,2
+218,Nashruk Mohammed Wasik Ataher,employee,2
+219,Vigneshsuran So Dhevan,employee,2
+220,Trixie trixie,employee,2
+221,Tony Ng Kok Siong,employee,2
+222,Thummanapally Tilak,employee,2
+223,Taimoor Hassan,employee,2
+224,Drive lah Support,employee,NA
+225,Pyiee Thin Nwe,employee,2
+226,Sharim Iqbal,employee,2
+227,Shanmugam,employee,2
+228,Seca Bugash,employee,2
+229,Sarthak Gupta,employee,2
+230,Sarahh Letchumenan,employee,2
+231,Sanjay Kumar,employee,2
+232,Sandeep Postbox,employee,NA
+233,Sagar Mahesh Prasad,employee,2
+234,Roxanne Reyes,employee,2
+235,Rosemarie Timbol Basilio,employee,2
+236,Drive lah Resolutions,employee,NA
+237,Ralph Efrenson Eronga,employee,2
+238,Rahul Moitra,employee,2
+239,Drive lah HR,employee,NA
+240,Paramjeet Paramjeet,employee,2
+241,Pankaj Patidar,employee,2
+242,Drive lah Admin,employee,NA
+243,Bhalani Nimesh Himmatbhai,employee,2
+244,Naitik Padsala,employee,2
+245,Myrna Lynne Alcala,employee,2
+246,Maricon Viza,employee,2
+247,Lai Mei T,employee,2
+248,Kamille Kassandra E. Abeleda,employee,2
+249,Judy Anne Baet,employee,2
+250,Jeremy Rowe,employee,NA
+251,Jeremy Bautista,employee,2
+252,Jennifer Esguerra Gajudo,employee,2
+253,Jay Balan,employee,2
+254,Izzah Lorraine Carandang Dela Cruz,employee,2
+255,Drive lah IT,employee,NA
+256,Drive lah Investor Relations,employee,NA
+257,Drive lah Customer team,employee,NA
+258,Gurjeet Singh Sodhi,employee,NA
+259,Gem Antonio,employee,2
+260,Gaurav Singhal,employee,2
+261,Drive lah/ Drive mate Finance,employee,NA
+262,Farjad Ali Khan,employee,2
+263,emmanuel Joseph Reyes Jacobo,employee,NA
+264,Edgar Edgar,employee,2
+265,Edelyn Reyes,employee,2
+266,Doris Eto,employee,2
+267,Dom Drive lah,employee,2
+268,Dirk-Jan Ter Horst,employee,2
+269,Dhevnesh,employee,2
+270,Ankish Mody,employee,2
+271,Aman Yadav,employee,2
+272,Aakash Chavda,employee,2
+273,Drive lah Admin,employee,NA
+274,Experian Australia Operations Pty Ltd,vendor,
+126,Rohde Smash Repair,vendor,
+175,Riezel Basilio Villanueva,employee,2
+285,"Anysphere, Inc.",vendor,
+306,ANGEL INVESTMENT TWICKENHAM,investor,3
+319,CreditLine NetBank BPAY,bank,3
+328,FIN-NOR HOLDINGS,investor,3
+344,Cosmic Galactic CommBank,other,3
+345,ZLR*Hills,other,3
+320,CASSIE CROWDER,customer,3
+321,POST GORDON,customer,3
+322,CROWDER C S,customer,3
+298,TRANSPORTFORNSW TAP SYDNEY AU,vendor,
+299,DiDiMobility Sydney AU,vendor,
+300,CURSOR (AI Powered IDE),vendor,
+301,OPENAI (ChatGPT Subscription),vendor,
+302,Intuit Quickbooks Sydney AU,vendor,
+303,SOURCEGRAPH,vendor,
+323,SPICA DELORINO,customer,3
+324,ANTHONY G PIKE,customer,3
+325,MEEGAN KING,customer,3
+304,IWG AUSTRALIA SYDNEY,vendor,
+305,SUPABASE,vendor,
+307,RIGHTWORKS,vendor,
+308,VERCEL INC,vendor,
+309,EDREAMS,vendor,
+310,Linkt Melbourne,vendor,
+311,RENDER.COM,vendor,
+312,NOTION LABS,vendor,
+313,WISPR,vendor,
+314,OMNITAS.DEV,vendor,
+315,CIRCLECI.COM,vendor,
+316,ELEVENLABS.IO,vendor,
+317,THE SPORTING GLOBE KING STREET,vendor,
+318,NEWS PTY LIMITED,vendor,
+326,IPPY*WOTSO HOLDINGS,vendor,
+327,Payrix*WOTSO HOLDINGS,vendor,
+329,UBER *TRIP,vendor,
+330,GLOBAL TRANSPORT,vendor,
+331,SQ *STOCK MARKET KITCHEN,vendor,
+332,INCANTO COFFEE,vendor,
+333,Caffeine Cartel,vendor,
+334,Trip.com,vendor,
+335,ANTHROPIC,vendor,
+336,APIFY,vendor,
+337,MICROSOFT,vendor,
+338,gotogate,vendor,
+339,DEFT INSURANCE,vendor,
+340,AUTOROLA,vendor,
+341,Refund Purchase,vendor,
+342,INSURET CLAIM,vendor,
+343,Taylors Pharmacy,vendor,
+346,POST SYDNEY GPO,vendor,
+347,LOVABLE,vendor,
+348,RUNWAY,vendor,

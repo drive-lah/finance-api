@@ -1,0 +1,325 @@
+"id","realm_id","rule_name","description","priority","is_active","is_and_rule","created_at","updated_at","created_by","bank_accounts"
+511,"9130354593661056",Quickbooks,Migrated from Australia CSV on 2025-06-30,60,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+296,"9130348479446096",Contractor Salary 10,,119,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,Wise
+274,"9130348479446096",Contractor Salary 2,,97,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,Wise
+275,"9130348479446096",Contractor Salary 3,,98,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,Wise
+276,"9130348479446096",Contractor Salary 4,,99,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,Wise
+277,"9130348479446096",Contractor Salary 5,,100,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,Wise
+278,"9130348479446096",Contractor Salary Aus,,101,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,Wise
+281,"9130348479446096",Wise Corporate Salary 2,,104,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,Wise
+282,"9130348479446096",Wise Corporate Salary 3,,105,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,Wise
+283,"9130348479446096",Wise Corporate Salary 4,,106,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,Wise
+284,"9130348479446096",Wise Corporate Salary 5,,107,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,Wise
+292,"9130348479446096",Wise Corporate Salary 7,,115,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,Wise
+293,"9130348479446096",Wise Corporate Salary 8,,116,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,Wise
+294,"9130348479446096",Wise Corporate Salary 9,,117,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,Wise
+279,"9130348479446096",Wise Transfer fee,,102,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,Wise
+512,"9130354593661056",Chatgpt,Migrated from Australia CSV on 2025-06-30,75,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+370,"9130348479446096",Wise HR Salary Payments - Paramjeet,Wise payment to HR employee Paramjeet (account 54),10,true,false,2025-06-25 01:51:37.061,2025-06-25 01:51:37.061,,
+513,"9130354593661056",(Suggested) Tax Payments Netbank Bpay as Tax Paid,Migrated from Australia CSV on 2025-06-30,60,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+514,"9130354593661056",(Suggested) Drive Lah Ventures Holding Pte as Due to Ventures,Migrated from Australia CSV on 2025-06-30,70,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+396,"9130348479446096",Vendor - OpenAI,,85,true,true,2025-06-25 02:36:39.447,2025-06-25 02:36:39.447,rule_manager,
+515,"9130354593661056",VSR,Migrated from Australia CSV on 2025-06-30,60,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+516,"9130354593661056",(Suggested) Mazda as Corporate-Other Corporate Expense,Migrated from Australia CSV on 2025-06-30,60,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+518,"9130354593661056",(Suggested) Pin Chargefox Pty Ltd as Operating Expenses-Corporate-Other Corporate Expense,Migrated from Australia CSV on 2025-06-30,60,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+519,"9130354593661056",(Suggested) Transfer from CommBank app VSR as Other Income,Migrated from Australia CSV on 2025-06-30,60,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+520,"9130354593661056",(Suggested) Rfnd OSeas Transaction Value Date- 15-09-2023 as Other Income,Migrated from Australia CSV on 2025-06-30,60,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+522,"9130354593661056",(Suggested) Transfer Benjamin Gotto Smith Commbank as Corporate - Legal and professional fees,Migrated from Australia CSV on 2025-06-30,60,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+426,"9130348479446096","1001 Incoming from 3001 Transfer",,1,true,true,2025-06-25 03:05:23.672,2025-06-25 03:05:23.672,fix_transfer_rules,"1001"
+429,"9130348479446096","1001 Outgoing to 3001 Transfer",,4,true,true,2025-06-25 03:05:23.672,2025-06-25 03:05:23.672,fix_transfer_rules,"1001"
+433,"9130348479446096","1001 Outgoing to Wise Transfer",,8,true,true,2025-06-25 03:05:23.672,2025-06-25 03:05:23.672,fix_transfer_rules,"1001"
+428,"9130348479446096","3001 Incoming from 1001 Transfer",,3,true,true,2025-06-25 03:05:23.672,2025-06-25 03:05:23.672,fix_transfer_rules,"3001"
+434,"9130348479446096","3001 Incoming from Stripe Transfer",,9,true,true,2025-06-25 03:05:23.672,2025-06-25 03:05:23.672,fix_transfer_rules,"3001"
+427,"9130348479446096","3001 Outgoing to 1001 Transfer",,2,true,true,2025-06-25 03:05:23.672,2025-06-25 03:05:23.672,fix_transfer_rules,"3001"
+431,"9130348479446096","3001 Outgoing to Wise Transfer",,6,true,true,2025-06-25 03:05:23.672,2025-06-25 03:05:23.672,fix_transfer_rules,"3001"
+523,"9130354593661056",(Suggested) Rightworks Www Rightwork Nh Us as Operating Expenses-Technology System Costs,Migrated from Australia CSV on 2025-06-30,75,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+432,"9130348479446096",Wise Incoming from 1001 Transfer,,7,true,true,2025-06-25 03:05:23.672,2025-06-25 03:05:23.672,fix_transfer_rules,Wise
+430,"9130348479446096",Wise Incoming from 3001 Transfer,,5,true,true,2025-06-25 03:05:23.672,2025-06-25 03:05:23.672,fix_transfer_rules,Wise
+435,"9130348479446096",Stripe Outgoing to 3001 Transfer,,10,true,true,2025-06-25 03:05:23.672,2025-06-25 03:05:23.672,fix_transfer_rules,stripe_sgd
+524,"9130354593661056",(Suggested) Sydney as Operating Expenses-Travel Expense,Migrated from Australia CSV on 2025-06-30,60,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+525,"9130354593661056",(Suggested) Starbucks as Meals and entertainment,Migrated from Australia CSV on 2025-06-30,60,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+517,"9130354593661056",(Suggested) Post Gordon Lpo Ns Au as Corporate-Other Corporate Expense,Migrated from Australia CSV on 2025-06-30,60,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+526,"9130354593661056",(Suggested) Return Drive Mate Melbourne Au as Refunds,Migrated from Australia CSV on 2025-06-30,60,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+527,"9130354593661056",(Suggested) Australia as Due from Singapore,Migrated from Australia CSV on 2025-06-30,70,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+494,"9130354593661056",apple.com,Migrated from Australia CSV on 2025-06-30,90,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+500,"9130354593661056",Adjust,Migrated from Australia CSV on 2025-06-30,70,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+230,"9130348479446096",ABWIN RMS,,53,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+207,"9130348479446096",Adobe,,30,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+223,"9130348479446096",Alpine RMS,,46,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+240,"9130348479446096",Arena detailing,,63,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+243,"9130348479446096",Atlassian,,66,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+189,"9130348479446096",AWS,,12,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+202,"9130348479446096",Birthdaybot,,25,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+206,"9130348479446096",Bitly,,29,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+501,"9130354593661056",Aussie Broadband,Migrated from Australia CSV on 2025-06-30,60,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+510,"9130354593661056",ATO,Migrated from Australia CSV on 2025-06-30,60,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+574,"9130348479446096",SG Cash - c_customer_deposits_received,Customer security deposits received,85,true,true,2025-07-02 10:16:14.870,2025-07-02 10:16:14.870,rule_creator_SG,stripe_sgd
+373,"9130348479446096",Wise HR Salary Payments - Paramjeet Paramjeet,Wise payment to HR employee Paramjeet Paramjeet (account 54),10,true,false,2025-06-25 02:04:06.809,2025-06-25 02:04:06.809,,
+374,"9130348479446096",Wise HR Salary Payments - Yash Mimani,Wise payment to HR employee Yash Mimani (account 54),10,true,false,2025-06-25 02:04:06.809,2025-06-25 02:04:06.809,,
+375,"9130348479446096",Wise HR Salary Payments - Thummanapally Tilak,Wise payment to HR employee Thummanapally Tilak (account 54),10,true,false,2025-06-25 02:04:06.809,2025-06-25 02:04:06.809,,
+376,"9130348479446096",Wise HR Salary Payments - Vigneshsuran So Dhevan,Wise payment to HR employee Vigneshsuran So Dhevan (account 54),10,true,false,2025-06-25 02:04:06.809,2025-06-25 02:04:06.809,,
+377,"9130348479446096",Wise HR Salary Payments - Padsala Naitik Babubhai,Wise payment to HR employee Padsala Naitik Babubhai (account 54),10,true,false,2025-06-25 02:04:06.809,2025-06-25 02:04:06.809,,
+378,"9130348479446096",Wise HR Salary Payments - Rahul Moitra,Wise payment to HR employee Rahul Moitra (account 54),10,true,false,2025-06-25 02:04:06.809,2025-06-25 02:04:06.809,,
+379,"9130348479446096",Wise HR Salary Payments - Bhalani Nimesh Himmatbhai,Wise payment to HR employee Bhalani Nimesh Himmatbhai (account 54),10,true,false,2025-06-25 02:04:06.809,2025-06-25 02:04:06.809,,
+380,"9130348479446096",Wise HR Salary Payments - Pankaj M Patidar,Wise payment to HR employee Pankaj M Patidar (account 54),10,true,false,2025-06-25 02:04:06.809,2025-06-25 02:04:06.809,,
+381,"9130348479446096",Wise HR Salary Payments - Aakash Aakash,Wise payment to HR employee Aakash Aakash (account 54),10,true,false,2025-06-25 02:04:06.809,2025-06-25 02:04:06.809,,
+382,"9130348479446096",Wise HR Salary Payments - SANJAY KUMAR,Wise payment to HR employee SANJAY KUMAR (account 54),10,true,false,2025-06-25 02:04:06.809,2025-06-25 02:04:06.809,,
+383,"9130348479446096",Wise HR Salary Payments - Joel Michael Wecker,Wise payment to HR employee Joel Michael Wecker (account 54),10,true,false,2025-06-25 02:04:06.809,2025-06-25 02:04:06.809,,
+384,"9130348479446096",Wise HR Salary Payments - Geraldine Austin,Wise payment to HR employee Geraldine Austin (account 54),10,true,false,2025-06-25 02:04:06.809,2025-06-25 02:04:06.809,,
+385,"9130348479446096",Wise HR Salary Payments - Muhammad Uzair Tanveer,Wise payment to HR employee Muhammad Uzair Tanveer (account 54),10,true,false,2025-06-25 02:04:06.809,2025-06-25 02:04:06.809,,
+386,"9130348479446096",Wise HR Salary Payments - Jacob Hyde,Wise payment to HR employee Jacob Hyde (account 54),10,true,false,2025-06-25 02:04:06.809,2025-06-25 02:04:06.809,,
+387,"9130348479446096",Wise HR Salary Payments - Farhan Chowdhury,Wise payment to HR employee Farhan Chowdhury (account 54),10,true,false,2025-06-25 02:04:06.809,2025-06-25 02:04:06.809,,
+388,"9130348479446096",Wise HR Salary Payments - Aman Yadav,Wise payment to HR employee Aman Yadav (account 54),10,true,false,2025-06-25 02:04:06.809,2025-06-25 02:04:06.809,,
+390,"9130348479446096",Tech Vendor - Paddle,Payments to Paddle for technology services (account 17),10,true,false,2025-06-25 02:04:06.809,2025-06-25 02:04:06.809,,
+391,"9130348479446096",Tech Vendor - Upwork,Payments to Upwork for technology services (account 17),10,true,false,2025-06-25 02:04:06.809,2025-06-25 02:04:06.809,,
+392,"9130348479446096",Tech Vendor - SafetyCulture,Payments to SafetyCulture for technology services (account 17),10,true,false,2025-06-25 02:04:06.809,2025-06-25 02:04:06.809,,
+393,"9130348479446096",Tech Vendor - OpenAI,Payments to OpenAI for technology services (account 17),10,true,false,2025-06-25 02:04:06.809,2025-06-25 02:04:06.809,,
+397,"9130348479446096",Vendor - Paddle,,85,true,true,2025-06-25 02:36:39.821,2025-06-25 02:36:39.821,rule_manager,
+593,"9130351639845226",DBS USD Outgoing to DBS SGD Transfer,DBS USD outgoing transfers to DBS SGD - awaits pairing,5,true,true,2025-07-04 02:08:17.324,2025-07-04 02:08:17.324,transfer_update_script,DBS_USD_Holding
+594,"9130351639845226",DBS SGD Incoming from DBS USD Transfer,DBS SGD incoming transfers from DBS USD - awaits pairing,6,true,true,2025-07-04 02:08:17.324,2025-07-04 02:08:17.324,transfer_update_script,DBS_SGD_Holding
+608,"9130348479446096",Wise Marekting new customers Auto,,191,true,false,2025-07-04 11:33:08.187,2025-07-04 11:33:08.187,wise_rule_creator,Wise
+287,"9130348479446096",Accounting expense,,110,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+285,"9130348479446096",Aircall,,108,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+269,"9130348479446096",Apex debt recovery,,92,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+265,"9130348479446096",Battery Company,,88,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+270,"9130348479446096",Carousell,,93,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+260,"9130348479446096",Cash rebate,,83,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+250,"9130348479446096",Cheng Auto Body works,,73,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+266,"9130348479446096",City Auto,,89,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+256,"9130348479446096",CPF,,79,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+261,"9130348479446096",CYCLE & CARRIA RMS,,84,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+316,"9130348479446096",Digital Matter,,139,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+251,"9130348479446096",Elite car,,74,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+304,"9130348479446096",Focussed claims,,127,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+257,"9130348479446096",Google suite,,80,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+308,"9130348479446096",GPS Malaysia,,131,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+309,"9130348479446096",Gupshup,,132,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+595,"9130348479446096",Wise Legal Auto,,178,true,false,2025-07-04 11:33:01.440,2025-07-04 11:33:01.440,wise_rule_creator,Wise
+561,"9130348479446096",SG Accrual - a_trip_revenue_earned,Trip revenue recognition when trip ends,85,true,true,2025-07-02 10:15:08.521,2025-07-02 10:15:08.521,rule_creator_SG,accrual_sg
+575,"9130348479446096",SG Cash - c_incidentals_invoice_paid,Incidentals invoice payments received,85,true,true,2025-07-02 10:16:15.318,2025-07-02 10:16:15.318,rule_creator_SG,stripe_sgd
+394,"9130348479446096",Vendor - Retool,,85,true,true,2025-06-25 02:36:38.158,2025-06-25 02:36:38.158,rule_manager,
+398,"9130348479446096",Vendor - Upwork,,85,true,true,2025-06-25 02:36:40.190,2025-06-25 02:36:40.190,rule_manager,
+227,"9130348479446096",Other payouts by customers,,50,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,"1001"
+351,"9130348479446096",Ana salary,,174,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+352,"9130348479446096",Annabella,,175,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+353,"9130348479446096",Antron,,176,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+354,"9130348479446096",Ashley RMS Host,,177,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+183,"9130348479446096",Bank charges,,6,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,"1001,3001"
+195,"9130348479446096",Calendly,,18,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+200,"9130348479446096",Canva,,23,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+335,"9130348479446096",Caretaker,,158,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+336,"9130348479446096",Caretaker1,,159,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+337,"9130348479446096",Caretaker2,,160,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+338,"9130348479446096",caretaker3,,161,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+241,"9130348479446096",CDG RMS,,64,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+242,"9130348479446096",CHENG CHUAN,,65,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+188,"9130348479446096",Circle CI,,11,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+323,"9130348479446096",Contractor,,146,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+472,"9130348479446096",AWS Auto-Rule,Auto-categorize AWS payments to Operating Expenses:Technology System Cost,90,true,true,2025-06-30 01:50:46.851,2025-06-30 01:50:46.851,rule_creator_SG,
+596,"9130348479446096",Wise Due from fleet Auto,,179,true,false,2025-07-04 11:33:01.878,2025-07-04 11:33:01.878,wise_rule_creator,Wise
+562,"9130348479446096",SG Accrual - a_incidentals_invoiced,Accrual for damage/toll invoices created,85,true,true,2025-07-02 10:15:08.960,2025-07-02 10:15:08.960,rule_creator_SG,accrual_sg
+576,"9130348479446096",SG Cash - c_subscription_invoice_paid,Subscription invoice payments received,85,true,true,2025-07-02 10:16:15.861,2025-07-02 10:16:15.861,rule_creator_SG,stripe_sgd
+334,"9130348479446096",DM,,157,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+198,"9130348479446096",Docsend,,21,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+197,"9130348479446096",Docusign,,20,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+342,"9130348479446096",Drive mate 1,,165,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+343,"9130348479446096",Drive mate 2,,166,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+232,"9130348479446096",Dropbox,,55,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+222,"9130348479446096",Eurokars RMS,,45,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+185,"9130348479446096",Facebook as Operating Expenses-Marketing - Advertising (new customers),,8,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+212,"9130348479446096",Finger Print,,35,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+341,"9130348479446096",Fleet Dr,,164,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+247,"9130348479446096",General debit card purchases,,70,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+191,"9130348479446096",Github,,14,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+186,"9130348479446096",GoDaddy.com as Operating Expenses-Technology System Cost,,9,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+180,"9130348479446096",GOOGLE ADS,,3,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+229,"9130348479446096",Google cloud,,52,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,"1001,3001"
+215,"9130348479446096",Google play as Tech operations,,38,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+181,"9130348479446096",Google Storage as Tech operations,,4,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+210,"9130348479446096",Hellosign,,33,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+239,"9130348479446096",HEROKU,,62,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+201,"9130348479446096",Hotjar,,24,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+348,"9130348479446096",Hubspot,,171,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+328,"9130348479446096",Human Resource,,151,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+332,"9130348479446096",Human resource1,,155,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+262,"9130348479446096",IBG GIRO,,85,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+305,"9130348479446096",Illion,,128,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+310,"9130348479446096",Income insurance,,133,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+190,"9130348479446096",Intercom,,13,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+220,"9130348479446096",Intuit as Operating Expenses-Corporate - Bookkeeping Fees,,43,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+317,"9130348479446096",Jared,,140,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+315,"9130348479446096",Jay Balan,,138,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+267,"9130348479446096",Jay Incentive,,90,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+249,"9130348479446096",Jay Salary,,72,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+314,"9130348479446096",Journey Horizon,,137,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+182,"9130348479446096",Justco,,5,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+264,"9130348479446096",Kaolin,,87,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+224,"9130348479446096",Komoco RMS,,47,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+318,"9130348479446096",KORE wireless,,141,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+298,"9130348479446096",Legal Fees,,121,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+272,"9130348479446096",LIBERTY WIRELE,,95,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+297,"9130348479446096",Liberty wireless,,120,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+258,"9130348479446096",Loom,,81,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+204,"9130348479446096",Lucidchart,,27,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+289,"9130348479446096",Metabase,,112,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+271,"9130348479446096",Microsoft,,94,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+235,"9130348479446096",Midjourney,,58,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+234,"9130348479446096",Miro,,57,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+255,"9130348479446096",Misc earnings,,78,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+286,"9130348479446096",Moengage,,109,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+346,"9130348479446096",Monday,,169,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+347,"9130348479446096",Monday.com,,170,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+246,"9130348479446096",MURF.AI,,69,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+208,"9130348479446096",Notion,,31,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+209,"9130348479446096",Notionforms,,32,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+300,"9130348479446096",NTUC,,123,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+193,"9130348479446096",Octopods,,16,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+273,"9130348479446096",Contractor salary 1,,96,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,Wise
+306,"9130348479446096",Money received from Australia,,0,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,Wise
+236,"9130348479446096",ONELINK,,59,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+329,"9130348479446096",Onfido,,152,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+238,"9130348479446096",OVERFLOW,,61,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+205,"9130348479446096",Papertrail,,28,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+259,"9130348479446096",Parking.sg,,82,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+324,"9130348479446096",PH Healthcare,,147,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+268,"9130348479446096",PHOTO,,91,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+263,"9130348479446096",Photograpger,,86,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+225,"9130348479446096",Photographer,,48,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+319,"9130348479446096",Photography,,142,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+320,"9130348479446096",Photography1,,143,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+321,"9130348479446096",Photography2,,144,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+331,"9130348479446096",Photography3,,154,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+313,"9130348479446096",Randolf,,136,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+291,"9130348479446096",Recruitee,,114,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+248,"9130348479446096",Refunds on card,,71,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+231,"9130348479446096",RMS,,54,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+322,"9130348479446096",RMS1,,145,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+326,"9130348479446096",RMS2,,149,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+327,"9130348479446096",RMS3,,150,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+330,"9130348479446096",RMS4,,153,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+219,"9130348479446096",RMS LOK NGEE,,42,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+312,"9130348479446096",Sandy,,135,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+245,"9130348479446096",Sarala salary,,68,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+290,"9130348479446096",Semrush,,113,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+216,"9130348479446096",Sentry,,39,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+253,"9130348479446096",SEON,,76,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+307,"9130348479446096",SEON 2,,130,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+187,"9130348479446096",Sharetribe as Operating Expenses-Technology System Cost,,10,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+302,"9130348479446096",Sharim,,125,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+199,"9130348479446096",Slack,,22,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+597,"9130348479446096",Wise Due from Australia Auto,,180,true,false,2025-07-04 11:33:02.471,2025-07-04 11:33:02.471,wise_rule_creator,Wise
+325,"9130348479446096",(Suggested) hansdhika winata as Other operating expenses,,148,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+288,"9130348479446096",(Suggested) Roobykon Software O√ú as Technology System Cost,,111,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+333,"9130348479446096",(Suggested) Sam Chan as Due from Fleet,,156,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+339,"9130348479446096",(Suggested) Timothys as Due from Fleet,,162,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+340,"9130348479446096",(Suggested) vighnesh r vighnesh as Operating Expenses-Human Resource - Salary Expense,,163,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+192,"9130348479446096",Surveymonkey,,15,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+237,"9130348479446096",TECHCRUNCH,,60,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+563,"9130348479446096",SG Accrual - a_subscription_invoiced,Accrual for subscription invoices created,85,true,true,2025-07-02 10:15:09.548,2025-07-02 10:15:09.548,rule_creator_SG,accrual_sg
+211,"9130348479446096",Timetastic,,34,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+299,"9130348479446096",Tokio,,122,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+303,"9130348479446096",Tokio 2,,126,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+244,"9130348479446096",Towing,,67,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+295,"9130348479446096",Towing expenses SG,,118,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+301,"9130348479446096",Tow Lah,,124,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+311,"9130348479446096",Trixie,,134,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+214,"9130348479446096",Trust Pilot,,37,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+179,"9130348479446096",Twilio,,2,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+203,"9130348479446096",type form,,26,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+217,"9130348479446096",Uptime,,40,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+228,"9130348479446096",Ventures payments,,51,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,"1001,3001"
+213,"9130348479446096",Voucherify,,36,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+254,"9130348479446096",Washngo,,77,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+345,"9130348479446096",Whale,,168,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+577,"9130348479446096",SG Cash - c_trip_refunds,Trip refunds issued to customers,85,true,true,2025-07-02 10:16:16.229,2025-07-02 10:16:16.229,rule_creator_SG,stripe_sgd
+218,"9130348479446096",Wise transfer,,41,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,"1001,3001"
+194,"9130348479446096",Xero,,17,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+252,"9130348479446096",YS Auto works,,75,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+196,"9130348479446096",Zapier,,19,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+280,"9130348479446096",Wise Corporate Salary,,103,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,Wise
+184,"9130348479446096",Zendesk,,7,true,true,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+233,"9130348479446096",Zoom,,56,true,false,2025-06-22 12:29:52.091,2025-06-22 12:29:52.091,csv_migration,
+598,"9130348479446096",Wise Marketing asset creation Auto,,181,true,false,2025-07-04 11:33:03.093,2025-07-04 11:33:03.093,wise_rule_creator,Wise
+226,"9130348479446096",Fleet earnings,Fleet earnings from Stripe to OCBC 1001 - single-sided expense,0,true,true,2025-06-22 12:29:52.091,2025-06-24 02:53:23.728,csv_migration,"1001"
+564,"9130348479446096",SG Accrual - a_host_trip_earnings_accrual,Host trip earnings accrual,85,true,true,2025-07-02 10:15:09.958,2025-07-02 10:15:09.958,rule_creator_SG,accrual_sg
+578,"9130348479446096",SG Cash - c_deposit_refunds,Customer deposit refunds issued,85,true,true,2025-07-02 10:16:16.670,2025-07-02 10:16:16.670,rule_creator_SG,stripe_sgd
+395,"9130348479446096",Vendor - Recruitee,,85,true,true,2025-06-25 02:36:39.033,2025-06-25 02:36:39.033,rule_manager,
+399,"9130348479446096",Vendor - SafetyCulture,,85,true,true,2025-06-25 02:36:40.550,2025-06-25 02:36:40.550,rule_manager,
+599,"9130348479446096",Wise Contractor salary Auto,,182,true,false,2025-07-04 11:33:03.538,2025-07-04 11:33:03.538,wise_rule_creator,Wise
+565,"9130348479446096",SG Accrual - a_host_incidentals_damage,Host damage payout accrual,85,true,true,2025-07-02 10:15:10.376,2025-07-02 10:15:10.376,rule_creator_SG,accrual_sg
+579,"9130348479446096",SG Cash - c_subscription_refunds,Subscription refunds issued,85,true,true,2025-07-02 10:16:17.021,2025-07-02 10:16:17.021,rule_creator_SG,stripe_sgd
+600,"9130348479446096",Wise Director salary Auto,,183,true,false,2025-07-04 11:33:04.131,2025-07-04 11:33:04.131,wise_rule_creator,Wise
+566,"9130348479446096",SG Accrual - a_host_incidentals_fuel,Host fuel reimbursement accrual,85,true,true,2025-07-02 10:15:10.919,2025-07-02 10:15:10.919,rule_creator_SG,accrual_sg
+580,"9130348479446096",SG Cash - c_invoice_payment_refunds,Invoice payment refunds issued,85,true,true,2025-07-02 10:16:17.420,2025-07-02 10:16:17.420,rule_creator_SG,stripe_sgd
+601,"9130348479446096",Wise Human resource salray expense Auto,,184,true,false,2025-07-04 11:33:04.617,2025-07-04 11:33:04.617,wise_rule_creator,Wise
+567,"9130348479446096",SG Accrual - a_host_incidentals_excess_mileage,Host excess mileage accrual,85,true,true,2025-07-02 10:15:11.339,2025-07-02 10:15:11.339,rule_creator_SG,accrual_sg
+581,"9130348479446096",SG Cash - c_host_transfers,Stripe transfers to hosts,85,true,true,2025-07-02 10:16:17.858,2025-07-02 10:16:17.858,rule_creator_SG,stripe_sgd
+602,"9130348479446096",Wise Insurance Auto,,185,true,false,2025-07-04 11:33:05.192,2025-07-04 11:33:05.192,wise_rule_creator,Wise
+568,"9130348479446096",SG Accrual - a_host_misc_payout,Host miscellaneous payout accrual,85,true,true,2025-07-02 10:15:11.737,2025-07-02 10:15:11.737,rule_creator_SG,accrual_sg
+582,"9130348479446096",SG Cash - c_stripe_fees_paid,Stripe processing fees paid,85,true,true,2025-07-02 10:16:18.238,2025-07-02 10:16:18.238,rule_creator_SG,stripe_sgd
+505,"9130354593661056",Digital Matter,Migrated from Australia CSV on 2025-06-30,60,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+603,"9130348479446096",Wise Operating expense - towing Auto,,186,true,false,2025-07-04 11:33:05.646,2025-07-04 11:33:05.646,wise_rule_creator,Wise
+569,"9130348479446096",SG Accrual - a_host_flexplus_payout,Host Flex+ payout accrual,85,true,true,2025-07-02 10:15:12.225,2025-07-02 10:15:12.225,rule_creator_SG,accrual_sg
+583,"9130348479446096",SG Cash - c_disputes,Chargeback and dispute costs,85,true,true,2025-07-02 10:16:18.604,2025-07-02 10:16:18.604,rule_creator_SG,stripe_sgd
+604,"9130348479446096",Wise Operating expense - misc Auto,,187,true,false,2025-07-04 11:33:06.137,2025-07-04 11:33:06.137,wise_rule_creator,Wise
+492,"9130354593661056",(Suggested) Google as Due from Singapore,Migrated from Australia CSV on 2025-06-30,100,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+493,"9130354593661056",Drive mate deposit,Due to Fleet: 158824 amounts <=1000 (after Rule 498) OR any 507141 amounts,2,true,false,2025-06-30 06:16:27.564,2025-07-01 23:26:32.492,australia_csv_migrator,CBA
+570,"9130348479446096",SG Accrual - a_host_superhost_payout,Host superhost payout accrual,85,true,true,2025-07-02 10:15:12.641,2025-07-02 10:15:12.641,rule_creator_SG,accrual_sg
+584,"9130348479446096",SG Cash - c_stripe_payouts,Stripe payouts to main bank account,85,true,true,2025-07-02 10:16:19.082,2025-07-02 10:16:19.082,rule_creator_SG,stripe_sgd
+605,"9130348479446096",Wise Bookkeeping Auto,,188,true,false,2025-07-04 11:33:06.702,2025-07-04 11:33:06.702,wise_rule_creator,Wise
+495,"9130354593661056",(Suggested) 2Checkout as Operating Expenses-Technology System Costs,Migrated from Australia CSV on 2025-06-30,75,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+521,"9130354593661056",Wise Australia,Migrated from Australia CSV on 2025-06-30,70,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+496,"9130354593661056",(Suggested) Facebook as Due from Singapore,Migrated from Australia CSV on 2025-06-30,100,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+497,"9130354593661056",Insuret,Migrated from Australia CSV on 2025-06-30,60,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+499,"9130354593661056",Linkt as Operating Expenses,Migrated from Australia CSV on 2025-06-30,60,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+502,"9130354593661056",Bank fees international,Migrated from Australia CSV on 2025-06-30,60,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+503,"9130354593661056",Didi,Migrated from Australia CSV on 2025-06-30,60,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+504,"9130354593661056",International transaction fee,Migrated from Australia CSV on 2025-06-30,60,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+506,"9130354593661056",Transport NSW,Migrated from Australia CSV on 2025-06-30,60,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+507,"9130354593661056",Superblog,Migrated from Australia CSV on 2025-06-30,75,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+508,"9130354593661056",Stonly,Migrated from Australia CSV on 2025-06-30,75,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+509,"9130354593661056",Techcrunch,Migrated from Australia CSV on 2025-06-30,75,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.166,australia_csv_migrator,CBA
+571,"9130348479446096",SG Accrual - a_host_sticker_payout,Host sticker payout accrual,85,true,true,2025-07-02 10:15:13.046,2025-07-02 10:15:13.046,rule_creator_SG,accrual_sg
+585,"9130351639845226",OCBC transfer,Ventures Holding rule: OCBC transfer,50,true,true,2025-07-04 01:03:24.328,2025-07-04 01:03:24.328,ventures_holding_migration,
+588,"9130351639845226",Australia transfer,Ventures Holding rule: Australia transfer,51,true,true,2025-07-04 01:03:24.328,2025-07-04 01:03:24.328,ventures_holding_migration,
+606,"9130348479446096",Wise Tech system cost Auto,,189,true,false,2025-07-04 11:33:07.191,2025-07-04 11:33:07.191,wise_rule_creator,Wise
+572,"9130348479446096",SG Cash - c_trip_cash_collected,Trip booking cash collected via Stripe,85,true,true,2025-07-02 10:16:14.075,2025-07-02 10:16:14.075,rule_creator_SG,stripe_sgd
+592,"9130351639845226",Transfer Agent Charges,Bank transfer agent charges and advice fees,20,true,false,2025-07-04 01:51:31.504,2025-07-04 01:51:31.504,rule_update_script,
+590,"9130351639845226",OCBC Bank Charges,OCBC transactions containing charges,21,true,true,2025-07-04 01:51:31.504,2025-07-04 01:51:31.504,rule_update_script,
+591,"9130351639845226",Australia Bank Charges,Australia transactions containing charges,22,true,true,2025-07-04 01:51:31.504,2025-07-04 01:51:31.504,rule_update_script,
+545,"9130354593661056",AU Accrual - A_host_trip_earnings_accrual,"Auto-create journal entry for host trip earnings accrual: Debit expenses, Credit payables",87,true,true,2025-06-30 07:34:52.942,2025-06-30 07:34:52.942,rule_creator_AU,accrual_au
+549,"9130354593661056",AU Accrual - a_subscription_invoiced,Auto-journal entry for a_subscription_invoiced: Record subscription invoices as receivables,90,true,true,2025-06-30 07:54:16.748,2025-06-30 07:54:16.748,rule_creator_AU,accrual_au
+553,"9130354593661056",AU Accrual - a_host_incidentals_excess_mileage,Auto-journal entry for a_host_incidentals_excess_mileage: Accrue excess mileage compensation to hosts,88,true,true,2025-06-30 07:54:18.315,2025-06-30 07:54:18.315,rule_creator_AU,accrual_au
+557,"9130354593661056",AU Accrual - a_host_flexplus_payout,Auto-journal entry for a_host_flexplus_payout: Accrue FlexPlus program payouts to hosts,85,true,true,2025-06-30 07:54:19.937,2025-06-30 07:54:19.937,rule_creator_AU,accrual_au
+546,"9130354593661056",AU Accrual - a_trip_revenue_earned,Auto-journal entry for a_trip_revenue_earned: Revenue recognition for completed trips,95,true,true,2025-06-30 07:54:15.524,2025-06-30 07:54:15.524,rule_creator_AU,accrual_au
+547,"9130354593661056",AU Accrual - a_trip_distance_invoiced,Auto-journal entry for a_trip_distance_invoiced: Record distance fee invoices as receivables,90,true,true,2025-06-30 07:54:15.940,2025-06-30 07:54:15.940,rule_creator_AU,accrual_au
+551,"9130354593661056",AU Accrual - a_host_incidentals_damage,Auto-journal entry for a_host_incidentals_damage: Accrue damage compensation to hosts,88,true,true,2025-06-30 07:54:17.532,2025-06-30 07:54:17.532,rule_creator_AU,accrual_au
+555,"9130354593661056",AU Accrual - a_host_misc_payout,Auto-journal entry for a_host_misc_payout: Accrue miscellaneous payments to hosts,85,true,true,2025-06-30 07:54:19.139,2025-06-30 07:54:19.139,rule_creator_AU,accrual_au
+559,"9130354593661056",AU Accrual - a_host_subscription_collected,Auto-journal entry for a_host_subscription_collected: Record subscription fees collected from hosts,87,true,true,2025-06-30 07:54:20.745,2025-06-30 07:54:20.745,rule_creator_AU,accrual_au
+550,"9130354593661056",AU Accrual - a_host_incidentals_cleanliness,Auto-journal entry for a_host_incidentals_cleanliness: Accrue cleanliness reimbursements to hosts,88,true,true,2025-06-30 07:54:17.153,2025-06-30 07:54:17.153,rule_creator_AU,accrual_au
+554,"9130354593661056",AU Accrual - a_host_incidentals_tolls,Auto-journal entry for a_host_incidentals_tolls: Accrue toll reimbursements to hosts,88,true,true,2025-06-30 07:54:18.718,2025-06-30 07:54:18.718,rule_creator_AU,accrual_au
+558,"9130354593661056",AU Accrual - a_host_fuel_charge_collected,Auto-journal entry for a_host_fuel_charge_collected: Record fuel charges collected from hosts,87,true,true,2025-06-30 07:54:20.352,2025-06-30 07:54:20.352,rule_creator_AU,accrual_au
+548,"9130354593661056",AU Accrual - a_incidentals_invoiced,"Auto-journal entry for a_incidentals_invoiced: Record incidental charges (damage, tolls) as receivables",90,true,true,2025-06-30 07:54:16.343,2025-06-30 07:54:16.343,rule_creator_AU,accrual_au
+552,"9130354593661056",AU Accrual - a_host_incidentals_fuel,Auto-journal entry for a_host_incidentals_fuel: Accrue fuel reimbursements to hosts,88,true,true,2025-06-30 07:54:17.914,2025-06-30 07:54:17.914,rule_creator_AU,accrual_au
+556,"9130354593661056",AU Accrual - a_host_referral_payout,Auto-journal entry for a_host_referral_payout: Accrue referral bonuses to hosts,85,true,true,2025-06-30 07:54:19.541,2025-06-30 07:54:19.541,rule_creator_AU,accrual_au
+560,"9130354593661056",AU Accrual - a_host_misc_charge_collected,Auto-journal entry for a_host_misc_charge_collected: Record miscellaneous charges collected from hosts,85,true,true,2025-06-30 07:54:21.125,2025-06-30 07:54:21.125,rule_creator_AU,accrual_au
+528,"9130354593661056",AU Stripe Cash - c_stripe_fees_paid,Auto-categorize c_stripe_fees_paid transactions to Stripe - Processing Fees,88,true,true,2025-06-30 07:11:25.579,2025-06-30 07:11:25.579,rule_creator_AU,stripe_aud
+531,"9130354593661056",AU Stripe Cash - c_verification_charge_received,Auto-categorize c_verification_charge_received transactions to Stripe - Verification Deposits,88,true,true,2025-06-30 07:11:26.666,2025-06-30 07:11:26.666,rule_creator_AU,stripe_aud
+534,"9130354593661056",AU Stripe Cash - c_trip_distance_cash_collected,Auto-categorize c_trip_distance_cash_collected transactions to Stripe - Trip Revenue,88,true,true,2025-06-30 07:11:27.762,2025-06-30 07:11:27.762,rule_creator_AU,stripe_aud
+537,"9130354593661056",AU Stripe Cash - c_incidentals_invoice_paid,Auto-categorize c_incidentals_invoice_paid transactions to Stripe - Incidentals Revenue,88,true,true,2025-06-30 07:11:28.807,2025-06-30 07:11:28.807,rule_creator_AU,stripe_aud
+540,"9130354593661056",AU Stripe Cash - c_subscription_refunds,Auto-categorize c_subscription_refunds transactions to Stripe - Subscription Refunds,88,true,true,2025-06-30 07:11:29.803,2025-06-30 07:11:29.803,rule_creator_AU,stripe_aud
+543,"9130354593661056",AU Stripe Cash - c_disputes,Auto-categorize c_disputes transactions to Stripe - Chargeback Expenses,88,true,true,2025-06-30 07:11:30.862,2025-06-30 07:11:30.862,rule_creator_AU,stripe_aud
+529,"9130354593661056",AU Stripe Cash - c_customer_deposits_received,Auto-categorize c_customer_deposits_received transactions to Stripe - Customer Deposits,89,true,true,2025-06-30 07:11:25.952,2025-06-30 07:11:25.952,rule_creator_AU,stripe_aud
+532,"9130354593661056",AU Stripe Cash - c_verification_refunds,Auto-categorize c_verification_refunds transactions to Stripe - Verification Deposits,89,true,true,2025-06-30 07:11:27.031,2025-06-30 07:11:27.031,rule_creator_AU,stripe_aud
+535,"9130354593661056",AU Stripe Cash - c_trip_distance_invoice_paid,Auto-categorize c_trip_distance_invoice_paid transactions to Stripe - Trip Revenue,89,true,true,2025-06-30 07:11:28.120,2025-06-30 07:11:28.120,rule_creator_AU,stripe_aud
+538,"9130354593661056",AU Stripe Cash - c_fuel_refunds,Auto-categorize c_fuel_refunds transactions to Stripe - Fuel Refunds,89,true,true,2025-06-30 07:11:29.115,2025-06-30 07:11:29.115,rule_creator_AU,stripe_aud
+541,"9130354593661056",AU Stripe Cash - c_invoice_payment_refunds,Auto-categorize c_invoice_payment_refunds transactions to Stripe - Invoice Refunds,89,true,true,2025-06-30 07:11:30.146,2025-06-30 07:11:30.146,rule_creator_AU,stripe_aud
+530,"9130354593661056",AU Stripe Cash - c_deposit_refunds,Auto-categorize c_deposit_refunds transactions to Stripe - Customer Deposits,90,true,true,2025-06-30 07:11:26.306,2025-06-30 07:11:26.306,rule_creator_AU,stripe_aud
+533,"9130354593661056",AU Stripe Cash - c_trip_cash_collected,Auto-categorize c_trip_cash_collected transactions to Stripe - Trip Revenue,90,true,true,2025-06-30 07:11:27.411,2025-06-30 07:11:27.411,rule_creator_AU,stripe_aud
+536,"9130354593661056",AU Stripe Cash - c_subscription_invoice_paid,Auto-categorize c_subscription_invoice_paid transactions to Stripe - Subscription Revenue,90,true,true,2025-06-30 07:11:28.478,2025-06-30 07:11:28.478,rule_creator_AU,stripe_aud
+539,"9130354593661056",AU Stripe Cash - c_trip_refunds,Auto-categorize c_trip_refunds transactions to Stripe - Trip Refunds,90,true,true,2025-06-30 07:11:29.471,2025-06-30 07:11:29.471,rule_creator_AU,stripe_aud
+542,"9130354593661056",AU Stripe Cash - c_host_transfers,Auto-categorize c_host_transfers transactions to Stripe - Host Payables,90,true,true,2025-06-30 07:11:30.515,2025-06-30 07:11:30.515,rule_creator_AU,stripe_aud
+491,"9130354593661056",AU Stripe Payouts - C_stripe_payouts,Rule for Australia Stripe payout transactions from c_stripe_payouts view,85,true,true,2025-06-30 04:55:17.945,2025-06-30 04:55:17.945,rule_creator_AU,stripe_aud
+607,"9130348479446096",Wise Operating expense - damage Auto,,190,true,false,2025-07-04 11:33:07.761,2025-07-04 11:33:07.761,wise_rule_creator,Wise
+498,"9130354593661056",Deposit transfer from stripe to bank,Transfer pending: Large amounts (>1000 AUD) from 158824 Drivemate,1,true,true,2025-06-30 06:16:27.564,2025-07-01 23:26:32.492,australia_csv_migrator,CBA
+573,"9130348479446096",SG Cash - c_trip_fuel_cash_collected,Fuel charges collected automatically,85,true,true,2025-07-02 10:16:14.498,2025-07-02 10:16:14.498,rule_creator_SG,stripe_sgd

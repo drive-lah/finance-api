@@ -1,0 +1,594 @@
+"id","realm_id","account_name","qb_account_id","account_type","is_active","created_at","updated_at"
+31,"9130348479446096",Accounts Payable,"61",Other Current Liability,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+32,"9130348479446096",Accrued Expense,"140",Other Current Liability,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+38,"9130348479446096",Accumulated Depreciation - Intangible asset,"191",Other Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+48,"9130348479446096",Amount Owing by Holding Company,"165",Other Current Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+33,"9130348479446096",Amount Owing to Third Party,"166",Other Current Liability,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+59,"9130348479446096",Billable Expense Income,"120",Income,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+34,"9130348479446096",Deferred Income,"139",Other Current Liability,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+42,"9130348479446096",Depreciation - Branding,"179",Other Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+43,"9130348479446096",Depreciation - Hardware,"154",Other Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+44,"9130348479446096",Depreciation-Equipment,"142",Other Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+60,"9130348479446096",Device subscriptions,"215",Income,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+50,"9130348479446096",Due From Ventures,"178",Other Current Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+45,"9130348479446096",Exchange Gain or Loss,"185",Other Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+61,"9130348479446096",Flex+,"214",Income,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+245,"9130354593661056",Billable Expense Income,"42",Income,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+62,"9130348479446096",Gross Revenue-Car Rental Usage,"5",Income,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+51,"9130348479446096",Inventory Asset,"12",Other Current Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+52,"9130348479446096",Loans to Others,"36",Other Current Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+46,"9130348479446096",Non Cash Expenses,"123",Other Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+53,"9130348479446096",Other current assets,"164",Other Current Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+49,"9130348479446096",Other current assets:Currency Exchange,"216",Other Current Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+35,"9130348479446096",Payable to Others,"143",Other Current Liability,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+54,"9130348479446096",Prepaid Expense,"135",Other Current Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+55,"9130348479446096",Prepaid Rental,"182",Other Current Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+56,"9130348479446096",Prepayment,"167",Other Current Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+47,"9130348479446096",Reconciliation Discrepancies,"39",Other Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+36,"9130348479446096",Security Deposit Refundable,"138",Other Current Liability,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+37,"9130348479446096",Suspense,"240",Other Current Liability,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+57,"9130348479446096",Uncategorised Asset,"3",Other Current Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+58,"9130348479446096",Undeposited Funds,"137",Other Current Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+335,"9130351639845226",Accounts Payable,"62",Other Current Liability,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+336,"9130351639845226",Accruals,"63",Other Current Liability,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+337,"9130351639845226",Amount owing from Shareholders,"112",Other Current Asset,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+338,"9130351639845226",Amount owing to Subsidiary,"108",Other Current Liability,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+340,"9130351639845226",Billable Expense Income ( 7 ),"7",Income,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+341,"9130351639845226",Cash and cash equivalents,"1150040005",Bank,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+342,"9130351639845226",Computer Software,"75",Other Asset,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+343,"9130351639845226",Cost of Overhead Related to Service,"20",Cost of Goods Sold,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+344,"9130351639845226",Cost of Overhead Related to Service:Market-Asset Creation,"80",Cost of Goods Sold,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+345,"9130351639845226",Cost of Overhead Related to Service:Marketing - Advertising (retargeting),"21",Cost of Goods Sold,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+346,"9130351639845226",Cost of Overhead Related to Service:Marketing - Discount & Promotions,"22",Cost of Goods Sold,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+347,"9130351639845226",Cost of Overhead Related to Service:Other Operating Expense,"23",Cost of Goods Sold,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+348,"9130351639845226",Cost of Overhead Related to Service:Salary Expense - Basic Ops Staff,"94",Cost of Goods Sold,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+349,"9130351639845226",Cost of Overhead Related to Service:Salary Expense - OPS Contractor (Bonus),"93",Cost of Goods Sold,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+350,"9130351639845226",Cost of Overhead Related to Service:Salary Expense Ops Contractor Basic,"24",Cost of Goods Sold,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+351,"9130351639845226",Cost of Overhead Related to Service:Salary Expense-Misc claims (ops Staff),"81",Cost of Goods Sold,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+352,"9130351639845226",Cost of sales,"85",Cost of Goods Sold,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+353,"9130351639845226",Cost of Service,"15",Cost of Goods Sold,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+354,"9130351639845226",Cost of Service:Host Earnings,"25",Cost of Goods Sold,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+355,"9130351639845226",Cost of Service:Insurance,"26",Cost of Goods Sold,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+356,"9130351639845226",Cost of Service:Payment Gateway,"27",Cost of Goods Sold,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+357,"9130351639845226",Currency Exchange,"129",Other Current Liability,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+358,"9130351639845226",Current Liabilities,"128",Other Current Liability,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+359,"9130351639845226",DBS - 4933 - SGD,"105",Bank,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+360,"9130351639845226",DBS - 4933 - USD,"124",Bank,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+361,"9130351639845226",Deferred Income,"65",Other Current Liability,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+362,"9130351639845226",Deposit,"114",Other Current Asset,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+363,"9130351639845226",Depreciation - Branding,"122",Other Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+364,"9130351639845226",Depreciation - Hardware,"101",Other Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+365,"9130351639845226",Depreciation - Technology Development,"126",Other Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+366,"9130351639845226",Depreciation Expenses,"117",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+367,"9130351639845226",Depreciation-Equipment,"44",Other Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+368,"9130351639845226",Due From Australian Account,"45",Other Current Asset,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+369,"9130351639845226",Due from Directors,"1150040000",Other Current Asset,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+370,"9130351639845226",Due from Singapore,"12",Other Current Asset,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+371,"9130351639845226",Due to Australia,"79",Other Current Liability,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+372,"9130351639845226",Due to Directors,"1150040001",Other Current Liability,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+373,"9130351639845226",Due to Singapore,"64",Other Current Liability,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+374,"9130351639845226",Employees Expense,"31",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+375,"9130351639845226",Gross Revenue-Car Rental Usage,"18",Income,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+376,"9130351639845226",Gross Revenue-Other Income,"17",Income,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+378,"9130351639845226",Intangible Assets:Brand,"115",Other Asset,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+379,"9130351639845226",Intangible Assets:Brand:Brand - Amortization,"116",Other Asset,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+380,"9130351639845226",Intangible Assets:Brand:Brand - Cost,"56",Other Asset,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+381,"9130351639845226",Intangible Assets:Research and Development Hardware,"74",Other Asset,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+382,"9130351639845226",Intangible Assets:Technology Development,"1150040004",Other Asset,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+383,"9130351639845226",Intangible Assets:Technology Development:Technology Development - Accumulated Depreciation,"127",Other Asset,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+634,"9130348479446096",Accumulated amortisation - Technology Development,"1150040000",Other Expense,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+636,"9130348479446096",Accumulated Depreciation-Computer and peripherals,"1150040001",Other Expense,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+637,"9130348479446096",Accumulated Depreciation-In-car Devices,"1150040002",Other Expense,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+75,"9130348479446096",Brand,"130",Other Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+73,"9130348479446096",Brand:Accumulated Depreciation- Branding,"180",Other Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+81,"9130348479446096",Computer & Software,"58",Fixed Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+82,"9130348479446096",Computer and Peripherals,"64",Fixed Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+384,"9130351639845226",Intangible Assets:Technology Development:Technology Development - At Cost,"57",Other Asset,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+385,"9130351639845226",Inventory Asset,"16",Other Current Asset,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+386,"9130351639845226",Investment in Subsidiaries,"1150040002",Other Asset,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+387,"9130351639845226",Investment in Subsidiaries:Investment in Subsidiary - Drive Lah Pte Ltd (SG),"120",Other Asset,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+80,"9130348479446096",Computer & Software:Accumulated Depreciation-Computer & Software,"66",Fixed Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+646,"9130348479446096",Computer and Peripherals:Accumulated Depreciation-Computer and peripherals,"168",Fixed Asset,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+88,"9130348479446096",Cost of Overhead Related to Service,"44",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+97,"9130348479446096",Cost of Overhead Related to Service:Other operating expenses:Fuel,"220",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+101,"9130348479446096",Cost of Overhead Related to Service:Other operating expenses:Late return,"222",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+105,"9130348479446096",Cost of Overhead Related to Service:Other operating expenses:Misc dispute,"225",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+107,"9130348479446096",Cost of Overhead Related to Service:Other operating expenses:Parking,"212",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+664,"9130348479446096",Cost of Overhead Related to Service:Other operating expenses:Sticker payouts,"208",Cost of Goods Sold,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+665,"9130348479446096",Cost of Overhead Related to Service:Other operating expenses:Stripe monthly,"213",Cost of Goods Sold,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+120,"9130348479446096",Cost of Overhead Related to Service:Other operating expenses:Towing,"1150040003",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+109,"9130348479446096",Cost of Overhead Related to Service:Refunds,"217",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+110,"9130348479446096",Cost of Overhead Related to Service:Salary Expense - Basic Ops Staff,"45",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+113,"9130348479446096",Cost of Overhead Related to Service:Salary expense - Bonus (Ops staff),"55",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+114,"9130348479446096",Cost of Overhead Related to Service:Salary expense - Misc claims (Ops staff),"51",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+111,"9130348479446096",Cost of Overhead Related to Service:Salary Expense - Ops Contractor (Bonus),"73",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+112,"9130348479446096",Cost of Overhead Related to Service:Salary Expense Ops Contractor Basic,"14",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+90,"9130348479446096",Cost of sales,"127",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+89,"9130348479446096",Cost of Service,"46",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+98,"9130348479446096",Cost of Service:Host Earnings,"47",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+86,"9130348479446096",Cost of Service:Host Earnings:Car Rental usage,"233",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+677,"9130348479446096",Cost of Service:Host Earnings:Car Rental usage:Non RMS,"236",Cost of Goods Sold,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+678,"9130348479446096",Cost of Service:Host Earnings:Car Rental usage:RMS,"235",Cost of Goods Sold,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+96,"9130348479446096",Cost of Service:Host Earnings:Flex+ payouts,"209",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+63,"9130348479446096",Cost of Service:Host Earnings:Flex+ payouts:Non RMS,"238",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+681,"9130348479446096",Cost of Service:Host Earnings:Flex+ payouts:RMS,"237",Cost of Goods Sold,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+118,"9130348479446096",Cost of Service:Host Earnings:Stripe_transfers_usage,"202",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+100,"9130348479446096",Cost of Service:Insurance,"13",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+108,"9130348479446096",Cost of Service:Payment Gateway,"15",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+116,"9130348479446096",Cost of Service:Payment Gateway:Stripe Fees,"188",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+117,"9130348479446096",Cost of Service:Payment Gateway:Stripe monthly,"218",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+64,"9130348479446096",Cost of Service:RMS,"156",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+83,"9130348479446096",Deprecitaion - R & D Hardware,"241",Fixed Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+30,"9130348479446096",Director's Remuneration Payable,"239",Other Current Liability,true,2025-06-22 11:39:03.267,2025-07-02 08:21:13.696
+27,"9130348479446096",Due From Australian Account,"146",Other Current Asset,true,2025-06-22 11:39:03.267,2025-07-02 08:21:13.696
+25,"9130348479446096",Due from Fleet,"184",Other Current Asset,true,2025-06-22 11:39:03.267,2025-07-02 08:21:13.696
+28,"9130348479446096",Due To Australia,"151",Other Current Liability,true,2025-06-22 11:39:03.267,2025-07-02 08:21:13.696
+26,"9130348479446096",Due to Fleet,"192",Other Current Liability,true,2025-06-22 11:39:03.267,2025-07-02 08:21:13.696
+29,"9130348479446096",Due to Ventures,"177",Other Current Liability,true,2025-06-22 11:39:03.267,2025-07-02 08:21:13.696
+150,"9130348479446096",Employees Expense,"147",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+704,"9130348479446096",Flex+:Non RMS,"230",Income,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+705,"9130348479446096",Flex+:RMS,"229",Income,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+22,"9130348479446096",Gross Revenue -Other Income,"10",Income,true,2025-06-22 11:39:03.267,2025-07-02 08:21:13.696
+69,"9130348479446096",Gross Revenue -Other Income:Stripe_sales_deposits,"196",Income,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+70,"9130348479446096",Gross Revenue -Other Income:Stripe_sales_disputes,"197",Income,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+710,"9130348479446096",Gross Revenue-Car Rental Usage:Non RMS,"232",Income,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+711,"9130348479446096",Gross Revenue-Car Rental Usage:RMS,"231",Income,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+66,"9130348479446096",Gross Revenue-Car Rental Usage:Stripe Platform Earnings,"193",Income,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+67,"9130348479446096",Gross Revenue-Car Rental Usage:Stripe Refunds,"194",Income,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+84,"9130348479446096",Hardware,"153",Fixed Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+79,"9130348479446096",Hardware:Accumulated Depreciation - Hardware,"155",Fixed Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+85,"9130348479446096",In-car Devices,"56",Fixed Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+717,"9130348479446096",In-car Devices:Accumulated Depreciation-In-car Devices,"68",Fixed Asset,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+76,"9130348479446096",Intangible Asset,"141",Other Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+74,"9130348479446096",Intangible Asset:Accumulated amortisation - Intangible Asset,"169",Other Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+77,"9130348479446096",Investments,"25",Other Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+186,"9130348479446096",Opening Balance Equity,"8",Equity,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+166,"9130348479446096",Operating Expenses,"76",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+99,"9130348479446096",Cost of Overhead Related to Service:In-car devices - running/maintenance costs,"75",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+102,"9130348479446096",Cost of Overhead Related to Service:Market -Asset Creation,"49",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+103,"9130348479446096",Cost of Overhead Related to Service:Marketing - Advertising (retargeting),"72",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+104,"9130348479446096",Cost of Overhead Related to Service:Marketing - Discount & Promotions,"71",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+92,"9130348479446096",Cost of Overhead Related to Service:Marketing - Discount & Promotions:Discounts,"226",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+119,"9130348479446096",Cost of Overhead Related to Service:Marketing - Discount & Promotions:Superhost payouts,"227",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+106,"9130348479446096",Cost of Overhead Related to Service:Other operating expenses,"48",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+87,"9130348479446096",Cost of Overhead Related to Service:Other operating expenses:Cleaning,"1150040004",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+91,"9130348479446096",Cost of Overhead Related to Service:Other operating expenses:Damage,"219",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+93,"9130348479446096",Cost of Overhead Related to Service:Other operating expenses:Downtime,"224",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+94,"9130348479446096",Cost of Overhead Related to Service:Other operating expenses:Excess mileage,"221",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+95,"9130348479446096",Cost of Overhead Related to Service:Other operating expenses:Extensions,"223",Cost of Goods Sold,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+235,"9130354593661056",Accounting and bookkeeping,"5",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+236,"9130354593661056",Accounts Payable (A/P),"136",Accounts Payable,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+237,"9130354593661056",Accounts Receivable,"119",Accounts Receivable,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+238,"9130354593661056",Accrued Expense,"43",Other Current Liability,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+239,"9130354593661056","Accumulated depreciation on property, plant and equipment","158",Fixed Asset,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+240,"9130354593661056",Advertising and marketing,"6",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+461,"9341452223116008",Fuel & oils,"11",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+462,"9341452223116008",Gas and electricity,"22",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+463,"9341452223116008",Gifts and donations,"8",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+464,"9341452223116008",Gross Revenue,"43",Income,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+465,"9341452223116008",Insurance,"14",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+466,"9341452223116008",Interest expense,"24",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+467,"9341452223116008",Interest income,"23",Other Income,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+468,"9341452223116008",Inventory,"40",Other Current Asset,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+388,"9130351639845226",Investment in Subsidiaries:Investment in subsidiary - Drive Lah Pty Ltd (AU),"1150040003",Other Asset,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+389,"9130351639845226",Loans to Others,"46",Other Current Asset,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+390,"9130351639845226",Opening Balance Equity,"11",Equity,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+391,"9130351639845226",Operating Expenses,"8",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+392,"9130351639845226",Operating Expenses:Admin Expense,"72",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+393,"9130351639845226",Operating Expenses:Business Development - Conference Fees,"98",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+394,"9130351639845226",Operating Expenses:Corporate - Accounting Fee,"111",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+395,"9130351639845226",Operating Expenses:Corporate - Bank Fees,"33",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+396,"9130351639845226",Operating Expenses:Corporate - Bookkeeping Fees,"32",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+397,"9130351639845226",Operating Expenses:Corporate - Company Secretary Fees,"110",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+398,"9130351639845226",Operating Expenses:Corporate - Entertainment (Local),"95",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+399,"9130351639845226",Operating Expenses:Corporate - General Liability Insurance,"97",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+400,"9130351639845226",Operating Expenses:Corporate - Incorporation,"109",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+401,"9130351639845226",Operating Expenses:Corporate - Nominee Director Service,"113",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+402,"9130351639845226",Operating Expenses:Corporate - Other Equipment and Software,"34",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+403,"9130351639845226",Operating Expenses:Corporate- Insurance Expense,"96",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+404,"9130351639845226",Operating Expenses:Corporate-Communications,"90",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+405,"9130351639845226","Operating Expenses:Corporate-COSEC, FS & Tax","87",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+406,"9130351639845226",Operating Expenses:Corporate-General Expense,"9",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+407,"9130351639845226",Operating Expenses:Corporate-Office Rent,"88",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+408,"9130351639845226",Operating Expenses:Corporate-Prof. Fees (Others),"86",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+409,"9130351639845226",Operating Expenses:Human Resource - CPF Contribution,"35",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+410,"9130351639845226",Operating Expenses:Human Resource - Directors' Salary,"36",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+411,"9130351639845226",Operating Expenses:Human Resource - Recruitment Advertising Fees,"37",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+951,"9130351639845226",Profit/Loss,"69",Income,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+952,"9130351639845226","Property, Plant, and Equipment","61",Fixed Asset,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+953,"9130351639845226","Property, Plant, and Equipment:Accumulated Depreciation - Computer & Software","82",Fixed Asset,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+954,"9130351639845226","Property, Plant, and Equipment:Accumulated Depreciation-In-car Devices","60",Fixed Asset,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+955,"9130351639845226","Property, Plant, and Equipment:Hardware","102",Fixed Asset,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+956,"9130351639845226","Property, Plant, and Equipment:Hardware:Accumulated Depreciation - Hardware","103",Fixed Asset,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+957,"9130351639845226","Property, Plant, and Equipment:Hardware Devices","58",Fixed Asset,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+958,"9130351639845226","Property, Plant, and Equipment:Hardware Devices:Accumulated Depreciation-Hardware Device","71",Fixed Asset,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+959,"9130351639845226","Property, Plant, and Equipment:In-car Devices","59",Fixed Asset,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+960,"9130351639845226",Receivable from Guests,"53",Accounts Receivable,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+961,"9130351639845226",Reconciliation Discrepancies,"123",Other Expense,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+962,"9130351639845226",Retained Earnings,"4",Equity,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+963,"9130351639845226",Sales,"5",Income,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+964,"9130351639845226",Sales of Product Revenue,"14",Income,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+965,"9130351639845226",Savings (7311),"51",Bank,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+966,"9130351639845226",Security Deposit Refundable,"66",Other Current Liability,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+967,"9130351639845226",SGD DRIVE LAH PTE. LTD. (1001),"49",Bank,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+968,"9130351639845226",SGD DRIVE LAH PTE. LTD. (3001),"50",Bank,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+969,"9130351639845226",Share Capital - Cost,"118",Equity,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+970,"9130351639845226",Share Capital - Ordinary,"119",Equity,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+971,"9130351639845226",Share Capital - Ordinary:Share Capital - Preference,"13",Equity,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+972,"9130351639845226",Stripe Account,"52",Bank,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+973,"9130351639845226",Trade and other receivables,"54",Accounts Receivable,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+974,"9130351639845226",Travel Expense,"78",Expense,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+975,"9130351639845226",Uncategorised Asset,"3",Other Current Asset,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+976,"9130351639845226",Uncategorised Expense,"2",Expense,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+977,"9130351639845226",Uncategorised Income,"1",Income,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+978,"9130351639845226",Undeposited Funds,"125",Other Current Asset,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+979,"9130351639845226",Ventures- Euro,"121",Bank,true,2025-07-02 04:01:46.152,2025-07-04 01:03:04.592
+494,"9341452223116008",Uncategorised Expense,"2",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+495,"9341452223116008",Uncategorised Income,"1",Income,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+496,"9341452223116008",Undeposited funds,"28",Other Current Asset,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+497,"9341452223116008",Workcover expenses,"35",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+241,"9130354593661056",ATO Clearing Account,"96",Other Current Liability,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+242,"9130354593661056",Bank charges and fees,"7",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+243,"9130354593661056",BAS Expense,"99",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+244,"9130354593661056",BAS Roundoff Gain or Loss,"97",Other Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+246,"9130354593661056",Billable Expense Income ( 7 ),"44",Income,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+247,"9130354593661056",Billable Expense Income-1,"84",Income,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+248,"9130354593661056",Contractor Expenses (non salary),"27",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+249,"9130354593661056",Cost of Overhead Related to Service,"45",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+250,"9130354593661056",Cost of Overhead Related to Service:In-car Running Costs,"70",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+251,"9130354593661056",Cost of Overhead Related to Service:Market Asset Creation,"46",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+252,"9130354593661056",Cost of Overhead Related to Service:Marketing -Discount & Promotions,"47",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+253,"9130354593661056",Cost of Overhead Related to Service:Marketing-Advertising (retargeting),"48",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+254,"9130354593661056",Cost of Overhead Related to Service:Operating Expenses,"49",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+255,"9130354593661056",Cost of Overhead Related to Service:Operating Expenses:Cleaning,"1150040001",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+256,"9130354593661056",Cost of Overhead Related to Service:Operating Expenses:Damages,"149",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+257,"9130354593661056",Cost of Overhead Related to Service:Operating Expenses:Downtime,"154",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+258,"9130354593661056",Cost of Overhead Related to Service:Operating Expenses:Excess mileage,"151",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+259,"9130354593661056",Cost of Overhead Related to Service:Operating Expenses:Extensions,"153",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+260,"9130354593661056",Cost of Overhead Related to Service:Operating Expenses:Fuel,"150",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+261,"9130354593661056",Cost of Overhead Related to Service:Operating Expenses:Late return,"152",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+262,"9130354593661056",Cost of Overhead Related to Service:Operating Expenses:Misc disputes,"155",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+263,"9130354593661056",Cost of Overhead Related to Service:Operating Expenses:Onground team,"157",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+264,"9130354593661056",Cost of Overhead Related to Service:Operating Expenses:Towing,"1150040000",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+265,"9130354593661056",Cost of Overhead Related to Service:Operating Expenses:Workshop,"156",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+266,"9130354593661056",Cost of Overhead Related to Service:Refunds,"142",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+267,"9130354593661056",Cost of Overhead Related to Service:Salary Expense Ops Contractor Basic,"50",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+268,"9130354593661056",Cost of sales,"87",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+269,"9130354593661056",Cost of Service,"51",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+270,"9130354593661056",Cost of Service:Host Earnings,"52",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+271,"9130354593661056",Cost of Service:Host Earnings:Car rental usage,"146",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+272,"9130354593661056",Cost of Service:Host Earnings:Flex+ payouts,"145",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+273,"9130354593661056",Cost of Service:Insurance,"53",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+274,"9130354593661056",Cost of Service:Payment Gateway,"54",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+275,"9130354593661056",Cost of Service:Payment Gateway:Stripe fees,"148",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+276,"9130354593661056",Cost of Service:Payment Gateway:Stripe monthly,"147",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+277,"9130354593661056",Currency Exchange,"141",Other Current Liability,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+278,"9130354593661056",Currency Gain/Loss,"139",Other Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+279,"9130354593661056",Current Liabilities,"160",Other Current Liability,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+280,"9130354593661056",Default Liability,"113",Other Current Liability,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+281,"9130354593661056",Depreciation - fixed asset,"135",Other Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+282,"9130354593661056",Depreciation on Car,"159",Other Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+283,"9130354593661056",Depreciation- Equipment,"55",Other Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+284,"9130354593661056",Device & Insurance subscriptions,"143",Income,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+285,"9130354593661056",Due from Aus Fleet,"165",Other Current Asset,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+286,"9130354593661056",Due from Malaysia,"126",Other Current Asset,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+287,"9130354593661056",Due from Singapore,"56",Other Current Asset,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+288,"9130354593661056",Due from Ventures,"106",Other Current Asset,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+289,"9130354593661056",Due to Aus Fleet,"164",Other Current Liability,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+290,"9130354593661056",Due to Singapore Account,"57",Other Current Liability,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+291,"9130354593661056",Due to Ventures,"92",Other Current Liability,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+292,"9130354593661056",Employee Expense,"58",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+293,"9130354593661056",Employee Expenses,"110",Other Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+294,"9130354593661056",Exempt Expense,"124",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+295,"9130354593661056",Exempt Payable,"122",Other Current Liability,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+296,"9130354593661056",Exempt Suspense,"123",Other Current Liability,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+297,"9130354593661056",Expenses Payable,"161",Other Current Liability,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+298,"9130354593661056",FBT Liabilities,"100",Other Current Liability,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+299,"9130354593661056",Flex+,"144",Income,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+300,"9130354593661056",Freight & Delivery - COS,"38",Cost of Goods Sold,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+301,"9130354593661056",Fuel & oils,"11",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+302,"9130354593661056",Furniture and Fixtures,"59",Fixed Asset,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+303,"9130354593661056",Gas and electricity,"22",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+304,"9130354593661056",Gifts and donations,"8",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+305,"9130354593661056",Gross Revenue-Car Rental Usage,"60",Income,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+306,"9130354593661056",Gross Revenue-Car Rental Usage:Stripe Refunds,"120",Income,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+307,"9130354593661056",Gross Revenue-Car Rental Usage:Stripe sales,"118",Income,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+308,"9130354593661056",Gross-Other Income,"93",Income,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+309,"9130354593661056",GST Liabilities Payable,"98",Other Current Liability,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+310,"9130354593661056",Hardware Devices,"61",Fixed Asset,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+311,"9130354593661056",Hardware Devices:Accumulated Depreciation-Hardware Device,"62",Fixed Asset,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+312,"9130354593661056",Insurance,"14",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+313,"9130354593661056",Insurance Payable,"108",Other Current Liability,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+314,"9130354593661056",Interest expense,"24",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+315,"9130354593661056",Interest income,"23",Other Income,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+316,"9130354593661056",Inventory,"40",Other Current Asset,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+317,"9130354593661056",Inventory Asset,"85",Other Current Asset,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+318,"9130354593661056",Loan,"31",Long Term Liability,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+319,"9130354593661056",Luxury Car Tax Liabilities,"102",Other Current Liability,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+320,"9130354593661056",Marketing -Discount & Promotions-Discount,"168",Bank,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+321,"9130354593661056",Meals and entertainment,"10",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+322,"9130354593661056",Motor vehicle expenses,"13",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+323,"9130354593661056",Motor vehicles at cost,"29",Fixed Asset,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+324,"9130354593661056",Motor vehicles at cost:Accumulated Depreciation-Motor Vehicles,"166",Fixed Asset,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+325,"9130354593661056",Office expenses,"15",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+326,"9130354593661056",Opening balance equity,"25",Equity,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+327,"9130354593661056",Operating Expenses,"63",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+328,"9130354593661056",Operating Expenses:Bank Fees,"64",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+329,"9130354593661056",Operating Expenses:Corporate - Insurance  Expense,"65",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+330,"9130354593661056",Operating Expenses:Corporate - Legal and professional fees,"94",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+331,"9130354593661056",Operating Expenses:Corporate - Office Rental,"167",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+332,"9130354593661056","Operating Expenses:Corporate - Postage, Courier and Delivery","66",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+333,"9130354593661056",Operating Expenses:Corporate-Other Corporate Expense,"91",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+334,"9130354593661056",Operating Expenses:General Expense,"67",Expense,true,2025-06-25 12:33:58.110,2025-06-30 04:42:27.066
+545,"9130354593661056",Operating Expenses:Human Resource - Directors' Salary,"68",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+546,"9130354593661056",Operating Expenses:Human Resource-Salary Expense,"69",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+547,"9130354593661056",Operating Expenses:Marketing Acquisition-New Customer,"71",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+548,"9130354593661056",Operating Expenses:Marketing Asset Creation,"72",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+549,"9130354593661056",Operating Expenses:Meals and Entertainment,"73",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+550,"9130354593661056",Operating Expenses:Recruitment Expense,"74",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+551,"9130354593661056",Operating Expenses:Salary - Marketing + Ops,"89",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+552,"9130354593661056",Operating Expenses:Salary - Tech,"90",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+553,"9130354593661056",Operating Expenses:Salary and wages - staff,"34",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+554,"9130354593661056",Operating Expenses:Superannuation Expense,"112",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+555,"9130354593661056",Operating Expenses:Technology System Costs,"75",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+556,"9130354593661056",Operating Expenses:Telephone & internet expenses,"20",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+557,"9130354593661056",Operating Expenses:Travel Expense,"82",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+558,"9130354593661056",Operating Expenses:Wages Expense,"109",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+559,"9130354593661056",Other current assets,"162",Other Current Asset,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+560,"9130354593661056",Other current assets:Accounts receivable,"163",Other Current Asset,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+561,"9130354593661056",Other fixed assets,"30",Fixed Asset,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+562,"9130354593661056",Other Income,"95",Other Income,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+563,"9130354593661056",Owners drawings,"26",Equity,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+564,"9130354593661056",Owners' Equity,"76",Equity,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+565,"9130354593661056",PAYG Instalment Liabilities,"101",Other Current Liability,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+566,"9130354593661056",PAYG instalments payable,"37",Other Current Liability,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+567,"9130354593661056",PAYG Liability,"111",Other Current Liability,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+568,"9130354593661056",PAYG Withholdings Payable,"104",Other Current Liability,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+569,"9130354593661056",Payroll clearing,"32",Other Current Liability,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+570,"9130354593661056",Postage & shipping,"16",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+571,"9130354593661056",Prepaid Expenses,"77",Other Current Asset,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+572,"9130354593661056",Prepaid Insurance,"140",Other Current Asset,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+573,"9130354593661056","Printing, stationery & supplies","17",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+574,"9130354593661056",Receivable from Guests,"78",Accounts Receivable,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+575,"9130354593661056",Reconciliation Discrepancies,"79",Other Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+576,"9130354593661056",Registration and insurance,"12",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+577,"9130354593661056",Repairs and maintenance,"18",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+578,"9130354593661056",Retained Earnings,"4",Equity,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+579,"9130354593661056",Sales,"80",Income,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+580,"9130354593661056",Sales of Product Income,"88",Income,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+581,"9130354593661056",Sales of Product Revenue,"86",Income,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+582,"9130354593661056",Savings,"83",Bank,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+583,"9130354593661056",Savings (7311),"81",Bank,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+584,"9130354593661056",Services,"41",Income,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+585,"9130354593661056","Shipping, Freight, and Delivery Postage & Handling","39",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+586,"9130354593661056",Software Expense,"137",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+587,"9130354593661056",Staff amenities,"19",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+588,"9130354593661056",Stripe,"107",Bank,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+589,"9130354593661056",Stripe - Accounts Receivable,"170",Accounts Receivable,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+590,"9130354593661056",Stripe - Chargeback Expenses,"195",Cost of Goods Sold,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+591,"9130354593661056",Stripe - Clearing Account,"169",Bank,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+592,"9130354593661056",Stripe - Customer Deposits,"178",Other Current Liability,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+593,"9130354593661056",Stripe - Deferred Trip Revenue,"174",Other Current Liability,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+594,"9130354593661056",Stripe - Fuel Refunds,"191",Cost of Goods Sold,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+595,"9130354593661056",Stripe - Host Cleanliness Expenses,"182",Cost of Goods Sold,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+596,"9130354593661056",Stripe - Host Damage Expenses,"183",Cost of Goods Sold,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+597,"9130354593661056",Stripe - Host Excess Mileage Expenses,"185",Cost of Goods Sold,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+598,"9130354593661056",Stripe - Host Flexplus Expenses,"189",Cost of Goods Sold,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+599,"9130354593661056",Stripe - Host Fuel Expenses,"184",Cost of Goods Sold,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+600,"9130354593661056",Stripe - Host Fuel Revenue,"175",Income,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+601,"9130354593661056",Stripe - Host Misc Expenses,"187",Cost of Goods Sold,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+602,"9130354593661056",Stripe - Host Misc Revenue,"177",Income,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+603,"9130354593661056",Stripe - Host Payables,"180",Other Current Liability,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+604,"9130354593661056",Stripe - Host Referral Expenses,"188",Cost of Goods Sold,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+605,"9130354593661056",Stripe - Host Subscription Revenue,"176",Income,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+606,"9130354593661056",Stripe - Host Tolls Expenses,"186",Cost of Goods Sold,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+607,"9130354593661056",Stripe - Host Trip Expenses,"181",Cost of Goods Sold,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+608,"9130354593661056",Stripe - Incidentals Revenue,"173",Income,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+609,"9130354593661056",Stripe - Invoice Refunds,"193",Cost of Goods Sold,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+610,"9130354593661056",Stripe - Processing Fees,"194",Cost of Goods Sold,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+611,"9130354593661056",Stripe - Subscription Refunds,"192",Cost of Goods Sold,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+612,"9130354593661056",Stripe - Subscription Revenue,"172",Income,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+613,"9130354593661056",Stripe - Trip Refunds,"190",Cost of Goods Sold,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+614,"9130354593661056",Stripe - Trip Revenue,"171",Income,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+615,"9130354593661056",Stripe - Verification Deposits,"179",Other Current Liability,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+616,"9130354593661056",Subscriptions,"9",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+617,"9130354593661056",Superannuation - staff,"33",Other Current Liability,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+618,"9130354593661056",Superannuation payable,"36",Other Current Liability,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+619,"9130354593661056",Tax Paid,"105",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+620,"9130354593661056",Unapplied Cash Bill Payment Expense,"138",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+621,"9130354593661056",Unapplied Cash Payment Income,"125",Income,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+622,"9130354593661056",Uncategorised Asset,"3",Other Current Asset,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+623,"9130354593661056",Uncategorised Expense,"2",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+624,"9130354593661056",Uncategorised Income,"1",Income,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+625,"9130354593661056",Undeposited funds,"28",Other Current Asset,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+626,"9130354593661056",WET Liabilities,"103",Other Current Liability,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+627,"9130354593661056",Workcover expenses,"35",Expense,true,2025-06-30 04:42:27.066,2025-06-30 04:42:27.066
+121,"9130348479446096",Operating Expenses:Admin Expense,"148",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+122,"9130348479446096",Operating Expenses:Bad debts,"77",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+452,"9341452223116008",Accounting and bookkeeping,"5",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+453,"9341452223116008",Advertising and marketing,"6",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+454,"9341452223116008",Bank charges and fees,"7",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+455,"9341452223116008",Billable Expense Income,"42",Income,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+456,"9341452223116008",Business General & Administrative Expense,"45",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+457,"9341452223116008",Contractor Expenses (non salary),"27",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+458,"9341452223116008",Due from Australia,"44",Other Current Asset,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+459,"9341452223116008",Due to Australia,"46",Other Current Liability,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+460,"9341452223116008",Freight & Delivery - COS,"38",Cost of Goods Sold,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+339,"9130351639845226",Billable Expense Income,"6",Income,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+123,"9130348479446096",Operating Expenses:Business Development - Conference Fees,"60",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+124,"9130348479446096",Operating Expenses:Corporate - Audit and Tax Fees,"78",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+125,"9130348479446096",Operating Expenses:Corporate - Bank Fees,"19",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+126,"9130348479446096",Operating Expenses:Corporate - Bookkeeping Fees,"79",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+127,"9130348479446096",Operating Expenses:Corporate - Communications,"80",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+128,"9130348479446096",Operating Expenses:Corporate - Corporate Secretary Fees,"81",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+129,"9130348479446096",Operating Expenses:Corporate - Entertainment (Local),"52",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+130,"9130348479446096",Operating Expenses:Corporate - Equipment,"82",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+131,"9130348479446096",Operating Expenses:Corporate - Fines and Penalties,"83",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+132,"9130348479446096",Operating Expenses:Corporate - General Expenses,"30",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+133,"9130348479446096",Operating Expenses:Corporate - General Liability Insurance,"84",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+134,"9130348479446096",Operating Expenses:Corporate - Interest expenses,"85",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+135,"9130348479446096",Operating Expenses:Corporate - Interest on short-term loans,"86",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+136,"9130348479446096",Operating Expenses:Corporate - Legal Fees,"87",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+137,"9130348479446096",Operating Expenses:Corporate - Licence and Permit Fees,"88",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+138,"9130348479446096",Operating Expenses:Corporate - Office Furniture and Equipment,"89",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+139,"9130348479446096",Operating Expenses:Corporate - Office Rent,"29",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+140,"9130348479446096",Operating Expenses:Corporate - Office Repair and Maintenance,"90",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+141,"9130348479446096",Operating Expenses:Corporate - Office Supplies,"91",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+142,"9130348479446096",Operating Expenses:Corporate - Other Equipment and Software,"92",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+143,"9130348479446096","Operating Expenses:Corporate - Postage, Courier and Delivery","93",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+144,"9130348479446096",Operating Expenses:Corporate - Printing,"94",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+145,"9130348479446096",Operating Expenses:Corporate - Software,"95",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+146,"9130348479446096",Operating Expenses:Corporate - Utilities,"96",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+147,"9130348479446096",Operating Expenses:Corporate- Transport,"97",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+148,"9130348479446096",Operating Expenses:Corporate-Other Corporate,"159",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+149,"9130348479446096",Operating Expenses:Depreciation Expense,"162",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+151,"9130348479446096",Operating Expenses:Foreign Currency Gains and Losses,"98",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+152,"9130348479446096",Operating Expenses:Human Resource - CPF Contribution,"99",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+153,"9130348479446096",Operating Expenses:Human Resource - Directors' Salary,"53",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+154,"9130348479446096",Operating Expenses:Human Resource - Employee Benefits,"100",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+155,"9130348479446096",Operating Expenses:Human Resource - Other Recruitment Fees,"101",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+156,"9130348479446096",Operating Expenses:Human Resource - Recruitment Advertising Fees,"102",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+157,"9130348479446096",Operating Expenses:Human Resource - Recruitment Agency Fees,"103",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+158,"9130348479446096",Operating Expenses:Human Resource - Salary Expense,"54",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+377,"9130351639845226",Intangible Assets,"55",Other Asset,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+159,"9130348479446096",Operating Expenses:Human Resource - Skills Development Levy,"104",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+160,"9130348479446096",Operating Expenses:Human Resource - Visa and Immigration Fees,"105",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+161,"9130348479446096",Operating Expenses:Human Resources - Sales contractor,"107",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+162,"9130348479446096",Operating Expenses:Human Resources- Staffs' training,"106",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+163,"9130348479446096",Operating Expenses:Legal Settlement Expense,"108",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+164,"9130348479446096",Operating Expenses:Marketing - Advertising (new customers),"59",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+115,"9130348479446096",Operating Expenses:Marketing - Advertising (new customers):Sticker payouts,"228",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+165,"9130348479446096",Operating Expenses:Marketing Asset Creation,"16",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+167,"9130348479446096",Operating Expenses:Other Business Development Expense,"109",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+168,"9130348479446096",Operating Expenses:Other Marketing Expense,"110",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+169,"9130348479446096",Operating Expenses:Research and Development - Hardware,"111",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+170,"9130348479446096",Operating Expenses:Research and Development - Software,"112",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+171,"9130348479446096",Operating Expenses:Rounding,"113",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+172,"9130348479446096",Operating Expenses:Salary - Marketing+Ops,"157",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+173,"9130348479446096",Operating Expenses:Salary Tech,"158",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+176,"9130348479446096",Operating Expenses:Subscription Fee,"163",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+177,"9130348479446096",Operating Expenses:Technology System Cost,"17",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+178,"9130348479446096",Operating Expenses:Travel - Accommodation,"114",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+179,"9130348479446096",Operating Expenses:Travel - Airfare,"115",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+180,"9130348479446096",Operating Expenses:Travel - Telecommunications,"116",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+181,"9130348479446096",Operating Expenses:Travel- Allowance,"117",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+182,"9130348479446096",Operating Expenses:Travel-Meals,"34",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+183,"9130348479446096",Operating Expenses:Travel-Transportation,"35",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+19,"9130348479446096",Other Income,"152",Other Income,true,2025-06-22 11:39:03.267,2025-07-02 08:21:13.696
+20,"9130348479446096",Other Income-Cash Rebate,"21",Other Income,true,2025-06-22 11:39:03.267,2025-07-02 08:21:13.696
+21,"9130348479446096",Other Income-Refund,"128",Other Income,true,2025-06-22 11:39:03.267,2025-07-02 08:21:13.696
+187,"9130348479446096",Owners Equity,"40",Equity,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+24,"9130348479446096",Prepaid Insurance,"43",Other Current Asset,true,2025-06-22 11:39:03.267,2025-07-02 08:21:13.696
+189,"9130348479446096",Receivable from Guests,"144",Accounts Receivable,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+78,"9130348479446096",Research and Development Hardware,"149",Other Asset,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+188,"9130348479446096",Retained Earnings,"4",Equity,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+65,"9130348479446096",Sales of Product Revenue,"118",Income,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+191,"9130348479446096",SGD DRIVE LAH PTE. LTD. (1001),"6",Bank,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+16,"9130348479446096",SGD DRIVE LAH PTE. LTD. (3001),"7",Bank,true,2025-06-22 11:39:03.267,2025-07-02 08:21:13.696
+805,"9130348479446096",Stripe - Accounts Receivable SGD,"243",Accounts Receivable,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+806,"9130348479446096",Stripe - Chargeback Expenses SGD,"261",Cost of Goods Sold,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+807,"9130348479446096",Stripe - Clearing Account SGD,"242",Bank,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+808,"9130348479446096",Stripe - Customer Deposits SGD,"245",Other Current Liability,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+809,"9130348479446096",Stripe - Deferred Trip Revenue SGD,"244",Other Current Liability,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+810,"9130348479446096",Stripe - Host Excess Mileage Expenses SGD,"252",Cost of Goods Sold,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+811,"9130348479446096",Stripe - Host Flexplus Expenses SGD,"254",Cost of Goods Sold,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+812,"9130348479446096",Stripe - Host Fuel Expenses SGD,"251",Cost of Goods Sold,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+813,"9130348479446096",Stripe - Host Misc Expenses SGD,"253",Cost of Goods Sold,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+435,"9130356162267236",Billable Expense Income,"6",Income,true,2025-06-25 12:34:10.573,2025-06-30 04:02:40.573
+436,"9130356162267236",Business General & Administrative Expense,"14",Expense,true,2025-06-25 12:34:10.573,2025-06-30 04:02:40.573
+437,"9130356162267236",Cost of sales,"9",Cost of Goods Sold,true,2025-06-25 12:34:10.573,2025-06-30 04:02:40.573
+438,"9130356162267236",Due from Singapore,"16",Other Current Asset,true,2025-06-25 12:34:10.573,2025-06-30 04:02:40.573
+439,"9130356162267236",Due to SG,"13",Other Current Liability,true,2025-06-25 12:34:10.573,2025-06-30 04:02:40.573
+440,"9130356162267236",Fleet Account,"12",Bank,true,2025-06-25 12:34:10.573,2025-06-30 04:02:40.573
+441,"9130356162267236",Gross Revenue,"17",Income,true,2025-06-25 12:34:10.573,2025-06-30 04:02:40.573
+814,"9130348479446096",Stripe - Host Payables SGD,"246",Other Current Liability,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+815,"9130348479446096",Stripe - Host Sticker Expenses SGD,"256",Cost of Goods Sold,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+816,"9130348479446096",Stripe - Host Superhost Expenses SGD,"255",Cost of Goods Sold,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+817,"9130348479446096",Stripe - Host Trip Expenses SGD,"250",Cost of Goods Sold,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+818,"9130348479446096",Stripe - Host Vehicle Damage SGD,"262",Cost of Goods Sold,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+819,"9130348479446096",Stripe - Incidentals Revenue SGD,"249",Income,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+820,"9130348479446096",Stripe - Invoice Refunds SGD,"258",Cost of Goods Sold,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+821,"9130348479446096",Stripe - Processing Fees SGD,"260",Cost of Goods Sold,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+822,"9130348479446096",Stripe - Subscription Refunds SGD,"259",Cost of Goods Sold,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+823,"9130348479446096",Stripe - Subscription Revenue SGD,"248",Income,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+824,"9130348479446096",Stripe - Trip Refunds SGD,"257",Cost of Goods Sold,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+825,"9130348479446096",Stripe - Trip Revenue SGD,"247",Income,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+17,"9130348479446096",Stripe Account,"125",Bank,true,2025-06-22 11:39:03.267,2025-07-02 08:21:13.696
+175,"9130348479446096",Stripe expenses,"187",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+174,"9130348479446096",Stripe Other fees,"189",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+68,"9130348479446096",Stripe sales,"190",Income,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+23,"9130348479446096",Technology Development,"131",Other Asset,true,2025-06-22 11:39:03.267,2025-07-02 08:21:13.696
+832,"9130348479446096",Technology Development:Accumulated amortisation - Technology Development,"170",Other Asset,true,2025-06-30 05:09:27.993,2025-07-02 08:21:13.696
+198,"9130348479446096",Trade and other payables,"204",Accounts Payable,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+199,"9130348479446096",Trade and other payables - INR,"205",Accounts Payable,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+200,"9130348479446096",Trade and other payables - USD,"203",Accounts Payable,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+190,"9130348479446096",Trade and other receivables,"136",Accounts Receivable,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+184,"9130348479446096",Unapplied Cash Bill Payment Expense,"206",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+71,"9130348479446096",Unapplied Cash Payment Income,"38",Income,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+185,"9130348479446096",Uncategorised Expense,"2",Expense,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+72,"9130348479446096",Uncategorised Income,"1",Income,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+192,"9130348479446096",Wise AUD,"174",Bank,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+193,"9130348479446096",Wise INR,"173",Bank,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+194,"9130348479446096",Wise MYR,"175",Bank,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+18,"9130348479446096",Wise NEW,"207",Bank,true,2025-06-22 11:39:03.267,2025-07-02 08:21:13.696
+195,"9130348479446096",Wise PKR,"176",Bank,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+196,"9130348479446096",Wise SGD,"171",Bank,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+197,"9130348479446096",Wise USD,"172",Bank,true,2025-06-22 12:02:18.596,2025-07-02 08:21:13.696
+412,"9130351639845226",Operating Expenses:Human Resource - Recruitment Agency Fees,"38",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+413,"9130351639845226",Operating Expenses:Human Resource - Salary Expense,"39",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+414,"9130351639845226",Operating Expenses:Human Resource-Employee Benefit,"89",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+415,"9130351639845226",Operating Expenses:In-Car Running Costs,"76",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+416,"9130351639845226",Operating Expenses:Marketing Acquisition - New Customer,"70",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+417,"9130351639845226",Operating Expenses:Marketing Asset Creation,"41",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+418,"9130351639845226",Operating Expenses:Research and Development - Hardware,"100",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+422,"9130351639845226",Operating Expenses:Salary Expense - CPF Ops Staff,"99",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+423,"9130351639845226",Operating Expenses:Technology System Cost,"43",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+424,"9130351639845226",Operating Expenses:Travel Accommodation,"91",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+425,"9130351639845226",Operating Expenses:Travel-Airfare,"92",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+426,"9130351639845226",Operating Expenses:Travel-Meals,"83",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+427,"9130351639845226",Operating Expenses:Travel-Transportation,"84",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+428,"9130351639845226",Other Revenue,"28",Other Income,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+429,"9130351639845226",Other Revenue:Other Income-Cash Rebate,"29",Other Income,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+430,"9130351639845226",Other Revenue:Other Income-Refund,"30",Other Income,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+431,"9130351639845226",Payable to Others,"67",Other Current Liability,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+432,"9130351639845226",Prepaid Insurance,"48",Other Current Asset,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+433,"9130351639845226",Prepayments,"47",Other Current Asset,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+434,"9130351639845226",Profit for the year,"68",Equity,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+485,"9341452223116008",Services,"41",Income,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+486,"9341452223116008","Shipping, Freight, and Delivery Postage & Handling","39",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+487,"9341452223116008",Staff amenities,"19",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+488,"9341452223116008",Subscriptions,"9",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+489,"9341452223116008",Superannuation - staff,"33",Other Current Liability,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+490,"9341452223116008",Superannuation payable,"36",Other Current Liability,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+419,"9130351639845226",Operating Expenses:Research and Development - Software,"42",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+420,"9130351639845226",Operating Expenses:Salary - Marketing+Ops,"106",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+421,"9130351639845226",Operating Expenses:Salary - Tech,"107",Expense,true,2025-06-25 12:34:04.895,2025-07-04 01:03:04.592
+442,"9130356162267236",Inventory Asset,"10",Other Current Asset,true,2025-06-25 12:34:10.573,2025-06-30 04:02:40.573
+443,"9130356162267236",Opening Balance Equity,"11",Equity,true,2025-06-25 12:34:10.573,2025-06-30 04:02:40.573
+444,"9130356162267236",Reconciliation Discrepancies,"15",Other Expense,true,2025-06-25 12:34:10.573,2025-06-30 04:02:40.573
+445,"9130356162267236",Retained Earnings,"4",Equity,true,2025-06-25 12:34:10.573,2025-06-30 04:02:40.573
+446,"9130356162267236",Sales of Product Revenue,"8",Income,true,2025-06-25 12:34:10.573,2025-06-30 04:02:40.573
+447,"9130356162267236",Services,"5",Income,true,2025-06-25 12:34:10.573,2025-06-30 04:02:40.573
+448,"9130356162267236",Uncategorised Asset,"3",Other Current Asset,true,2025-06-25 12:34:10.573,2025-06-30 04:02:40.573
+449,"9130356162267236",Uncategorised Expense,"2",Expense,true,2025-06-25 12:34:10.573,2025-06-30 04:02:40.573
+450,"9130356162267236",Uncategorised Income,"1",Income,true,2025-06-25 12:34:10.573,2025-06-30 04:02:40.573
+451,"9130356162267236",Undeposited Funds,"7",Other Current Asset,true,2025-06-25 12:34:10.573,2025-06-30 04:02:40.573
+469,"9341452223116008",Loan,"31",Long Term Liability,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+470,"9341452223116008",Meals and entertainment,"10",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+471,"9341452223116008",Motor vehicle expenses,"13",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+472,"9341452223116008",Motor vehicles at cost,"29",Fixed Asset,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+473,"9341452223116008",Office expenses,"15",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+474,"9341452223116008",Office furniture and equipment at cost,"30",Fixed Asset,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+475,"9341452223116008",Opening balance equity,"25",Equity,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+476,"9341452223116008",Owners drawings,"26",Equity,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+477,"9341452223116008",PAYG instalments payable,"37",Other Current Liability,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+478,"9341452223116008",Payroll clearing,"32",Other Current Liability,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+479,"9341452223116008",Postage & shipping,"16",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+480,"9341452223116008","Printing, stationery & supplies","17",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+481,"9341452223116008",Registration and insurance,"12",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+482,"9341452223116008",Repairs and maintenance,"18",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+483,"9341452223116008",Retained Earnings,"4",Equity,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+484,"9341452223116008",Salary and wages - staff,"34",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+491,"9341452223116008",Telephone & internet expenses,"20",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+492,"9341452223116008",Travel expenses,"21",Expense,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888
+493,"9341452223116008",Uncategorised Asset,"3",Other Current Asset,true,2025-06-25 12:34:11.795,2025-06-30 04:02:41.888

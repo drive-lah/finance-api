@@ -162,27 +162,16 @@ class CategorizationService:
             rules_query = rules_query.filter(FinanceCategorizationRule.id == rule_id)
         rules = rules_query.order_by(FinanceCategorizationRule.priority).all()
 
-        # Pre-load counterparties and check which have open invoices
+        # Pre-load counterparties for Phase 4B default account lookup
         from src.models.counterparty import FinanceCounterparty
-        from src.models.invoice import FinanceInvoice, InvoiceStatus
 
         cp_map: dict[int, FinanceCounterparty] = {}
-        cp_has_open_invoices: dict[int, bool] = {}  # Track which CPs have open invoices
 
         if transactions:
             cp_ids = {t.counterparty_id for t in transactions if t.counterparty_id}
             if cp_ids:
                 cps = db.query(FinanceCounterparty).filter(FinanceCounterparty.id.in_(cp_ids)).all()
                 cp_map = {cp.id: cp for cp in cps}
-
-                # Check which counterparties have open invoices
-                open_statuses = (InvoiceStatus.APPROVED.value, InvoiceStatus.PARTIALLY_PAID.value)
-                for cp_id in cp_ids:
-                    has_invoices = db.query(FinanceInvoice).filter(
-                        FinanceInvoice.counterparty_id == cp_id,
-                        FinanceInvoice.status.in_(open_statuses),
-                    ).count() > 0
-                    cp_has_open_invoices[cp_id] = has_invoices
 
         for transaction in transactions:
             if transaction.id in ap_handled_ids or transaction.id in payroll_handled_ids:
@@ -196,47 +185,14 @@ class CategorizationService:
                 if matched_rule:
                     result = self._apply_rule(db, transaction, matched_rule)
 
-                # Phase 4B: Default account or Asset account (SECOND — more generic)
+                # Phase 4B: Default account (SECOND — more generic)
+                # NOTE: CASE 3 (amount mismatch with open invoices) is now handled in Phase 1.5B
+                # and won't reach Phase 4 (already marked MATCHED and in ap_handled_ids)
                 if result is None and transaction.counterparty_id and transaction.counterparty_id in cp_map:
                     cp = cp_map[transaction.counterparty_id]
-                    has_open_invoices = cp_has_open_invoices.get(transaction.counterparty_id, False)
-
-                    if has_open_invoices:
-                        # CASE 3: Counterparty has open invoices but amount didn't match in Phase 2
-                        # → Use 1300 Prepayments (asset) to defer categorization to vendor reconciliation
-                        bank_account = db.query(FinanceBankAccount).filter(
-                            FinanceBankAccount.id == transaction.bank_account_id
-                        ).first()
-                        if bank_account and bank_account.coa_account_code:
-                            amount = float(transaction.amount) if transaction.amount is not None else 0.0
-                            abs_amount = abs(amount)
-                            entry = self._create_simple_entry(
-                                db=db,
-                                transaction=transaction,
-                                entity_id=bank_account.entity_id,
-                                bank_coa_code=bank_account.coa_account_code,
-                                contra_code="1300",  # Prepayments asset account
-                                amount=amount,
-                                abs_amount=abs_amount,
-                                source="case3_asset_parking",
-                            )
-                            transaction.status = TransactionStatus.MATCHED
-                            transaction.reconciled_journal_entry_id = entry.id
-                            transaction.matched_at = datetime.now(UTC)
-                            transaction.coa_account_code = "1300"
-                            # No categorization_type for asset-parked transactions
-                            db.commit()
-                            result = {
-                                "transaction_id": transaction.id,
-                                "status": "categorized",
-                                "rule_name": "[case3:prepayment_asset]",
-                                "journal_entry_id": entry.id,
-                                "error": None,
-                            }
-                    else:
-                        # No open invoices for this counterparty → use default account
-                        if cp.default_account_code:
-                            result = self._apply_default_account(db, transaction, cp)
+                    # Use counterparty's default account if available
+                    if cp.default_account_code:
+                        result = self._apply_default_account(db, transaction, cp)
 
                 if result is not None:
                     results.append(result)
@@ -559,9 +515,37 @@ class CategorizationService:
                     handled.add(txn.id)
                 else:
                     # CASE 3: Amount doesn't match any invoice
-                    # Skip knock-off; park in 1300 Prepayments in Phase 4
-                    # Do NOT add to handled — let Phase 4 process this
-                    continue
+                    # Park to 1300 Prepayments asset account (Phase 1.5B)
+                    # This defers categorization to vendor-level reconciliation
+                    bank_account = db.query(FinanceBankAccount).filter(
+                        FinanceBankAccount.id == txn.bank_account_id
+                    ).first()
+                    if bank_account and bank_account.coa_account_code:
+                        entry = self._create_simple_entry(
+                            db=db,
+                            transaction=txn,
+                            entity_id=bank_account.entity_id,
+                            bank_coa_code=bank_account.coa_account_code,
+                            contra_code="1300",  # Prepayments asset account
+                            amount=amount,
+                            abs_amount=abs_amount,
+                            source="case3_asset_parking",
+                        )
+                        txn.status = TransactionStatus.MATCHED
+                        txn.reconciled_journal_entry_id = entry.id
+                        txn.matched_at = datetime.now(UTC)
+                        txn.coa_account_code = "1300"
+                        # No categorization_type for asset-parked transactions
+                        db.commit()
+
+                        results.append({
+                            "transaction_id": txn.id,
+                            "status": "categorized",
+                            "rule_name": "[case3:asset_parking]",
+                            "journal_entry_id": entry.id,
+                            "error": None,
+                        })
+                        handled.add(txn.id)  # Stop further processing in Phase 4
 
             except Exception as e:
                 logger.warning(

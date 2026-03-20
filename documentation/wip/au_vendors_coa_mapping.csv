@@ -1,0 +1,59 @@
+Vendor Name,Frequency,Type,Suggested COA,COA Account Name,Status,Notes,My remarks
+Wise Australia Pty Ltd,78,Bank,"1001, 1002, 1009, 1010",Bank - Wise (multiple currencies),READY,Map by currency based on transaction,Not needed. Internal transfer
+TRANSPORTFORNSW TAP SYDNEY AU,76,Transport,6400,Travel - Tickets,READY,Could also be 5020 if reimbursement,ok
+DiDiMobility Sydney AU,31,Transport,6400,Travel - Tickets,READY,,ok
+CURSOR (AI Powered IDE),18,Software,6701,Technology - Software Subscriptions,READY,,ok
+OPENAI (ChatGPT Subscription),15,Software,6701,Technology - Software Subscriptions,READY,,ok
+Intuit Quickbooks Sydney AU,13,Software,6701,Technology - Software Subscriptions,READY,Accounting software,ok
+SOURCEGRAPH,13,Software,6701,Technology - Software Subscriptions,READY,Development tool,ok
+IWG AUSTRALIA SYDNEY,12,Office,6300,Office Rent,READY,Co-working space,ok
+SUPABASE,8,Software,6701,Technology - Software Subscriptions,READY,Backend/database service,ok
+ANGEL INVESTMENT TWICKENHAM,8,Investment,1220,Other Receivables,NEEDS_REVIEW,Is this a loan? Investment? Check entity,No COA needed
+RIGHTWORKS,7,Software,6701,Technology - Software Subscriptions,READY,HR/Admin software,ok
+VERCEL INC,7,Software,6701,Technology - Software Subscriptions,READY,Hosting/deployment,ok
+EDREAMS,7,Travel,6400,Travel - Tickets,READY,Travel booking site,ok
+Linkt Melbourne,7,Transport,5020,Incidentals Payout - Tolls,READY,Toll/road fees,ok
+RENDER.COM,6,Software,6701,Technology - Software Subscriptions,READY,Hosting,ok
+NOTION LABS,6,Software,6701,Technology - Software Subscriptions,READY,Productivity tool,ok
+WISPR,6,Software,6701,Technology - Software Subscriptions,READY,Workflow software,ok
+OMNITAS.DEV,5,Software,6701,Technology - Software Subscriptions,READY,Development service,ok
+CIRCLECI.COM,5,Software,6701,Technology - Software Subscriptions,READY,CI/CD pipeline,ok
+ELEVENLABS.IO,5,Software,6701,Technology - Software Subscriptions,READY,AI voice service,ok
+THE SPORTING GLOBE KING STREET,5,Entertainment,6402,Entertainment,NEEDS_REVIEW,Is this business entertainment or personal?,This is meals
+NEWS PTY LIMITED,5,Media,6014,Employee Claims - Other,NEEDS_REVIEW,Could be advertising or supplies,No COA needed
+CreditLine NetBank BPAY,6,Bank,6600,Bank Fees,NEEDS_REVIEW,Is this a fee or a vendor account?,No COA needed
+CASSIE CROWDER,17,Employee,6000,Salaries & Wages,NEEDS_REVIEW,Employee or contractor? If contractor: use 6014,This is a customer. How do we handle it. Generic? 4025
+POST GORDON,10,Employee,6000,Salaries & Wages,NEEDS_REVIEW,Employee or contractor?,This is a customer. How do we handle it. Generic? 4025
+CROWDER C S,10,Employee,6000,Salaries & Wages,NEEDS_REVIEW,Employee or contractor?,This is a customer. How do we handle it. Generic? 4025
+SPICA DELORINO,10,Employee,6000,Salaries & Wages,NEEDS_REVIEW,Employee or contractor?,This is a customer. How do we handle it. Generic? 4025
+ANTHONY G PIKE,8,Employee,6000,Salaries & Wages,NEEDS_REVIEW,Employee or contractor?,This is a customer. How do we handle it. Generic? 4025
+MEEGAN KING,3,Employee,6000,Salaries & Wages,NEEDS_REVIEW,Employee or contractor? Mileage/arrears suggests expense reimbursement,This is a customer. How do we handle it. Generic? 4025
+IPPY*WOTSO HOLDINGS,3,Office,6300,Office Rent,NEEDS_REVIEW,Co-working? Office space?,ok
+Payrix*WOTSO HOLDINGS,3,Office,6300,Office Rent,NEEDS_REVIEW,Co-working? Office space?,ok
+FIN-NOR HOLDINGS,4,Loan,2400,Loans from Others,NEEDS_REVIEW,Is this a loan to or from Drive Mate?,FIN NOR HOLDINGS IS AN INVESTOR. Sometimes investors do convertibles and sometimes they do share capitral directly. How should we handle this?
+UBER *TRIP,3,Transport,6400,Travel - Tickets,READY,,ok
+GLOBAL TRANSPORT,3,Transport,6400,Travel - Tickets,READY,,ok
+SQ *STOCK MARKET KITCHEN,3,Entertainment,6402,Entertainment,READY,Restaurant/bar,ok
+INCANTO COFFEE,2,Meals,6402,Entertainment,READY,Coffee/cafe,ok
+Caffeine Cartel,2,Meals,6402,Entertainment,READY,Coffee/cafe,ok
+Trip.com,2,Travel,6400,Travel - Tickets,READY,Travel booking,ok
+ANTHROPIC,2,Software,6701,Technology - Software Subscriptions,NEEDS_REVIEW,Claude API subscription?,ok
+APIFY,2,Software,6701,Technology - Software Subscriptions,READY,Data scraping tool,ok
+MICROSOFT,2,Software,6701,Technology - Software Subscriptions,READY,Microsoft cloud/services,ok
+Dirk-Jan Ter Horst,2,Employee,6000,Salaries & Wages,READY,Salary payment,Employee. But employee payment may not always be a particular COA. It can be a separate COA. How do we handle it then. Not have a COA for an employee and let the rule determine it?
+gotogate,2,Travel,6400,Travel - Tickets,READY,Travel booking,ok
+DEFT INSURANCE,2,Insurance,2500,GST Payable / Insurance,NEEDS_REVIEW,Which insurance account?,ok. No default COA as COA can be different for this one
+AUTOROLA,2,Fleet,5061,On-Ground Team - Salary,NEEDS_REVIEW,Fleet management? Equipment?,No COA needed
+Admin CF-15245631C,2,Internal,8110,IC - Due to SG (AU books),NEEDS_REVIEW,Internal transfer to SG entity?,Don’t create this one
+Refund Purchase,2,Travel,5052,Refunds - Trip,NEEDS_REVIEW,Travel refund?,Don’t create this one
+Return DRIVE LAH,6,Internal,1001,Bank - Wise,NEEDS_REVIEW,Internal transfer - use RULES not counterparty,Don’t create this one
+Return DRIVE MATE,2,Internal,1000,Bank - OCBC,NEEDS_REVIEW,Internal transfer - use RULES not counterparty,Don’t create this one
+INSURET CLAIM,2,Insurance,7001,Other Income - Cash Rebate,NEEDS_REVIEW,Insurance claim/reimbursement?,Create Insuret. But no COA
+Twilio,2,Software,6701,Technology - Software Subscriptions,READY,Communication/SMS API,This will be technilogy infrastructure
+RIGHTWORKS,7,Software,6701,Technology - Software Subscriptions,READY,,This is a repeat. You have done it above.
+Taylors Pharmacy,1,Supplies,6013,Employee Claims - Office Supplies,NEEDS_REVIEW,Personal health or business supply?,No COA needed
+Cosmic Galactic CommBank,1,Other,2200,Accrued Expenses,NEEDS_REVIEW,Damage claim? What is this?,No COA needed
+ZLR*Hills,1,Other,6402,Entertainment,NEEDS_REVIEW,Restaurant? Hotel? Business expense?,ok
+POST SYDNEY GPO,1,Supplies,6013,Employee Claims - Office Supplies,READY,Postal/mail services,ok
+LOVABLE,7,Software,6701,Technology - Software Subscriptions,READY,Web development platform,ok
+RUNWAY,4,Software,6701,Technology - Software Subscriptions,READY,AI video platform,ok
