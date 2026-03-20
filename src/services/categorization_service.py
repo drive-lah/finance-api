@@ -1231,6 +1231,10 @@ Return only the JSON object, no explanation."""
         return True
 
     # ------------------------------------------------------------------
+    # Conditional rule logic evaluation
+    # ------------------------------------------------------------------
+
+    # ------------------------------------------------------------------
     # Apply rule
     # ------------------------------------------------------------------
 
@@ -1256,6 +1260,14 @@ Return only the JSON object, no explanation."""
         amount = float(transaction.amount) if transaction.amount is not None else 0.0
         abs_amount = abs(amount)
 
+        # Get the contra_account_code from the rule
+        # Note: INTERNAL_TRANSFER rules may not have a contra_account_code (they use target_bank_account_id instead)
+        contra_account_code = None
+        if rule.category != TransactionCategory.INTERNAL_TRANSFER:
+            contra_account_code = rule.contra_account_code
+            if not contra_account_code:
+                raise ValueError(f"Rule {rule.id} produced no contra_account_code")
+
         if rule.category == TransactionCategory.INTERNAL_TRANSFER:
             journal_entry = self._create_internal_transfer_entries(
                 db, transaction, rule, bank_account, amount, abs_amount
@@ -1270,7 +1282,7 @@ Return only the JSON object, no explanation."""
                 transaction=transaction,
                 entity_id=bank_account.entity_id,
                 bank_coa_code=bank_account.coa_account_code,
-                contra_code=rule.contra_account_code,
+                contra_code=contra_account_code,
                 amount=amount,
                 abs_amount=abs_amount,
                 source="categorization_engine",
@@ -1283,7 +1295,7 @@ Return only the JSON object, no explanation."""
 
         # Set COA account code for non-internal-transfer categorizations
         if rule.category != TransactionCategory.INTERNAL_TRANSFER:
-            transaction.coa_account_code = rule.contra_account_code
+            transaction.coa_account_code = contra_account_code
 
         # Set categorization type from rule category
         category_map = {

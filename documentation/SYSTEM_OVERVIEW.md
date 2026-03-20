@@ -544,15 +544,17 @@ When a reviewer approves a Matched transaction (`POST /transactions/:id/approve`
 
 **Rule Match Criteria (AND logic — all non-null must match):**
 
+**Important:** Rules match by TEXT and TYPE, NOT by numeric ID. This makes rules resilient (work regardless of vendor ID).
+
 | Criterion | Operators | Notes |
 |-----------|-----------|-------|
 | `bank_account_ids` | — (scope filter) | JSON array; null = all accounts |
 | `match_counterparty_type` | — (match condition) | Filter rule by counterparty type (EMPLOYEE, VENDOR, etc.). Requires counterparty enrichment to run first. Prevents employee salary rules from misfiring on vendor transactions. |
+| `counterparty_operator` + `counterparty_value` | `contains` · `not_contains` · `is_exactly` · `matches_regex` | Matches counterparty NAME (text), NOT numeric ID. Enables rules like "Vendor name contains 'Acme'". |
 | `direction` | — (required field) | `incoming` or `outgoing` checked first |
 | `amount_operator` + `amount_value` | `equals` · `not_equals` · `greater_than` · `less_than` · `between` | `between` also requires `amount_value_max` |
 | `description_operator` + `description_value` | `contains` · `not_contains` · `is_exactly` · `matches_regex` | Case-insensitive |
 | `transaction_type_operator` + `transaction_type_value` | Same as description | Matches bank's type code (e.g. `TRANSFER`) |
-| `counterparty_operator` + `counterparty_value` | Same as description | Matches raw counterparty from bank CSV |
 | `match_currency` | — (exact) | ISO 4217 (e.g. `SGD`) |
 
 **Rule Actions (what happens when matched):**
@@ -768,28 +770,38 @@ AI extracts vendor_name + vendor_tax_id
 Returns: counterparty_id, is_new_vendor, match_confidence
 ```
 
-**COA Priority Chain:**
+**COA Priority Chain (Invoices):**
+
+**Key principle:** Rules are SMARTER than defaults, so rules come BEFORE defaults.
 
 ```
-1. counterparty.default_account_code  → coa_source = 'db'
+1. Manual override (approver sets)    → coa_source = 'manual' (ALWAYS WINS)
+   └─ Approver can override any automatic COA at approval time
+
+2. Phase 4 Rules match                → coa_source = 'rule'
+   └─ Apply Phase 4 categorization rules (same logic as transaction categorization)
+   └─ Rules match by: counterparty type, description, amount, transaction type
+   └─ NO ID-based matching (rules are resilient, don't depend on specific vendor IDs)
+   └─ If rule matches: use rule's account code
+   └─ Most specific rule conditions evaluated first; first match wins
+
+3. counterparty.default_account_code  → coa_source = 'db' (FALLBACK)
+   └─ If no rule matched, use vendor's default
    └─ For vendors: use if set
    └─ For employees: use if set; do NOT default to salary_expense_code
 
-2. contract.coa_account_code          → coa_source = 'contract'
+4. contract.coa_account_code          → coa_source = 'contract'
    └─ If invoice is linked to a contract, use contract's account code
 
-3. Phase 4 Rules match                → coa_source = 'rule' (NEW)
-   └─ Apply Phase 4 categorization rules (same logic as transaction categorization)
-   └─ Most specific rule conditions first (counterparty attributes, amount, description)
-   └─ If rule matches: use rule's account code
-
-4. AI extraction suggestion           → coa_source = 'ai'
+5. AI extraction suggestion           → coa_source = 'ai'
    └─ Claude Haiku suggestion from PDF extraction
+   └─ Only used if confidence ≥ 0.80
 
-5. null                               → invoice blocked from approval until COA set
+6. NEEDS_REVIEW                       → coa_source = null
+   └─ Invoice blocked from approval until COA is manually set
 ```
 
-Approver confirms or changes COA at approval time → `coa_source = 'manual'`.
+**Why rules before defaults?** Rules are curated, specific scenarios. Defaults are generic ("this vendor usually uses this account"). Smart before dumb.
 
 **Note on Employee Invoices:** For employee counterparties (e.g., expense reimbursements):
 - Do NOT assume salary_expense_code (6000) automatically
@@ -1167,6 +1179,32 @@ salary_expense_code = SALARY_ACCOUNT_MAPPING.get(first_team_in_array, 6000)
 ```
 
 This is **NOT** a fixed field in HrEmployee. It's **computed at creation time** from the teams array, and **recalculated if teams change** (sync job updates it).
+
+#### Employee Rules (Phase 4 Categorization)
+
+Phase 4 rules enable flexible employee payment categorization beyond just salary:
+
+**Matching Employees via Rules:**
+- Rules match employees by: `match_counterparty_type = 'employee'` + optional additional criteria
+- NO ID-based matching (rules don't depend on knowing specific employee IDs beforehand)
+- Example rules:
+  - `match_counterparty_type='employee' + amount < 500` → 1300 Miscellaneous (small amounts)
+  - `match_counterparty_type='employee' + description contains 'reimbursement'` → 1300 Prepayments
+  - `match_counterparty_type='employee' + description contains 'bonus'` → 5800 Bonuses
+  - `match_counterparty_type='employee' + [teams in rule] = employee's teams` → team-specific salary account (e.g., 5063 for Support team)
+
+**Rule Priority for Employee Payments:**
+1. Most specific rules first (exact team + amount range)
+2. Team-based rules (Support → 5063, On-Ground → 5061)
+3. Contractor rules (match_counterparty_type='contractor' → 6020)
+4. Generic employee fallback (match_counterparty_type='employee' → 6000)
+5. If no rule matches → PENDING (no false defaults for employees)
+
+**Why Rules Instead of salary_expense_code?**
+- Salary code is payroll-specific (set during onboarding)
+- Rules handle ad-hoc employee payments (reimbursements, advances, bonuses, etc.)
+- Rules are more intelligent (can match multiple criteria: team, amount, description)
+- Rules prevent misclassification (no automatic salary categorization for non-salary payments)
 
 #### Payroll Run (COA Override)
 
@@ -1954,7 +1992,7 @@ TAX (9xxx)
 5. ~~**DBS PDF Import**~~ — ✅ Done (multi-currency, single PDF upload routes to all DBS accounts)
 6. ~~**Wise API Sync**~~ — ✅ Done (connect profile → auto-create accounts, on-demand sync)
 7. **Invoice / AP** — automates the accrual path (invoices → journal entries → payment matching); link to counterparty_id
-8. **Categorization → Counterparty wiring** — `counterparty_id` on rules; engine sets it on matched transactions, inherits `default_account_code`
+8. **Categorization → Counterparty wiring** — ✅ Done (rules match by text/type; engine sets counterparty on matched transactions, can inherit `default_account_code` as fallback)
 9. **Payroll** — `counterparty_payroll_details` extension + payroll journal entry generation; employees already synced via `external_id`
 10. **Prepayment Scheduling** — auto-spread payments over future periods
 11. **Stripe Full Integration** — automate Stripe transaction ingestion and categorization

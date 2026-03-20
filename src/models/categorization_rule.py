@@ -13,6 +13,7 @@ Rule structure:
 from datetime import datetime, UTC
 from typing import Optional
 import enum
+import json
 
 from sqlalchemy import (
     String, DateTime, Integer, Boolean, ForeignKey, Enum as SQLEnum,
