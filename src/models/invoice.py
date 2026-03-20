@@ -98,7 +98,7 @@ class FinanceInvoice(Base):
     )
     coa_source: Mapped[Optional[str]] = mapped_column(
         String(20), nullable=True,
-        comment="db | contract | ai | manual",
+        comment="db | contract | rule | ai | manual",
     )
 
     # Approval fields

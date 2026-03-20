@@ -172,7 +172,12 @@ class InvoiceService:
             status=InvoiceStatus.DRAFT.value,
         )
 
-        # ── COA priority: DB counterparty → contract → AI suggestion ──
+        # ── COA priority chain ──────────────────────────────────────────
+        # 1. Counterparty default_account_code  (source: "db")
+        # 2. Contract COA                       (source: "contract")
+        # 3. Phase 4 categorization rules       (source: "rule")
+        # 4. AI suggestion                      (source: "ai")
+        # ───────────────────────────────────────────────────────────────
         coa_code: Optional[str] = None
         coa_source: Optional[str] = None
 
@@ -186,7 +191,7 @@ class InvoiceService:
         # 2. Contract COA (after contract matching below)
         # will be applied post-match
 
-        # 3. AI suggestion passed in contra_account_code
+        # AI suggestion (used as fallback after rules)
         ai_coa = data.contra_account_code
 
         # ── Contract matching ──
@@ -201,6 +206,20 @@ class InvoiceService:
                 if not coa_code and contract.coa_account_code:
                     coa_code = contract.coa_account_code
                     coa_source = "contract"
+
+        # 3. Phase 4 categorization rules
+        if not coa_code:
+            from src.services.categorization_service import categorization_service
+            matched_rule = categorization_service.match_invoice_to_rule(
+                db=db,
+                counterparty_id=data.counterparty_id,
+                amount=data.total_amount,
+                currency=data.currency,
+                description=data.notes,
+            )
+            if matched_rule and matched_rule.contra_account_code:
+                coa_code = matched_rule.contra_account_code
+                coa_source = "rule"
 
         # 4. Fall back to AI suggestion
         if not coa_code and ai_coa:
@@ -452,17 +471,20 @@ class InvoiceService:
         transaction_date: Optional[date] = None,
     ) -> Optional[FinanceInvoice]:
         """
-        Find the best open invoice to knock off for a counterparty payment.
+        Find matching invoice for AP knock-off using 3-case framework.
 
-        Ranked matching (first match wins in priority order):
-          1. Reference match  — invoice_number appears in bank description or reference_number
-          2. Exact amount     — payment ≈ remaining balance (±2% for FX rounding)
-          3. Partial payment  — payment < remaining (accepted; creates PARTIALLY_PAID record)
+        CASE 1: Reference + Amount + Date (DEFINITIVE)
+          IF invoice_number in description/reference AND amount ≈ remaining (±2%) AND txn_date > invoice_date
+          → Return invoice (use invoice.account_code)
 
-        Within each tier, oldest invoice (by invoice_date, then id) wins (FIFO convention).
+        CASE 2: Amount + Date, NO Reference (FIFO)
+          IF no invoice_number in description AND amount ≈ remaining (±2%) AND txn_date > invoice_date
+          → Return FIRST (oldest) matching invoice (use invoice.account_code)
 
-        Date constraint: invoices dated after transaction_date are excluded — a payment
-        cannot precede the invoice it settles.
+        CASE 3: Amount doesn't match any invoice
+          → Return None (calling code will use 1300 Prepayments asset account)
+
+        Returns None if no match found or no invoices exist for counterparty.
         """
         open_statuses = (InvoiceStatus.APPROVED.value, InvoiceStatus.PARTIALLY_PAID.value)
 
@@ -482,7 +504,7 @@ class InvoiceService:
         desc_upper = (description or "").upper()
         ref_upper = (reference_number or "").upper()
 
-        # Tier 1: reference match — invoice_number found in bank text
+        # CASE 1: Reference + Amount + Date (DEFINITIVE)
         for inv in invoices:
             remaining = float(inv.total_amount) - float(inv.amount_paid)
             if remaining <= 0:
@@ -492,24 +514,26 @@ class InvoiceService:
                 if inv_num_upper and (
                     inv_num_upper in desc_upper or inv_num_upper in ref_upper
                 ):
-                    return inv
+                    # Found reference; check amount (±2% FX tolerance)
+                    if abs(amount - remaining) <= remaining * 0.02:
+                        return inv
 
-        # Tier 2: exact amount match (payment ≈ remaining ±2%)
+        # CASE 2: Amount + Date (NO REFERENCE) → FIFO
         for inv in invoices:
             remaining = float(inv.total_amount) - float(inv.amount_paid)
             if remaining <= 0:
                 continue
+            # Ensure invoice_number NOT in description (skip if already handled in CASE 1)
+            if inv.invoice_number:
+                inv_num_upper = inv.invoice_number.upper()
+                if inv_num_upper in desc_upper or inv_num_upper in ref_upper:
+                    continue  # Skip; would have been matched in CASE 1
+            # Match on amount only; return FIRST (oldest)
             if abs(amount - remaining) <= remaining * 0.02:
                 return inv
 
-        # Tier 3: partial payment (payment < remaining, more than zero)
-        for inv in invoices:
-            remaining = float(inv.total_amount) - float(inv.amount_paid)
-            if remaining <= 0:
-                continue
-            if 0 < amount < remaining * 1.02:
-                return inv
-
+        # CASE 3: No match → Return None
+        # Calling code will use 1300 Prepayments instead
         return None
 
     def get_open_for_match(
