@@ -475,7 +475,6 @@ For each remaining Pending transaction:
   │   │   ├── `amount_operator` + `amount_value` — optional, amount thresholds
   │   │   └── `description_operator` + `description_value` — optional, transaction memo matching
   │   ├── First matching rule wins (ordered by priority)
-  │   ├── **Employee constraint:** For outgoing employee payments with NO rule match → PENDING (don't default to salary_expense_code)
   │   ├── Create journal entry (expense/deposit/transfer)
   │   ├── Update transaction counterparty (name, type)
   │   ├── Apply tags from rule
@@ -1165,26 +1164,31 @@ Step 6: Sync job runs daily (manual trigger: POST /api/jobs/sync-employees)
 
 **Q: Which account should salary expense hit?**
 
-**Answer: Depends on teams array + employee_type + entity.**
+**Answer: Depends on teams array.**
+
+Salary expense code is **derived from the employee's teams at onboarding time** and stored in both `HrEmployee.salary_expense_code` and `FinanceCounterparty.default_account_code`:
 
 ```python
-# Salary expense COA mapping
-SALARY_ACCOUNT_MAPPING = {
-    "Customer Support": 5063,  # COA 5063: Customer Support Salary
-    "On-Ground": 5061,         # COA 5061: On-Ground Team Salary
-    # Default: 6000            # COA 6000: Salaries & Wages
-}
+# Salary expense COA mapping (priority order)
+if any("Customer Support" in team for team in teams):
+    salary_expense_code = "5063"  # COA 5063: Customer Support Salary
+elif any("On-Ground" in team for team in teams):
+    salary_expense_code = "5061"  # COA 5061: On-Ground Team Salary
+else:
+    salary_expense_code = "6000"  # COA 6000: Salaries & Wages (default)
 
-# Logic at HrEmployee creation:
-salary_expense_code = SALARY_ACCOUNT_MAPPING.get(first_team_in_array, 6000)
-
-# Example:
-# Employee teams = ["Engineering"]           → salary_expense_code = 6000
-# Employee teams = ["Customer Support"]      → salary_expense_code = 5063
-# Employee teams = ["On-Ground", "Support"]  → salary_expense_code = 5061 (first match)
+# Examples:
+# Employee teams = ["Engineering"]                → 6000 (no match, use default)
+# Employee teams = ["Customer Support"]           → 5063 (Customer Support match)
+# Employee teams = ["On-Ground", "Support"]       → 5061 (On-Ground match, checked first)
+# Employee teams = ["Customer Support", "Engineering"] → 5063 (CS checked first)
 ```
 
-This is **NOT** a fixed field in HrEmployee. It's **computed at creation time** from the teams array, and **recalculated if teams change** (sync job updates it).
+**Key behaviors:**
+- Checked at **onboarding time** — derived from teams array and stored permanently
+- **Never NULL** — always defaults to 6000 if no explicit code provided and no team match
+- **Used as Phase 4B fallback** — when no rule matches in Phase 4A, counterparty.default_account_code (= salary_expense_code) is used
+- **Sync job updates** — if teams change later, salary_expense_code is recalculated and synced
 
 #### Employee Rules (Phase 4 Categorization)
 
@@ -1199,18 +1203,22 @@ Phase 4 rules enable flexible employee payment categorization beyond just salary
   - `match_counterparty_type='employee' + description contains 'bonus'` → 5800 Bonuses
   - `match_counterparty_type='employee' + [teams in rule] = employee's teams` → team-specific salary account (e.g., 5063 for Support team)
 
-**Rule Priority for Employee Payments:**
+**Rule Priority for Employee Payments (Phase 4A):**
 1. Most specific rules first (exact team + amount range)
 2. Team-based rules (Support → 5063, On-Ground → 5061)
-3. Contractor rules (match_counterparty_type='contractor' → 6020)
-4. Generic employee fallback (match_counterparty_type='employee' → 6000)
-5. If no rule matches → PENDING (no false defaults for employees)
+3. Description-based rules (reimbursement → 1300, bonus → 5800, etc.)
+4. Contractor rules (match_counterparty_type='contractor' → 6020)
 
-**Why Rules Instead of salary_expense_code?**
-- Salary code is payroll-specific (set during onboarding)
-- Rules handle ad-hoc employee payments (reimbursements, advances, bonuses, etc.)
-- Rules are more intelligent (can match multiple criteria: team, amount, description)
-- Rules prevent misclassification (no automatic salary categorization for non-salary payments)
+**If no Phase 4A rule matches (Phase 4B):**
+- Fallback to counterparty.default_account_code (= employee's salary_expense_code from onboarding)
+- Never leaves employee payments unclassified due to NULL defaults
+- Only PENDING if default_account_code is also NULL (rare, indicates missing onboarding data)
+
+**Why Rules + Fallback Hybrid?**
+- Rules are intelligent for ad-hoc payments (reimbursements, advances, bonuses, irregular amounts)
+- Fallback ensures regular salary/stipend payments always categorize correctly
+- Rules prevent misclassification (no automatic salary on reimbursement unless explicit rule)
+- Combined approach: flexibility of rules + safety of fallback
 
 #### Payroll Run (COA Override)
 
