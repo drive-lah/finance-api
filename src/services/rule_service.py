@@ -167,6 +167,7 @@ class RuleService:
             allocation_entity_id=rule_data.allocation_entity_id,
             counterparty_name=rule_data.counterparty_name,
             counterparty_type=rule_data.counterparty_type,
+            match_counterparty_type=rule_data.match_counterparty_type,
             tag_ids=tag_ids_json,
             gst_override=rule_data.gst_override,
         )

@@ -151,6 +151,14 @@ class FinanceCategorizationRule(Base):
             "Enrichment runs before rules, so this is reliable."
         ),
     )
+    match_counterparty_type: Mapped[Optional[str]] = mapped_column(
+        String(50), nullable=True,
+        comment=(
+            "Match condition: if set, rule only matches transactions whose linked "
+            "counterparty has this type (e.g. 'employee', 'vendor'). "
+            "Requires counterparty enrichment to have run first."
+        ),
+    )
 
     # ------------------------------------------------------------------
     # ACTION
@@ -242,6 +250,7 @@ class FinanceCategorizationRule(Base):
             "counterparty_value": self.counterparty_value,
             "match_currency": self.match_currency,
             "counterparty_id": self.counterparty_id,
+            "match_counterparty_type": self.match_counterparty_type,
             "category": self.category.value,
             "contra_account_code": self.contra_account_code,
             "target_bank_account_id": self.target_bank_account_id,

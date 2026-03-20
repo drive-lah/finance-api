@@ -486,6 +486,10 @@ class RuleCreate(BaseModel):
     counterparty_operator: Optional[MatchOperator] = None
     counterparty_value: Optional[str] = Field(None, max_length=255)
     match_currency: Optional[str] = Field(None, max_length=3)
+    match_counterparty_type: Optional[str] = Field(
+        None, max_length=50,
+        description="Match condition: only match transactions whose counterparty has this type (e.g. 'employee', 'vendor')",
+    )
 
     # Action
     category: TransactionCategory = Field(..., description="expense | deposit | internal_transfer | cross_entity_allocation")
@@ -519,6 +523,7 @@ class RuleUpdate(BaseModel):
     counterparty_operator: Optional[MatchOperator] = None
     counterparty_value: Optional[str] = Field(None, max_length=255)
     match_currency: Optional[str] = Field(None, max_length=3)
+    match_counterparty_type: Optional[str] = Field(None, max_length=50)
 
     category: Optional[TransactionCategory] = None
     contra_account_code: Optional[str] = Field(None, max_length=20)
@@ -567,6 +572,7 @@ class RuleResponse(BaseModel):
     counterparty_operator: Optional[str] = None
     counterparty_value: Optional[str] = None
     match_currency: Optional[str] = None
+    match_counterparty_type: Optional[str] = None
 
     category: str
     contra_account_code: Optional[str] = None

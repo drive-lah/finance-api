@@ -70,10 +70,11 @@ class CategorizationService:
             and mark handled so Phase 4 does not double-book.
 
         Phase 4 — Accounting Classification:
-            A) If transaction has a counterparty with default_account_code →
-               auto-create the journal entry (no rule needed).
-            B) Otherwise walk active rules in priority order (first match wins).
-            C) Unmatched transactions stay Pending.
+            A) Walk active rules in priority order (most specific first match wins).
+            B) If no rule match: use counterparty's default_account_code if available.
+            C) If no rule and no default: run AI classification (high confidence → MATCHED,
+               low → NEEDS_REVIEW).
+            D) Unmatched transactions stay Pending.
 
         Args:
             db: Database session
@@ -161,14 +162,27 @@ class CategorizationService:
             rules_query = rules_query.filter(FinanceCategorizationRule.id == rule_id)
         rules = rules_query.order_by(FinanceCategorizationRule.priority).all()
 
-        # Pre-load counterparties that have a default_account_code for the default-account path
+        # Pre-load counterparties and check which have open invoices
         from src.models.counterparty import FinanceCounterparty
+        from src.models.invoice import FinanceInvoice, InvoiceStatus
+
         cp_map: dict[int, FinanceCounterparty] = {}
+        cp_has_open_invoices: dict[int, bool] = {}  # Track which CPs have open invoices
+
         if transactions:
             cp_ids = {t.counterparty_id for t in transactions if t.counterparty_id}
             if cp_ids:
                 cps = db.query(FinanceCounterparty).filter(FinanceCounterparty.id.in_(cp_ids)).all()
                 cp_map = {cp.id: cp for cp in cps}
+
+                # Check which counterparties have open invoices
+                open_statuses = (InvoiceStatus.APPROVED.value, InvoiceStatus.PARTIALLY_PAID.value)
+                for cp_id in cp_ids:
+                    has_invoices = db.query(FinanceInvoice).filter(
+                        FinanceInvoice.counterparty_id == cp_id,
+                        FinanceInvoice.status.in_(open_statuses),
+                    ).count() > 0
+                    cp_has_open_invoices[cp_id] = has_invoices
 
         for transaction in transactions:
             if transaction.id in ap_handled_ids or transaction.id in payroll_handled_ids:
@@ -177,17 +191,52 @@ class CategorizationService:
             try:
                 result = None
 
-                # Phase 4A: default_account_code from linked counterparty
-                if transaction.counterparty_id and transaction.counterparty_id in cp_map:
-                    cp = cp_map[transaction.counterparty_id]
-                    if cp.default_account_code:
-                        result = self._apply_default_account(db, transaction, cp)
+                # Phase 4A: Rule-based matching (FIRST — most specific)
+                matched_rule = self._match_transaction(transaction, rules, cp_map)
+                if matched_rule:
+                    result = self._apply_rule(db, transaction, matched_rule)
 
-                # Phase 4B: rule-based matching
-                if result is None:
-                    matched_rule = self._match_transaction(transaction, rules)
-                    if matched_rule:
-                        result = self._apply_rule(db, transaction, matched_rule)
+                # Phase 4B: Default account or Asset account (SECOND — more generic)
+                if result is None and transaction.counterparty_id and transaction.counterparty_id in cp_map:
+                    cp = cp_map[transaction.counterparty_id]
+                    has_open_invoices = cp_has_open_invoices.get(transaction.counterparty_id, False)
+
+                    if has_open_invoices:
+                        # CASE 3: Counterparty has open invoices but amount didn't match in Phase 2
+                        # → Use 1300 Prepayments (asset) to defer categorization to vendor reconciliation
+                        bank_account = db.query(FinanceBankAccount).filter(
+                            FinanceBankAccount.id == transaction.bank_account_id
+                        ).first()
+                        if bank_account and bank_account.coa_account_code:
+                            amount = float(transaction.amount) if transaction.amount is not None else 0.0
+                            abs_amount = abs(amount)
+                            entry = self._create_simple_entry(
+                                db=db,
+                                transaction=transaction,
+                                entity_id=bank_account.entity_id,
+                                bank_coa_code=bank_account.coa_account_code,
+                                contra_code="1300",  # Prepayments asset account
+                                amount=amount,
+                                abs_amount=abs_amount,
+                                source="case3_asset_parking",
+                            )
+                            transaction.status = TransactionStatus.MATCHED
+                            transaction.reconciled_journal_entry_id = entry.id
+                            transaction.matched_at = datetime.now(UTC)
+                            transaction.coa_account_code = "1300"
+                            # No categorization_type for asset-parked transactions
+                            db.commit()
+                            result = {
+                                "transaction_id": transaction.id,
+                                "status": "categorized",
+                                "rule_name": "[case3:prepayment_asset]",
+                                "journal_entry_id": entry.id,
+                                "error": None,
+                            }
+                    else:
+                        # No open invoices for this counterparty → use default account
+                        if cp.default_account_code:
+                            result = self._apply_default_account(db, transaction, cp)
 
                 if result is not None:
                     results.append(result)
@@ -405,20 +454,32 @@ class CategorizationService:
         categorized_counter: int,
     ) -> set[int]:
         """
-        For each enriched transaction, check whether it matches an open AP invoice.
+        Phase 2: AP Knock-off with 3-case matching logic.
 
-        Outgoing payments (negative amount) from a known counterparty are checked
-        against open invoices (approved or partially_paid) for the same counterparty
-        and a similar amount (±2% tolerance for FX rounding).
+        For each enriched transaction (counterparty_id set), check whether it matches
+        an open AP invoice using the 3-case framework:
 
-        On match:
-        - Creates payment JE: Dr 2000 Accounts Payable / Cr bank_coa_code
-        - Updates invoice.amount_paid; sets status → paid or partially_paid
-        - Sets transaction → MATCHED, links JE
+        CASE 1: Reference + Amount + Date all match
+          → Create payment JE (Dr AP 2000 / Cr Bank)
+          → Use invoice.account_code (INVOICE COA WINS)
+          → Status: MATCHED
 
-        Returns a set of transaction IDs that were handled (skip Phase 4 for these).
+        CASE 2: Amount + Date match, NO reference (FIFO)
+          → Match to oldest invoice
+          → Create payment JE, use invoice.account_code
+          → Status: MATCHED
+
+        CASE 3: Amount doesn't match any invoice
+          → Skip knock-off
+          → Return None (Phase 4 will handle via rules or asset account)
+
+        For counterparties with NO open invoices: Skip Phase 2 entirely
+          → Let Phase 4 (rules/default) handle instead
+
+        Returns set of transaction IDs that were handled via knock-off.
         """
         from src.services.invoice_service import invoice_service
+        from src.models.invoice import FinanceInvoice, InvoiceStatus
 
         handled: set[int] = set()
 
@@ -427,11 +488,26 @@ class CategorizationService:
                 continue
             amount = float(txn.amount) if txn.amount is not None else 0.0
             if amount >= 0:
-                continue  # only outgoing payments knock off AP
+                continue  # Only outgoing payments knock off AP
 
             try:
                 abs_amount = abs(amount)
-                invoice = invoice_service.get_open_for_counterparty(
+
+                # Check if counterparty has ANY open invoices (Case 3 vs Phase 4 decision point)
+                open_statuses = (InvoiceStatus.APPROVED.value, InvoiceStatus.PARTIALLY_PAID.value)
+                has_open_invoices = db.query(FinanceInvoice).filter(
+                    FinanceInvoice.counterparty_id == txn.counterparty_id,
+                    FinanceInvoice.currency == txn.currency,
+                    FinanceInvoice.status.in_(open_statuses),
+                ).count() > 0
+
+                if not has_open_invoices:
+                    # No invoices for this counterparty — skip Phase 2
+                    # Let Phase 4 handle (rules, default account, or AI)
+                    continue
+
+                # Counterparty has open invoices; try to match using 3-case logic
+                invoice = invoice_service.find_matching_invoice(
                     db,
                     txn.counterparty_id,
                     abs_amount,
@@ -440,43 +516,52 @@ class CategorizationService:
                     reference_number=txn.reference_number or "",
                     transaction_date=txn.transaction_date,
                 )
-                if not invoice:
+
+                if invoice:
+                    # CASE 1 or 2: Invoice matched
+                    # Use invoice.account_code (INVOICE COA WINS over counterparty default)
+                    bank_account = db.query(FinanceBankAccount).filter(
+                        FinanceBankAccount.id == txn.bank_account_id
+                    ).first()
+                    if not bank_account or not bank_account.coa_account_code:
+                        continue
+
+                    inv_ref = f"Invoice {invoice.invoice_number or invoice.id}"
+                    je = invoice_service.create_ap_payment_entries(
+                        db=db,
+                        bank_account=bank_account,
+                        invoice=invoice,
+                        txn_date=txn.transaction_date,
+                        abs_amount=abs_amount,
+                        source="ap_knockoff",
+                        description=f"AP Payment: {inv_ref}",
+                    )
+
+                    invoice_service.record_payment(db, invoice.id, abs_amount)
+
+                    now = datetime.now(UTC)
+                    txn.status = TransactionStatus.MATCHED
+                    txn.reconciled_journal_entry_id = je.id
+                    txn.matched_at = now
+                    txn.coa_account_code = invoice.account_code  # Store invoice COA
+                    txn.categorization_type = CategorizationType.EXPENSE
+                    txn.categorized_by_logic = 'invoice_knockoff'
+                    db.commit()
+
+                    results.append({
+                        "transaction_id": txn.id,
+                        "status": "categorized",
+                        "rule_name": f"[ap_knockoff:invoice_{invoice.id}]",
+                        "journal_entry_id": je.id,
+                        "cross_entity": bank_account.entity_id != invoice.entity_id,
+                        "error": None,
+                    })
+                    handled.add(txn.id)
+                else:
+                    # CASE 3: Amount doesn't match any invoice
+                    # Skip knock-off; park in 1300 Prepayments in Phase 4
+                    # Do NOT add to handled — let Phase 4 process this
                     continue
-
-                bank_account = db.query(FinanceBankAccount).filter(
-                    FinanceBankAccount.id == txn.bank_account_id
-                ).first()
-                if not bank_account or not bank_account.coa_account_code:
-                    continue
-
-                inv_ref = f"Invoice {invoice.invoice_number or invoice.id}"
-                je = invoice_service.create_ap_payment_entries(
-                    db=db,
-                    bank_account=bank_account,
-                    invoice=invoice,
-                    txn_date=txn.transaction_date,
-                    abs_amount=abs_amount,
-                    source="ap_knockoff",
-                    description=f"AP Payment: {inv_ref}",
-                )
-
-                invoice_service.record_payment(db, invoice.id, abs_amount)
-
-                now = datetime.now(UTC)
-                txn.status = TransactionStatus.MATCHED
-                txn.reconciled_journal_entry_id = je.id
-                txn.matched_at = now
-                db.commit()
-
-                results.append({
-                    "transaction_id": txn.id,
-                    "status": "categorized",
-                    "rule_name": f"[ap_knockoff:invoice_{invoice.id}]",
-                    "journal_entry_id": je.id,
-                    "cross_entity": bank_account.entity_id != invoice.entity_id,
-                    "error": None,
-                })
-                handled.add(txn.id)
 
             except Exception as e:
                 logger.warning(
@@ -547,7 +632,6 @@ class CategorizationService:
 
             try:
                 runs = db.query(FinancePayrollRun).filter(
-                    FinancePayrollRun.entity_id == entity_id,
                     FinancePayrollRun.status == "POSTED",
                     FinancePayrollRun.run_date.between(date_low, date_high),
                 ).all()
@@ -577,8 +661,22 @@ class CategorizationService:
 
                 now = datetime.now(UTC)
                 txn.status = TransactionStatus.MATCHED
-                txn.reconciled_journal_entry_id = matched_run.journal_entry_id
                 txn.matched_at = now
+                txn.categorized_by_logic = 'payroll_knockoff'
+
+                # Handle cross-entity JEs via payroll service
+                from src.services.payroll_service import payroll_service
+
+                bank_account = db.query(FinanceBankAccount).get(txn.bank_account_id)
+                primary_je = payroll_service.create_payroll_payment_entries(
+                    db=db,
+                    bank_account=bank_account,
+                    payroll_run=matched_run,
+                    txn_date=txn.transaction_date,
+                    abs_amount=Decimal(str(abs_amount)),
+                    match_type=match_type,
+                )
+                txn.reconciled_journal_entry_id = primary_je.id
 
                 if match_type == "net":
                     matched_run.net_payment_transaction_id = txn.id
@@ -591,7 +689,8 @@ class CategorizationService:
                     "transaction_id": txn.id,
                     "status": "categorized",
                     "rule_name": f"[payroll_knockoff:run_{matched_run.id}:{match_type}]",
-                    "journal_entry_id": matched_run.journal_entry_id,
+                    "journal_entry_id": primary_je.id,
+                    "cross_entity": entity_id != matched_run.entity_id,
                     "error": None,
                 })
                 handled.add(txn.id)
@@ -927,10 +1026,11 @@ Return only the JSON object, no explanation."""
         self,
         transaction: FinanceTransaction,
         rules: list[FinanceCategorizationRule],
+        cp_map: Optional[dict] = None,
     ) -> Optional[FinanceCategorizationRule]:
         """Walk rules in priority order; return first match."""
         for rule in rules:
-            if self._rule_matches(transaction, rule):
+            if self._rule_matches(transaction, rule, cp_map):
                 return rule
         return None
 
@@ -938,6 +1038,7 @@ Return only the JSON object, no explanation."""
         self,
         transaction: FinanceTransaction,
         rule: FinanceCategorizationRule,
+        cp_map: Optional[dict] = None,
     ) -> bool:
         """Return True if ALL non-null criteria on the rule match the transaction."""
         amount = float(transaction.amount) if transaction.amount is not None else 0.0
@@ -945,6 +1046,16 @@ Return only the JSON object, no explanation."""
         # 0. Counterparty ID (exact FK match — enrichment must have run first)
         if rule.counterparty_id is not None:
             if transaction.counterparty_id != rule.counterparty_id:
+                return False
+
+        # 0b. Counterparty type (match condition — check the counterparty's type)
+        if rule.match_counterparty_type is not None:
+            if not transaction.counterparty_id:
+                return False  # No counterparty linked — cannot match type
+            cp = (cp_map or {}).get(transaction.counterparty_id)
+            if not cp:
+                return False  # Counterparty not in map
+            if cp.type != rule.match_counterparty_type:
                 return False
 
         # 1. Bank account scope
@@ -998,6 +1109,123 @@ Return only the JSON object, no explanation."""
         # 7. Currency
         if rule.match_currency is not None:
             if transaction.currency != rule.match_currency:
+                return False
+
+        return True
+
+    # ------------------------------------------------------------------
+    # Invoice rule matching (Phase 4 rules for AP invoices)
+    # ------------------------------------------------------------------
+
+    def match_invoice_to_rule(
+        self,
+        db: Session,
+        counterparty_id: Optional[int],
+        amount: float,
+        currency: str,
+        description: Optional[str] = None,
+    ) -> Optional[FinanceCategorizationRule]:
+        """
+        Match an invoice against active EXPENSE/OUTGOING categorization rules.
+
+        Used during invoice creation to determine the contra_account_code
+        (expense account) when the counterparty has no default_account_code
+        and no contract COA is available.
+
+        Only EXPENSE rules (direction=OUTGOING, category=EXPENSE) are considered,
+        since invoices represent outgoing payments. Deposit, internal_transfer,
+        and cross_entity_allocation rules are skipped.
+
+        Matching criteria evaluated (same logic as transaction matching):
+          - counterparty_id (exact FK match)
+          - amount (absolute value comparison)
+          - currency (exact match)
+          - description (text matching against invoice notes/number)
+          - counterparty name/value matching
+
+        Args:
+            db: Database session
+            counterparty_id: The invoice's counterparty FK (or None)
+            amount: The invoice total_amount (always positive for AP invoices)
+            currency: ISO 4217 currency code
+            description: Optional text to match against description rules
+
+        Returns:
+            The first matching rule, or None if no rules match.
+        """
+        rules = (
+            db.query(FinanceCategorizationRule)
+            .filter(
+                FinanceCategorizationRule.status == RuleStatus.ACTIVE,
+                FinanceCategorizationRule.direction == TransactionDirection.OUTGOING,
+                FinanceCategorizationRule.category == TransactionCategory.EXPENSE,
+            )
+            .order_by(FinanceCategorizationRule.priority)
+            .all()
+        )
+
+        for rule in rules:
+            if self._invoice_rule_matches(
+                rule, counterparty_id, amount, currency, description
+            ):
+                return rule
+
+        return None
+
+    def _invoice_rule_matches(
+        self,
+        rule: FinanceCategorizationRule,
+        counterparty_id: Optional[int],
+        amount: float,
+        currency: str,
+        description: Optional[str] = None,
+    ) -> bool:
+        """
+        Check if ALL non-null criteria on the rule match the invoice data.
+
+        Mirrors _rule_matches() logic but adapted for invoice fields instead
+        of transaction fields. Bank account scope is ignored for invoices.
+        """
+        # 0. Counterparty ID (exact FK match)
+        if rule.counterparty_id is not None:
+            if counterparty_id != rule.counterparty_id:
+                return False
+
+        # 1. Bank account scope — not applicable for invoices, skip
+
+        # 2. Direction — already filtered to OUTGOING in query, skip
+
+        # 3. Amount (absolute value — invoices are always positive)
+        abs_amount = abs(amount)
+        if rule.amount_operator is not None and rule.amount_value is not None:
+            v = float(rule.amount_value)
+            op = rule.amount_operator
+            if op == AmountOperator.EQUALS and abs_amount != v:
+                return False
+            if op == AmountOperator.NOT_EQUALS and abs_amount == v:
+                return False
+            if op == AmountOperator.GREATER_THAN and abs_amount <= v:
+                return False
+            if op == AmountOperator.LESS_THAN and abs_amount >= v:
+                return False
+            if op == AmountOperator.BETWEEN:
+                v_max = float(rule.amount_value_max) if rule.amount_value_max is not None else v
+                if not (v <= abs_amount <= v_max):
+                    return False
+
+        # 4. Description (match invoice notes/description against rule)
+        if rule.description_operator is not None and rule.description_value is not None:
+            if not _text_matches(description, rule.description_operator, rule.description_value):
+                return False
+
+        # 5. Transaction type — not applicable for invoices, skip
+
+        # 6. Counterparty name — skip for invoices (we use counterparty_id instead)
+        # Invoices already have resolved counterparty_id from creation
+
+        # 7. Currency
+        if rule.match_currency is not None:
+            if currency != rule.match_currency:
                 return False
 
         return True
@@ -1101,6 +1329,9 @@ Return only the JSON object, no explanation."""
             transaction.status = TransactionStatus.MATCHED
             transaction.reconciled_journal_entry_id = journal_entry.id
             transaction.matched_at = datetime.now(UTC)
+            # Track which rule was used for categorization
+            transaction.categorized_by_rule_id = rule.id
+            transaction.categorized_by_logic = 'rule'
 
         self._apply_tags(db, transaction.id, rule.tag_ids)
         db.commit()
