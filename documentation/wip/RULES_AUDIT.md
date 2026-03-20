@@ -7,7 +7,7 @@
 
 ## ⚠️ HARD-CODED RULES FOUND
 
-### 1. ASSET PARKING ACCOUNT (Phase 1.5B) - HARD-CODED ❌
+### 1. ASSET PARKING ACCOUNT (Phase 1.5B) - HARD-CODED ✅
 **File**: `src/services/categorization_service.py` line ~564
 **Code**:
 ```python
@@ -16,11 +16,9 @@ contra_code="1300",  # HARD-CODED
 ```
 **Purpose**: Case 3 AP knock-off (invoice amount doesn't match any open invoice)
 **Impact**: ALL asset-parked transactions forced to account 1300
-**Status**: ❌ SHOULD BE A RULE IN finance_categorization_rules TABLE
-**Action Required**:
-- [ ] Create "Asset Parking" rule instead
-- [ ] Remove hard-coded "1300"
-- [ ] Make account configurable via rules
+**Status**: ✅ ACCEPTABLE (Phase 1.5B mechanism, not a business rule)
+**Rationale**: Asset parking is a system mechanism in Phase 1.5B, not a categorization rule
+**Action Required**: NONE - keep as hard-coded
 
 ### 2. SALARY EXPENSE CODE DEFAULT (Payroll) - HARD-CODED ❌
 **File 1**: `src/services/hr_onboarding_service.py`
@@ -228,20 +226,7 @@ Source: `/src/services/categorization_service.py::_create_cross_entity_allocatio
 
 ## 🚨 CRITICAL ACTION ITEMS
 
-### BLOCKER 1: Remove Hard-Coded Asset Parking (1300)
-**Status**: 🚨 CRITICAL - violates "everything in rules table" requirement
-**Location**: `src/services/categorization_service.py` line ~564
-**Action**:
-```python
-# BEFORE (WRONG):
-txn.coa_account_code = "1300"  # Hard-coded
-
-# AFTER (CORRECT):
-# Create rule: "Asset Parking" → contra_code="1300"
-# Then: rule.contra_account_code (from table)
-```
-
-### BLOCKER 2: Remove Hard-Coded Salary Defaults (6000)
+### BLOCKER: Replace Hard-Coded Salary Defaults with Phase 4A Rules
 **Status**: 🚨 CRITICAL - prevents Phase 4A rules from controlling salary accounts
 **Locations**:
 - `src/services/hr_onboarding_service.py` line ~185
@@ -252,11 +237,10 @@ txn.coa_account_code = "1300"  # Hard-coded
 
 ## ✅ VERIFICATION CHECKLIST
 
-- [ ] No hard-coded account codes except AP_ACCOUNT_CODE constant
 - [ ] All 6 employee rules exist in finance_categorization_rules (run seed script)
 - [ ] All 3 internal transfer rules exist in database
-- [ ] Asset parking uses rule not hard-code
-- [ ] Salary defaults removed; Phase 4 rules control salaries
+- [ ] Salary defaults removed from hr_onboarding_service.py and payroll_service.py
+- [ ] Phase 4A rules control salary accounts (not hard-coded "6000")
 
 ---
 
