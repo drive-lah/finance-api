@@ -468,8 +468,13 @@ For each outgoing transaction (negative amount) in scope:
 Engine loads active rules (ordered by priority)
 For each remaining Pending transaction:
   ├── Phase 4A: Rules Engine (most specific conditions)
-  │   ├── Match against rules (AND logic on all non-null criteria)
-  │   ├── First matching rule wins
+  │   ├── Match against rules (AND logic on all non-null criteria):
+  │   │   ├── `match_counterparty_type` — filters by type ('employee', 'vendor', 'contractor'); prevents employee salary rules from firing on vendor transactions
+  │   │   ├── `match_currency` — optional, filters by currency (e.g., SGD, AUD)
+  │   │   ├── `counterparty_operator` + `counterparty_value` — optional, text/regex matching on vendor name
+  │   │   ├── `amount_operator` + `amount_value` — optional, amount thresholds
+  │   │   └── `description_operator` + `description_value` — optional, transaction memo matching
+  │   ├── First matching rule wins (ordered by priority)
   │   ├── **Employee constraint:** For outgoing employee payments with NO rule match → PENDING (don't default to salary_expense_code)
   │   ├── Create journal entry (expense/deposit/transfer)
   │   ├── Update transaction counterparty (name, type)

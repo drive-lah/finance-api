@@ -29,6 +29,7 @@ from src.models.hr_payroll import HrPayrollItem
 from src.models.bank_account import FinanceBankAccount
 from src.models.journal_entry import JournalEntryStatus
 from src.models.payroll import FinancePayrollRun
+from src.models.categorization_rule import FinanceCategorizationRule, RuleStatus, TransactionDirection, TransactionCategory
 from src.services.journal_service import journal_service
 
 logger = logging.getLogger(__name__)
@@ -55,7 +56,7 @@ class HrPayrollService:
             entity_id=data["entity_id"],
             employee_type=data.get("employee_type", "FULL_TIME"),
             tax_treatment=data.get("tax_treatment", "SELF_MANAGED"),
-            salary_expense_code=data.get("salary_expense_code", "6000"),
+            salary_expense_code=data.get("salary_expense_code"),
             employment_end_date=data.get("employment_end_date"),
         )
         db.add(emp)
@@ -383,7 +384,19 @@ class HrPayrollService:
 
         for item in items:
             emp = db.query(HrEmployee).filter(HrEmployee.id == item.employee_id).first()
-            salary_code = emp.salary_expense_code if emp else "6000"
+            if not emp:
+                raise ValueError(f"Employee {item.employee_id} not found for payroll item {item.id}")
+
+            # Determine salary account: from employee record or Phase 4A rules
+            salary_code = emp.salary_expense_code
+            if not salary_code:
+                salary_code = self._get_salary_account_from_rules(db, emp, item.currency)
+            if not salary_code:
+                raise ValueError(
+                    f"Cannot determine salary account for employee {item.employee_id}. "
+                    f"Please set salary_expense_code on employee record or create a Phase 4A salary rule."
+                )
+
             gross = Decimal(str(item.gross_amount))
 
             debit_map[salary_code] = debit_map.get(salary_code, Decimal("0")) + gross
@@ -488,6 +501,35 @@ class HrPayrollService:
     # ──────────────────────────────────────────────────────────────────────────
     # Internal helpers
     # ──────────────────────────────────────────────────────────────────────────
+
+    def _get_salary_account_from_rules(
+        self, db: Session, emp: HrEmployee, currency: str
+    ) -> Optional[str]:
+        """
+        Query Phase 4A rules to determine salary expense account.
+        Matches rules on: OUTGOING direction, EXPENSE category, match_counterparty_type=employee, currency.
+        Returns the contra_account_code if a rule matches, else None.
+        """
+        rules = (
+            db.query(FinanceCategorizationRule)
+            .filter(
+                FinanceCategorizationRule.status == RuleStatus.ACTIVE,
+                FinanceCategorizationRule.direction == TransactionDirection.OUTGOING,
+                FinanceCategorizationRule.category == TransactionCategory.EXPENSE,
+                FinanceCategorizationRule.match_counterparty_type == "employee",
+            )
+            .order_by(FinanceCategorizationRule.priority)
+            .all()
+        )
+
+        for rule in rules:
+            # Check currency match
+            if rule.match_currency and rule.match_currency != currency:
+                continue
+            # Rule matches
+            return rule.contra_account_code
+
+        return None
 
     def _active_compensation(
         self, db: Session, employee_id: int, as_of: date

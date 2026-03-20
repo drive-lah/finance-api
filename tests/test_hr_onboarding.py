@@ -673,9 +673,9 @@ class TestIndividualOnboardService:
         assert result["success"] is False
         assert result["error_type"] == "validation"
 
-    def test_defaults_salary_expense_code_to_6000(self, db_session, entity, accounts):
-        """salary_expense_code defaults to '6000' if not provided."""
-        _insert_user(db_session, 205, name="Default COA")
+    def test_salary_expense_code_optional_without_rule(self, db_session, entity, accounts):
+        """salary_expense_code is None if not provided and no Phase 4A rule matches."""
+        _insert_user(db_session, 205, name="No Salary Code")
 
         result = hr_onboarding_service.single_onboard(db_session, user_id=205, payload={
             "payroll_entity_id": entity.id,
@@ -684,7 +684,7 @@ class TestIndividualOnboardService:
         })
 
         assert result["success"] is True
-        assert result["user"]["salary_expense_code"] == "6000"
+        assert result["user"]["salary_expense_code"] is None
 
 
 # ============================================================================

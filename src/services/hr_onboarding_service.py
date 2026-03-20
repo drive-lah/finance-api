@@ -139,7 +139,7 @@ class HrOnboardingService:
                 {"id": user_id},
             ).fetchone()
 
-            salary_expense_code = item.get("salary_expense_code", "6000")
+            salary_expense_code = item.get("salary_expense_code")
             payroll_entity_id = item["payroll_entity_id"]
             teams_raw = user_row[6]
             teams_list = teams_raw.split(",") if teams_raw else []
@@ -201,14 +201,15 @@ class HrOnboardingService:
         if not entity:
             return [{"user_id": user_id, "message": f"Entity {payroll_entity_id} not found"}]
 
-        # 5. Validate salary_expense_code
-        salary_expense_code = item.get("salary_expense_code", "6000")
-        coa_account = db.query(FinanceAccount).filter(
-            FinanceAccount.code == salary_expense_code
-        ).first()
-        if not coa_account:
-            return [{"user_id": user_id,
-                      "message": f"Invalid salary_expense_code '{salary_expense_code}' — not found in COA"}]
+        # 5. Validate salary_expense_code (if provided; Phase 4A rules provide default)
+        salary_expense_code = item.get("salary_expense_code")
+        if salary_expense_code:
+            coa_account = db.query(FinanceAccount).filter(
+                FinanceAccount.code == salary_expense_code
+            ).first()
+            if not coa_account:
+                return [{"user_id": user_id,
+                          "message": f"Invalid salary_expense_code '{salary_expense_code}' — not found in COA"}]
 
         # --- All validations passed: perform writes ---
 
