@@ -53,6 +53,8 @@ def create_app(config=None):
     from src.routes.payroll import payroll_bp
     from src.routes.hr import hr_bp
     from src.routes.amortization import amortization_bp
+    from src.routes.hr_onboarding import hr_onboarding_bp, hr_offboarding_bp
+    from src.routes.jobs import jobs_bp
     app.register_blueprint(entities_bp)
     app.register_blueprint(accounts_bp)
     app.register_blueprint(bank_accounts_bp)
@@ -70,6 +72,9 @@ def create_app(config=None):
     app.register_blueprint(payroll_bp)
     app.register_blueprint(hr_bp)
     app.register_blueprint(amortization_bp)
+    app.register_blueprint(hr_onboarding_bp)
+    app.register_blueprint(hr_offboarding_bp)
+    app.register_blueprint(jobs_bp)
 
     # Health check endpoint
     @app.route('/health', methods=['GET'])
