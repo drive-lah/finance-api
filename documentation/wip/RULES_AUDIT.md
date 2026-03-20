@@ -1,27 +1,108 @@
-# Finance Rules System Audit
+# Finance Rules System Audit - CODE ANALYSIS
 
 **Date**: 2026-03-20
-**Status**: Complete inventory and recommendations
+**Status**: 🚨 CRITICAL: Hard-coded rules found (should be in finance_categorization_rules table)
 
-## Rules by Category
+---
 
-### 1. EMPLOYEE SALARY & NON-SALARY RULES (Phase 4A)
-Status: **DEFINED** (in seed_employee_rules.py)
-Source: `/documentation/wip/seed_employee_rules.py`
+## ⚠️ HARD-CODED RULES FOUND
 
-#### Non-Salary Rules (Higher Priority)
-- **P10**: Employee + "reimbursement" in description → Account 1300 (Prepayments)
-- **P10**: Employee + "advance" in description → Account 1300 (Prepayments)
-- **P10**: Employee + "bonus" in description → Account 5800 (Bonuses)
-- **P15**: Employee + amount < 100 → Account 1300 (Miscellaneous)
+### 1. ASSET PARKING ACCOUNT (Phase 1.5B) - HARD-CODED ❌
+**File**: `src/services/categorization_service.py` line ~564
+**Code**:
+```python
+txn.coa_account_code = "1300"  # HARD-CODED Prepayments
+contra_code="1300",  # HARD-CODED
+```
+**Purpose**: Case 3 AP knock-off (invoice amount doesn't match any open invoice)
+**Impact**: ALL asset-parked transactions forced to account 1300
+**Status**: ❌ SHOULD BE A RULE IN finance_categorization_rules TABLE
+**Action Required**:
+- [ ] Create "Asset Parking" rule instead
+- [ ] Remove hard-coded "1300"
+- [ ] Make account configurable via rules
 
-#### Salary Default Rules (Lower Priority)
-- **P50**: Employee + SGD currency → Account 6000 (Salaries & Wages SG)
-- **P50**: Employee + AUD currency → Account 6000 (Salaries & Wages AU)
+### 2. SALARY EXPENSE CODE DEFAULT (Payroll) - HARD-CODED ❌
+**File 1**: `src/services/hr_onboarding_service.py`
+**Code**:
+```python
+salary_expense_code = item.get("salary_expense_code", "6000")  # HARD-CODED DEFAULT
+```
+**File 2**: `src/services/hr_payroll_service.py`
+**Code**:
+```python
+salary_expense_code=data.get("salary_expense_code", "6000"),  # HARD-CODED DEFAULT
+```
+**Purpose**: Fallback when no specific salary account provided
+**Impact**: ALL employees without explicit salary_expense_code get account 6000
+**Status**: ❌ SHOULD USE PHASE 4A RULES (already exist in seed_employee_rules.py)
+**Action Required**:
+- [ ] Remove hard-coded "6000" defaults
+- [ ] Use Phase 4A rules instead (P50 Employee Salary rules)
+- [ ] Delete HrEmployee.salary_expense_code field (or make it optional, deprecated)
 
-**Status**: ✅ Well-designed with clear priority chain
-**Issues**: None identified
-**Recommendation**: ✅ KEEP
+### 3. AP LIABILITY ACCOUNT (Invoice) - HARD-CODED ⚠️
+**File**: `src/services/invoice_service.py` line ~31
+**Code**:
+```python
+AP_ACCOUNT_CODE = "2000"
+```
+**Purpose**: Credit side of all invoice approval JEs
+**Status**: ⚠️ ACCEPTABLE (system constant, not a business rule)
+**Rationale**: AP account is always 2000 by accounting definition
+**Action**: KEEP (this is infrastructure, not a business rule)
+
+---
+
+## 📋 WHERE RULES SHOULD KICK IN (Per User Spec)
+
+### ✅ Phase 3: Invoice Upload (NEW in Build 3)
+- **Function**: `categorization_service.match_invoice_to_rule()`
+- **Status**: ✅ ENGINE READY
+- **Rules Applied**: Vendor/counterparty rules at invoice creation
+- **Priority Chain**: rules → contract → vendor default → AI
+- **Missing**: No vendor rules in database yet
+
+### ✅ Phase 4A: Transaction Categorization (GENERAL PHASE)
+- **Function**: `categorization_service.run()`
+- **Status**: ✅ ENGINE READY
+- **Rules Applied**: Employee + Vendor + Internal Transfer rules
+- **Expected Rules in DB**:
+  - 6 Employee rules (salary/non-salary)
+  - 3 Internal transfer rules
+  - 0 Vendor rules (missing)
+
+### ❌ SHOULD NOT BE HARD-CODED
+- **Phase 1.5B**: AP Knock-off (currently uses hard-coded "1300")
+- **Phase 2.5**: Payroll (currently uses hard-coded "6000" defaults)
+
+---
+
+## 📊 EXPECTED RULES IN finance_categorization_rules TABLE
+
+### Employee Rules (P10-P50)
+From `seed_employee_rules.py`:
+
+| Priority | Name | Condition | Account |
+|----------|------|-----------|---------|
+| P10 | Employee Reimbursement | OUTGOING + "reimbursement" in desc | 1300 |
+| P10 | Employee Advance | OUTGOING + "advance" in desc | 1300 |
+| P10 | Employee Bonus | OUTGOING + "bonus" in desc | 5800 |
+| P15 | Employee Small Payment | OUTGOING + amount < 100 | 1300 |
+| P50 | Employee Salary SG Default | OUTGOING + SGD currency | 6000 |
+| P50 | Employee Salary AU Default | OUTGOING + AUD currency | 6000 |
+
+### Internal Transfer Rules (from memory)
+| Rule | Condition | Target |
+|------|-----------|--------|
+| Rule 2 | OCBC 3001 outgoing + desc CONTAINS "713147601001" | OCBC 1001 |
+| Rule 3 | OCBC 3001 incoming + cp CONTAINS "STRIPE" | Stripe Platform |
+| Rule 4 | OCBC 3001 outgoing + desc CONTAINS "WISE" | Wise SGD |
+
+### Missing Rules (MUST BUILD)
+- Vendor/contractor categorization rules (0 exist)
+- Asset parking rule (currently hard-coded)
+- Cross-entity allocation rules (0 exist)
 
 ---
 
@@ -142,3 +223,48 @@ Source: `/src/services/categorization_service.py::_create_cross_entity_allocatio
 1. Define and create cross-entity allocation rules
 2. Create asset type-specific rules (if needed)
 3. Implement rule versioning/auditing
+
+---
+
+## 🚨 CRITICAL ACTION ITEMS
+
+### BLOCKER 1: Remove Hard-Coded Asset Parking (1300)
+**Status**: 🚨 CRITICAL - violates "everything in rules table" requirement
+**Location**: `src/services/categorization_service.py` line ~564
+**Action**:
+```python
+# BEFORE (WRONG):
+txn.coa_account_code = "1300"  # Hard-coded
+
+# AFTER (CORRECT):
+# Create rule: "Asset Parking" → contra_code="1300"
+# Then: rule.contra_account_code (from table)
+```
+
+### BLOCKER 2: Remove Hard-Coded Salary Defaults (6000)
+**Status**: 🚨 CRITICAL - prevents Phase 4A rules from controlling salary accounts
+**Locations**:
+- `src/services/hr_onboarding_service.py` line ~185
+- `src/services/hr_payroll_service.py`
+**Action**: Remove hard-coded "6000" defaults; use Phase 4A rules instead
+
+---
+
+## ✅ VERIFICATION CHECKLIST
+
+- [ ] No hard-coded account codes except AP_ACCOUNT_CODE constant
+- [ ] All 6 employee rules exist in finance_categorization_rules (run seed script)
+- [ ] All 3 internal transfer rules exist in database
+- [ ] Asset parking uses rule not hard-code
+- [ ] Salary defaults removed; Phase 4 rules control salaries
+
+---
+
+## SQL: Check What's in Database
+
+```sql
+SELECT COUNT(*) as total_rules FROM finance_categorization_rules;
+SELECT id, priority, status, name, category, direction, contra_account_code
+FROM finance_categorization_rules
+ORDER BY priority, id;
+```
