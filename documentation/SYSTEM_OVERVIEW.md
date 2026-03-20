@@ -482,10 +482,11 @@ For each remaining Pending transaction:
   │   └── Set status → Matched, link to JE, stamp matched_at
   ├── Phase 4B: Default Account (more generic fallback)
   │   ├── For vendors: If counterparty has default_account_code AND no rule matched → Use default
-  │   └── For employees: Do NOT use salary_expense_code as fallback
-  │       ├── **Constraint:** Outgoing employee payments with no explicit rule → PENDING, not auto-salary
-  │       ├── Reason: Not all employee payments are salaries (reimbursements, advances, bonuses)
-  │       └── Only use salary_expense_code if explicit Phase 4A rule matched it
+  │   └── For employees: counterparty.default_account_code = salary_expense_code
+  │       ├── Derived from teams at onboarding: Customer Support → 5063, On-Ground → 5061, else → 6000
+  │       ├── Only fires after Phase 4A rules find no match (rules take priority)
+  │       ├── Covers both base salaries AND fallback for non-rule-matching employee payments
+  │       └── **Constraint:** Only if default_account_code is NOT NULL (if NULL → AI fallback)
   ├── Phase 4C: Asset Parking for Mismatched Amounts
   │   └── For AP knock-off Case 3 (amount mismatch with invoices)
   │       └── Dr 1300 Prepayments / Cr Bank (defers categorization to vendor reconciliation)
@@ -791,9 +792,9 @@ Returns: counterparty_id, is_new_vendor, match_confidence
    └─ Most specific rule conditions evaluated first; first match wins
 
 3. counterparty.default_account_code  → coa_source = 'db' (FALLBACK)
-   └─ If no rule matched, use vendor's default
-   └─ For vendors: use if set
-   └─ For employees: use if set; do NOT default to salary_expense_code
+   └─ If no rule matched, use counterparty's default
+   └─ For vendors: use if set (manually configured)
+   └─ For employees: use if set (= salary_expense_code, derived from teams at onboarding)
 
 4. contract.coa_account_code          → coa_source = 'contract'
    └─ If invoice is linked to a contract, use contract's account code
@@ -809,10 +810,10 @@ Returns: counterparty_id, is_new_vendor, match_confidence
 **Why rules before defaults?** Rules are curated, specific scenarios. Defaults are generic ("this vendor usually uses this account"). Smart before dumb.
 
 **Note on Employee Invoices:** For employee counterparties (e.g., expense reimbursements):
-- Do NOT assume salary_expense_code (6000) automatically
-- Check Phase 4 rules first (reimbursement → 1300, bonus → 5800, etc.)
-- If no rule matches, require approver to manually set COA
-- This ensures non-salary employee payments are correctly categorized
+- Check Phase 4 rules first (reimbursement → 1300, bonus → 5800, etc.) — rules take priority
+- If no rule matches, fallback to counterparty.default_account_code (= salary_expense_code from onboarding)
+- Works for both salary and non-salary employee payments (all use same fallback mechanism)
+- No special employee branch needed — same counterparty.default_account_code path for both vendors and employees
 
 **AP Knock-off — Matching Logic:**
 
@@ -1242,10 +1243,12 @@ Transaction: "$8,000 outgoing from SG bank, description = 'Monthly salary - John
 Phase 0-3: Enrichment, AP knock-off, payroll knock-off (no employee match yet)
          ↓
 Phase 4A: Rules matching
-         - Rule: "If counterparty type = EMPLOYEE, use salary_expense_code"
-         - Salary code determined from employee's team (via HrEmployee.salary_expense_code)
+         - Check for explicit rules (reimbursement → 1300, bonus → 5800, etc.)
+         - If rule matches: use rule's account code
          ↓
-Phase 4B: If no rule, PENDING (don't default to salary_expense_code)
+Phase 4B: If no rule matches, use counterparty.default_account_code
+         - default_account_code = salary_expense_code (determined from employee's team at onboarding)
+         - Customer Support team → 5063, On-Ground → 5061, else → 6000
          ↓
 Result: Dr 5063 (Customer Support Salary) / Cr Bank
 ```

@@ -201,7 +201,7 @@ class HrOnboardingService:
         if not entity:
             return [{"user_id": user_id, "message": f"Entity {payroll_entity_id} not found"}]
 
-        # 5. Validate salary_expense_code (if provided; Phase 4A rules provide default)
+        # 5. Validate salary_expense_code (if provided; derived from teams or defaults to 6000)
         salary_expense_code = item.get("salary_expense_code")
         if salary_expense_code:
             coa_account = db.query(FinanceAccount).filter(
@@ -210,6 +210,16 @@ class HrOnboardingService:
             if not coa_account:
                 return [{"user_id": user_id,
                           "message": f"Invalid salary_expense_code '{salary_expense_code}' — not found in COA"}]
+
+        # Derive salary_expense_code from teams if not explicitly provided
+        if not salary_expense_code:
+            _teams = item.get("teams", [])
+            if any("Customer Support" in t for t in _teams):
+                salary_expense_code = "5063"
+            elif any("On-Ground" in t for t in _teams):
+                salary_expense_code = "5061"
+            else:
+                salary_expense_code = "6000"  # Salaries & Wages default
 
         # --- All validations passed: perform writes ---
 
