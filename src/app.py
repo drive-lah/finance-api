@@ -50,7 +50,6 @@ def create_app(config=None):
     from src.routes.invoices import invoices_bp
     from src.routes.contracts import contracts_bp
     from src.routes.approval_rules import approval_rules_bp
-    from src.routes.payroll import payroll_bp
     from src.routes.hr import hr_bp
     from src.routes.amortization import amortization_bp
     from src.routes.hr_onboarding import hr_onboarding_bp, hr_offboarding_bp
@@ -69,7 +68,6 @@ def create_app(config=None):
     app.register_blueprint(invoices_bp)
     app.register_blueprint(contracts_bp)
     app.register_blueprint(approval_rules_bp)
-    app.register_blueprint(payroll_bp)
     app.register_blueprint(hr_bp)
     app.register_blueprint(amortization_bp)
     app.register_blueprint(hr_onboarding_bp)
