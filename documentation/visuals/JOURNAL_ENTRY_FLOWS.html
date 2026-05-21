@@ -53,6 +53,26 @@
   .rep p{margin:0;font-size:11px;color:var(--muted)}
   .arrow-down{text-align:center;color:#9aa6b6;font-size:20px;margin:4px 0}
   .foot{margin-top:26px;font-size:11.5px;color:var(--muted);text-align:center;line-height:1.6}
+  /* tabs + views */
+  .tabs{display:flex;gap:8px;margin:18px 4px 0;flex-wrap:wrap}
+  .tab{font-family:inherit;font-size:13px;font-weight:700;padding:9px 16px;border-radius:10px;border:1px solid var(--line);background:#e4e9f1;color:var(--slate);cursor:pointer}
+  .tab.active{background:#0f1729;color:#fff;border-color:#0f1729}
+  .view{display:none}
+  .view.active{display:block}
+  .clickable{cursor:pointer}
+  .clickable .expand{margin-left:auto;font-size:10.5px;font-weight:800;color:#0c6b34;background:var(--green-bg);padding:3px 10px;border-radius:999px;white-space:nowrap}
+  .clickable:hover{box-shadow:0 0 0 2px var(--green) inset}
+  /* phase cards (categorization detail) */
+  .phase{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:14px 18px;margin-bottom:10px;box-shadow:0 3px 10px rgba(20,30,50,.05);display:grid;grid-template-columns:56px 1fr;gap:16px;align-items:start;border-left:5px solid var(--blue)}
+  .phase.inv{border-left-color:var(--amber);background:#fffdf6}
+  .phase .pn{width:46px;height:30px;border-radius:8px;background:var(--blue);color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center}
+  .phase.inv .pn{background:var(--amber)}
+  .phase h4{margin:0 0 5px;font-size:15px;font-weight:740}
+  .phase p{margin:0;font-size:13px;color:var(--slate);line-height:1.5}
+  .phase .out{font-size:11.5px;color:var(--muted);margin-top:7px}
+  .phase code{background:#f3f5f9;padding:1px 5px;border-radius:5px;font-size:11.5px}
+  .lifecycle{background:#0f1729;color:#dbe6f5;border-radius:12px;padding:14px 18px;font-size:13px;text-align:center;margin-top:10px}
+  .lifecycle b{color:#fff}
   @media(max-width:900px){.reports{grid-template-columns:repeat(2,1fr)}.lane .note{margin-left:0;width:100%}}
 </style>
 </head>
@@ -70,10 +90,17 @@
     </div>
   </div>
 
+  <div class="tabs">
+    <button class="tab active" data-view="flows">All JE flows</button>
+    <button class="tab" data-view="cat">⚙ Categorization engine — how it works</button>
+  </div>
+
+  <div id="view-flows" class="view active">
+
   <h2 class="sec">6 Sources of Journal Entries</h2>
 
-  <div class="lane live">
-    <div class="head"><span class="src">1 · Bank transactions → Categorization engine</span><span class="pill pl-green">Live</span><span class="note">730 txns · 244 rules · 245 JEs</span></div>
+  <div class="lane live clickable" ondblclick="showView('cat')" title="Double-click to see how the categorization engine works">
+    <div class="head"><span class="src">1 · Bank transactions → Categorization engine</span><span class="pill pl-green">Live</span><span class="expand">⤢ double-click for detail</span><span class="note">730 txns · 244 rules · 245 JEs</span></div>
     <div class="pipe">
       <span class="step">Import (CSV / PDF / Wise)</span><span class="ar">→</span>
       <span class="step">Pending txn</span><span class="ar">→</span>
@@ -165,6 +192,81 @@
     payroll &amp; depreciation are built but unused; Stripe sync is mid-build; reports beyond Trial Balance come later.
   </div>
 
+  </div><!-- /view-flows -->
+
+  <div id="view-cat" class="view">
+    <h2 class="sec">Categorization Engine — How It Works <span style="text-transform:none;letter-spacing:0;font-weight:600;color:var(--muted)">(flow #1, expanded) · input = a Pending bank transaction → output = a posted JE</span></h2>
+
+    <div class="phase">
+      <div class="pn">Phase 0</div>
+      <div>
+        <h4>Internal-transfer pairing</h4>
+        <p>If this transaction is the counterpart of an <code>AWAITING_MATCH</code> internal transfer (e.g. OCBC → Wise), pair the two sides (±2% amount, ±5 days).</p>
+        <p class="out">→ both sides become <b>Matched</b>, sharing one JE. Otherwise continue.</p>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="pn">Phase 1</div>
+      <div>
+        <h4>Counterparty enrichment</h4>
+        <p><b>L1</b> deterministic (exact/substring on name + aliases) → <b>L2</b> fuzzy (rapidfuzz ≥ 88) → <b>L3</b> LLM (one batched Claude call for the rest). Links a <code>counterparty_id</code>.</p>
+        <p class="out">→ needed so the next phases (invoices, payroll, rules) can act on the counterparty.</p>
+      </div>
+    </div>
+
+    <div class="phase inv">
+      <div class="pn">Phase 1.5</div>
+      <div>
+        <h4>AP invoice knock-off &nbsp;<span style="font-size:11px;color:var(--amber);font-weight:800">← this is where existing invoices come in</span></h4>
+        <p>If the counterparty has <b>open AP invoices</b>, run 3-case matching:</p>
+        <p class="out">
+          <b>Case 1</b> — invoice ref in description + amount ≈ remaining (±2%) + date OK → match (invoice's COA wins) → <code>Dr 2000 AP / Cr Bank</code><br>
+          <b>Case 2</b> — no ref but amount ≈ remaining → match the <b>oldest</b> invoice (FIFO) → <code>Dr 2000 AP / Cr Bank</code><br>
+          <b>Case 3</b> — amount matches no invoice → skip → Phase 4 asset-parks to <code>1300</code><br>
+          <b>No invoices</b> → skip to Phase 4. &nbsp;(Cross-entity invoice → paired IC JEs.)
+        </p>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="pn">Phase 2.5</div>
+      <div>
+        <h4>Payroll knock-off</h4>
+        <p>For outgoing payments, match a <b>POSTED payroll run</b> (net salary or CPF, ±2% amount, ±7 days, any entity).</p>
+        <p class="out">→ same-entity: links the existing payroll JE. Cross-entity: creates paired intercompany JEs.</p>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="pn">Phase 4</div>
+      <div>
+        <h4>Accounting classification (the fallback ladder)</h4>
+        <p>
+          <b>4A — Rules engine:</b> first matching rule by priority (AND logic on counterparty type / text / amount / currency) → JE.<br>
+          <b>4B — Counterparty default:</b> use <code>default_account_code</code> if set → JE.<br>
+          <b>4C — Asset parking:</b> the Case-3 amount-mismatches → <code>Dr 1300 / Cr Bank</code>.<br>
+          <b>4D — AI classification:</b> Claude Haiku suggests a COA + confidence — <b>≥ 0.80</b> → JE; <b>&lt; 0.80</b> → <b>Needs Review</b>.
+        </p>
+        <p class="out">→ if none of these fire, the transaction stays <b>Pending</b> in the manual queue.</p>
+      </div>
+    </div>
+
+    <div class="lifecycle">
+      <b>Status lifecycle:</b> &nbsp; Pending &nbsp;→&nbsp; { Awaiting Match · Matched · Needs Review } &nbsp;→&nbsp; <b>Reconciled</b> (human-confirmed). &nbsp; On approval, the engine also learns the bank description as a counterparty alias (better L1 matching next time).
+    </div>
+
+    <div class="foot">Every path above ends by posting a balanced JE into the general ledger (or parking the txn for manual review). Live: 244 active rules across 730 transactions → 245 JEs.</div>
+  </div><!-- /view-cat -->
+
 </div>
+<script>
+  function showView(v){
+    document.querySelectorAll('.view').forEach(el=>el.classList.toggle('active', el.id==='view-'+v));
+    document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.view===v));
+    window.scrollTo(0,0);
+  }
+  document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>showView(t.dataset.view)));
+</script>
 </body>
 </html>
