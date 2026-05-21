@@ -945,26 +945,93 @@ This ensures bank payments recorded before the invoice is created are correctly 
 
 ### 3.6 Stripe Integration
 
-**Status: To Be Built (Later)**
+**Status: Phase 1-4 COMPLETE ✅ | Phase 5-7 In Progress 🔄**
 
-Direct integration with Stripe to automatically import transactions and create journal entries for trip-related money flows.
+End-to-end Stripe Platform sync pipeline: automatically transforms Stripe balance transactions into monthly journal entries. Architecture uses ClickHouse views as single source of truth, PostgreSQL as authoritative ledger.
 
-**Planned Scope:**
-- Webhook listener for Stripe events (charges, payouts, refunds, disputes)
-- Auto-create transactions from Stripe events (duplicate detection via stripe_transaction_id)
-- Auto-categorize Stripe transactions using known patterns:
-  - Trip charges → 4000-4003 GBV (based on booking metadata)
-  - Host payouts → 5000-5003 Host Payouts
-  - Processing fees → 5010 Payment Processing Fees
-  - Refunds → 5052-5055 Refunds
-  - Chargebacks → 5051 Chargebacks
-- Stripe balance reconciliation (Stripe clearing account 1100 vs actual Stripe balance)
-- Support for both SG and AU Stripe accounts
+**📋 Status & Timeline:** See `documentation/STATUS.md` for current progress tracking and task status updates. This section documents architecture only.
 
-**Current State:**
-- Basic webhook endpoint exists (`POST /api/finance/transactions/stripe`)
-- Accepts manual Stripe transaction creation with duplicate detection
-- Full automation planned for later phase
+**Architecture Overview:**
+
+```
+Stripe Platform Account (SG/AU) ──┐
+                                   │
+                            ClickHouse
+                            (sg_stripe_balance_transactions,
+                             sg_stripe_transfers, etc.)
+                                   │
+                                   ↓
+                            11 Aggregation Views
+                            (_new suffix for Phase 4 modifications)
+                                   │
+                                   ↓
+                            query_builder.py
+                            (25 monthly view readers)
+                                   │
+                    ┌───────────────┴───────────────┐
+                    │                               │
+                    ↓                               ↓
+        Internal Transfers (4)         Non-Transfers (21 JEs)
+              Create:                         Create:
+        FinanceTransaction              JournalEntry
+        Status: AWAITING_MATCH          Direct to Ledger
+              (for matching)
+                    │                               │
+                    └───────────────┬───────────────┘
+                                    │
+                                    ↓
+                        PostgreSQL Finance Ledger
+                        (journal_entries table)
+```
+
+**25 Monthly Journal Entry Categories:**
+
+| # | Category | Type | Description | COA Range |
+|----|----------|------|-------------|-----------|
+| 1-4 | Trip Revenue (4 types) | Non-transfer | GBV by business line (P2P, RMS) | 4000-4003 |
+| 5-7 | Subscription Revenue (3) | Non-transfer | Subscriptions by type | 4010-4012 |
+| 8 | Incidentals Charges | Non-transfer | Tolls, fuel, damage charges | 4020 |
+| 9 | Non-Invoiced Direct | Non-transfer | Direct charges without AR | 4021 |
+| 10-17 | Host Payouts (8) | Non-transfer | By payout type (damage, fuel, toll, etc.) | 5000-5007 |
+| 18-20 | Processing Fees (3) | Non-transfer | Stripe fee, payment processor, disputes | 5010-5012 |
+| 21-22 | Reconciliation (2) | Non-transfer | Refunds, reversals | 5052-5055 |
+| 23-24 | Internal Transfers (2) | Transfer | Platform → OCBC, Platform → Wise | Paired JEs |
+| 25 | Connect Transfers (pending) | Transfer | Platform ↔ Connect accounts | Paired JEs |
+
+**Data Flow & Integration:**
+
+- **Single Source of Truth:** ClickHouse views aggregate raw Stripe balance_transactions and transfers tables; query builder reads FROM views (never rebuilds logic)
+- **Monthly Aggregation:** One JE per month per region covering all transactions; not per-transaction journalizing
+- **Internal Transfers:** Platform-to-bank movements create FinanceTransaction records with AWAITING_MATCH status for matching via internal transfer rules
+- **Direct JEs:** Non-transfer amounts (revenue, payouts, fees) post directly to PostgreSQL ledger without intermediate bank transaction step
+- **Regional Support:** Unified AU + SG logic; REGION_COLUMNS dict in config handles column name variance between regions
+- **Cross-Entity:** Connect account company-owned pass-through handling; tracks as liability, not revenue-generating
+
+**Key Technical Details:**
+
+- **Config:** `src/services/stripe_sync/config.py` stores all Stripe account IDs, COA mappings, region configurations
+- **Query Builder:** `src/services/stripe_sync/query_builder.py` with 25 methods (one per JE category), each reads a single ClickHouse view
+- **Journal Entry Builder:** `src/services/stripe_sync/journal_entry_builder.py` constructs JE specs from view data
+- **Sync Orchestrator:** `src/services/stripe_sync/sync_service.py` coordinates monthly syncs, creates transactions/entries
+- **ClickHouse Client:** `src/clients/clickhouse_client.py` HTTP connection with retry logic
+- **Validation:** AU and SG validation scripts compare calculated JE amounts against ClickHouse views; 100% match rate achieved for Dec 2025
+
+**Next Steps (Phase 5-7 Critical Path):**
+
+1. **Task #2:** Update query_builder to use "_new" view names (Phase 4 modifications)
+2. **Task #3:** Add JE #25 method (incidentals_direct_revenue) to query builder
+3. **Task #4:** Implement `monthly_stripe_sync(month, region)` — creates 25 JEs + 4 internal transfer transactions per month
+4. **Task #5:** Update validation scripts for 25 JEs and monthly sync E2E testing
+5. **Task #6:** E2E test Dec 2025 for both regions — verify all 25 JEs with correct amounts
+6. **Task #9:** Validate views across all 15 months (2025-01 to 2026-03)
+7. **Task #10-12:** Backfill historical data and post 750+ JEs to PostgreSQL ledger
+8. **Task #13:** Setup production monthly sync (2nd of month at 02:00 UTC)
+
+**Deferred (v1.1):**
+- **Task #8:** Platform ↔ Connect cash transfer views — blocked on ClickHouse table structure clarification
+- **Task #7:** Connect cash flow views — depends on Task #8 resolution
+
+**Reference:** Detailed roadmap and all 13 tasks tracked in `documentation/wip/STRIPE_SYNC_ROADMAP_2026.md`
 
 ---
 
@@ -1967,37 +2034,10 @@ TAX (9xxx)
 
 ## 6. Implementation Status
 
-| Module | Backend | BFF | Frontend | Status |
-|--------|---------|-----|----------|--------|
-| Entity Management | Done | Done | Done | Ready |
-| Chart of Accounts (v2) | Done | Done | Done | Ready |
-| Bank Account Management | Done | Done | Done | Ready |
-| CSV Transaction Import (OCBC, CBA) | Done | Done | Done | Ready |
-| DBS PDF Import (multi-currency, single upload) | Done | Done | Done | Ready |
-| Wise API Connect + Sync | Done | Done | Done | Ready |
-| Import consolidation (all in Bank Accounts tab) | Done | Done | Done | Ready |
-| Transaction Counterparty Tracking | Done | — | — | Ready |
-| Journal Entry CRUD | Done | Done | Done | Ready |
-| Journal Posting | Done | Done | Done | Ready |
-| Trial Balance Report | Done | Done | Done | Ready |
-| Reconciliation Suggestions | Done | Done | Done | Ready |
-| Reconciliation Confirmation | Done | Done | Done | Ready |
-| Stripe Webhook (basic) | Done | — | — | Partial |
-| Cash vs Accrual Framework | Defined | — | — | Documented |
-| Categorization Engine | Done | Done | Done | Ready |
-| Tags System | Done | — | — | Ready |
-| Categorization Rules CRUD | Done | Done | Done | Ready |
-| GST Handling (entity/account/rule level) | Done | — | — | Ready |
-| Transaction Review Queue (approve/reject) | Done | Done | Done | Ready |
-| **Counterparty Module** | Done | Done | Done | Ready |
-| **Employee Sync (user registry → counterparties)** | Done | Done | Done | Ready |
-| **Invoice / AP (Accrual)** | — | — | — | Planned |
-| **Prepayment Scheduling** | — | — | — | Planned |
-| **Stripe Full Integration** | — | — | — | Later |
-| **Payroll (via Counterparty + payroll_details)** | — | — | — | Planned |
-| **P&L Report** | — | — | — | Planned |
-| **Balance Sheet Report** | — | — | — | Planned |
-| **Business Line Margin Report** | — | — | — | Planned |
+> **Status lives in `documentation/STATUS.md`** (single source of truth — see CLAUDE.md Rule 4).
+> See STATUS.md §1 What's Done, §2 What's Pending, and §5 Module Maturity for current state.
+> This section previously held a status table; it was removed to prevent drift (it had gone stale —
+> e.g. Invoice/AP and Payroll were marked "Planned" though both are built).
 
 ### Build Order
 

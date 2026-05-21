@@ -352,6 +352,133 @@ Manual categorization (`/manual`) sets status → `Reconciled` directly (human c
 
 ---
 
+## Stripe Sync
+
+**Status:** Phases 1-4 complete ✅ | Phase 5 in progress 🔄
+
+Automated monthly Stripe Platform transaction sync. Transforms ClickHouse aggregated balance transactions into journal entries and bank transactions for complete financial ledger integration.
+
+| Method | Path | Query Params | Body | Returns |
+|--------|------|-------------|------|---------|
+| POST | `/api/finance/stripe-sync/sync-month` | — | `month` (YYYY-MM), `region` (SG\|AU) | 200 SyncResult |
+
+**Request Body:**
+
+```json
+{
+  "month": "2025-12",
+  "region": "SG"
+}
+```
+
+**Response (200 SyncResult):**
+
+```json
+{
+  "month": "2025-12",
+  "region": "SG",
+  "status": "success",
+  "journal_entries_created": 25,
+  "internal_transfers_created": 4,
+  "total_amount": 1234567.89,
+  "je_details": [
+    {
+      "je_number": 1,
+      "category": "trip_revenue_p2p",
+      "description": "Trip Revenue - P2P",
+      "amount": 450000.00,
+      "account_code": "4000",
+      "created": true
+    },
+    ...
+  ],
+  "transfer_details": [
+    {
+      "transfer_number": 1,
+      "type": "platform_to_ocbc",
+      "description": "Platform → OCBC 1001",
+      "amount": 125000.00,
+      "status": "awaiting_match",
+      "from_bank_account_id": 19,
+      "to_bank_account_id": 1,
+      "created": true
+    },
+    ...
+  ],
+  "errors": [],
+  "execution_time_seconds": 3.45
+}
+```
+
+**Sync Process:**
+
+1. **Query ClickHouse:** Reads 25 aggregation views for the specified month/region
+2. **Separate Flows:** 
+   - Non-transfer JEs (21 categories) → create JournalEntry directly
+   - Internal transfer JEs (4 categories) → create FinanceTransaction with AWAITING_MATCH status
+3. **Validation:** Verify all amounts balance, validate account codes exist
+4. **Audit Trail:** Log sync run to `stripe_sync_runs` table (month, region, je_created, txn_created, status)
+
+**25 Journal Entry Categories:**
+
+| JE # | Category | Type | Example Amount (Dec 2025 SG) |
+|------|----------|------|------------------------------|
+| 1-4 | Trip Revenue (4 types) | Non-transfer | 450K (P2P), 380K (RMS) |
+| 5-7 | Subscription Revenue | Non-transfer | 45K total |
+| 8 | Incidentals Charges | Non-transfer | 78K |
+| 9 | Non-Invoiced Direct | Non-transfer | 524K |
+| 10-17 | Host Payouts (8 types) | Non-transfer | 389K total (by type) |
+| 18-20 | Processing Fees (3) | Non-transfer | 23K (Stripe), 5K (other) |
+| 21-22 | Reconciliation (2) | Non-transfer | 12K (refunds/reversals) |
+| 23-24 | Internal Transfers (2) | Transfer | 125K (Platform→OCBC), 87K (Platform→Wise) |
+
+**Internal Transfer Matching:**
+
+Transactions created with `status = "AWAITING_MATCH"`:
+- Engine sets `expected_counterpart_ba_id` to the destination bank account
+- When opposing bank transaction arrives, categorization engine pairs them
+- Both transactions move to `MATCHED` status
+- Journal entries posted only after reconciliation confirmation
+
+**Error Response (400/500):**
+
+```json
+{
+  "error": "validation_error",
+  "details": [
+    "Month 2025-13 is invalid",
+    "Region 'SG2' not supported",
+    "ClickHouse view_SG_a_trip_revenue_new not found"
+  ]
+}
+```
+
+**Idempotency:**
+
+Posting the same month/region twice is safe:
+- First run: Creates 25 JEs + 4 transactions
+- Second run (same month/region): Returns same journal_entries_created count but skips already-created entries (deduped by month/region/je_number)
+- Errors detail: "JE #3 for 2025-12 SG already exists, skipping"
+
+**Scheduled Execution (Production):**
+
+- Frequency: Monthly, 2nd of month at 02:00 UTC
+- Regions: Both SG and AU (sequential)
+- Failure notification: Email alert if sync fails 3 times
+- Manual trigger: Admins can POST to this endpoint anytime to re-run or catch up on missed months
+
+**Validation:**
+
+After sync completion, recommend running validation:
+```bash
+python compare_calculated_vs_views.py 2025-12 AU
+python compare_sg_calculated_vs_views.py 2025-12 SG
+```
+
+These scripts compare calculated JE amounts against ClickHouse views to ensure 100% accuracy before reconciliation/posting.
+
+---
+
 ## Invoices (Accounts Payable)
 
 | Method | Path | Query Params | Body | Returns |
