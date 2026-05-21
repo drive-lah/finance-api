@@ -1,3 +1,4 @@
+
 # Stripe-to-Finance-API Zero-Touch Sync Architecture
 
 **Version:** 3.0
