@@ -20,6 +20,7 @@ from src.models.categorization_rule import (
 )
 from src.models.counterparty import FinanceCounterparty, CounterpartyType, CounterpartyStatus
 from src.models.payroll import FinancePayrollRun
+from src.models.depreciation import FinanceAssetSchedule, FinanceCOAAmortizationPolicy
 from src.models.schemas import (
     EntityCreate,
     EntityUpdate,
@@ -114,4 +115,7 @@ __all__ = [
     "FinancePayrollRun",
     "PayrollRunCreate",
     "PayrollRunResponse",
+    # Depreciation/Amortization models
+    "FinanceAssetSchedule",
+    "FinanceCOAAmortizationPolicy",
 ]
