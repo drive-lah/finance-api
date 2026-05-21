@@ -10,7 +10,7 @@
 **Ideal ↔ Current (gap + mental model):** `documentation/IDEAL_VS_CURRENT.md`
 **Deep architecture (archived):** `documentation/wip/SYSTEM_OVERVIEW.md` (§-refs below point here)
 **State-vs-ideal visual:** `documentation/wip/FINANCE_SYSTEM_STATE_VS_IDEAL.html`
-**Verified ground truth (2026-05-21):** `pytest tests/ --ignore=tests/stripe_sync` = **565 pass / 0 fail**; `mypy src/ --ignore-missing-imports` = **30 errors / 10 files**. 10 commits landed this session; branch is ahead of origin (local, unpushed). *(stripe_sync tests were WIP for the old shape — removed pending a rewrite against the views path; obsolete `test_docs.py` removed since API/SYSTEM_OVERVIEW were archived.)*
+**Verified ground truth (2026-05-21):** `pytest tests/ --ignore=tests/stripe_sync` = **568 pass / 0 fail**; `mypy src/ --ignore-missing-imports` = **24 errors / 9 files**. ~13 commits this session; branch is ahead of origin (local, unpushed). *(stripe_sync tests were WIP for the old shape — removed pending a rewrite against the views path; obsolete `test_docs.py` removed since API/SYSTEM_OVERVIEW were archived.)*
 
 ---
 
@@ -59,7 +59,7 @@
 
 | Item | Status |
 |------|--------|
-| mypy errors | **30 remaining** (from 112). Remaining are mechanical: categorization_service, hr_onboarding_service (6 — the `Row\|None` index, see §2.3), transaction_service, invoice_service, + singletons (`requests` stub, `payroll:224` Optional-return, `schemas:562`). stripe_sync is clean of stripe-specific errors. Safe to sweep. |
+| mypy errors | **24 remaining** (from 112). Remaining are mechanical: categorization_service, transaction_service, invoice_service, + singletons (`requests` stub, `payroll:224` Optional-return, `schemas:562`). stripe_sync + hr_onboarding_service now clean. Safe to sweep. |
 | Tests | **565 / 565 green** (core, excl. stripe_sync). Obsolete `test_docs.py` removed (API/SYSTEM_OVERVIEW archived). stripe_sync tests removed pending rewrite against the views path. |
 | Cleanup | **DONE** — 22 scratch scripts + 6 superseded docs deleted, `.gitignore` added. |
 | Working tree | Clean except 2 deliberate loose ends (§2.6). **10 commits this session**; branch ahead of origin, **not pushed**. |
@@ -90,9 +90,9 @@ Mental model (`IDEAL_VS_CURRENT.md §1`): providers (Stripe, Grab, OCBC, Wise) =
 
 **Open question (unresolved):** *how* employee onboarding feeds payroll — i.e. where each employee's salary/comp data comes from (manual? `new-monitor-api` / `user-registry`? a CSV?) and how it lands as `HrCompensation` + `HrDeductionRule`. Gaurav: "still not clear how that's gonna happen." **Needs a designed flow before payroll can run end-to-end.**
 
-**Verified bug (the concrete blocker):** Onboarding (`hr_onboarding_service`) creates user-update + `HrEmployee` + counterparty, but **silently drops `gross_amount` / `pay_type` / `currency` / `default_deductions`** — it never creates `HrCompensation` or `HrDeductionRule` (those exist only via separate `POST /employees/{id}/compensation` + `/deduction-rules`). **Net effect: an onboarded employee has no compensation → payroll `create_run` skips them → they cannot be paid.** SYSTEM_OVERVIEW §3.7.1 Step 4 says onboarding *should* create both.
-- **E2E proof:** 7/10 checks pass; the 3 failures are exactly compensation, deductions, and "employee can be paid."
-- **Fix (pending approval on COA mapping):** wire comp + deduction creation into `_validate_and_onboard_one` (parse `default_deductions` + SG/AU statutory defaults; CPF/Super → COA mapping drafted) + fold in the 6 `hr_onboarding_service` mypy errors. *But first resolve the salary-data-source question above.*
+**✅ Onboarding fix SHIPPED (commit `e8b29ca`):** `hr_onboarding_service` now creates `HrCompensation` + `HrDeductionRule` from the payload (`gross_amount`/`pay_type`/`currency`/`default_deductions`), applying SG/AU statutory defaults (CPF / Super) when none given, with a validated deduction→COA map (2300 CPF / 2310 Super / 2320 tax / 6001 employer / 6000 salary). No salary → employee onboarded but not yet payable (matches the current roster CSV). Covered by `tests/test_hr_payroll_flow.py` (SG, AU, roster-only); the 6 `Row\|None` mypy errors are fixed. End-to-end process diagram: `wip/HR_PAYROLL_PROCESS_DIAGRAM.html`.
+
+**⛔ Remaining blocker = the salary data itself.** The engine works and onboarding now wires comp/deductions — but the roster CSV's salary/deduction columns are still **blank**, so nothing real can be onboarded yet. Resolving *where each employee's salary + deduction setup comes from* (and filling it) is the one thing left before payroll runs for real.
 
 ### 2.4 Financial Reporting last-mile (GAP — highest leverage)
 
