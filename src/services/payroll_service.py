@@ -11,7 +11,7 @@ Bank recon Step 2.5 later matches bank payments to this run.
 """
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 import uuid
 
 from sqlalchemy.orm import Session
@@ -20,6 +20,9 @@ from src.models.payroll import FinancePayrollRun
 from src.models.bank_account import FinanceBankAccount
 from src.models.journal_entry import JournalEntryStatus
 from src.services.journal_service import journal_service
+
+if TYPE_CHECKING:
+    from src.models.journal_entry import FinanceJournalEntry
 
 # IC (Intercompany) Account Codes for cross-entity payroll transfers
 _IC_RECEIVABLE_CODES: dict[tuple[str, str], str] = {

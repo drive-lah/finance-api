@@ -11,8 +11,11 @@ import uuid
 import logging
 from datetime import datetime, UTC
 from decimal import Decimal
-from typing import Optional, Any
+from typing import Optional, Any, TYPE_CHECKING, cast
 from sqlalchemy.orm import Session
+
+if TYPE_CHECKING:
+    from anthropic.types import TextBlock
 
 from src.models.transaction import FinanceTransaction, TransactionStatus, CategorizationType
 from src.models.bank_account import FinanceBankAccount
@@ -915,7 +918,7 @@ Return only the JSON object, no explanation."""
                 max_tokens=512,
                 messages=[{"role": "user", "content": prompt}],
             )
-            raw_response = message.content[0].text.strip()
+            raw_response = cast("TextBlock", message.content[0]).text.strip()
 
             # Parse the JSON response
             # Strip markdown code fences if present
@@ -1890,7 +1893,7 @@ Rules:
                 max_tokens=1024,
                 messages=[{"role": "user", "content": prompt}],
             )
-            raw = message.content[0].text.strip()
+            raw = cast("TextBlock", message.content[0]).text.strip()
             if raw.startswith("```"):
                 lines = raw.split("\n")
                 raw = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])

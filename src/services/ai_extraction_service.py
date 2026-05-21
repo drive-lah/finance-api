@@ -8,10 +8,13 @@ service period, COA suggestion).
 import json
 import logging
 import os
-from typing import Optional
+from typing import Optional, TYPE_CHECKING, cast
 import pdfplumber
 import io
 import anthropic
+
+if TYPE_CHECKING:
+    from anthropic.types import TextBlock
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +135,7 @@ class AIExtractionService:
                 ]}],
             )
 
-            response_text = message.content[0].text.strip()
+            response_text = cast("TextBlock", message.content[0]).text.strip()
             logger.info(f"Claude vision API responded. Response length: {len(response_text)} chars")
 
             if response_text.startswith("```"):
@@ -193,7 +196,7 @@ class AIExtractionService:
                 messages=[{"role": "user", "content": prompt}],
             )
 
-            response_text = message.content[0].text.strip()
+            response_text = cast("TextBlock", message.content[0]).text.strip()
             if response_text.startswith("```"):
                 lines = response_text.split("\n")
                 response_text = "\n".join(lines[1:-1] if lines[-1] == "```" else lines[1:])

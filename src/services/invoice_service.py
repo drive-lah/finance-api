@@ -9,7 +9,7 @@ import json
 import logging
 import os
 from datetime import datetime, date, UTC
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, cast
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -24,6 +24,8 @@ from src.utils.errors import NotFoundError
 if TYPE_CHECKING:
     from src.models.bank_account import FinanceBankAccount
     from src.models.journal_entry import FinanceJournalEntry
+    from src.models.transaction import FinanceTransaction
+    from anthropic.types import TextBlock
 
 logger = logging.getLogger(__name__)
 
@@ -1168,7 +1170,7 @@ Rules:
                 max_tokens=512,
                 messages=[{"role": "user", "content": prompt}],
             )
-            response_text = message.content[0].text.strip()
+            response_text = cast("TextBlock", message.content[0]).text.strip()
             if response_text.startswith("```"):
                 lines = response_text.split("\n")
                 response_text = "\n".join(lines[1:-1] if lines[-1] == "```" else lines[1:])
@@ -1196,7 +1198,7 @@ Rules:
             db.query(FinanceApprovalRule)
             .filter(
                 FinanceApprovalRule.entity_id == invoice.entity_id,
-                FinanceApprovalRule.is_active == True,
+                FinanceApprovalRule.status == "active",
             )
             .order_by(FinanceApprovalRule.priority.asc())
             .all()
@@ -1206,12 +1208,9 @@ Rules:
 
         for rule in rules:
             # Amount range check
-            if rule.min_amount is not None and amount < float(rule.min_amount):
+            if rule.amount_min is not None and amount < float(rule.amount_min):
                 continue
-            if rule.max_amount is not None and amount > float(rule.max_amount):
-                continue
-            # Currency check
-            if rule.currency and rule.currency != invoice.currency:
+            if rule.amount_max is not None and amount > float(rule.amount_max):
                 continue
             # COA prefix check
             if rule.coa_account_prefix and invoice.contra_account_code:
@@ -1219,16 +1218,16 @@ Rules:
                     continue
             elif rule.coa_account_prefix and not invoice.contra_account_code:
                 continue
-            # Counterparty type check
-            if rule.counterparty_type and invoice.counterparty_id:
+            # Vendor type check
+            if rule.vendor_type and invoice.counterparty_id:
                 from src.models.counterparty import FinanceCounterparty
                 cp = db.get(FinanceCounterparty, invoice.counterparty_id)
-                if cp and cp.counterparty_type != rule.counterparty_type:
+                if cp and cp.type != rule.vendor_type:
                     continue
 
             # Rule matched
             if rule.action == "auto_approve":
-                return InvoiceStatus.APPROVED.value, f"auto:{rule.name}"
+                return InvoiceStatus.APPROVED.value, f"auto:rule_{rule.id}"
             else:
                 return InvoiceStatus.PENDING_APPROVAL.value, None
 
