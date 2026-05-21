@@ -80,12 +80,15 @@ Mental model (`IDEAL_VS_CURRENT.md §1`): providers (Stripe, Grab, OCBC, Wise) =
 
 **Future-proofing — DEFERRED (YAGNI, note for later):** the source-adapter abstraction (JE Catalog + `EconomicEventSource.amount_for()` + `SourceRegistry`) is **not built now** — the code reads views directly. When the TMS PGW ledger is real, wrap the existing sync behind a thin source interface *then* and add a `PGWLedgerSource`. `category_id` (finance-owned COA map, §4 F-1) is the shared vocabulary that keeps that swap cheap. Don't pre-build the abstraction.
 
-### 2.3 Employee onboarding gap (BUG — verified end-to-end)
+### 2.3 Payroll & Employee Onboarding (NEAR-TERM GOAL + a verified bug)
 
-Onboarding (`hr_onboarding_service`) creates user-update + `HrEmployee` + counterparty, but **silently drops `gross_amount` / `pay_type` / `currency` / `default_deductions`** from the onboarding payload — it never creates `HrCompensation` or `HrDeductionRule` (those exist only via separate `POST /employees/{id}/compensation` + `/deduction-rules`). **Net effect: an onboarded employee has no compensation → payroll `create_run` skips them ("no active compensation") → they cannot be paid.** SYSTEM_OVERVIEW §3.7.1 Step 4 says onboarding *should* create both → incomplete implementation.
+**Goal (Gaurav, 2026-05-21):** the **whole payroll system is to run from finance-api** — each employee's salary/comp, **monthly payroll runs**, and **tax implications** (CPF/Super/income tax) generated here. "A lot of that needs to happen now."
 
+**Open question (unresolved):** *how* employee onboarding feeds payroll — i.e. where each employee's salary/comp data comes from (manual? `new-monitor-api` / `user-registry`? a CSV?) and how it lands as `HrCompensation` + `HrDeductionRule`. Gaurav: "still not clear how that's gonna happen." **Needs a designed flow before payroll can run end-to-end.**
+
+**Verified bug (the concrete blocker):** Onboarding (`hr_onboarding_service`) creates user-update + `HrEmployee` + counterparty, but **silently drops `gross_amount` / `pay_type` / `currency` / `default_deductions`** — it never creates `HrCompensation` or `HrDeductionRule` (those exist only via separate `POST /employees/{id}/compensation` + `/deduction-rules`). **Net effect: an onboarded employee has no compensation → payroll `create_run` skips them → they cannot be paid.** SYSTEM_OVERVIEW §3.7.1 Step 4 says onboarding *should* create both.
 - **E2E proof:** 7/10 checks pass; the 3 failures are exactly compensation, deductions, and "employee can be paid."
-- **Fix (pending approval on COA mapping):** wire comp + deduction creation into `_validate_and_onboard_one` (parse `default_deductions` + SG/AU statutory defaults; CPF/Super → COA mapping drafted), and fold in the 6 `hr_onboarding_service` mypy errors while there.
+- **Fix (pending approval on COA mapping):** wire comp + deduction creation into `_validate_and_onboard_one` (parse `default_deductions` + SG/AU statutory defaults; CPF/Super → COA mapping drafted) + fold in the 6 `hr_onboarding_service` mypy errors. *But first resolve the salary-data-source question above.*
 
 ### 2.4 Financial Reporting last-mile (GAP — highest leverage)
 
@@ -135,7 +138,22 @@ Onboarding (`hr_onboarding_service`) creates user-update + `HrEmployee` + counte
 
 ---
 
-## 4. Cross-Service Dependencies (finance ↔ TMS)
+## 4. System Topology & Cross-Service Dependencies
+
+### 4.0 Repos & data stores (the dependency map)
+
+| Repo / store | Role | Local? |
+|--------------|------|--------|
+| **finance-api** (this) | Python/Flask finance backend + ledger | ✅ here |
+| **admincontrols** | NEW front end (finance UI) | ❌ not cloned locally |
+| **admin-bff** | NEW middleware / backend-for-frontend (proxies finance-api; the `users` table lives here) | ❌ not cloned locally |
+| **new-monitor-api** | CURRENT front end + its backend-for-frontend; has finance-system branches to check out | ✅ `../new-monitor-api` |
+| **tms** (`tms-pricing-service`, `tms-trips-service`) | Pricing + trips; future **PGW ledger** economic-event source | ✅ `../tms` |
+| **collections-db** (AWS RDS, ap-southeast-2) | ⭐ **Where the finance tables sit right now** — finance-api connects here via `DATABASE_URL` ("collections agent database") | remote (live — **read-only**) |
+
+> Each dependent repo has its own finance-system branches (checkable). admincontrols/admin-bff are NOT in `../` — locate/clone before inspecting. The live DB is shared/production — **inspect read-only, never mutate.**
+
+### 4.1 Finance ↔ TMS obligations
 
 **Source of truth for cross-service contracts:** `tms-trips-service/docs/migration/CROSS-SERVICE.md` (DP-2). Recorded here because finance owns several obligations in the TMS line-item ledger migration.
 
