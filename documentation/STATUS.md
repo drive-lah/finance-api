@@ -94,6 +94,27 @@ Mental model (`IDEAL_VS_CURRENT.md §1`): providers (Stripe, Grab, OCBC, Wise) =
 
 **⛔ Remaining blocker = the salary data itself.** The engine works and onboarding now wires comp/deductions — but the roster CSV's salary/deduction columns are still **blank**, so nothing real can be onboarded yet. Resolving *where each employee's salary + deduction setup comes from* (and filling it) is the one thing left before payroll runs for real.
 
+### 2.3.1 Triggers & duplication (for FE wiring)
+
+**Triggers (endpoints the front end will wire to):**
+| Action | Endpoint |
+|--------|----------|
+| Bulk onboard (roster) | `POST /api/hr/onboard/bulk` |
+| Onboard one | `POST /api/hr/onboard/{user_id}` |
+| Offboard | `POST /api/hr/offboard/{user_id}` |
+| Daily employee sync | `POST /api/jobs/sync-employees` (cron + manual) |
+| Add/raise compensation | `POST /api/hr/employees/{id}/compensation` |
+| Add deduction rule | `POST /api/hr/employees/{id}/deduction-rules` |
+| **Create payroll run (DRAFT)** | `POST /api/hr/payroll-runs` |
+| **Submit run (post JE)** | `POST /api/hr/payroll-runs/{id}/submit` |
+
+> ⚠️ **Two payroll systems exist:** the rich per-employee one (`/api/hr/payroll-runs` → `hr_payroll_service`, uses comp + deduction rules) and a simpler aggregate one (`/api/payroll/runs` → `payroll_service`, takes pre-computed totals). **Decide which is canonical** — FE should wire the rich `/api/hr/payroll-runs`.
+
+**Duplication / idempotency:**
+- **Onboarding — GUARDED.** `is_employee` flag → 409 "already onboarded"; `HrEmployee` / counterparty / compensation existence checks; bulk batch dedup. Re-onboarding is safe/idempotent.
+- **Payroll runs — ⚠️ NOT GUARDED (gap).** No uniqueness on `(entity_id, payroll_period)`; two DRAFT runs for the same month can both be created **and** submitted → **double-posted payroll JEs (double expense / double pay)**. `submit_run` only blocks re-submitting the *same* run (status≠DRAFT). The payroll JE has **no period-derived idempotency reference** (contrast stripe_sync's `STRIPE-{region}-{month}` + delete-and-recreate).
+- **To handle (later):** add a uniqueness guard on `(entity_id, period)` where status≠VOID — reject or replace a duplicate run; and/or a period-derived JE `reference_number` + idempotent replace; FE shows the existing run for a period and blocks/confirms a re-run.
+
 ### 2.4 Financial Reporting last-mile (GAP — highest leverage)
 
 | Item | Status |
