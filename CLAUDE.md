@@ -161,4 +161,19 @@ Then in SYSTEM_OVERVIEW.md, reference it:
 
 ---
 
+## Rule 5: Keep STATUS.md Current (Living Doc)
+
+`documentation/STATUS.md` is a **living tracker** — it must reflect reality at the end of every working session, not just when convenient. Stale status is worse than no status.
+
+**The rule:** Any session that changes the system — code committed, a decision made, a blocker/bug found, a module finished, files cleaned up — MUST update `STATUS.md` in the **same session, before wrapping up.**
+
+**What to keep current:**
+- The **Overall** summary + **Verified ground truth** line (test/mypy counts, branch state) whenever they change — and keep the numbers **verified** (re-run pytest/mypy), not remembered.
+- **§2 What's Pending** — move finished items out; add newly discovered work, blockers, and bugs.
+- **§3 Decisions** — record any decision the moment it's made.
+
+**If you did work and didn't touch `STATUS.md`, the task isn't done.**
+
+---
+
 **These rules apply to all future work in this repository.**
