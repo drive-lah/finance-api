@@ -54,6 +54,12 @@ The real seam is **not** "Stripe vs PGW." It is:
 
 Both post into the one ledger. This is **"payment-provider ingestion + economic-event recognition," not "Stripe sync."** Stripe and Grab are instances of the provider concept; the PGW ledger is a future economic-event source, not a replacement for the cash rails.
 
+### Build boundary — reuse, don't rebuild
+
+- **Reuse all the bank machinery** for the cash/settlement side: bank-account model, transaction import, internal-transfer matching (Stripe → OCBC is just a bank transfer), categorization, reconciliation, the ledger. Providers add nothing new here — they're bank accounts.
+- **Build only the thin economic-event adapter.** Current source = the **existing ClickHouse views** (already battle-tested feeding the current books) — *read* them; do **not** re-home their logic into Python. Future source = the **TMS PGW ledger**, swapped in behind the same seam.
+- The only genuinely-new code is that adapter + the monthly aggregation/accrual it does. Everything else already exists.
+
 ---
 
 ## 2. The Accounting Pipeline — Ideal vs Today

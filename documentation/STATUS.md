@@ -64,12 +64,16 @@
 | Cleanup | **DONE** — 22 scratch scripts + 6 superseded docs deleted, `.gitignore` added, `stripe_sync` reset to baseline. |
 | Working tree | Clean except 2 deliberate loose ends (§2.6). **5 commits this session** (mypy, docs collapse, gitignore, mental model, cleanup); branch ahead of origin, **not pushed**. |
 
-### 2.2 Payment-provider + Stripe rebuild (NEXT — model locked, build pending)
+### 2.2 Payment-provider + Stripe rebuild (NEXT — model + approach locked)
 
-Mental model locked in `IDEAL_VS_CURRENT.md §1`: payment providers (Stripe, Grab, OCBC, Wise) are permanent **bank/cash accounts**; **economic events** (revenue/COGS) are a **swappable source** (ClickHouse now → PGW ledger later); both post into one ledger. Direction = **source-adapter architecture** + Stripe **v3.0** (Python owns all classification logic; ClickHouse is a raw data store, not the logic owner).
+Mental model (`IDEAL_VS_CURRENT.md §1`): providers (Stripe, Grab, OCBC, Wise) = permanent **bank/cash accounts**; **economic events** (revenue/COGS) = **swappable source** (existing ClickHouse views now → TMS PGW ledger later); both post into one ledger.
 
-- `stripe_sync` is reset to the committed Phase 1/2 baseline; the half-done v3.0 refactor (**867 lines + the v3.0 tests**) is preserved in **`stash@{0}`** (recoverable via `git stash apply`) for reuse during the rebuild.
-- **To build:** a `Source.generate_specs(month, region) → JESpec[]` seam · `StripeClickHouseSource` (serves now + historic permanently) · provider cash-account ingestion (Stripe/Grab treated as banks; settlement → internal transfers) · lock the JE↔COA taxonomy aligned with the TMS `code→category_id` map (§4) · `PGWLedgerSource` later behind the same seam.
+**Approach (locked 2026-05-21): reuse, don't rebuild.**
+- **Reuse the bank machinery** for the cash/settlement side — Stripe/Grab are bank accounts; Stripe→OCBC payouts go through the existing transaction import + internal-transfer matching; reconciliation, categorization, and ledger reused as-is.
+- **Build only a thin economic-event adapter** that reads the **existing ClickHouse views** (the battle-tested logic already feeding the current books) → JESpecs → ledger. **No v3.0 Python re-home** — it rebuilds existing logic for a transitional pipeline.
+- The committed Phase 1/2 baseline already reads the views, so this is close. **Patch the one known view gap** (`code='2'` excess mileage, ~SGD 14.8k/2025) narrowly — fix the view or a tiny targeted correction, not a rewrite.
+- **Future:** swap the views adapter for a `PGWLedgerSource` behind the same seam.
+- The stashed v3.0 WIP (`stash@{0}`) is **mostly not needed** now — keep only the `code='2'` fix learning.
 - Deferred: Platform↔Connect views, RMS vs non-RMS split, historical backfill, production monthly schedule.
 
 ### 2.3 Employee onboarding gap (BUG — verified end-to-end)
@@ -115,8 +119,8 @@ Onboarding (`hr_onboarding_service`) creates user-update + `HrEmployee` + counte
 | Decision | Resolution | Source |
 |----------|-----------|--------|
 | **Payment-provider mental model** | Providers (Stripe, Grab, OCBC, Wise) = permanent bank/cash accounts; economic events (revenue/COGS) = swappable source (ClickHouse → PGW); both post to one ledger. Frame the work as "provider ingestion + economic-event recognition," NOT "Stripe sync." | IDEAL_VS_CURRENT §1 (2026-05-21) |
-| **Stripe v3.0 — Python owns logic** | All classification/aggregation logic lives in Python; ClickHouse is a raw data store. **Supersedes** the older "ClickHouse views are the source of truth." | wip/STRIPE_SYNC_ARCHITECTURE.md |
-| **Source-adapter architecture** | One JE pipeline; swappable sources (StripeClickHouseSource now + historic; PGWLedgerSource later). JESpec is the seam. | IDEAL_VS_CURRENT §1 |
+| **Stripe current source = existing ClickHouse views** | Read the existing, battle-tested views (they already feed the current QuickBooks books) via a thin adapter. Do **NOT** re-home view logic into Python — **v3.0 dropped** (it rebuilds existing logic for a pipeline TMS will replace). Patch the one known view gap (`code='2'` excess mileage) narrowly. | 2026-05-21 (reverses v3.0) |
+| **Source-adapter architecture** | One JE pipeline; swappable economic-event source: **existing ClickHouse views now → TMS PGW ledger later**. Reuse the bank machinery (account model, transaction import, transfer-matching, categorization, reconciliation); build only the thin economic-event adapter. JESpec is the seam. | IDEAL_VS_CURRENT §1 |
 | **Doc structure** | `documentation/` root = exactly `STATUS.md` + `IDEAL_VS_CURRENT.md`; SYSTEM_OVERVIEW + API archived to `wip/`. | CLAUDE.md Rules 2/4 (2026-05-21) |
 | Employees as counterparties | `finance_counterparties.type="employee"`; `users` table is the source of truth; counterparty is a synced read-copy | §3.7.1 |
 | Salary expense COA (Option C) | Derived from `teams` at onboarding (CS→5063, On-Ground→5061, else→6000); recalc on team change | commits ae7372e/0437b55 |
@@ -168,6 +172,6 @@ Onboarding (`hr_onboarding_service`) creates user-update + `HrEmployee` + counte
 - **Verification commands:** `venv/bin/python -m pytest tests/ -q` · `venv/bin/python -m mypy src/ --ignore-missing-imports` · run Flask via venv for pdfplumber: `venv/bin/python -m flask --app src/app.py run --port 8081 --debug`.
 - **Test reality:** 569 pass / 0 fail. The 20 prior failures were all in `tests/stripe_sync/` (now stashed with the v3.0 WIP).
 - **mypy this session:** 112 → 33. The `.text` fixes use `cast("TextBlock", message.content[0])` (runtime no-op) + `TYPE_CHECKING` imports — zero behavior change.
-- **Stashed work:** `stash@{0}` = the stripe_sync v3.0 WIP (867 lines + tests), preserved for the rebuild.
+- **Stashed work:** `stash@{0}` = the stripe_sync v3.0 WIP (867 lines + tests). Mostly **not needed** under the views-based approach (§2.2) — retain only the `code='2'` view-gap fix.
 - **Accounting basis:** accrual. Cash path (providers/bank) and accrual path (invoices/payroll/depreciation) reconcile via payable/clearing accounts.
 - **Migrations:** Alembic, 001 → 036 (`alembic upgrade head`).
