@@ -11,7 +11,52 @@
 
 ---
 
-## 1. The Accounting Pipeline — Ideal vs Today
+## 1. Mental Model — How Money and Meaning Enter the Ledger
+
+Three layers, kept strictly separate. Conflating them is the root of most of the confusion in this area:
+
+```
+┌─ PAYMENT PROVIDERS = banks (cash rails) ─────────── PERMANENT, provider-agnostic
+│   Stripe SG/AU · Grab (SG) · OCBC · Wise · CBA
+│   → cash in / cash out / fees / settlement to our operating bank
+│   → each is a cash account in the COA, ingested like a bank feed
+│
+├─ ECONOMIC EVENTS = the "why" (revenue earned, host owed, incidentals) ─ SWAPPABLE source
+│   NOW:    ClickHouse — inferred from Stripe metadata + the payout_entries table
+│   FUTURE: PGW / TMS ledger — captured authoritatively at pricing time
+│
+└─ THE LEDGER = the double-entry record (finance-api, replaces QuickBooks) ── durable target
+```
+
+**1. Payment providers = banks (cash rails).** Stripe (SG/AU), Grab (SG), OCBC, Wise, CBA. Each is a cash account in the COA. They give us cash in/out, fees, and settlement to our operating bank. **Permanent and provider-agnostic** — adding a provider (e.g. Grab) is just another bank account + adapter, never a new pipeline.
+
+**2. Economic events = the "why".** Revenue earned, host owed, incidentals charged. The business meaning behind the cash. **The source swaps over time** — today inferred from ClickHouse (Stripe metadata + `payout_entries`); in future captured authoritatively by the PGW / TMS ledger at pricing time.
+
+**3. The ledger = the record.** The double-entry journal entries in finance-api. The durable target everything posts into.
+
+### "Stripe is a bank" — the two facets
+
+Stripe (and Grab) carry two different things; only one of them is "bank":
+
+| Facet | What it is | Treatment | Lifespan |
+|-------|-----------|-----------|----------|
+| **Cash** | balance, payouts to OCBC, fees deducted | a **bank account** — cash in/out, internal transfers, fees | **permanent** |
+| **Information** | metadata: this charge = trip X, this transfer = host damage payout | a **source of economic events** | **replaceable** (PGW takes over) |
+
+So Stripe → OCBC is an **internal transfer between two cash accounts** (an already-solved pattern in the categorization engine); Stripe's *metadata* is merely our current source for the "why".
+
+### The architectural seam
+
+The real seam is **not** "Stripe vs PGW." It is:
+
+- **Cash rails** — many, permanent (Stripe, Grab, OCBC, Wise…) → cash movements + fees, ingested like bank feeds.
+- **Economic-event source** — one, swappable (ClickHouse today → PGW ledger tomorrow) → revenue / COGS recognition.
+
+Both post into the one ledger. This is **"payment-provider ingestion + economic-event recognition," not "Stripe sync."** Stripe and Grab are instances of the provider concept; the PGW ledger is a future economic-event source, not a replacement for the cash rails.
+
+---
+
+## 2. The Accounting Pipeline — Ideal vs Today
 
 The job of the system, in 8 layers from economic event to financial statement:
 
@@ -28,7 +73,7 @@ The job of the system, in 8 layers from economic event to financial statement:
 
 ---
 
-## 2. Module Maturity — Ideal vs Current
+## 3. Module Maturity — Ideal vs Current
 
 | Module | Ideal | Current (verified) | Status |
 |--------|-------|--------------------|--------|
@@ -48,7 +93,7 @@ The job of the system, in 8 layers from economic event to financial statement:
 
 ---
 
-## 3. The Gap — What Stands Between Current and Ideal
+## 4. The Gap — What Stands Between Current and Ideal
 
 In priority order of leverage:
 
@@ -59,7 +104,7 @@ In priority order of leverage:
 
 ---
 
-## 4. Sequenced Path to Ideal
+## 5. Sequenced Path to Ideal
 
 High-level direction (task-level tracking lives in `STATUS.md`):
 
