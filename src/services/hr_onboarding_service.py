@@ -9,6 +9,8 @@ Handles bulk and individual employee onboarding:
   - All-or-nothing transaction: any validation failure rolls back the entire batch
 """
 import logging
+from datetime import date
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import text
@@ -16,10 +18,25 @@ from sqlalchemy.orm import Session
 
 from src.models.entity import FinanceEntity
 from src.models.account import FinanceAccount
-from src.models.hr_employee import HrEmployee
+from src.models.hr_employee import HrEmployee, HrCompensation, HrDeductionRule
 from src.models.counterparty import FinanceCounterparty
 
 logger = logging.getLogger(__name__)
+
+# Deduction type → COA + behaviour. Validated against the payroll engine
+# (produces balanced JEs). employee_bears=True reduces net pay; =False is an
+# employer cost debited to its own expense account on top of gross.
+DEDUCTION_COA = {
+    "CPF_EMPLOYEE":   {"employee_bears": True,  "coa_debit_code": "6000", "coa_credit_code": "2300", "cap": 6000},
+    "CPF_EMPLOYER":   {"employee_bears": False, "coa_debit_code": "6001", "coa_credit_code": "2300", "cap": 6000},
+    "SUPERANNUATION": {"employee_bears": False, "coa_debit_code": "6001", "coa_credit_code": "2310", "cap": None},
+    "INCOME_TAX":     {"employee_bears": True,  "coa_debit_code": "6000", "coa_credit_code": "2320", "cap": None},
+}
+# Statutory defaults applied per region when no explicit default_deductions given.
+REGION_DEFAULT_DEDUCTIONS = {
+    "SG": [("CPF_EMPLOYEE", "PERCENTAGE", 0.20), ("CPF_EMPLOYER", "PERCENTAGE", 0.17)],
+    "AU": [("SUPERANNUATION", "PERCENTAGE", 0.115)],
+}
 
 
 class HrOnboardingService:
@@ -139,6 +156,7 @@ class HrOnboardingService:
                 {"id": user_id},
             ).fetchone()
 
+            assert user_row is not None  # just onboarded above — row exists
             salary_expense_code = item.get("salary_expense_code")
             payroll_entity_id = item["payroll_entity_id"]
             teams_raw = user_row[6]
@@ -253,8 +271,8 @@ class HrOnboardingService:
         )
 
         # 7. Create HrEmployee record (if not exists)
-        existing_emp = db.query(HrEmployee).filter(HrEmployee.user_id == user_id).first()
-        if not existing_emp:
+        emp = db.query(HrEmployee).filter(HrEmployee.user_id == user_id).first()
+        if not emp:
             emp = HrEmployee(
                 user_id=user_id,
                 entity_id=payroll_entity_id,
@@ -262,6 +280,10 @@ class HrOnboardingService:
                 salary_expense_code=salary_expense_code,
             )
             db.add(emp)
+            db.flush()  # assign emp.id for compensation / deduction FKs
+
+        # 7b. Create compensation + deduction rules from the payload (if salary given)
+        self._create_compensation_and_deductions(db, emp, item, entity)
 
         # 8. Create FinanceCounterparty record (if not exists)
         existing_cp = db.query(FinanceCounterparty).filter(
@@ -281,6 +303,76 @@ class HrOnboardingService:
 
         db.flush()  # flush to catch DB-level errors early
         return []  # no errors
+
+    def _create_compensation_and_deductions(
+        self, db: Session, emp: HrEmployee, item: dict[str, Any], entity: FinanceEntity
+    ) -> None:
+        """
+        Populate HrCompensation + HrDeductionRule from the onboarding payload.
+
+        If no gross_amount is provided, the employee is onboarded WITHOUT
+        compensation (not yet payable) — salary can be added later. If a salary
+        is given, statutory region defaults (SG=CPF, AU=Super) apply unless the
+        payload supplies an explicit `default_deductions` string.
+        """
+        gross = item.get("gross_amount")
+        if gross in (None, ""):
+            return  # no salary data yet — employee onboarded but not yet payable
+
+        # Idempotent: don't duplicate if compensation already exists
+        if db.query(HrCompensation).filter(HrCompensation.employee_id == emp.id).first():
+            return
+
+        eff = item.get("effective_from") or date.today()
+        if isinstance(eff, str):
+            eff = date.fromisoformat(eff)
+        country = (entity.country or "SG").upper()
+        currency = item.get("currency") or ("AUD" if country == "AU" else "SGD")
+
+        db.add(HrCompensation(
+            employee_id=emp.id,
+            pay_type=item.get("pay_type", "FIXED_SALARY"),
+            gross_amount=Decimal(str(gross)),
+            currency=currency,
+            effective_from=eff,
+        ))
+
+        raw = item.get("default_deductions")
+        specs = self._parse_deductions(raw) if raw else REGION_DEFAULT_DEDUCTIONS.get(country, [])
+        for dtype, calc, value in specs:
+            meta = DEDUCTION_COA.get(
+                dtype,
+                {"employee_bears": True, "coa_debit_code": "6000", "coa_credit_code": "2300", "cap": None},
+            )
+            db.add(HrDeductionRule(
+                employee_id=emp.id,
+                deduction_type=dtype,
+                label=dtype.replace("_", " ").title(),
+                calculation_type=calc,
+                rate=(Decimal(str(value)) if calc == "PERCENTAGE" else None),
+                fixed_amount=(Decimal(str(value)) if calc == "FIXED_AMOUNT" else None),
+                ordinary_wage_cap=(Decimal(str(meta["cap"])) if meta["cap"] else None),
+                employee_bears=bool(meta["employee_bears"]),
+                coa_debit_code=str(meta["coa_debit_code"]),
+                coa_credit_code=str(meta["coa_credit_code"]),
+                effective_from=eff,
+            ))
+
+    @staticmethod
+    def _parse_deductions(raw: str) -> list[tuple[str, str, float]]:
+        """Parse "CPF_EMPLOYEE:20%|INCOME_TAX:8.5%|HEALTH_INSURANCE:150" → specs."""
+        specs: list[tuple[str, str, float]] = []
+        for part in raw.split("|"):
+            part = part.strip()
+            if not part or ":" not in part:
+                continue
+            dtype, val = part.split(":", 1)
+            dtype, val = dtype.strip().upper(), val.strip()
+            if val.endswith("%"):
+                specs.append((dtype, "PERCENTAGE", float(val[:-1]) / 100))
+            else:
+                specs.append((dtype, "FIXED_AMOUNT", float(val)))
+        return specs
 
     def offboard_employee(
         self, db: Session, user_id: int, payload: dict[str, Any]
