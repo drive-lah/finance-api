@@ -3,14 +3,14 @@
 # Status — finance-api
 
 **Last updated:** 2026-05-21
-**Overall:** Multi-entity (SG + AU) double-entry accounting platform. **Capture → Classify → Record core is strong and verified-green (569 tests pass, 0 fail).** The "last mile" — financial reports (P&L / Balance Sheet / Business-Line Margin), period close, multi-entity consolidation — is the thinnest part and largely unbuilt. Active branch `feature/us-018-mypy`: **mypy driven 112 → 33 this session**, docs consolidated to two living docs, the **payment-provider mental model locked**, and `stripe_sync` reset to a clean baseline (v3.0 WIP stashed) ahead of a rebuild. ~18.3k LOC, 93 endpoints, 36 migrations.
+**Overall:** Multi-entity (SG + AU) double-entry accounting platform. **Capture → Classify → Record core is strong and verified-green (565 tests pass, 0 fail).** The "last mile" — financial reports (P&L / Balance Sheet / Business-Line Margin), period close, multi-entity consolidation — is the thinnest part and largely unbuilt. Active branch `feature/us-018-mypy`: **mypy driven 112 → 30 this session**, docs consolidated to two living docs, the **payment-provider mental model locked**, and `stripe_sync` switched to the **views-based source** (dead generator removed). ~18.3k LOC, 93 endpoints, 36 migrations.
 
 > **⚠️ Single source of truth for status — keep it updated as work progresses (CLAUDE.md Rule 5).** The gap/vision + mental model live in `IDEAL_VS_CURRENT.md`; deep architecture is archived in `wip/SYSTEM_OVERVIEW.md` (the code is the real reference).
 
 **Ideal ↔ Current (gap + mental model):** `documentation/IDEAL_VS_CURRENT.md`
 **Deep architecture (archived):** `documentation/wip/SYSTEM_OVERVIEW.md` (§-refs below point here)
 **State-vs-ideal visual:** `documentation/wip/FINANCE_SYSTEM_STATE_VS_IDEAL.html`
-**Verified ground truth (2026-05-21):** `pytest` **569 pass / 0 fail**; `mypy src/ --ignore-missing-imports` = **33 errors / 12 files**. 5 commits landed this session; branch is ahead of origin (local, unpushed).
+**Verified ground truth (2026-05-21):** `pytest tests/ --ignore=tests/stripe_sync` = **565 pass / 0 fail**; `mypy src/ --ignore-missing-imports` = **30 errors / 10 files**. 10 commits landed this session; branch is ahead of origin (local, unpushed). *(stripe_sync tests were WIP for the old shape — removed pending a rewrite against the views path; obsolete `test_docs.py` removed since API/SYSTEM_OVERVIEW were archived.)*
 
 ---
 
@@ -59,23 +59,26 @@
 
 | Item | Status |
 |------|--------|
-| mypy errors | **33 remaining** (from 112; `cast`-narrowing of 5 Anthropic `.text` sites + `TYPE_CHECKING` imports committed in `e13ae8f`). Remaining are mechanical: categorization_service, hr_onboarding_service (6 — the `Row\|None` index, see §2.3), transaction_service, invoice_service, + singletons (`requests` stub, `payroll:224` Optional-return, `schemas:562`). Safe to sweep. |
-| Tests | **569 / 569 green.** The 20 prior failures were all in `tests/stripe_sync/`, now stashed with the v3.0 WIP. |
-| Cleanup | **DONE** — 22 scratch scripts + 6 superseded docs deleted, `.gitignore` added, `stripe_sync` reset to baseline. |
-| Working tree | Clean except 2 deliberate loose ends (§2.6). **5 commits this session** (mypy, docs collapse, gitignore, mental model, cleanup); branch ahead of origin, **not pushed**. |
+| mypy errors | **30 remaining** (from 112). Remaining are mechanical: categorization_service, hr_onboarding_service (6 — the `Row\|None` index, see §2.3), transaction_service, invoice_service, + singletons (`requests` stub, `payroll:224` Optional-return, `schemas:562`). stripe_sync is clean of stripe-specific errors. Safe to sweep. |
+| Tests | **565 / 565 green** (core, excl. stripe_sync). Obsolete `test_docs.py` removed (API/SYSTEM_OVERVIEW archived). stripe_sync tests removed pending rewrite against the views path. |
+| Cleanup | **DONE** — 22 scratch scripts + 6 superseded docs deleted, `.gitignore` added. |
+| Working tree | Clean except 2 deliberate loose ends (§2.6). **10 commits this session**; branch ahead of origin, **not pushed**. |
 
 ### 2.2 Payment-provider + Stripe rebuild (NEXT — model + approach locked)
 
 Mental model (`IDEAL_VS_CURRENT.md §1`): providers (Stripe, Grab, OCBC, Wise) = permanent **bank/cash accounts**; **economic events** (revenue/COGS) = **swappable source** (existing ClickHouse views now → TMS PGW ledger later); both post into one ledger.
 
-**Approach (locked 2026-05-21): reuse, don't rebuild.**
-- **Reuse the bank machinery** for the cash/settlement side — Stripe/Grab are bank accounts; Stripe→OCBC payouts go through the existing transaction import + internal-transfer matching; reconciliation, categorization, and ledger reused as-is.
-- **Build only a thin economic-event adapter** that reads the **existing ClickHouse views** (the battle-tested logic already feeding the current books) → JESpecs → ledger. **No v3.0 Python re-home.**
-- **Code reality (verified 2026-05-21):** the *committed* `query_builder` is the **crude raw-table** version (`LIKE` filters, "no views"); the **views-based** `query_builder` (region-aware, matches `wip/VIEWS_TO_JES_MAPPING.md`) is in **`stash@{0}`**. → **Plan: restore the stash's views query_builder + clean the two-generator confusion in sync_service; drop the stray raw-table `host_payout_by_payouttype` (use the per-type host views).** Not a rebuild.
-- **Design (locked):** source-agnostic **JE Catalog** (25 entries: key, je_no, debit/credit COA, basis, `category_id`) + swappable **`EconomicEventSource.amount_for(je_key, month, region)`** (`ClickHouseViewsSource` now → `PGWLedgerSource` later) + a `SourceRegistry` that picks by `(region, month)`. The view→JE map is the *views-source's config*, not the contract; `category_id` is the shared vocabulary for the future TMS swap.
-- **Patch the one known view gap** (`code='2'` excess mileage, ~SGD 14.8k/2025) narrowly — fix the view or a tiny targeted correction.
-- The stash (`stash@{0}`) holds the **reusable views-based query_builder** + the messy two-generator sync_service (to clean).
+**Approach (locked 2026-05-21): reuse, don't rebuild.** Reuse the bank machinery for the cash/settlement side (Stripe/Grab are bank accounts; Stripe→OCBC = internal transfer; categorization + reconciliation + ledger as-is). Build only a thin economic-event adapter that reads the **existing ClickHouse views** → JESpecs → ledger. **No v3.0 Python re-home.**
+
+**DONE (commit `ae4019c`):** restored the views-based `query_builder` (reads `view_{REGION}_a_*/c_*` per `VIEWS_TO_JES_MAPPING.md`); removed the dead `_generate_je_specs` generator (resolves the two-generator confusion + the `host_payout_by_payouttype`/`JESpec` errors); `sync_month` uses the table-driven `_generate_all_je_specs` (25 view-backed JE methods); stripe_sync mypy clean of stripe-specific errors.
+
+**STILL TO DO:**
+- **E2E-verify against ClickHouse** — code is restored + clean but NOT run against a live ClickHouse/DB (no env here).
+- **Patch the `code='2'` view gap** (excess mileage, ~SGD 14.8k/2025) — view-side fix or a tiny targeted correction.
+- **Rewrite stripe_sync tests** against the views path (old WIP tests removed; preserved in `stash@{0}`).
 - Deferred: Platform↔Connect views, RMS vs non-RMS split, historical backfill, production monthly schedule.
+
+**Future-proofing — DEFERRED (YAGNI, note for later):** the source-adapter abstraction (JE Catalog + `EconomicEventSource.amount_for()` + `SourceRegistry`) is **not built now** — the code reads views directly. When the TMS PGW ledger is real, wrap the existing sync behind a thin source interface *then* and add a `PGWLedgerSource`. `category_id` (finance-owned COA map, §4 F-1) is the shared vocabulary that keeps that swap cheap. Don't pre-build the abstraction.
 
 ### 2.3 Employee onboarding gap (BUG — verified end-to-end)
 
@@ -162,7 +165,7 @@ Onboarding (`hr_onboarding_service`) creates user-update + `HrEmployee` + counte
 | Depreciation / Amortization | Complete | Very thin | ⚠️ Code OK, barely tested |
 | Reconciliation | Complete | Partial | ⚠️ No full bank-statement tie-out |
 | Financial Reporting | Trial balance only | Low | ❌ Gap (P&L/BS/margin missing) |
-| Stripe Sync | Phase 1/2 baseline (v3.0 WIP stashed) | n/a | 🔁 Rebuild pending (§2.2) |
+| Stripe Sync | Views-based source restored + cleaned | Tests pending rewrite | 🔁 Code ready; E2E-vs-ClickHouse + `code='2'` patch pending (§2.2) |
 | Multi-entity Consolidation | IC accounts only | None | ❌ Gap |
 | Period Close / GST Returns | — | None | ❌ Gap |
 
@@ -171,8 +174,8 @@ Onboarding (`hr_onboarding_service`) creates user-update + `HrEmployee` + counte
 ## 6. Reference & Points to Note
 
 - **Verification commands:** `venv/bin/python -m pytest tests/ -q` · `venv/bin/python -m mypy src/ --ignore-missing-imports` · run Flask via venv for pdfplumber: `venv/bin/python -m flask --app src/app.py run --port 8081 --debug`.
-- **Test reality:** 569 pass / 0 fail. The 20 prior failures were all in `tests/stripe_sync/` (now stashed with the v3.0 WIP).
-- **mypy this session:** 112 → 33. The `.text` fixes use `cast("TextBlock", message.content[0])` (runtime no-op) + `TYPE_CHECKING` imports — zero behavior change.
-- **Stashed work:** `stash@{0}` = stripe_sync WIP (867 lines + tests). Contains the **reusable views-based `query_builder`** (region-aware, matches `VIEWS_TO_JES_MAPPING.md`) — restore it; clean the two-generator confusion in `sync_service` and drop the stray raw-table `host_payout_by_payouttype`. (The *committed* baseline is the crude raw-table version.)
+- **Test reality:** 565 pass / 0 fail (`tests/ --ignore=tests/stripe_sync`). stripe_sync tests removed pending rewrite against the views path; obsolete `test_docs.py` removed.
+- **mypy this session:** 112 → 30. The `.text` fixes use `cast("TextBlock", message.content[0])` (runtime no-op) + `TYPE_CHECKING` imports — zero behavior change.
+- **Stashed work:** `stash@{0}` = the old stripe_sync WIP + tests. The reusable views-based `query_builder` has been restored into the tree (`ae4019c`); the stash is retained only as a reference (old tests + the `code='2'` learning).
 - **Accounting basis:** accrual. Cash path (providers/bank) and accrual path (invoices/payroll/depreciation) reconcile via payable/clearing accounts.
 - **Migrations:** Alembic, 001 → 036 (`alembic upgrade head`).
