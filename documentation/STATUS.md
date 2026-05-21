@@ -55,6 +55,8 @@
 
 ## 2. What's Pending
 
+> **▶ Priority (Gaurav, 2026-05-21):** session is **protected** (all committed locally, **no PR** for now). Then, for later, roughly in this order: **(a) finish Stripe sync** (§2.2 — needs ClickHouse access), **(b) test the categorization engine + rules** (§2.7 — new), **(c) make payroll real** (§2.3 — needs salary data), **(d) reporting last-mile** (§2.4). Branch `feature/us-018-mypy` is **78 commits ahead of origin, unpushed.**
+
 ### 2.1 Land branch `feature/us-018-mypy`
 
 | Item | Status |
@@ -142,7 +144,11 @@ Mental model (`IDEAL_VS_CURRENT.md §1`): providers (Stripe, Grab, OCBC, Wise) =
 | TD-3 | Throwaway scratch scripts in repo root | DONE — deleted |
 | TD-4 | Under-tested modules: depreciation, payroll, invoices/AP, reporting | Add coverage |
 | **LE-1** | `src/models/__init__.py` — exports depreciation models (`FinanceAssetSchedule`, `FinanceCOAAmortizationPolicy`); **uncommitted**, correct + harmless. Decide: commit or drop. |
-| **LE-2** | `documentation/wip/HR_ONBOARDING_COMPLETE_POPULATED.csv` — **uncommitted** data change. Decide: commit or drop. |
+| ~~LE-1 / LE-2~~ | ✅ Resolved — loose ends committed; working tree clean. |
+
+### 2.7 Test the categorization engine + rules (BACKLOG — new, 2026-05-21)
+
+The live DB has **244 categorization rules** and **730 transactions** but the engine's correctness hasn't been re-verified against real data. To do (later): confirm the 5-phase pipeline actually fires correctly — rules match the right transactions (no misfires), AP/payroll knock-off + internal-transfer pairing behave, AI fallback + NEEDS_REVIEW thresholds work — and the produced JEs are correct. Likely needs running against real/seeded transaction data (ClickHouse/collections-db access helps). Pairs with the Stripe-sync verification (both need a real data env).
 
 ---
 
