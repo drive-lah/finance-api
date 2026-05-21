@@ -160,7 +160,7 @@ Mental model (`IDEAL_VS_CURRENT.md §1`): providers (Stripe, Grab, OCBC, Wise) =
 | Invoice COA priority | On AP knock-off, `invoice.account_code` (approver-set) wins over counterparty default | §3.5 |
 | Asset parking (Case 3) | Amount-mismatch vs open invoices → 1300 Prepayments (Phase 1.5B) | commit 775f982 |
 | Stripe: monthly aggregation | One JE per month per region (not per-transaction); ~25 JE categories | wip/STRIPE_SYNC_ARCHITECTURE.md |
-| **Canonical payroll service** | **`hr_payroll_service` (`/api/hr/payroll-runs`)** — the rich per-employee engine (compensation + deduction rules → computed gross/tax/net). The simpler `payroll_service` (`/api/payroll/runs`, takes pre-computed totals, no employee data) is **superseded** — retire/ignore it; FE wires the hr path. (Duplicate-run guard lives on the hr path.) | 2026-05-21 |
+| **Canonical payroll service** | **`hr_payroll_service` (`/api/hr/payroll-runs`)** — the rich per-employee engine (compensation + deduction rules → computed gross/tax/net). The duplicate `/api/payroll/runs` endpoint is **REMOVED** (commit `09ca63a`). `payroll_service` is retained **only** for `create_payroll_payment_entries` (the live Phase-2.5 categorization knock-off); its `create_run` is now internal (knock-off test setup), not a public API. Duplicate-run guard lives on the hr path. | 2026-05-21 |
 
 ---
 
@@ -210,7 +210,7 @@ These finance-api endpoints exist and work but are **not yet surfaced in the UI*
 | Review payslips | `GET /api/hr/payroll-runs/{id}/items` | |
 | **Submit run (posts JE)** | `POST /api/hr/payroll-runs/{id}/submit` | DRAFT → POSTED |
 
-> Wire the **`/api/hr/*` (rich) payroll path**, not `/api/payroll/*` (superseded — see §3 decision). Bank import/categorization screens already exist; these HR/payroll screens are the gap.
+> The `/api/payroll/*` endpoint has been **removed** — `/api/hr/*` is the only payroll API now (see §3 decision). Bank import/categorization screens already exist; these HR/payroll screens are the gap.
 
 ---
 
