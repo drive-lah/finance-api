@@ -9,7 +9,7 @@
 
 **Ideal ↔ Current (gap + mental model):** `documentation/IDEAL_VS_CURRENT.md`
 **Deep architecture (archived):** `documentation/wip/SYSTEM_OVERVIEW.md` (§-refs below point here)
-**State-vs-ideal visual:** `documentation/wip/FINANCE_SYSTEM_STATE_VS_IDEAL.html`
+**Visuals:** `documentation/visuals/` — `FINANCE_SYSTEM_STATE_VS_IDEAL.html`, `HR_PAYROLL_PROCESS_DIAGRAM.html`, `JOURNAL_ENTRY_FLOWS.html`
 **Verified ground truth (2026-05-21):** `pytest tests/ --ignore=tests/stripe_sync` = **568 pass / 0 fail**; `mypy src/ --ignore-missing-imports` = **24 errors / 9 files**. ~13 commits this session; branch is ahead of origin (local, unpushed). *(stripe_sync tests were WIP for the old shape — removed pending a rewrite against the views path; obsolete `test_docs.py` removed since API/SYSTEM_OVERVIEW were archived.)*
 
 ---
@@ -92,7 +92,7 @@ Mental model (`IDEAL_VS_CURRENT.md §1`): providers (Stripe, Grab, OCBC, Wise) =
 
 **Open question (unresolved):** *how* employee onboarding feeds payroll — i.e. where each employee's salary/comp data comes from (manual? `new-monitor-api` / `user-registry`? a CSV?) and how it lands as `HrCompensation` + `HrDeductionRule`. Gaurav: "still not clear how that's gonna happen." **Needs a designed flow before payroll can run end-to-end.**
 
-**✅ Onboarding fix SHIPPED (commit `e8b29ca`):** `hr_onboarding_service` now creates `HrCompensation` + `HrDeductionRule` from the payload (`gross_amount`/`pay_type`/`currency`/`default_deductions`), applying SG/AU statutory defaults (CPF / Super) when none given, with a validated deduction→COA map (2300 CPF / 2310 Super / 2320 tax / 6001 employer / 6000 salary). No salary → employee onboarded but not yet payable (matches the current roster CSV). Covered by `tests/test_hr_payroll_flow.py` (SG, AU, roster-only); the 6 `Row\|None` mypy errors are fixed. End-to-end process diagram: `wip/HR_PAYROLL_PROCESS_DIAGRAM.html`.
+**✅ Onboarding fix SHIPPED (commit `e8b29ca`):** `hr_onboarding_service` now creates `HrCompensation` + `HrDeductionRule` from the payload (`gross_amount`/`pay_type`/`currency`/`default_deductions`), applying SG/AU statutory defaults (CPF / Super) when none given, with a validated deduction→COA map (2300 CPF / 2310 Super / 2320 tax / 6001 employer / 6000 salary). No salary → employee onboarded but not yet payable (matches the current roster CSV). Covered by `tests/test_hr_payroll_flow.py` (SG, AU, roster-only); the 6 `Row\|None` mypy errors are fixed. End-to-end process diagram: `visuals/HR_PAYROLL_PROCESS_DIAGRAM.html`.
 
 **⛔ Remaining blocker = the salary data itself.** The engine works and onboarding now wires comp/deductions — but the roster CSV's salary/deduction columns are still **blank**, so nothing real can be onboarded yet. Resolving *where each employee's salary + deduction setup comes from* (and filling it) is the one thing left before payroll runs for real.
 

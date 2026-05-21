@@ -122,4 +122,4 @@ High-level direction (task-level tracking lives in `STATUS.md`):
 
 ---
 
-*Visual companion: `wip/FINANCE_SYSTEM_STATE_VS_IDEAL.html`.*
+*Visual companions: `visuals/FINANCE_SYSTEM_STATE_VS_IDEAL.html`, `visuals/JOURNAL_ENTRY_FLOWS.html`, `visuals/HR_PAYROLL_PROCESS_DIAGRAM.html`.*
