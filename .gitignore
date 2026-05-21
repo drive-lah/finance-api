@@ -49,3 +49,12 @@ htmlcov/
 
 # Logs
 *.log
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Tooling
+.serena/
+.mypy_cache/
+.ruff_cache/
