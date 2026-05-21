@@ -191,6 +191,23 @@ class HrPayrollService:
         entity_id = data["entity_id"]
         run_date: date = data["run_date"]
 
+        # Duplicate-run guard: one (entity, period) may have only one live run.
+        # Prevents two runs for the same month both posting → double-pay.
+        period_start = data["payroll_period_start"]
+        period_end = data["payroll_period_end"]
+        existing_run = db.query(FinancePayrollRun).filter(
+            FinancePayrollRun.entity_id == entity_id,
+            FinancePayrollRun.payroll_period_start == period_start,
+            FinancePayrollRun.payroll_period_end == period_end,
+            FinancePayrollRun.status != "VOID",
+        ).first()
+        if existing_run:
+            raise ValueError(
+                f"A payroll run already exists for entity {entity_id} and period "
+                f"{period_start}-{period_end} (run id={existing_run.id}, "
+                f"status={existing_run.status}). Void it before creating another."
+            )
+
         bank_account = db.query(FinanceBankAccount).filter(
             FinanceBankAccount.id == data["bank_account_id"]
         ).first()

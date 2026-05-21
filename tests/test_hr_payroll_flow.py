@@ -135,6 +135,24 @@ def test_au_onboard_to_payroll_super_and_tax(db_session, setup):
     assert Decimal(str(bank.credit_amount)) == Decimal("6400.00")  # net = 8000 - income tax 1600
 
 
+def test_duplicate_payroll_run_rejected(db_session, setup):
+    """Two runs for the same (entity, period) must not both be created (double-pay guard)."""
+    hr_onboarding_service.single_onboard(db_session, 501, {
+        "payroll_entity_id": setup["sg"].id, "salary_expense_code": "6000",
+        "employee_type": "FULL_TIME", "gross_amount": 5000, "pay_type": "FIXED_SALARY",
+        "currency": "SGD", "effective_from": "2026-01-01",
+    })
+    db_session.commit()
+    args = {
+        "entity_id": setup["sg"].id, "run_date": date(2026, 1, 31),
+        "payroll_period_start": date(2026, 1, 1), "payroll_period_end": date(2026, 1, 31),
+        "bank_account_id": setup["sg_bank"].id,
+    }
+    hr_payroll_service.create_run(db_session, args)  # first run OK
+    with pytest.raises(ValueError, match="already exists"):
+        hr_payroll_service.create_run(db_session, args)  # duplicate rejected
+
+
 def test_roster_only_onboard_creates_no_compensation(db_session, setup):
     """Blank salary (like the current roster CSV) → employee onboarded but not yet payable."""
     res = hr_onboarding_service.single_onboard(db_session, 501, {
