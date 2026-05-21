@@ -160,6 +160,7 @@ Mental model (`IDEAL_VS_CURRENT.md §1`): providers (Stripe, Grab, OCBC, Wise) =
 | Invoice COA priority | On AP knock-off, `invoice.account_code` (approver-set) wins over counterparty default | §3.5 |
 | Asset parking (Case 3) | Amount-mismatch vs open invoices → 1300 Prepayments (Phase 1.5B) | commit 775f982 |
 | Stripe: monthly aggregation | One JE per month per region (not per-transaction); ~25 JE categories | wip/STRIPE_SYNC_ARCHITECTURE.md |
+| **Canonical payroll service** | **`hr_payroll_service` (`/api/hr/payroll-runs`)** — the rich per-employee engine (compensation + deduction rules → computed gross/tax/net). The simpler `payroll_service` (`/api/payroll/runs`, takes pre-computed totals, no employee data) is **superseded** — retire/ignore it; FE wires the hr path. (Duplicate-run guard lives on the hr path.) | 2026-05-21 |
 
 ---
 
@@ -191,6 +192,25 @@ Mental model (`IDEAL_VS_CURRENT.md §1`): providers (Stripe, Grab, OCBC, Wise) =
 | F-5 | `earned_at` rule (finance-confirmed): trip-revenue lines = trip completion; all others = invoice creation | Locked 2026-05-21 |
 
 > **Strategic note:** the PGW ledger becomes a future **economic-event source** (revenue/COGS), slotting in behind the source-adapter seam (§2.2). It does **not** replace the cash rails — Stripe/Grab remain bank accounts for fees, payouts, deposits, disputes. So plan for Stripe + PGW sources running **concurrently**, each owning a slice of the JE taxonomy.
+
+### 4.2 Front-end / BFF wiring NEEDED (cross-service — owned by admincontrols + admin-bff)
+
+These finance-api endpoints exist and work but are **not yet surfaced in the UI**. To make HR/payroll usable, the front end (`admincontrols` / `new-monitor-api`) + middleware (`admin-bff`, proxies with JWT) must wire each UI action to its endpoint:
+
+| UI action (screen) | Method + endpoint | Notes |
+|--------------------|-------------------|-------|
+| Onboard roster (bulk) | `POST /api/hr/onboard/bulk` | from CSV/JSON; idempotent (re-runnable) |
+| Onboard one employee | `POST /api/hr/onboard/{user_id}` | 409 if already onboarded |
+| Offboard employee | `POST /api/hr/offboard/{user_id}` | sets end date, deactivates counterparty |
+| Sync employees (button + cron) | `POST /api/jobs/sync-employees` | keeps HrEmployee ↔ users |
+| Set / raise salary | `POST /api/hr/employees/{id}/compensation` | effective-dated |
+| Add deduction rule | `POST /api/hr/employees/{id}/deduction-rules` | CPF/Super/tax/custom |
+| List employees / runs | `GET /api/hr/employees` · `GET /api/hr/payroll-runs` | |
+| **Create payroll run (DRAFT)** | `POST /api/hr/payroll-runs` | canonical (rich) path; **dup-guarded** → returns 400 if a run for that (entity, period) exists — FE should surface the message (ideally as a 409) |
+| Review payslips | `GET /api/hr/payroll-runs/{id}/items` | |
+| **Submit run (posts JE)** | `POST /api/hr/payroll-runs/{id}/submit` | DRAFT → POSTED |
+
+> Wire the **`/api/hr/*` (rich) payroll path**, not `/api/payroll/*` (superseded — see §3 decision). Bank import/categorization screens already exist; these HR/payroll screens are the gap.
 
 ---
 
