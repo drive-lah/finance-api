@@ -70,10 +70,11 @@ Mental model (`IDEAL_VS_CURRENT.md §1`): providers (Stripe, Grab, OCBC, Wise) =
 
 **Approach (locked 2026-05-21): reuse, don't rebuild.**
 - **Reuse the bank machinery** for the cash/settlement side — Stripe/Grab are bank accounts; Stripe→OCBC payouts go through the existing transaction import + internal-transfer matching; reconciliation, categorization, and ledger reused as-is.
-- **Build only a thin economic-event adapter** that reads the **existing ClickHouse views** (the battle-tested logic already feeding the current books) → JESpecs → ledger. **No v3.0 Python re-home** — it rebuilds existing logic for a transitional pipeline.
-- The committed Phase 1/2 baseline already reads the views, so this is close. **Patch the one known view gap** (`code='2'` excess mileage, ~SGD 14.8k/2025) narrowly — fix the view or a tiny targeted correction, not a rewrite.
-- **Future:** swap the views adapter for a `PGWLedgerSource` behind the same seam.
-- The stashed v3.0 WIP (`stash@{0}`) is **mostly not needed** now — keep only the `code='2'` fix learning.
+- **Build only a thin economic-event adapter** that reads the **existing ClickHouse views** (the battle-tested logic already feeding the current books) → JESpecs → ledger. **No v3.0 Python re-home.**
+- **Code reality (verified 2026-05-21):** the *committed* `query_builder` is the **crude raw-table** version (`LIKE` filters, "no views"); the **views-based** `query_builder` (region-aware, matches `wip/VIEWS_TO_JES_MAPPING.md`) is in **`stash@{0}`**. → **Plan: restore the stash's views query_builder + clean the two-generator confusion in sync_service; drop the stray raw-table `host_payout_by_payouttype` (use the per-type host views).** Not a rebuild.
+- **Design (locked):** source-agnostic **JE Catalog** (25 entries: key, je_no, debit/credit COA, basis, `category_id`) + swappable **`EconomicEventSource.amount_for(je_key, month, region)`** (`ClickHouseViewsSource` now → `PGWLedgerSource` later) + a `SourceRegistry` that picks by `(region, month)`. The view→JE map is the *views-source's config*, not the contract; `category_id` is the shared vocabulary for the future TMS swap.
+- **Patch the one known view gap** (`code='2'` excess mileage, ~SGD 14.8k/2025) narrowly — fix the view or a tiny targeted correction.
+- The stash (`stash@{0}`) holds the **reusable views-based query_builder** + the messy two-generator sync_service (to clean).
 - Deferred: Platform↔Connect views, RMS vs non-RMS split, historical backfill, production monthly schedule.
 
 ### 2.3 Employee onboarding gap (BUG — verified end-to-end)
@@ -172,6 +173,6 @@ Onboarding (`hr_onboarding_service`) creates user-update + `HrEmployee` + counte
 - **Verification commands:** `venv/bin/python -m pytest tests/ -q` · `venv/bin/python -m mypy src/ --ignore-missing-imports` · run Flask via venv for pdfplumber: `venv/bin/python -m flask --app src/app.py run --port 8081 --debug`.
 - **Test reality:** 569 pass / 0 fail. The 20 prior failures were all in `tests/stripe_sync/` (now stashed with the v3.0 WIP).
 - **mypy this session:** 112 → 33. The `.text` fixes use `cast("TextBlock", message.content[0])` (runtime no-op) + `TYPE_CHECKING` imports — zero behavior change.
-- **Stashed work:** `stash@{0}` = the stripe_sync v3.0 WIP (867 lines + tests). Mostly **not needed** under the views-based approach (§2.2) — retain only the `code='2'` view-gap fix.
+- **Stashed work:** `stash@{0}` = stripe_sync WIP (867 lines + tests). Contains the **reusable views-based `query_builder`** (region-aware, matches `VIEWS_TO_JES_MAPPING.md`) — restore it; clean the two-generator confusion in `sync_service` and drop the stray raw-table `host_payout_by_payouttype`. (The *committed* baseline is the crude raw-table version.)
 - **Accounting basis:** accrual. Cash path (providers/bank) and accrual path (invoices/payroll/depreciation) reconcile via payable/clearing accounts.
 - **Migrations:** Alembic, 001 → 036 (`alembic upgrade head`).
