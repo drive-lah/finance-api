@@ -487,3 +487,40 @@ class TestPayrollKnockoff:
         assert secondary_je.lines[2].credit_amount == 8000
         assert secondary_je.lines[3].account_code == "2300"  # CPF Payable
         assert secondary_je.lines[3].credit_amount == 3700  # 1700 + 2000
+
+    def test_payroll_knockoff_prefers_same_entity(self, db_session, entity, bank_account, accounts):
+        """A same-entity payroll run wins over a coincidental same-amount run in another entity."""
+        # Other entity + run created FIRST (lower id → would match first WITHOUT the fix), same net (8000).
+        other_entity = FinanceEntity(name="Other Co", country="AU", base_currency="AUD", status=EntityStatus.ACTIVE)
+        db_session.add(other_entity)
+        db_session.flush()
+        other_bank = FinanceBankAccount(
+            entity_id=other_entity.id, bank_name="NAB", account_number="999",
+            account_name="Other", currency="SGD", coa_account_code="1000",
+            status=BankAccountStatus.ACTIVE,
+        )
+        db_session.add(other_bank)
+        db_session.flush()
+        other_run = _create_run(db_session, other_entity, other_bank, run_date=date(2026, 3, 1))
+        # Same-entity run (the txn's own entity)
+        same_run = _create_run(db_session, entity, bank_account, run_date=date(2026, 3, 1))
+        db_session.commit()
+
+        import hashlib
+        fp = hashlib.sha256(b"prefer-same-entity-payroll").hexdigest()
+        txn = FinanceTransaction(
+            bank_account_id=bank_account.id, transaction_date=date(2026, 3, 2),
+            amount=Decimal("-8000"), description="net salary", fingerprint=fp,
+            status=TransactionStatus.PENDING,
+        )
+        db_session.add(txn)
+        db_session.commit()
+
+        CategorizationService()._try_payroll_knockoff(db_session, [txn], results=[])
+        db_session.refresh(txn)
+        db_session.refresh(same_run)
+        db_session.refresh(other_run)
+
+        assert txn.status == TransactionStatus.MATCHED
+        assert same_run.net_payment_transaction_id == txn.id    # same-entity run won
+        assert other_run.net_payment_transaction_id is None       # other entity NOT matched

@@ -566,8 +566,11 @@ class CategorizationService:
                         handled.add(txn.id)  # Stop further processing in Phase 4
 
             except Exception as e:
-                logger.warning(
-                    f"AP knock-off check failed for transaction {txn.id}: {e}",
+                # Unexpected failure (the "no open invoices" / "no match" paths are
+                # normal control flow, not exceptions) — log at ERROR so code bugs
+                # surface instead of hiding as warnings (cf. BUG-1). Batch proceeds.
+                logger.error(
+                    f"Unexpected AP knock-off error for transaction {txn.id}: {e}",
                     exc_info=True,
                 )
                 db.rollback()
@@ -637,6 +640,11 @@ class CategorizationService:
                     FinancePayrollRun.status == "POSTED",
                     FinancePayrollRun.run_date.between(date_low, date_high),
                 ).all()
+                # Prefer the transaction's own entity: a same-entity payroll run
+                # should win over a coincidental amount match in another entity.
+                # Cross-entity is still supported (below), but only when no
+                # same-entity run matches.
+                runs.sort(key=lambda r: 0 if r.entity_id == entity_id else 1)
 
                 matched_run = None
                 match_type = None
@@ -698,8 +706,11 @@ class CategorizationService:
                 handled.add(txn.id)
 
             except Exception as e:
-                logger.warning(
-                    f"Payroll knock-off check failed for transaction {txn.id}: {e}",
+                # Unexpected failure (the "no match" path is a normal `continue`,
+                # not an exception) — log at ERROR so code bugs surface instead of
+                # hiding as warnings (cf. BUG-1). The batch still proceeds.
+                logger.error(
+                    f"Unexpected payroll knock-off error for transaction {txn.id}: {e}",
                     exc_info=True,
                 )
                 db.rollback()

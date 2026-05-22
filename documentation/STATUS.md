@@ -75,17 +75,17 @@ Close each section to "done" before moving on. **Reporting is fixed at the very 
 **Cascade work, in order:**
 
 1. ✅ **Tier-1: move `INTERNAL_TRANSFER` rules ahead of enrichment** (Phase 0.5, before Phase 1). Deterministic + counterparty-independent → claim transfers up front so they (a) never get a wrong external-party counterparty and (b) never reach the L3 LLM. Fixes the "Dom Drive lah on a Stripe settlement" class of bug at the root (no write-then-delete). *Done 2026-05-22 — `test_categorization.py::test_internal_transfer_claimed_before_enrichment`; full suite 573/0.*
-2. **Tier-1 (fuller, later):** generalise — split *all* rules into counterparty-independent (run early) vs dependent (run after enrichment), driven by the placement test above. Precedence semantics to nail down.
-3. **AI = RAG, not fine-tuning** (later): retrieve similar past *confirmed* (description → COA) pairs + company facts into the L3/Phase-4 prompts; tell the model the company's own names + providers. Feedback loop: every confirmation becomes a retrievable example.
+2. **Phase-structure review (next):** audit the 5 phases as a whole — confirm the cascade order is right and whether the fuller split (all counterparty-independent rules run early vs dependent later) is worth it. Driven by the placement test above; precedence semantics to nail down.
+3. **AI = RAG (genuine embeddings), not fine-tuning** (the centerpiece): retrieve top-k similar past *confirmed* (description → COA) pairs + company facts into the L3/Phase-4 prompts. **Build pluggable** — an `Embedder` interface so the retrieval logic is fully testable with a deterministic fake embedder (no API key/torch in tests); production wires a real embeddings provider. Brute-force cosine (no vector DB at this scale). Feedback loop: every confirmation becomes a retrievable example.
 
-**Correctness fixes (independent of the cascade):**
+**Correctness fixes:**
 
-4. **Cross-entity internal-transfer IC codes** — `_create_internal_transfer_entries` uses ONE shared IC code (`rule.contra_account_code`) in both entities; should be a receivable/payable pair like `_create_cross_entity_allocation_entries`. ⚠️ needs an accounting nod on the codes.
-5. **`intercompany_group_id` persistence** — set *after* the committing `journal_service.create()` with only `db.flush()`; the last paired JE's group id may not persist → halves unlinkable for elimination.
-6. **Payroll knock-off entity guard** — `_try_payroll_knockoff` matches POSTED runs by amount ±2% / ±7d but **not by entity** → could match another entity's run.
-7. **Narrow the broad `except Exception` blocks** (they hid BUG-1); per-JE `db.commit()` makes runs non-atomic (architectural, lower priority).
+4. ⚠️ **Cross-entity internal-transfer IC codes** — `_create_internal_transfer_entries` uses ONE shared IC code (`rule.contra_account_code`) in both entities; the allocation/AP paths use a receivable/payable pair. **Needs an accounting nod on the codes before changing.** (Open.)
+5. ✅ **`intercompany_group_id` persistence — VERIFIED NON-ISSUE (2026-05-23).** The callers (`_apply_rule`, `match_transaction`) `db.commit()` *after* creation, so the post-create group_id persists; the 16 cross-entity tests (incl. `test_creates_paired_jes_with_ic_group`) confirm both halves share a non-None group id. Earlier audit over-flagged it.
+6. ✅ **Payroll knock-off entity preference (2026-05-23)** — `_try_payroll_knockoff` now sorts candidate runs same-entity-first, so a same-entity run wins over a coincidental cross-entity amount match (cross-entity still supported when no same-entity run matches). Test: `test_payroll.py::test_payroll_knockoff_prefers_same_entity`.
+7. ✅ **Knock-off `except` blocks log at ERROR (2026-05-23)** — AP + payroll knock-off failures (always unexpected; "no match" is normal control flow) now log at ERROR with trace, so code bugs surface instead of hiding as warnings (cf. BUG-1). *(Per-JE `db.commit()` non-atomicity remains — architectural, lower priority.)*
 
-> Audit summary: transfer **pairing** sound; cross-entity **allocation** correct; **AP** fixed; **payroll** needs the entity guard. Tier-1 cascade move done.
+> Audit summary: transfer **pairing** sound; cross-entity **allocation** correct; **AP** fixed; **payroll** entity-preference + except-logging fixed; intercompany_group_id verified fine. Remaining: cross-entity IC codes (needs nod), phase review, RAG.
 
 ### 2.3 Payroll — make it real
 
