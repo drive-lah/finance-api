@@ -452,6 +452,16 @@ class CategorizationService:
             try:
                 abs_amount = abs(amount)
 
+                # Only counterparties with OPEN invoices participate in AP knock-off.
+                # No open invoices → not an AP payment; skip to Phase 4 (rules/default/AI).
+                # (Case 3 asset-parking below must only fire when invoices DO exist but
+                # none match the amount — otherwise every employee/vendor payment without
+                # an invoice would wrongly park to 1300.)
+                if not invoice_service.get_open_for_match(
+                    db, txn.counterparty_id, txn.currency, txn.transaction_date
+                ):
+                    continue
+
                 # Deterministic 3-case match (NOT AI): Case 1 reference + amount,
                 # Case 2 FIFO amount, Case 3 → None. Returns the invoice to knock off.
                 matched_invoice = invoice_service.get_open_for_counterparty(
