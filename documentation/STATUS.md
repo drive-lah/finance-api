@@ -160,10 +160,24 @@ Goal: a bank transaction can knock off an **AP invoice**, a **payroll** run, pai
 |------|--------|----------|
 | **AP knock-off** (`_try_ap_knockoff`) | 🔴 **Broken** | BUG-1 (above) — calls non-existent `find_matching_invoice`; fix scoped. |
 | **Payroll knock-off** (`_try_payroll_knockoff`) | 🟠 **Works but suspect** | Calls `payroll_service.create_payroll_payment_entries` (exists ✓). **But** the payroll-run query filters only `status=POSTED` + run_date ±7d — **not entity** — so an outgoing txn could match *another entity's* payroll run on amount±2% coincidence. Also uses legacy `db.query(...).get()` and the same broad `except`/per-txn-commit/`db.rollback()` pattern. Needs an entity guard + tighter matching. |
-| **Internal-transfer pairing** (`_pair_awaiting_matches`, `_find_counter_transaction`) + JE creation (`_create_internal_transfer_entries`) | ⚪ **Not yet audited** | To inspect: AWAITING_MATCH pairing (±2%/±5d), single vs cross-entity paired JEs, `intercompany_group_id`. |
-| **Cross-entity allocation** (`_create_cross_entity_allocation_entries`) | ⚪ **Not yet audited** | To inspect: IC code resolution, paired JE balance, entity-pair lookup. |
+| **Internal-transfer pairing** (`_pair_awaiting_matches`) | 🟢 **Sound** | Opposite-sign + ±2%/±5d + in-run dedup; links the counter to the same JE. Minor: per-pair commit; **no `try/except` — an error here kills the whole run** (knock-offs swallow theirs — inconsistent); first-match not best-match. |
+| **Internal-transfer JE creation** (`_create_internal_transfer_entries`) | 🟠 **Intra ✓ / cross-entity suspect** | Intra-entity 2-line JE is correct (Dr/Cr by sign, balances). **Cross-entity uses ONE shared IC code (`rule.contra_account_code`) in *both* entities** — not a proper receivable/payable elimination pair. The allocation path (below) does it correctly with a distinct recv/pay pair — so this is inconsistent and likely **wrong for consolidation/elimination**. |
+| **Cross-entity allocation** (`_create_cross_entity_allocation_entries`) | 🟢 **Correct** | Resolves a proper IC **receivable/payable pair** via `_IC_RECEIVABLE_CODES`/`_IC_PAYABLE_CODES` + `_entity_short`; both JEs balance; validates entities + codes. |
+| **`_find_counter_transaction`** | ⚪ **Likely dead** | Defined but `_pair_awaiting_matches` matches inline — appears unused; verify + remove. |
 
-Cross-cutting smells (all paths): per-JE `db.commit()` (non-atomic), broad `except Exception` that hides bugs (how BUG-1 stayed hidden), `categorized_counter` dead param. **Next: finish auditing the two transfer paths, then fix in order (AP → payroll entity guard → narrow excepts).**
+**Cross-cutting (every JE-creating path):**
+- 🔴 **`intercompany_group_id` may not persist.** `journal_service.create()` **commits internally**, but `.source` and `.intercompany_group_id` are set *afterward* with only a `db.flush()`. The *last* paired entry's `intercompany_group_id` has no commit following it (the rule path doesn't commit) → the two halves of an intercompany JE may not be linkable for elimination. **Verify/fix:** pass `source`/`ic_group_id` into `create()`, or commit after.
+- per-JE `db.commit()` → runs aren't atomic.
+- broad `except Exception` blocks hide bugs (how BUG-1 stayed hidden).
+- dead `categorized_counter` param on `_try_ap_knockoff`.
+
+**Fix list (priority — to action next):**
+1. **BUG-1** — AP knock-off: `get_open_for_match` + 3-case selection + `match_transaction`.
+2. **Cross-entity internal-transfer IC codes** — use a receivable/payable pair (align with the allocation path), not one shared code.
+3. **`intercompany_group_id` persistence** — ensure both paired JEs commit with the group id set.
+4. **Payroll knock-off entity guard** — filter the payroll-run query by entity (+ tighten matching).
+5. **Narrow the broad `except` blocks** so the next bug surfaces instead of hiding.
+6. Remove dead `_find_counter_transaction` + `categorized_counter`.
 
 ---
 
