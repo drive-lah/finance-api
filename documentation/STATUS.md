@@ -143,7 +143,7 @@ Mental model (`IDEAL_VS_CURRENT.md §1`): providers (Stripe, Grab, OCBC, Wise) =
 | TD-2 | Documentation drift | Addressed — root collapsed to STATUS.md + IDEAL_VS_CURRENT.md |
 | TD-3 | Throwaway scratch scripts in repo root | DONE — deleted |
 | TD-4 | Under-tested modules: depreciation, payroll, invoices/AP, reporting | Add coverage |
-| **BUG-1** | **AP invoice knock-off silently broken** — `categorization_service._try_ap_knockoff` calls `invoice_service.find_matching_invoice` (line ~470) which **doesn't exist** (actual: `match_transaction`/`get_open_for_match`). `AttributeError` swallowed by a broad `except Exception` → txns with open invoices fall through to Phase 4. mypy-flagged; latent (only 6 invoices in prod, no test on the open-invoice branch). **Fix: reconcile the call to the real method + narrow the except.** | High |
+| **BUG-1** | **AP invoice knock-off silently broken** — `categorization_service._try_ap_knockoff` (line ~470) calls `invoice_service.find_matching_invoice` which **doesn't exist**; `AttributeError` swallowed by a broad `except Exception` → txns with open invoices fall through to Phase 4. mypy-flagged; latent (only 6 invoices in prod, no test on the open-invoice branch). **Precise fix (scoped 2026-05-22):** the missing method held the 3-case *selection*. Real API = `get_open_for_match()` (candidates, oldest-first, dated ≤ txn) + `match_transaction(invoice_id, txn_id)` (applies one: does `create_ap_payment_entries` + `record_payment` + marks MATCHED). So: get candidates → pick by 3-case (ref+amount → Case 1; FIFO amount → Case 2; none → Case 3 asset-park to 1300) → call `match_transaction` (don't also call create/record — that would double-book) → set audit fields (`coa_account_code`, `categorization_type`, `categorized_by_logic`). Then narrow the `except`. Add a test on the open-invoice branch. | High |
 | TD-5 | Categorization engine: per-JE `db.commit()` in `journal_service.create` → runs aren't atomic; broad `except Exception` blocks mask bugs (see BUG-1); AI called inline in the run; 2,022-line god-object; 12 mypy errors. | Medium |
 | **LE-1** | `src/models/__init__.py` — exports depreciation models (`FinanceAssetSchedule`, `FinanceCOAAmortizationPolicy`); **uncommitted**, correct + harmless. Decide: commit or drop. |
 | ~~LE-1 / LE-2~~ | ✅ Resolved — loose ends committed; working tree clean. |
@@ -151,6 +151,19 @@ Mental model (`IDEAL_VS_CURRENT.md §1`): providers (Stripe, Grab, OCBC, Wise) =
 ### 2.7 Test the categorization engine + rules (BACKLOG — new, 2026-05-21)
 
 The live DB has **244 categorization rules** and **730 transactions** but the engine's correctness hasn't been re-verified against real data. To do (later): confirm the 5-phase pipeline actually fires correctly — rules match the right transactions (no misfires), AP/payroll knock-off + internal-transfer pairing behave, AI fallback + NEEDS_REVIEW thresholds work — and the produced JEs are correct. Likely needs running against real/seeded transaction data (ClickHouse/collections-db access helps). Pairs with the Stripe-sync verification (both need a real data env).
+
+### 2.8 Categorization knock-off audit (IN PROGRESS, 2026-05-22)
+
+Goal: a bank transaction can knock off an **AP invoice**, a **payroll** run, pair an **internal/inter-bank transfer**, or post a **cross-entity (intercompany)** JE — verify all four are correctly built.
+
+| Path | Status | Findings |
+|------|--------|----------|
+| **AP knock-off** (`_try_ap_knockoff`) | 🔴 **Broken** | BUG-1 (above) — calls non-existent `find_matching_invoice`; fix scoped. |
+| **Payroll knock-off** (`_try_payroll_knockoff`) | 🟠 **Works but suspect** | Calls `payroll_service.create_payroll_payment_entries` (exists ✓). **But** the payroll-run query filters only `status=POSTED` + run_date ±7d — **not entity** — so an outgoing txn could match *another entity's* payroll run on amount±2% coincidence. Also uses legacy `db.query(...).get()` and the same broad `except`/per-txn-commit/`db.rollback()` pattern. Needs an entity guard + tighter matching. |
+| **Internal-transfer pairing** (`_pair_awaiting_matches`, `_find_counter_transaction`) + JE creation (`_create_internal_transfer_entries`) | ⚪ **Not yet audited** | To inspect: AWAITING_MATCH pairing (±2%/±5d), single vs cross-entity paired JEs, `intercompany_group_id`. |
+| **Cross-entity allocation** (`_create_cross_entity_allocation_entries`) | ⚪ **Not yet audited** | To inspect: IC code resolution, paired JE balance, entity-pair lookup. |
+
+Cross-cutting smells (all paths): per-JE `db.commit()` (non-atomic), broad `except Exception` that hides bugs (how BUG-1 stayed hidden), `categorized_counter` dead param. **Next: finish auditing the two transfer paths, then fix in order (AP → payroll entity guard → narrow excepts).**
 
 ---
 

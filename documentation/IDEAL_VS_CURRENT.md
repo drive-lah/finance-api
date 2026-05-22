@@ -60,6 +60,15 @@ Both post into the one ledger. This is **"payment-provider ingestion + economic-
 - **Build only the thin economic-event adapter.** Current source = the **existing ClickHouse views** (already battle-tested feeding the current books) — *read* them; do **not** re-home their logic into Python. Future source = the **TMS PGW ledger**, swapped in behind the same seam.
 - The only genuinely-new code is that adapter + the monthly aggregation/accrual it does. Everything else already exists.
 
+### The ledger gate — how activity becomes "in the reports" (decision, 2026-05-22)
+
+A journal entry counts toward the reports **only when `status = POSTED`** (reports filter on POSTED). Activity reaches POSTED via **two routes**:
+
+- **Bank / cash route — goes through reconciliation:** bank txn `Pending` → **categorization** creates a **DRAFT** JE + marks the txn `Matched` → **reconcile / approve** flips DRAFT → **POSTED** + txn `Reconciled` → *now in the reports.* (Reject → voids the draft, txn back to `Pending`.) **Categorization proposes; reconciliation is the gate.**
+- **Accrual / direct route — no reconciliation gate:** Stripe sync, payroll submit, depreciation scheduler, invoice approval, manual JE → created **POSTED on the spot** → in the reports immediately.
+
+So "reconciliation" here = confirming bank transactions against the ledger (which posts their draft JE); it governs only the cash/bank route. *(Tell: the live GL's 151 DRAFT vs 89 POSTED JEs are categorized-but-unreconciled bank entries — matched but not yet in the reports.)*
+
 ---
 
 ## 2. The Accounting Pipeline — Ideal vs Today
