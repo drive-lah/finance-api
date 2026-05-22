@@ -32,8 +32,8 @@ documentation/wip/NEW_FEATURE.md  # Create here instead
 
 The `documentation/` root holds exactly **two** docs:
 
-- **`IDEAL_VS_CURRENT.md`** — target state vs where we are (the gap). Slow-changing; update only when the vision or gap shifts, OR when explicitly requested.
-- **`STATUS.md`** — the living progress tracker (done / left / when). Updated continuously as work progresses (see Rule 4).
+- **`IDEAL_STATE.md`** — the target/vision **only** (mental model + ideal pipeline + subsystem ideal specs). No current-state or gap. Slow-changing; update only when the vision shifts, OR when explicitly requested.
+- **`STATUS.md`** — the living progress tracker: current state, the gap, done / left / next steps. Updated continuously as work progresses (see Rule 4).
 
 Do not add other docs to the root. Deep architecture reference is archived in `wip/SYSTEM_OVERVIEW.md`; the code is the source of truth for how things actually work. All other docs (analysis, design, roadmaps, API reference) go in `documentation/wip/`.
 

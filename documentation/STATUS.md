@@ -7,7 +7,7 @@
 
 **Verified ground truth (2026-05-22):** `pytest tests/ --ignore=tests/stripe_sync` = **572 pass / 0 fail**; `mypy src/ --ignore-missing-imports` = **23 errors / 9 files** (mechanical). Branch `feature/us-018-mypy` ≈ **10 commits ahead of origin** (unpushed since last push).
 
-**Pointers:** gap + mental model → `IDEAL_VS_CURRENT.md` · deep architecture (archived) → `wip/SYSTEM_OVERVIEW.md` (§-refs below) · diagrams → `visuals/` (`ARCHITECTURE`, `JOURNAL_ENTRY_FLOWS`, `HR_PAYROLL_PROCESS_DIAGRAM`, `FINANCE_SYSTEM_STATE_VS_IDEAL`).
+**Pointers:** ideal state + mental model → `IDEAL_STATE.md` (vision only; the *gap* + current state live here in STATUS) · deep architecture (archived) → `wip/SYSTEM_OVERVIEW.md` (§-refs below) · diagrams → `visuals/` (`ARCHITECTURE`, `JOURNAL_ENTRY_FLOWS`, `HR_PAYROLL_PROCESS_DIAGRAM`, `FINANCE_SYSTEM_STATE_VS_IDEAL`).
 
 ---
 
@@ -70,7 +70,7 @@ Close each section to "done" before moving on. **Reporting is fixed at the very 
 
 ### 2.2 Categorization engine — rebuild as a confidence/dependency cascade
 
-**Design principle (recorded in `IDEAL_VS_CURRENT §6`):** deterministic → enrichment → counterparty-dependent → RAG-grounded AI → human; a classifier runs **before enrichment iff its conditions are counterparty-independent**. Goal: AI never runs blind or before deterministic rules.
+**Design principle (recorded in `IDEAL_STATE §3`):** deterministic → enrichment → counterparty-dependent → RAG-grounded AI → human; a classifier runs **before enrichment iff its conditions are counterparty-independent**. Goal: AI never runs blind or before deterministic rules.
 
 **Cascade work, in order:**
 
@@ -118,13 +118,13 @@ Views-based adapter is restored + clean (`sync_month` → `_generate_all_je_spec
 
 | Decision | Resolution |
 |----------|-----------|
-| **Payment-provider mental model** | Providers (Stripe, Grab, OCBC, Wise) = permanent bank/cash accounts; economic events (revenue/COGS) = swappable source (ClickHouse views now → TMS PGW ledger later); both post to one ledger. Frame as "provider ingestion + economic-event recognition," not "Stripe sync." (`IDEAL_VS_CURRENT §1`) |
+| **Payment-provider mental model** | Providers (Stripe, Grab, OCBC, Wise) = permanent bank/cash accounts; economic events (revenue/COGS) = swappable source (ClickHouse views now → TMS PGW ledger later); both post to one ledger. Frame as "provider ingestion + economic-event recognition," not "Stripe sync." (`IDEAL_STATE §1`) |
 | **Stripe source = existing ClickHouse views** | Read the battle-tested views via a thin adapter; do NOT re-home view logic into Python (v3.0 dropped). Patch the `code='2'` gap narrowly. |
 | **Source-adapter abstraction** | Deferred (YAGNI). Read views directly now; wrap behind a thin `EconomicEventSource` interface when the PGW ledger is real. `category_id` (finance-owned COA map, §4 F-1) keeps the swap cheap. |
-| **The ledger gate** | A JE counts in reports only when `status=POSTED`. Bank/cash route: categorize → DRAFT → reconcile/approve → POSTED. Accrual/direct route (Stripe, payroll, depreciation, invoice approval, manual): POSTED on the spot. Reconciliation governs only the cash route. (`IDEAL_VS_CURRENT §1`) |
+| **The ledger gate** | A JE counts in reports only when `status=POSTED`. Bank/cash route: categorize → DRAFT → reconcile/approve → POSTED. Accrual/direct route (Stripe, payroll, depreciation, invoice approval, manual): POSTED on the spot. Reconciliation governs only the cash route. (`IDEAL_STATE §1`) |
 | **Canonical payroll service** | `hr_payroll_service` (`/api/hr/payroll-runs`) — rich per-employee engine. The duplicate `/api/payroll/runs` endpoint was **removed**; `payroll_service` retained only for `create_payroll_payment_entries` (the categorization knock-off helper). |
-| **AP knock-off** | Deterministic 3-case match (NOT AI), Phase 1.5; invoice COA wins; cross-entity → IC receivable/payable pair. Spec: `IDEAL_VS_CURRENT §6`. |
-| Doc structure | `documentation/` root = `STATUS.md` + `IDEAL_VS_CURRENT.md` only; SYSTEM_OVERVIEW + API archived to `wip/`; diagrams in `visuals/`. (CLAUDE.md Rules 2/4) |
+| **AP knock-off** | Deterministic 3-case match (NOT AI), Phase 1.5; invoice COA wins; cross-entity → IC receivable/payable pair. Spec: `IDEAL_STATE §3`. |
+| Doc structure | `documentation/` root = `STATUS.md` + `IDEAL_STATE.md` only; SYSTEM_OVERVIEW + API archived to `wip/`; diagrams in `visuals/`. (CLAUDE.md Rules 2/4) |
 | Employees as counterparties | `finance_counterparties.type="employee"`; `users` table is source of truth; counterparty is a synced read-copy (§3.7.1) |
 | Salary expense COA (Option C) | Derived from `teams` at onboarding (CS→5063, On-Ground→5061, else→6000); recalc on team change |
 | Categorization: rules before defaults | Phase 4A rules win over Phase 4B `default_account_code` (§3.7) |
