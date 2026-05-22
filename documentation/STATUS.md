@@ -189,7 +189,7 @@ Goal: a bank transaction can knock off an **AP invoice**, a **payroll** run, pai
 | `stripe_sync/sync_service._persist_journal_entries` | ✅ **Orphaned** — `sync_month` uses `_create_journal_entries`. Safe to delete. |
 | `stripe_sync/sync_service._reconcile` | ✅ **Orphaned** — no caller; superseded. Safe to delete. |
 
-Genuinely dead (3): `import_csv`, `_persist_journal_entries`, `_reconcile`. Script-only (1): `get_business_profile`. False positives (2): `get_score`, `sync_month`. (`_find_counter_transaction` also confirmed NOT dead — called at categorization:1289.)
+✅ **Deleted (3, 2026-05-22):** `transaction_service.import_csv`, `stripe_sync/sync_service._persist_journal_entries` + `_reconcile` — plus their now-unused imports (`Tuple`, `JournalEntryStatus`). Verified: app loads, mypy 23 (unchanged), 159 tests green. Script-only (1, kept): `get_business_profile`. False positives (2, kept): `get_score`, `sync_month`. (`_find_counter_transaction` also confirmed NOT dead — called at categorization:1289.)
 
 ---
 

@@ -7,11 +7,11 @@ from decimal import Decimal
 from dataclasses import asdict
 import logging
 import time
-from typing import Optional, Tuple
+from typing import Optional
 
 from src.clients.clickhouse_client import ClickHouseClient
 from src.database import db_session
-from src.models.journal_entry import FinanceJournalEntry, JournalEntryStatus
+from src.models.journal_entry import FinanceJournalEntry
 from src.models.stripe_sync_run import StripeSyncRun, StripeSyncStatus
 # Import all models to ensure metadata is loaded for SQLAlchemy relationships
 import src.models
@@ -124,44 +124,6 @@ class StripeSyncService:
                 "errors": [str(e)],
                 "execution_time_seconds": round(execution_time, 2),
             }
-
-    def _persist_journal_entries(
-        self, specs: list, builder, month: date, entity_id: int
-    ) -> Tuple[int, int, int]:
-        """Create JEs in Finance API. Idempotent via reference_number."""
-        created, replaced, skipped = 0, 0, 0
-
-        with db_session() as db:
-            for spec in specs:
-                ref = builder.build_reference(spec.reference_suffix, month)
-
-                existing = db.query(FinanceJournalEntry).filter(
-                    FinanceJournalEntry.reference_number == ref,
-                    FinanceJournalEntry.entity_id == entity_id,
-                ).first()
-
-                if existing:
-                    if existing.status == JournalEntryStatus.VOID:
-                        skipped += 1
-                        continue
-                    # Delete and recreate (POSTED or DRAFT)
-                    db.delete(existing)
-                    db.flush()
-                    replaced += 1
-                else:
-                    created += 1
-
-                je_args = builder.build_je(spec)
-                # TODO: Call journal_service.create(db=db, **je_args)
-
-            db.commit()
-
-        return created, replaced, skipped
-
-    def _reconcile(self, month_str: str) -> bool:
-        """Verify account 1017 net matches ClickHouse total."""
-        # TODO: Implement reconciliation logic
-        return True
 
     def _generate_all_je_specs(self, entry_date: date, month_str: str) -> list:
         """Generate all 25 JE specs by calling query_builder methods."""

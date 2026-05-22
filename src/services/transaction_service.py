@@ -249,20 +249,6 @@ class TransactionService:
             extra_errors=parse_errors,
         )
 
-    def import_csv(
-        self,
-        db: Session,
-        bank_account_id: int,
-        csv_content: str,
-        import_batch_id: Optional[str] = None
-    ) -> Dict[str, Any]:
-        """Backwards-compatible wrapper for import_file. Accepts str content."""
-        if isinstance(csv_content, str):
-            file_bytes = csv_content.encode('utf-8')
-        else:
-            file_bytes = csv_content
-        return self.import_file(db, bank_account_id, file_bytes, import_batch_id)
-
     def import_from_rows(
         self,
         db: Session,
