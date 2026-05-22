@@ -132,3 +132,27 @@ High-level direction (task-level tracking lives in `STATUS.md`):
 ---
 
 *Visual companions: `visuals/FINANCE_SYSTEM_STATE_VS_IDEAL.html`, `visuals/JOURNAL_ENTRY_FLOWS.html`, `visuals/HR_PAYROLL_PROCESS_DIAGRAM.html`.*
+
+---
+
+## 6. Subsystem ideal-state specs
+
+### AP invoice knock-off (ideal state, 2026-05-22)
+
+**What it is** — the *second leg* of a two-leg story: invoice approval already posted the accrual (`Dr Expense (+ Dr 1350 GST) / Cr 2000 AP`); the knock-off settles it when the payment leaves the bank — `Dr 2000 AP / Cr Bank`. Net of both legs = `Dr Expense / Cr Bank`. **It settles a liability; it must not re-expense (no double-count).**
+
+**Where it sits** — Phase 1.5 / 2 of the categorization engine: **after** counterparty enrichment (need the vendor) and **before** the generic Phase 4 fallback (so a payment-against-invoice isn't mis-booked as a fresh expense).
+
+**Matching = deterministic, NOT AI.** It moves money, so it must be exact, reproducible, auditable. Signals: counterparty (prerequisite, from enrichment) · currency · date (payment ≥ invoice date) · reference · amount.
+- **Case 1** — invoice # in the description/reference **and** amount ≈ remaining (±2%) → match that invoice.
+- **Case 2** — no reference but amount ≈ remaining → match the **oldest** open invoice (FIFO).
+- **Case 3** — amount matches no open invoice → not a clean knock-off → park to `1300` Prepayments / manual review.
+- No open invoices → skip to Phase 4.
+
+**AI's role is upstream only:** Phase-1 enrichment (who is the counterparty) and, optionally, fuzzy invoice-number extraction. **AI never decides the match or posts the JE.**
+
+**What happens to the transaction** — linked to the knock-off JE; status → Matched → Reconciled on approval (per the ledger gate); `categorized_by_logic='invoice_knockoff'`, `coa_account_code` = the invoice's `contra_account_code` (invoice COA wins over the counterparty default). The invoice's `amount_paid` increases → `partially_paid` / `paid`.
+
+**Cross-entity** (bank entity ≠ invoice entity) — paired intercompany JEs sharing one `intercompany_group_id`, using a proper **receivable/payable pair** (not one shared code): bank entity `Dr IC Receivable / Cr Bank`; invoice entity `Dr 2000 AP / Cr IC Payable`. (Handled by `invoice_service.create_ap_payment_entries` via the IC-pair lookup.)
+
+> **Implementation:** the engine should *select* the invoice (3-case) then call `invoice_service.match_transaction(invoice_id, txn_id)` — which does the JE + `record_payment` + marks Matched. The candidate list comes from `get_open_for_match`. (Fixes BUG-1, which called a non-existent `find_matching_invoice`.)

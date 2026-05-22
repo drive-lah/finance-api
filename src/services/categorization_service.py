@@ -439,7 +439,6 @@ class CategorizationService:
         Returns set of transaction IDs that were handled via knock-off.
         """
         from src.services.invoice_service import invoice_service
-        from src.models.invoice import FinanceInvoice, InvoiceStatus
 
         handled: set[int] = set()
 
@@ -453,21 +452,9 @@ class CategorizationService:
             try:
                 abs_amount = abs(amount)
 
-                # Check if counterparty has ANY open invoices (Case 3 vs Phase 4 decision point)
-                open_statuses = (InvoiceStatus.APPROVED.value, InvoiceStatus.PARTIALLY_PAID.value)
-                has_open_invoices = db.query(FinanceInvoice).filter(
-                    FinanceInvoice.counterparty_id == txn.counterparty_id,
-                    FinanceInvoice.currency == txn.currency,
-                    FinanceInvoice.status.in_(open_statuses),
-                ).count() > 0
-
-                if not has_open_invoices:
-                    # No invoices for this counterparty — skip Phase 2
-                    # Let Phase 4 handle (rules, default account, or AI)
-                    continue
-
-                # Counterparty has open invoices; try to match using 3-case logic
-                invoice = invoice_service.find_matching_invoice(
+                # Deterministic 3-case match (NOT AI): Case 1 reference + amount,
+                # Case 2 FIFO amount, Case 3 → None. Returns the invoice to knock off.
+                matched_invoice = invoice_service.get_open_for_counterparty(
                     db,
                     txn.counterparty_id,
                     abs_amount,
@@ -477,33 +464,14 @@ class CategorizationService:
                     transaction_date=txn.transaction_date,
                 )
 
-                if invoice:
-                    # CASE 1 or 2: Invoice matched
-                    # Use invoice.account_code (INVOICE COA WINS over counterparty default)
-                    bank_account = db.query(FinanceBankAccount).filter(
-                        FinanceBankAccount.id == txn.bank_account_id
-                    ).first()
-                    if not bank_account or not bank_account.coa_account_code:
-                        continue
-
-                    inv_ref = f"Invoice {invoice.invoice_number or invoice.id}"
-                    je = invoice_service.create_ap_payment_entries(
-                        db=db,
-                        bank_account=bank_account,
-                        invoice=invoice,
-                        txn_date=txn.transaction_date,
-                        abs_amount=abs_amount,
-                        source="ap_knockoff",
-                        description=f"AP Payment: {inv_ref}",
+                if matched_invoice is not None:
+                    # CASE 1/2 — knock off via the canonical path: match_transaction creates
+                    # Dr 2000 AP / Cr Bank (or paired IC JEs cross-entity), records the
+                    # payment, and marks the txn MATCHED. Invoice COA wins over the default.
+                    res = invoice_service.match_transaction(
+                        db, matched_invoice.id, txn.id, matched_by="ap_knockoff"
                     )
-
-                    invoice_service.record_payment(db, invoice.id, abs_amount)
-
-                    now = datetime.now(UTC)
-                    txn.status = TransactionStatus.MATCHED
-                    txn.reconciled_journal_entry_id = je.id
-                    txn.matched_at = now
-                    txn.coa_account_code = invoice.account_code  # Store invoice COA
+                    txn.coa_account_code = matched_invoice.contra_account_code
                     txn.categorization_type = CategorizationType.EXPENSE
                     txn.categorized_by_logic = 'invoice_knockoff'
                     db.commit()
@@ -511,9 +479,9 @@ class CategorizationService:
                     results.append({
                         "transaction_id": txn.id,
                         "status": "categorized",
-                        "rule_name": f"[ap_knockoff:invoice_{invoice.id}]",
-                        "journal_entry_id": je.id,
-                        "cross_entity": bank_account.entity_id != invoice.entity_id,
+                        "rule_name": f"[ap_knockoff:invoice_{matched_invoice.id}]",
+                        "journal_entry_id": res["journal_entry_id"],
+                        "cross_entity": res["cross_entity"],
                         "error": None,
                     })
                     handled.add(txn.id)
