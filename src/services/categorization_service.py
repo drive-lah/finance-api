@@ -139,6 +139,42 @@ class CategorizationService:
         # Remove step0-handled transactions from further processing
         transactions = [t for t in transactions if t.id not in step0_handled_ids]
 
+        # ── Phase 0.5: Classify NEW internal transfers BEFORE enrichment ───
+        # Internal-transfer rules are deterministic + counterparty-INDEPENDENT
+        # (they match raw description/amount, never the enriched counterparty),
+        # so per the cascade principle they run before Phase 1. This claims
+        # transfers up front: they never get a (wrong) external-party
+        # counterparty written, and never reach the expensive L3 LLM.
+        if transactions:
+            transfer_rules = (
+                db.query(FinanceCategorizationRule)
+                .filter(
+                    FinanceCategorizationRule.status == RuleStatus.ACTIVE,
+                    FinanceCategorizationRule.category == TransactionCategory.INTERNAL_TRANSFER,
+                )
+                .order_by(FinanceCategorizationRule.priority)
+                .all()
+            )
+            if rule_id is not None:
+                transfer_rules = [r for r in transfer_rules if r.id == rule_id]
+            for transaction in list(transactions):
+                matched_rule = self._match_transaction(transaction, transfer_rules, {})
+                if not matched_rule:
+                    continue
+                try:
+                    results.append(self._apply_rule(db, transaction, matched_rule))
+                    categorized += 1
+                except Exception as e:
+                    logger.error(
+                        f"Error classifying internal transfer txn {transaction.id}: {e}",
+                        exc_info=True,
+                    )
+                    db.rollback()
+            # Drop everything no longer PENDING: claimed transfers (AWAITING_MATCH)
+            # plus any counter-legs paired immediately (MATCHED). Enrichment +
+            # later phases only see what's left.
+            transactions = [t for t in transactions if t.status == TransactionStatus.PENDING]
+
         # ── Phase 1: Counterparty enrichment ──────────────────────────────
         self._enrich_counterparties(db, transactions)
 

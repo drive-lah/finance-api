@@ -156,3 +156,21 @@ High-level direction (task-level tracking lives in `STATUS.md`):
 **Cross-entity** (bank entity ≠ invoice entity) — paired intercompany JEs sharing one `intercompany_group_id`, using a proper **receivable/payable pair** (not one shared code): bank entity `Dr IC Receivable / Cr Bank`; invoice entity `Dr 2000 AP / Cr IC Payable`. (Handled by `invoice_service.create_ap_payment_entries` via the IC-pair lookup.)
 
 > **Implementation:** the engine should *select* the invoice (3-case) then call `invoice_service.match_transaction(invoice_id, txn_id)` — which does the JE + `record_payment` + marks Matched. The candidate list comes from `get_open_for_match`. (Fixes BUG-1, which called a non-existent `find_matching_invoice`.)
+
+### Categorization engine — design principle (ideal state, 2026-05-22)
+
+**The principle:** *deterministic where you can, learned-from-our-own-history where you must, human-in-the-loop closes the gap — and the AI is never blind.* The pipeline is a **confidence / dependency cascade**: every classifier's position is **derived from its inputs and cost**, not chosen ad-hoc.
+
+**The cascade (the order, and why):**
+
+1. **Deterministic + input-independent — runs FIRST, before enrichment.** Internal-transfer rules and exact-match rules read only the raw bank text (description / amount / direction / currency), *not* the enriched counterparty. They are exact, free, and auditable, so they claim their transactions up front. Consequence: a claimed transaction never gets a wrong counterparty written to it and never reaches the expensive LLM.
+2. **Counterparty enrichment** (L1 deterministic → L2 fuzzy → L3 LLM) — runs **only on what tier 1 didn't claim**.
+3. **Counterparty-*dependent* classification** — AP knock-off, payroll knock-off, counterparty-type rules, counterparty default account. These read the enriched counterparty, so they run *after* enrichment.
+4. **AI classification — the long-tail fallback, RAG-grounded, never blind.** Fed (a) the company's own facts (its entity names, its payment providers) and (b) the most similar **past confirmed** categorizations retrieved from history. It only ever sees what tiers 1–3 couldn't resolve.
+5. **Human confirmation** on low confidence — and **every confirmation becomes a new retrievable example** (the feedback loop; the existing alias-learning-on-approval is the seed of this).
+
+**The rule for placement (so calls aren't random):** a classifier runs *before* enrichment iff its match conditions are **counterparty-independent**; otherwise *after*. That single test decides the tier — no eyeballing.
+
+**AI strategy: RAG, not fine-tuning.** Ground the model in the business's own categorization history (the JE audit trail + years of QuickBooks categorizations) by retrieving similar past *(description → COA / category)* pairs at inference time, plus company facts. Fine-tuning is **rejected for now**: too little volume, too slow to iterate, stale between retrains. RAG is instantly updatable (a new correction is usable immediately), interpretable ("matched because of these past txns"), and handles new vendors gracefully.
+
+> **The lesson behind the principle ("Dom Drive lah"):** a Stripe settlement was mislabeled to an *employee* because the L3 LLM ran **blind and first** on a transaction a one-line deterministic rule already covered. The cascade fixes the *class* of bug (AI never runs blind or before deterministic rules), not just the instance.

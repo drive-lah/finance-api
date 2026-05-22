@@ -68,17 +68,24 @@ Close each section to "done" before moving on. **Reporting is fixed at the very 
 | Business-Line Margin report | Not built (§5.4) |
 | Cash-flow statement | Not built |
 
-### 2.2 Categorization engine hardening
+### 2.2 Categorization engine — rebuild as a confidence/dependency cascade
 
-AP knock-off is fixed + tested (`tests/test_ap_knockoff.py`; ideal spec in `IDEAL_VS_CURRENT §6`). Remaining, in rough priority:
+**Design principle (recorded in `IDEAL_VS_CURRENT §6`):** deterministic → enrichment → counterparty-dependent → RAG-grounded AI → human; a classifier runs **before enrichment iff its conditions are counterparty-independent**. Goal: AI never runs blind or before deterministic rules.
 
-1. **Cross-entity internal-transfer IC codes** — `_create_internal_transfer_entries` uses ONE shared IC code (`rule.contra_account_code`) in both entities; should be a receivable/payable pair like `_create_cross_entity_allocation_entries` does. Likely wrong for consolidation/elimination.
-2. **`intercompany_group_id` persistence** — set *after* the committing `journal_service.create()` with only a `db.flush()`; the last paired JE's group id may not persist → the two halves can't be linked for elimination. Pass into `create()` or commit after.
-3. **Payroll knock-off entity guard** — `_try_payroll_knockoff` matches POSTED runs by amount ±2% / ±7d but **not by entity** → could match another entity's run on coincidence. Add an entity filter.
-4. **Narrow the broad `except Exception` blocks** — they hid BUG-1; make the next bug surface.
-5. **Per-JE `db.commit()`** in `journal_service.create` → runs aren't atomic (architectural; lower priority).
+**Cascade work, in order:**
 
-> Knock-off audit summary: internal-transfer **pairing** is sound; cross-entity **allocation** is correct; **payroll** works but needs the entity guard; **AP** fixed.
+1. ✅ **Tier-1: move `INTERNAL_TRANSFER` rules ahead of enrichment** (Phase 0.5, before Phase 1). Deterministic + counterparty-independent → claim transfers up front so they (a) never get a wrong external-party counterparty and (b) never reach the L3 LLM. Fixes the "Dom Drive lah on a Stripe settlement" class of bug at the root (no write-then-delete). *Done 2026-05-22 — `test_categorization.py::test_internal_transfer_claimed_before_enrichment`; full suite 573/0.*
+2. **Tier-1 (fuller, later):** generalise — split *all* rules into counterparty-independent (run early) vs dependent (run after enrichment), driven by the placement test above. Precedence semantics to nail down.
+3. **AI = RAG, not fine-tuning** (later): retrieve similar past *confirmed* (description → COA) pairs + company facts into the L3/Phase-4 prompts; tell the model the company's own names + providers. Feedback loop: every confirmation becomes a retrievable example.
+
+**Correctness fixes (independent of the cascade):**
+
+4. **Cross-entity internal-transfer IC codes** — `_create_internal_transfer_entries` uses ONE shared IC code (`rule.contra_account_code`) in both entities; should be a receivable/payable pair like `_create_cross_entity_allocation_entries`. ⚠️ needs an accounting nod on the codes.
+5. **`intercompany_group_id` persistence** — set *after* the committing `journal_service.create()` with only `db.flush()`; the last paired JE's group id may not persist → halves unlinkable for elimination.
+6. **Payroll knock-off entity guard** — `_try_payroll_knockoff` matches POSTED runs by amount ±2% / ±7d but **not by entity** → could match another entity's run.
+7. **Narrow the broad `except Exception` blocks** (they hid BUG-1); per-JE `db.commit()` makes runs non-atomic (architectural, lower priority).
+
+> Audit summary: transfer **pairing** sound; cross-entity **allocation** correct; **AP** fixed; **payroll** needs the entity guard. Tier-1 cascade move done.
 
 ### 2.3 Payroll — make it real
 

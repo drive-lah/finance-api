@@ -811,6 +811,28 @@ class TestCategorizationEngine:
         assert outgoing.expected_counterpart_ba_id is None  # cleared after pairing
         assert result2["categorized"] >= 1
 
+    def test_internal_transfer_claimed_before_enrichment(self, db_session, test_accounts, test_bank_account, test_bank_account_wise):
+        """Cascade tier-1: a transfer is classified BEFORE enrichment, so no (wrong)
+        counterparty is written — even though a counterparty whose name matches the
+        description exists (L1 enrichment WOULD have linked it)."""
+        # This counterparty name is a substring of the description → L1 would match it.
+        _make_counterparty(db_session, "WISE TRANSFER")
+        rule_service.create(db_session, RuleCreate(
+            name="OCBC to Wise",
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.INTERNAL_TRANSFER,
+            target_bank_account_id=test_bank_account_wise.id,
+            description_operator=MatchOperator.CONTAINS, description_value="WISE TRANSFER",
+        ))
+        txn = _make_transaction(db_session, test_bank_account, description="WISE TRANSFER", amount=-1000.0)
+        categorization_service.run(db_session)
+        db_session.refresh(txn)
+        # Claimed as an internal transfer in the pre-enrichment pass ...
+        assert txn.status == TransactionStatus.AWAITING_MATCH
+        assert txn.expected_counterpart_ba_id == test_bank_account_wise.id
+        # ... and NOT enriched: counterparty stays clear despite the matching counterparty.
+        assert txn.counterparty_id is None
+
     def test_inactive_rules_skipped(self, db_session, test_accounts, test_bank_account):
         rule_service.create(db_session, _expense_rule(
             name="Inactive Rule",
