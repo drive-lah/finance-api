@@ -143,6 +143,8 @@ Mental model (`IDEAL_VS_CURRENT.md §1`): providers (Stripe, Grab, OCBC, Wise) =
 | TD-2 | Documentation drift | Addressed — root collapsed to STATUS.md + IDEAL_VS_CURRENT.md |
 | TD-3 | Throwaway scratch scripts in repo root | DONE — deleted |
 | TD-4 | Under-tested modules: depreciation, payroll, invoices/AP, reporting | Add coverage |
+| **BUG-1** | **AP invoice knock-off silently broken** — `categorization_service._try_ap_knockoff` calls `invoice_service.find_matching_invoice` (line ~470) which **doesn't exist** (actual: `match_transaction`/`get_open_for_match`). `AttributeError` swallowed by a broad `except Exception` → txns with open invoices fall through to Phase 4. mypy-flagged; latent (only 6 invoices in prod, no test on the open-invoice branch). **Fix: reconcile the call to the real method + narrow the except.** | High |
+| TD-5 | Categorization engine: per-JE `db.commit()` in `journal_service.create` → runs aren't atomic; broad `except Exception` blocks mask bugs (see BUG-1); AI called inline in the run; 2,022-line god-object; 12 mypy errors. | Medium |
 | **LE-1** | `src/models/__init__.py` — exports depreciation models (`FinanceAssetSchedule`, `FinanceCOAAmortizationPolicy`); **uncommitted**, correct + harmless. Decide: commit or drop. |
 | ~~LE-1 / LE-2~~ | ✅ Resolved — loose ends committed; working tree clean. |
 
