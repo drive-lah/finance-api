@@ -9,7 +9,7 @@
 
 **Ideal ↔ Current (gap + mental model):** `documentation/IDEAL_VS_CURRENT.md`
 **Deep architecture (archived):** `documentation/wip/SYSTEM_OVERVIEW.md` (§-refs below point here)
-**Visuals:** `documentation/visuals/` — `FINANCE_SYSTEM_STATE_VS_IDEAL.html`, `HR_PAYROLL_PROCESS_DIAGRAM.html`, `JOURNAL_ENTRY_FLOWS.html`
+**Visuals:** `documentation/visuals/` — `ARCHITECTURE.html` (service/function map), `FINANCE_SYSTEM_STATE_VS_IDEAL.html`, `HR_PAYROLL_PROCESS_DIAGRAM.html`, `JOURNAL_ENTRY_FLOWS.html`
 **Verified ground truth (2026-05-21):** `pytest tests/ --ignore=tests/stripe_sync` = **568 pass / 0 fail**; `mypy src/ --ignore-missing-imports` = **24 errors / 9 files**. ~13 commits this session; branch is ahead of origin (local, unpushed). *(stripe_sync tests were WIP for the old shape — removed pending a rewrite against the views path; obsolete `test_docs.py` removed since API/SYSTEM_OVERVIEW were archived.)*
 
 ---
@@ -163,7 +163,7 @@ Goal: a bank transaction can knock off an **AP invoice**, a **payroll** run, pai
 | **Internal-transfer pairing** (`_pair_awaiting_matches`) | 🟢 **Sound** | Opposite-sign + ±2%/±5d + in-run dedup; links the counter to the same JE. Minor: per-pair commit; **no `try/except` — an error here kills the whole run** (knock-offs swallow theirs — inconsistent); first-match not best-match. |
 | **Internal-transfer JE creation** (`_create_internal_transfer_entries`) | 🟠 **Intra ✓ / cross-entity suspect** | Intra-entity 2-line JE is correct (Dr/Cr by sign, balances). **Cross-entity uses ONE shared IC code (`rule.contra_account_code`) in *both* entities** — not a proper receivable/payable elimination pair. The allocation path (below) does it correctly with a distinct recv/pay pair — so this is inconsistent and likely **wrong for consolidation/elimination**. |
 | **Cross-entity allocation** (`_create_cross_entity_allocation_entries`) | 🟢 **Correct** | Resolves a proper IC **receivable/payable pair** via `_IC_RECEIVABLE_CODES`/`_IC_PAYABLE_CODES` + `_entity_short`; both JEs balance; validates entities + codes. |
-| **`_find_counter_transaction`** | ⚪ **Likely dead** | Defined but `_pair_awaiting_matches` matches inline — appears unused; verify + remove. |
+| **`_find_counter_transaction`** | ✅ **NOT dead (corrected)** | Verified: called at `categorization_service:1289` (internal-transfer creation in `_apply_rule`). Earlier "likely dead" note was wrong. |
 
 **Cross-cutting (every JE-creating path):**
 - 🔴 **`intercompany_group_id` may not persist.** `journal_service.create()` **commits internally**, but `.source` and `.intercompany_group_id` are set *afterward* with only a `db.flush()`. The *last* paired entry's `intercompany_group_id` has no commit following it (the rule path doesn't commit) → the two halves of an intercompany JE may not be linkable for elimination. **Verify/fix:** pass `source`/`ic_group_id` into `create()`, or commit after.
@@ -177,7 +177,7 @@ Goal: a bank transaction can knock off an **AP invoice**, a **payroll** run, pai
 3. **`intercompany_group_id` persistence** — ensure both paired JEs commit with the group id set.
 4. **Payroll knock-off entity guard** — filter the payroll-run query by entity (+ tighten matching).
 5. **Narrow the broad `except` blocks** so the next bug surfaces instead of hiding.
-6. Remove dead `_find_counter_transaction` + `categorized_counter`.
+6. Remove the dead `categorized_counter` param. (`_find_counter_transaction` is NOT dead — verified.) Dead-code candidates to verify before deleting: `reconciliation_service.get_score`, `transaction_service.import_csv`, `wise_service.get_business_profile` (singular), `stripe_sync/sync_service` `sync_month`/`_persist_journal_entries`/`_reconcile`. See `visuals/ARCHITECTURE.html`.
 
 ---
 
