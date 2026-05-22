@@ -1471,9 +1471,10 @@ Return only the JSON object, no explanation."""
         Create journal entry/entries for an internal transfer.
 
         Same entity (intra-bank): single 2-line JE moving cash between accounts.
-        Different entities (intercompany): paired JEs with a shared intercompany_group_id.
-        The contra_account_code (if set on the rule) is used as the IC clearing account
-        in both entities for intercompany transfers.
+        Different entities (intercompany): paired JEs with a shared intercompany_group_id,
+        using a receivable/payable IC PAIR resolved per entity-pair (via
+        invoice_service._get_ic_codes) — same convention as the allocation/AP paths, so
+        each entity's standalone statements are correct and consolidation eliminates by pair.
         """
         target_ba = db.query(FinanceBankAccount).filter(
             FinanceBankAccount.id == rule.target_bank_account_id
@@ -1520,37 +1521,50 @@ Return only the JSON object, no explanation."""
             return entry
 
         else:
-            # Intercompany: two paired JEs
+            # Intercompany: two paired JEs using a receivable/payable PAIR (NOT one
+            # shared code), resolved per entity-pair — same as the allocation/AP paths.
+            from src.services.invoice_service import invoice_service
             ic_group_id = str(uuid.uuid4())
-            ic_code = rule.contra_account_code  # IC clearing account used in both entities
-
-            if not ic_code:
-                raise ValueError(
-                    "Intercompany internal_transfer rule requires contra_account_code "
-                    "(IC clearing account used in both entities)"
-                )
 
             if amount < 0:
-                # Source entity sends money out: Dr IC Receivable / Cr Source Bank
+                # Source bank pays out → source FUNDS target: source holds the
+                # receivable (owed by target); target holds the payable.
+                ic_codes = invoice_service._get_ic_codes(db, source_entity_id, target_entity_id)
+                if not ic_codes:
+                    raise ValueError(
+                        f"No intercompany codes for entity pair ({source_entity_id} → "
+                        f"{target_entity_id}); add to _IC_RECEIVABLE_CODES / _IC_PAYABLE_CODES."
+                    )
+                ic_receivable, ic_payable = ic_codes
+                # Source: Dr IC Receivable (due from target) / Cr Source Bank
                 source_lines = [
-                    {"account_code": ic_code,    "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
-                    {"account_code": source_coa, "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
+                    {"account_code": ic_receivable, "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
+                    {"account_code": source_coa,    "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
                 ]
-                # Target entity receives money in: Dr Target Bank / Cr IC Payable
+                # Target: Dr Target Bank / Cr IC Payable (due to source)
                 target_lines = [
-                    {"account_code": target_coa, "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
-                    {"account_code": ic_code,    "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
+                    {"account_code": target_coa,   "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
+                    {"account_code": ic_payable,   "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
                 ]
             else:
-                # Source entity receives money in: Dr Source Bank / Cr IC Payable
+                # Source bank receives in → target FUNDS source: target holds the
+                # receivable; source holds the payable.
+                ic_codes = invoice_service._get_ic_codes(db, target_entity_id, source_entity_id)
+                if not ic_codes:
+                    raise ValueError(
+                        f"No intercompany codes for entity pair ({target_entity_id} → "
+                        f"{source_entity_id}); add to _IC_RECEIVABLE_CODES / _IC_PAYABLE_CODES."
+                    )
+                ic_receivable, ic_payable = ic_codes
+                # Source: Dr Source Bank / Cr IC Payable (due to target)
                 source_lines = [
-                    {"account_code": source_coa, "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
-                    {"account_code": ic_code,    "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
+                    {"account_code": source_coa,  "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
+                    {"account_code": ic_payable,  "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
                 ]
-                # Target entity sends money out: Dr IC Receivable / Cr Target Bank
+                # Target: Dr IC Receivable (due from source) / Cr Target Bank
                 target_lines = [
-                    {"account_code": ic_code,    "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
-                    {"account_code": target_coa, "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
+                    {"account_code": ic_receivable, "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
+                    {"account_code": target_coa,    "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
                 ]
 
             source_entry = journal_service.create(

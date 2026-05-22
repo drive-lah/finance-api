@@ -80,12 +80,12 @@ Close each section to "done" before moving on. **Reporting is fixed at the very 
 
 **Correctness fixes:**
 
-4. ⚠️ **Cross-entity internal-transfer IC codes** — `_create_internal_transfer_entries` uses ONE shared IC code (`rule.contra_account_code`) in both entities; the allocation/AP paths use a receivable/payable pair. **Needs an accounting nod on the codes before changing.** (Open.)
+4. ✅ **Cross-entity internal-transfer IC codes (2026-05-23)** — now uses the receivable/payable PAIR via `_get_ic_codes` (same convention as allocation/AP; confirmed by Gaurav — "always A"). SG-pays-AU → SG `Dr 8000` receivable / AU `Cr 8110` payable. Test: `test_cross_entity_allocation.py::TestCrossEntityInternalTransfer`.
 5. ✅ **`intercompany_group_id` persistence — VERIFIED NON-ISSUE (2026-05-23).** The callers (`_apply_rule`, `match_transaction`) `db.commit()` *after* creation, so the post-create group_id persists; the 16 cross-entity tests (incl. `test_creates_paired_jes_with_ic_group`) confirm both halves share a non-None group id. Earlier audit over-flagged it.
 6. ✅ **Payroll knock-off entity preference (2026-05-23)** — `_try_payroll_knockoff` now sorts candidate runs same-entity-first, so a same-entity run wins over a coincidental cross-entity amount match (cross-entity still supported when no same-entity run matches). Test: `test_payroll.py::test_payroll_knockoff_prefers_same_entity`.
 7. ✅ **Knock-off `except` blocks log at ERROR (2026-05-23)** — AP + payroll knock-off failures (always unexpected; "no match" is normal control flow) now log at ERROR with trace, so code bugs surface instead of hiding as warnings (cf. BUG-1). *(Per-JE `db.commit()` non-atomicity remains — architectural, lower priority.)*
 
-> Audit summary: transfer **pairing** sound; cross-entity **allocation** correct; **AP** fixed; **payroll** entity-preference + except-logging fixed; intercompany_group_id verified fine. Remaining: cross-entity IC codes (needs nod), phase review, RAG.
+> **Correctness fixes COMPLETE** (2026-05-23): AP fixed · transfer pairing sound · cross-entity allocation + transfer both use IC recv/payable pair · payroll entity-preference + except-logging · intercompany_group_id verified fine. **Remaining to close the engine: (1) phase-structure review, (2) the RAG pipeline.**
 
 ### 2.3 Payroll — make it real
 
