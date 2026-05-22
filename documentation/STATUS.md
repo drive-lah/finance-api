@@ -2,15 +2,27 @@
 
 # Status — finance-api
 
-**Last updated:** 2026-05-21
-**Overall:** Multi-entity (SG + AU) double-entry accounting platform. **Capture → Classify → Record core is strong and verified-green (565 tests pass, 0 fail).** The "last mile" — financial reports (P&L / Balance Sheet / Business-Line Margin), period close, multi-entity consolidation — is the thinnest part and largely unbuilt. Active branch `feature/us-018-mypy`: **mypy driven 112 → 30 this session**, docs consolidated to two living docs, the **payment-provider mental model locked**, and `stripe_sync` switched to the **views-based source** (dead generator removed). ~18.3k LOC, 93 endpoints, 36 migrations.
+**Last updated:** 2026-05-22
+**Overall:** Multi-entity (SG + AU) double-entry accounting platform. The **Capture → Classify → Record** core is strong and green; the **last mile** — financial reports (P&L / Balance Sheet / Business-Line Margin), period close, consolidation — is the thin, mostly-unbuilt part. We're ~75% an ingestion engine, ~25% an accounting system.
 
-> **⚠️ Single source of truth for status — keep it updated as work progresses (CLAUDE.md Rule 5).** The gap/vision + mental model live in `IDEAL_VS_CURRENT.md`; deep architecture is archived in `wip/SYSTEM_OVERVIEW.md` (the code is the real reference).
+**Verified ground truth (2026-05-22):** `pytest tests/ --ignore=tests/stripe_sync` = **572 pass / 0 fail**; `mypy src/ --ignore-missing-imports` = **23 errors / 9 files** (mechanical). Branch `feature/us-018-mypy` ≈ **10 commits ahead of origin** (unpushed since last push).
 
-**Ideal ↔ Current (gap + mental model):** `documentation/IDEAL_VS_CURRENT.md`
-**Deep architecture (archived):** `documentation/wip/SYSTEM_OVERVIEW.md` (§-refs below point here)
-**Visuals:** `documentation/visuals/` — `ARCHITECTURE.html` (service/function map), `FINANCE_SYSTEM_STATE_VS_IDEAL.html`, `HR_PAYROLL_PROCESS_DIAGRAM.html`, `JOURNAL_ENTRY_FLOWS.html`
-**Verified ground truth (2026-05-21):** `pytest tests/ --ignore=tests/stripe_sync` = **568 pass / 0 fail**; `mypy src/ --ignore-missing-imports` = **24 errors / 9 files**. ~13 commits this session; branch is ahead of origin (local, unpushed). *(stripe_sync tests were WIP for the old shape — removed pending a rewrite against the views path; obsolete `test_docs.py` removed since API/SYSTEM_OVERVIEW were archived.)*
+**Pointers:** gap + mental model → `IDEAL_VS_CURRENT.md` · deep architecture (archived) → `wip/SYSTEM_OVERVIEW.md` (§-refs below) · diagrams → `visuals/` (`ARCHITECTURE`, `JOURNAL_ENTRY_FLOWS`, `HR_PAYROLL_PROCESS_DIAGRAM`, `FINANCE_SYSTEM_STATE_VS_IDEAL`).
+
+---
+
+## ▶ Closing Path (section by section — reporting LAST)
+
+Close each section to "done" before moving on. **Reporting is fixed at the very end** (Gaurav, 2026-05-22).
+
+1. **Categorization engine** — close the hardening items: cross-entity transfer IC pair · `intercompany_group_id` persistence · payroll-knockoff entity guard · narrow the broad `except` blocks. No external dependency — **start here.** *(§2.2)*
+2. **Payroll** — resolve the salary-data source, onboard a pilot, run one real payroll JE end-to-end. *(§2.3)*
+3. **Stripe sync** — E2E-verify the views adapter vs ClickHouse + patch the `code='2'` gap. *(§2.4 — needs ClickHouse)*
+4. **Reconciliation + categorization vs real data** — bank-statement tie-out loop; verify the 244 live rules fire correctly. *(§2.5 — needs a data env)*
+5. **Period close + GST returns + consolidation** — period lock, GST summary, IC elimination + FX → USD. *(§2.5)*
+6. **Reporting last-mile** — P&L → Balance Sheet → Business-Line Margin. **LAST.** *(§2.1)*
+
+> Steps 3 & 4 need a **ClickHouse / collections-db env** — flag when available.
 
 ---
 
@@ -18,278 +30,171 @@
 
 | # | Item | Source |
 |---|------|--------|
-| | **Core Ledger & Infrastructure** | |
-| 1 | Flask + SQLAlchemy + Pydantic backend; PostgreSQL; 93 endpoints across 19 route modules | Initial build |
-| 2 | Chart of Accounts v2 — 134 group-level accounts, 4 entities, 4 business lines; seed via `python -m src.seed_coa` | migrations 001/004 |
-| 3 | Double-entry ledger: Journal Entry CRUD, posting, voiding; multi-currency; balanced-entry enforcement | migration 003 |
-| 4 | GST handling — entity rate / account `gst_applicable` / rule `gst_override`; input (1350) vs output (2500) split | migration 007 |
-| | **Bank Transaction Import** | |
-| 5 | CSV + PDF import: OCBC, CBA (adapter registry, fingerprint dedup, year-inference for multi-year PDFs) | §3.2 |
-| 6 | DBS multi-currency PDF — single upload routes to all matching DBS accounts | §3.2.2 |
-| 7 | Wise API connect + on-demand sync (auto-creates accounts/COA per balance) | migration 015 |
-| 8 | Bank-Type selector auto-derives `file_adapter`; import surfaced per-row in Bank Accounts tab | migration 027/029 |
-| | **Categorization Engine** (the core asset) | |
-| 9 | 5-phase pipeline: internal-transfer pairing → counterparty enrichment (L1/L2/L3) → AP knock-off → payroll knock-off → rules/default/AI | §3.3 |
-| 10 | Rules engine (text/type matching, no ID coupling), tags, manual categorization, NEEDS_REVIEW resolution | migrations 006/009 |
-| 11 | AI classification fallback (Claude Haiku, confidence-gated) + self-improving aliases on approval | migration 021 |
-| 12 | Categorization audit trail (`categorized_by_rule_id`, `categorized_by_logic`, manual-override fields) | migration 030 |
-| | **Counterparties & HR / Employees** | |
-| 13 | Universal party directory (vendor/customer/employee/host/guest/…); entity-scoped + global; duplicate guards | migration 010–014 |
-| 14 | Employee sync (users table → counterparties), HR onboarding/offboarding, salary_expense_code derivation — **but onboarding does NOT create compensation/deductions, see §2.3** | migration 022/034 |
-| | **Invoices / Accounts Payable** | |
-| 15 | AI extraction (PDF + image), duplicate hash check, vendor matching, approval routing, GST split | migrations 016–019 |
-| 16 | AP knock-off (3-case matching), retroactive knock-off on approval, cross-entity paired JEs | §3.5 |
-| | **Payroll** | |
-| 17 | Payroll runs create full accrual JE; Phase 2.5 knock-off (net + CPF, ±2% / ±7d); cross-entity intercompany pairs | migration 021/022 |
-| | **Depreciation / Amortization** | |
-| 18 | COA-policy-driven scheduler; idempotent monthly posting; capitalisation-event trigger on approval | migration 025 |
-| | **Reconciliation & Reporting** | |
-| 19 | Reconciliation suggestions + confirmation; transaction review queue (approve/reject with JE post/void) | §5 |
-| 20 | **Trial Balance report** (the only financial report currently built) | §5.1 |
-| | **Stripe Sync (committed baseline only)** | |
-| 21 | ClickHouse client + Phase 1/2 infra: query builder, journal-entry builder, monthly sync orchestrator | commits 447fa9d/78f1107 |
-
-> Note: the fuller "25 JE / region-aware / v3.0" Stripe work is **NOT** committed — it is stashed (`stash@{0}`) pending the rebuild (§2.2).
+| | **Core ledger & infrastructure** | |
+| 1 | Flask + SQLAlchemy + Pydantic; PostgreSQL; ~93 endpoints / 19 route modules | initial build |
+| 2 | Chart of Accounts (group-level), entities, business lines; seed via `python -m src.seed_coa` | migrations 001/004 |
+| 3 | Double-entry ledger: JE CRUD, posting, voiding; multi-currency; balanced-entry enforcement | migration 003 |
+| 4 | GST handling — entity rate / account flag / rule override; input (1350) vs output (2500) split | migration 007 |
+| | **Bank transaction import** | |
+| 5 | CSV + PDF import (OCBC, CBA, DBS multi-currency); adapter registry, fingerprint dedup | §3.2 |
+| 6 | Wise API connect + on-demand sync (auto-creates accounts/COA); bank-type selector | migrations 015/027/029 |
+| | **Categorization engine** (the core asset) | |
+| 7 | 5-phase pipeline: transfer pairing → counterparty enrichment (L1/L2/L3) → AP knock-off → payroll knock-off → rules/default/AI | §3.3 |
+| 8 | Rules engine (text/type, no ID coupling), tags, manual categorization, NEEDS_REVIEW resolution, audit trail | migrations 006/009/030 |
+| 9 | AI classification fallback (Claude Haiku, confidence-gated) + self-improving aliases on approval | migration 021 |
+| | **Counterparties & HR** | |
+| 10 | Universal party directory (entity-scoped + global, dedup guards); employee sync (users → counterparties) | migrations 010–014/022 |
+| 11 | HR onboarding/offboarding — **now creates compensation + deduction rules** (SG CPF / AU Super defaults) | migration 034 |
+| | **Invoices / AP · Payroll · Depreciation** | |
+| 12 | Invoices: AI extraction (PDF+image), dedup, vendor match, approval + GST split; AP knock-off (3-case) + cross-entity IC pairs | migrations 016–019, §3.5 |
+| 13 | Payroll: per-employee comp + deduction rules → balanced run JE (CPF/Super/tax); Phase-2.5 bank knock-off; duplicate-run guard | migrations 021/022 |
+| 14 | Depreciation/amortization: COA-policy-driven, idempotent monthly posting, capitalisation trigger | migration 025 |
+| | **Reconciliation & reporting** | |
+| 15 | Reconciliation suggestions + confirmation; transaction review queue (approve posts JE / reject voids) | §5 |
+| 16 | **Trial Balance** (the only financial report built) | §5.1 |
+| | **Stripe sync (baseline)** | |
+| 17 | ClickHouse client + views-based query builder → 25 JE specs → ledger; monthly sync orchestrator | §2.4 |
 
 ---
 
 ## 2. What's Pending
 
-> **▶ Priority (Gaurav, 2026-05-21):** session is **protected** (all committed locally, **no PR** for now). Then, for later, roughly in this order: **(a) finish Stripe sync** (§2.2 — needs ClickHouse access), **(b) test the categorization engine + rules** (§2.7 — new), **(c) make payroll real** (§2.3 — needs salary data), **(d) reporting last-mile** (§2.4). Branch `feature/us-018-mypy` is **78 commits ahead of origin, unpushed.**
-
-### 2.1 Land branch `feature/us-018-mypy`
+### 2.1 Financial reporting last-mile — GAP, highest leverage
 
 | Item | Status |
 |------|--------|
-| mypy errors | **24 remaining** (from 112). Remaining are mechanical: categorization_service, transaction_service, invoice_service, + singletons (`requests` stub, `payroll:224` Optional-return, `schemas:562`). stripe_sync + hr_onboarding_service now clean. Safe to sweep. |
-| Tests | **565 / 565 green** (core, excl. stripe_sync). Obsolete `test_docs.py` removed (API/SYSTEM_OVERVIEW archived). stripe_sync tests removed pending rewrite against the views path. |
-| Cleanup | **DONE** — 22 scratch scripts + 6 superseded docs deleted, `.gitignore` added. |
-| Working tree | Clean except 2 deliberate loose ends (§2.6). **10 commits this session**; branch ahead of origin, **not pushed**. |
-
-### 2.2 Payment-provider + Stripe rebuild (NEXT — model + approach locked)
-
-Mental model (`IDEAL_VS_CURRENT.md §1`): providers (Stripe, Grab, OCBC, Wise) = permanent **bank/cash accounts**; **economic events** (revenue/COGS) = **swappable source** (existing ClickHouse views now → TMS PGW ledger later); both post into one ledger.
-
-**Approach (locked 2026-05-21): reuse, don't rebuild.** Reuse the bank machinery for the cash/settlement side (Stripe/Grab are bank accounts; Stripe→OCBC = internal transfer; categorization + reconciliation + ledger as-is). Build only a thin economic-event adapter that reads the **existing ClickHouse views** → JESpecs → ledger. **No v3.0 Python re-home.**
-
-**DONE (commit `ae4019c`):** restored the views-based `query_builder` (reads `view_{REGION}_a_*/c_*` per `VIEWS_TO_JES_MAPPING.md`); removed the dead `_generate_je_specs` generator (resolves the two-generator confusion + the `host_payout_by_payouttype`/`JESpec` errors); `sync_month` uses the table-driven `_generate_all_je_specs` (25 view-backed JE methods); stripe_sync mypy clean of stripe-specific errors.
-
-**STILL TO DO:**
-- **E2E-verify against ClickHouse** — code is restored + clean but NOT run against a live ClickHouse/DB (no env here).
-- **Patch the `code='2'` view gap** (excess mileage, ~SGD 14.8k/2025) — view-side fix or a tiny targeted correction.
-- **Rewrite stripe_sync tests** against the views path (old WIP tests removed; preserved in `stash@{0}`).
-- Deferred: Platform↔Connect views, RMS vs non-RMS split, historical backfill, production monthly schedule.
-
-**Future-proofing — DEFERRED (YAGNI, note for later):** the source-adapter abstraction (JE Catalog + `EconomicEventSource.amount_for()` + `SourceRegistry`) is **not built now** — the code reads views directly. When the TMS PGW ledger is real, wrap the existing sync behind a thin source interface *then* and add a `PGWLedgerSource`. `category_id` (finance-owned COA map, §4 F-1) is the shared vocabulary that keeps that swap cheap. Don't pre-build the abstraction.
-
-### 2.3 Payroll & Employee Onboarding (NEAR-TERM GOAL + a verified bug)
-
-**Goal (Gaurav, 2026-05-21):** the **whole payroll system is to run from finance-api** — each employee's salary/comp, **monthly payroll runs**, and **tax implications** (CPF/Super/income tax) generated here. "A lot of that needs to happen now."
-
-**⭐ Live state (verified read-only in collections-db, 2026-05-21): the HR/payroll subsystem is BUILT BUT EMPTY — it has never been populated or run.** `hr_employees = 0`, `hr_compensation = 0`, `hr_deduction_rules = 0`, `hr_payroll_items = 0`, `finance_payroll_runs = 0`. Yet **81 employee counterparties** exist (`finance_counterparties` type=employee — the synced roster). The onboarding CSV (`wip/HR_ONBOARDING_COMPLETE_POPULATED.csv`) holds the ~80-person roster (identity/role/team/region) but **every compensation column is blank** (gross_amount, pay_type, tax_treatment, default_deductions, bank). So: code exists, roster exists as counterparties, but **no one is onboarded into HR and payroll has never run.**
-
-**✅ Engine verified (mock, 2026-05-21, local SQLite — collections-db untouched):** drove `hr_payroll_service` end-to-end with 2 mock employees — **SG** (gross 5000 SGD → CPF employee 20% cap6000 = 1000, employer 17% = 850, **net 4000**) and **AU** (gross 8000 AUD → Super 11.5% = 920 employer, PAYG income tax 20% = 1600 withheld, **net 6400**). Both produced correct, **balanced** double-entry JEs (Dr salary + employer contrib / Cr bank net + payables). **The payroll engine + region tax rules WORK.** The blocker is data + onboarding wiring, not the engine.
-
-**Open question (unresolved):** *how* employee onboarding feeds payroll — i.e. where each employee's salary/comp data comes from (manual? `new-monitor-api` / `user-registry`? a CSV?) and how it lands as `HrCompensation` + `HrDeductionRule`. Gaurav: "still not clear how that's gonna happen." **Needs a designed flow before payroll can run end-to-end.**
-
-**✅ Onboarding fix SHIPPED (commit `e8b29ca`):** `hr_onboarding_service` now creates `HrCompensation` + `HrDeductionRule` from the payload (`gross_amount`/`pay_type`/`currency`/`default_deductions`), applying SG/AU statutory defaults (CPF / Super) when none given, with a validated deduction→COA map (2300 CPF / 2310 Super / 2320 tax / 6001 employer / 6000 salary). No salary → employee onboarded but not yet payable (matches the current roster CSV). Covered by `tests/test_hr_payroll_flow.py` (SG, AU, roster-only); the 6 `Row\|None` mypy errors are fixed. End-to-end process diagram: `visuals/HR_PAYROLL_PROCESS_DIAGRAM.html`.
-
-**⛔ Remaining blocker = the salary data itself.** The engine works and onboarding now wires comp/deductions — but the roster CSV's salary/deduction columns are still **blank**, so nothing real can be onboarded yet. Resolving *where each employee's salary + deduction setup comes from* (and filling it) is the one thing left before payroll runs for real.
-
-### 2.3.1 Triggers & duplication (for FE wiring)
-
-**Triggers (endpoints the front end will wire to):**
-| Action | Endpoint |
-|--------|----------|
-| Bulk onboard (roster) | `POST /api/hr/onboard/bulk` |
-| Onboard one | `POST /api/hr/onboard/{user_id}` |
-| Offboard | `POST /api/hr/offboard/{user_id}` |
-| Daily employee sync | `POST /api/jobs/sync-employees` (cron + manual) |
-| Add/raise compensation | `POST /api/hr/employees/{id}/compensation` |
-| Add deduction rule | `POST /api/hr/employees/{id}/deduction-rules` |
-| **Create payroll run (DRAFT)** | `POST /api/hr/payroll-runs` |
-| **Submit run (post JE)** | `POST /api/hr/payroll-runs/{id}/submit` |
-
-> ⚠️ **Two payroll systems exist:** the rich per-employee one (`/api/hr/payroll-runs` → `hr_payroll_service`, uses comp + deduction rules) and a simpler aggregate one (`/api/payroll/runs` → `payroll_service`, takes pre-computed totals). **Decide which is canonical** — FE should wire the rich `/api/hr/payroll-runs`.
-
-**Duplication / idempotency:**
-- **Onboarding — GUARDED.** `is_employee` flag → 409 "already onboarded"; `HrEmployee` / counterparty / compensation existence checks; bulk batch dedup. Re-onboarding is safe/idempotent.
-- **Payroll runs — ⚠️ NOT GUARDED (gap).** No uniqueness on `(entity_id, payroll_period)`; two DRAFT runs for the same month can both be created **and** submitted → **double-posted payroll JEs (double expense / double pay)**. `submit_run` only blocks re-submitting the *same* run (status≠DRAFT). The payroll JE has **no period-derived idempotency reference** (contrast stripe_sync's `STRIPE-{region}-{month}` + delete-and-recreate).
-- **To handle (later):** add a uniqueness guard on `(entity_id, period)` where status≠VOID — reject or replace a duplicate run; and/or a period-derived JE `reference_number` + idempotent replace; FE shows the existing run for a period and blocks/confirms a re-run.
-
-### 2.4 Financial Reporting last-mile (GAP — highest leverage)
-
-| Item | Status |
-|------|--------|
-| P&L report | Not built (designed in `wip/SYSTEM_OVERVIEW.md §5.2`) |
+| P&L report | Not built (designed in `wip/SYSTEM_OVERVIEW §5.2`) |
 | Balance Sheet | Not built (§5.3) |
 | Business-Line Margin report | Not built (§5.4) |
 | Cash-flow statement | Not built |
 
-### 2.5 Period Close, GST Returns, Consolidation (GAP)
+### 2.2 Categorization engine hardening
+
+AP knock-off is fixed + tested (`tests/test_ap_knockoff.py`; ideal spec in `IDEAL_VS_CURRENT §6`). Remaining, in rough priority:
+
+1. **Cross-entity internal-transfer IC codes** — `_create_internal_transfer_entries` uses ONE shared IC code (`rule.contra_account_code`) in both entities; should be a receivable/payable pair like `_create_cross_entity_allocation_entries` does. Likely wrong for consolidation/elimination.
+2. **`intercompany_group_id` persistence** — set *after* the committing `journal_service.create()` with only a `db.flush()`; the last paired JE's group id may not persist → the two halves can't be linked for elimination. Pass into `create()` or commit after.
+3. **Payroll knock-off entity guard** — `_try_payroll_knockoff` matches POSTED runs by amount ±2% / ±7d but **not by entity** → could match another entity's run on coincidence. Add an entity filter.
+4. **Narrow the broad `except Exception` blocks** — they hid BUG-1; make the next bug surface.
+5. **Per-JE `db.commit()`** in `journal_service.create` → runs aren't atomic (architectural; lower priority).
+
+> Knock-off audit summary: internal-transfer **pairing** is sound; cross-entity **allocation** is correct; **payroll** works but needs the entity guard; **AP** fixed.
+
+### 2.3 Payroll — make it real
+
+Engine verified (mock SG CPF + AU Super/PAYG → balanced JEs) and onboarding now wires comp + deductions. **Live DB: every `hr_*` table + `finance_payroll_runs` = 0** — built but never run; 81 employees exist only as counterparties; the roster CSV's salary columns are **blank**. **The one blocker: source/fill each employee's salary + deduction data**, then onboard a pilot and run one real payroll. Triggers + FE wiring: §4.2. Canonical service: `hr_payroll_service` (§3).
+
+### 2.4 Stripe sync — finish (needs ClickHouse access)
+
+Views-based adapter is restored + clean (`sync_month` → `_generate_all_je_specs` over 25 view-backed JE methods → ledger). **To do:** E2E-verify against live ClickHouse; patch the `code='2'` view gap (excess mileage, ~SGD 14.8k/2025); rewrite stripe_sync tests against the views path (old WIP tests removed; in `stash@{0}`). Deferred: Platform↔Connect views, RMS split, historical backfill, production schedule. *(Future: the source-adapter abstraction is deferred (YAGNI) until the TMS PGW ledger is real — see §3.)*
+
+### 2.5 Period close, GST returns, consolidation — GAP
 
 | Item | Status |
 |------|--------|
 | Period close / lock | Not built — posted periods remain mutable |
-| GST return summary (Output − Input) + period clearing JE | Not built |
-| Revenue recognition | Deferred (likely lands with the PGW ledger, §4) |
-| Multi-entity consolidation: IC elimination execution + FX translation to USD | Not built (IC account pairs exist in COA; nothing runs the elimination) |
+| GST return summary (output − input) + clearing JE | Not built |
+| Multi-entity consolidation: IC elimination + FX → USD | Not built (IC account pairs exist; nothing runs the elimination) |
+| Test categorization vs real data | 244 live rules / 730 txns never re-verified; needs a data env |
 
-### 2.6 Technical Debt & Loose Ends
+### 2.6 Technical debt
 
-| # | Item | Status |
-|---|------|--------|
-| TD-1 | Stripe two-generator confusion | Resolved by reset + the §2.2 rebuild direction |
-| TD-2 | Documentation drift | Addressed — root collapsed to STATUS.md + IDEAL_VS_CURRENT.md |
-| TD-3 | Throwaway scratch scripts in repo root | DONE — deleted |
-| TD-4 | Under-tested modules: depreciation, payroll, invoices/AP, reporting | Add coverage |
-| ~~BUG-1~~ | ✅ **FIXED (2026-05-22)** — `_try_ap_knockoff` was calling a non-existent `find_matching_invoice`. The intended method already existed: **`invoice_service.get_open_for_counterparty`** (full 3-case ranking, already unit-tested by `TestApKnockoffMatching`). Fix = call it + `match_transaction(invoice_id, txn_id)` to apply (no double-book). Integration test added: `tests/test_ap_knockoff.py` (Case 1 reference / Case 2 FIFO / Case 3 asset-park). Spec: IDEAL_VS_CURRENT §6. mypy attr-defined cleared (24→23). | Done |
-| TD-5 | Categorization engine: per-JE `db.commit()` in `journal_service.create` → runs aren't atomic; broad `except Exception` blocks mask bugs (see BUG-1); AI called inline in the run; 2,022-line god-object; 12 mypy errors. | Medium |
-| **LE-1** | `src/models/__init__.py` — exports depreciation models (`FinanceAssetSchedule`, `FinanceCOAAmortizationPolicy`); **uncommitted**, correct + harmless. Decide: commit or drop. |
-| ~~LE-1 / LE-2~~ | ✅ Resolved — loose ends committed; working tree clean. |
-
-### 2.7 Test the categorization engine + rules (BACKLOG — new, 2026-05-21)
-
-The live DB has **244 categorization rules** and **730 transactions** but the engine's correctness hasn't been re-verified against real data. To do (later): confirm the 5-phase pipeline actually fires correctly — rules match the right transactions (no misfires), AP/payroll knock-off + internal-transfer pairing behave, AI fallback + NEEDS_REVIEW thresholds work — and the produced JEs are correct. Likely needs running against real/seeded transaction data (ClickHouse/collections-db access helps). Pairs with the Stripe-sync verification (both need a real data env).
-
-### 2.8 Categorization knock-off audit (IN PROGRESS, 2026-05-22)
-
-Goal: a bank transaction can knock off an **AP invoice**, a **payroll** run, pair an **internal/inter-bank transfer**, or post a **cross-entity (intercompany)** JE — verify all four are correctly built.
-
-| Path | Status | Findings |
-|------|--------|----------|
-| **AP knock-off** (`_try_ap_knockoff`) | ✅ **FIXED** | BUG-1 fixed — calls existing tested `get_open_for_counterparty` (3-case) + `match_transaction`. Tested in `tests/test_ap_knockoff.py`. Spec: IDEAL_VS_CURRENT §6. |
-| **Payroll knock-off** (`_try_payroll_knockoff`) | 🟠 **Works but suspect** | Calls `payroll_service.create_payroll_payment_entries` (exists ✓). **But** the payroll-run query filters only `status=POSTED` + run_date ±7d — **not entity** — so an outgoing txn could match *another entity's* payroll run on amount±2% coincidence. Also uses legacy `db.query(...).get()` and the same broad `except`/per-txn-commit/`db.rollback()` pattern. Needs an entity guard + tighter matching. |
-| **Internal-transfer pairing** (`_pair_awaiting_matches`) | 🟢 **Sound** | Opposite-sign + ±2%/±5d + in-run dedup; links the counter to the same JE. Minor: per-pair commit; **no `try/except` — an error here kills the whole run** (knock-offs swallow theirs — inconsistent); first-match not best-match. |
-| **Internal-transfer JE creation** (`_create_internal_transfer_entries`) | 🟠 **Intra ✓ / cross-entity suspect** | Intra-entity 2-line JE is correct (Dr/Cr by sign, balances). **Cross-entity uses ONE shared IC code (`rule.contra_account_code`) in *both* entities** — not a proper receivable/payable elimination pair. The allocation path (below) does it correctly with a distinct recv/pay pair — so this is inconsistent and likely **wrong for consolidation/elimination**. |
-| **Cross-entity allocation** (`_create_cross_entity_allocation_entries`) | 🟢 **Correct** | Resolves a proper IC **receivable/payable pair** via `_IC_RECEIVABLE_CODES`/`_IC_PAYABLE_CODES` + `_entity_short`; both JEs balance; validates entities + codes. |
-| **`_find_counter_transaction`** | ✅ **NOT dead (corrected)** | Verified: called at `categorization_service:1289` (internal-transfer creation in `_apply_rule`). Earlier "likely dead" note was wrong. |
-
-**Cross-cutting (every JE-creating path):**
-- 🔴 **`intercompany_group_id` may not persist.** `journal_service.create()` **commits internally**, but `.source` and `.intercompany_group_id` are set *afterward* with only a `db.flush()`. The *last* paired entry's `intercompany_group_id` has no commit following it (the rule path doesn't commit) → the two halves of an intercompany JE may not be linkable for elimination. **Verify/fix:** pass `source`/`ic_group_id` into `create()`, or commit after.
-- per-JE `db.commit()` → runs aren't atomic.
-- broad `except Exception` blocks hide bugs (how BUG-1 stayed hidden).
-- dead `categorized_counter` param on `_try_ap_knockoff`.
-
-**Fix list (priority — to action next):**
-1. **BUG-1** — AP knock-off: `get_open_for_match` + 3-case selection + `match_transaction`.
-2. **Cross-entity internal-transfer IC codes** — use a receivable/payable pair (align with the allocation path), not one shared code.
-3. **`intercompany_group_id` persistence** — ensure both paired JEs commit with the group id set.
-4. **Payroll knock-off entity guard** — filter the payroll-run query by entity (+ tighten matching).
-5. **Narrow the broad `except` blocks** so the next bug surfaces instead of hiding.
-6. Remove the dead `categorized_counter` param.
-
-**Dead-code investigation (2026-05-22, traced actual callers — NOT deleted, awaiting sign-off):**
-| Method | Verdict |
-|--------|---------|
-| `reconciliation_service.get_score` | ❌ NOT dead — nested local fn used as `matches.sort(key=get_score)`. Keep. |
-| `stripe_sync/sync_service.sync_month` | ❌ NOT dead — public entry point, just **not wired yet** (no route/job). Keep; needs wiring. |
-| `wise_service.get_business_profile` (singular) | ⚠️ App uses plural `get_business_profiles`; only `scripts/test_wise_api.py` calls singular. Dead in-app, script depends on it. |
-| `transaction_service.import_csv` | ✅ **Orphaned** — import route + tests use `import_file`; nothing calls `import_csv`. Safe to delete. |
-| `stripe_sync/sync_service._persist_journal_entries` | ✅ **Orphaned** — `sync_month` uses `_create_journal_entries`. Safe to delete. |
-| `stripe_sync/sync_service._reconcile` | ✅ **Orphaned** — no caller; superseded. Safe to delete. |
-
-✅ **Deleted (3, 2026-05-22):** `transaction_service.import_csv`, `stripe_sync/sync_service._persist_journal_entries` + `_reconcile` — plus their now-unused imports (`Tuple`, `JournalEntryStatus`). Verified: app loads, mypy 23 (unchanged), 159 tests green. Script-only (1, kept): `get_business_profile`. False positives (2, kept): `get_score`, `sync_month`. (`_find_counter_transaction` also confirmed NOT dead — called at categorization:1289.)
+| Item | Status |
+|------|--------|
+| Under-tested modules: depreciation, payroll, invoices/AP, reporting | Add coverage |
+| Categorization engine is a 2,022-line god-object; AI called inline in the run | Consider splitting (low priority) |
+| Dead-code candidate kept: `wise_service.get_business_profile` (singular) — script-only | Leave / verify with script owner |
 
 ---
 
 ## 3. Decisions
 
-| Decision | Resolution | Source |
-|----------|-----------|--------|
-| **Payment-provider mental model** | Providers (Stripe, Grab, OCBC, Wise) = permanent bank/cash accounts; economic events (revenue/COGS) = swappable source (ClickHouse → PGW); both post to one ledger. Frame the work as "provider ingestion + economic-event recognition," NOT "Stripe sync." | IDEAL_VS_CURRENT §1 (2026-05-21) |
-| **Stripe current source = existing ClickHouse views** | Read the existing, battle-tested views (they already feed the current QuickBooks books) via a thin adapter. Do **NOT** re-home view logic into Python — **v3.0 dropped** (it rebuilds existing logic for a pipeline TMS will replace). Patch the one known view gap (`code='2'` excess mileage) narrowly. | 2026-05-21 (reverses v3.0) |
-| **Source-adapter architecture** | One JE pipeline; swappable economic-event source: **existing ClickHouse views now → TMS PGW ledger later**. Reuse the bank machinery (account model, transaction import, transfer-matching, categorization, reconciliation); build only the thin economic-event adapter. JESpec is the seam. | IDEAL_VS_CURRENT §1 |
-| **Doc structure** | `documentation/` root = exactly `STATUS.md` + `IDEAL_VS_CURRENT.md`; SYSTEM_OVERVIEW + API archived to `wip/`. | CLAUDE.md Rules 2/4 (2026-05-21) |
-| Employees as counterparties | `finance_counterparties.type="employee"`; `users` table is the source of truth; counterparty is a synced read-copy | §3.7.1 |
-| Salary expense COA (Option C) | Derived from `teams` at onboarding (CS→5063, On-Ground→5061, else→6000); recalc on team change | commits ae7372e/0437b55 |
-| Categorization: rules before defaults | Phase 4A rules win over Phase 4B `default_account_code` | §3.7 |
-| Invoice COA priority | On AP knock-off, `invoice.account_code` (approver-set) wins over counterparty default | §3.5 |
-| Asset parking (Case 3) | Amount-mismatch vs open invoices → 1300 Prepayments (Phase 1.5B) | commit 775f982 |
-| Stripe: monthly aggregation | One JE per month per region (not per-transaction); ~25 JE categories | wip/STRIPE_SYNC_ARCHITECTURE.md |
-| **Canonical payroll service** | **`hr_payroll_service` (`/api/hr/payroll-runs`)** — the rich per-employee engine (compensation + deduction rules → computed gross/tax/net). The duplicate `/api/payroll/runs` endpoint is **REMOVED** (commit `09ca63a`). `payroll_service` is retained **only** for `create_payroll_payment_entries` (the live Phase-2.5 categorization knock-off); its `create_run` is now internal (knock-off test setup), not a public API. Duplicate-run guard lives on the hr path. | 2026-05-21 |
+| Decision | Resolution |
+|----------|-----------|
+| **Payment-provider mental model** | Providers (Stripe, Grab, OCBC, Wise) = permanent bank/cash accounts; economic events (revenue/COGS) = swappable source (ClickHouse views now → TMS PGW ledger later); both post to one ledger. Frame as "provider ingestion + economic-event recognition," not "Stripe sync." (`IDEAL_VS_CURRENT §1`) |
+| **Stripe source = existing ClickHouse views** | Read the battle-tested views via a thin adapter; do NOT re-home view logic into Python (v3.0 dropped). Patch the `code='2'` gap narrowly. |
+| **Source-adapter abstraction** | Deferred (YAGNI). Read views directly now; wrap behind a thin `EconomicEventSource` interface when the PGW ledger is real. `category_id` (finance-owned COA map, §4 F-1) keeps the swap cheap. |
+| **The ledger gate** | A JE counts in reports only when `status=POSTED`. Bank/cash route: categorize → DRAFT → reconcile/approve → POSTED. Accrual/direct route (Stripe, payroll, depreciation, invoice approval, manual): POSTED on the spot. Reconciliation governs only the cash route. (`IDEAL_VS_CURRENT §1`) |
+| **Canonical payroll service** | `hr_payroll_service` (`/api/hr/payroll-runs`) — rich per-employee engine. The duplicate `/api/payroll/runs` endpoint was **removed**; `payroll_service` retained only for `create_payroll_payment_entries` (the categorization knock-off helper). |
+| **AP knock-off** | Deterministic 3-case match (NOT AI), Phase 1.5; invoice COA wins; cross-entity → IC receivable/payable pair. Spec: `IDEAL_VS_CURRENT §6`. |
+| Doc structure | `documentation/` root = `STATUS.md` + `IDEAL_VS_CURRENT.md` only; SYSTEM_OVERVIEW + API archived to `wip/`; diagrams in `visuals/`. (CLAUDE.md Rules 2/4) |
+| Employees as counterparties | `finance_counterparties.type="employee"`; `users` table is source of truth; counterparty is a synced read-copy (§3.7.1) |
+| Salary expense COA (Option C) | Derived from `teams` at onboarding (CS→5063, On-Ground→5061, else→6000); recalc on team change |
+| Categorization: rules before defaults | Phase 4A rules win over Phase 4B `default_account_code` (§3.7) |
 
 ---
 
 ## 4. System Topology & Cross-Service Dependencies
 
-### 4.0 Repos & data stores (the dependency map)
+### 4.0 Repos & data stores
 
 | Repo / store | Role | Local? |
 |--------------|------|--------|
 | **finance-api** (this) | Python/Flask finance backend + ledger | ✅ here |
-| **admincontrols** | NEW front end (finance UI) | ❌ not cloned locally |
-| **admin-bff** | NEW middleware / backend-for-frontend (proxies finance-api; the `users` table lives here) | ❌ not cloned locally |
-| **new-monitor-api** | CURRENT front end + its backend-for-frontend; has finance-system branches to check out | ✅ `../new-monitor-api` |
+| **admincontrols** | NEW front end (finance UI) | ❌ not cloned |
+| **admin-bff** | NEW middleware/BFF (proxies finance-api; the `users` table lives here) | ❌ not cloned |
+| **new-monitor-api** | CURRENT front end + BFF; has finance-system branches | ✅ `../new-monitor-api` |
 | **tms** (`tms-pricing-service`, `tms-trips-service`) | Pricing + trips; future **PGW ledger** economic-event source | ✅ `../tms` |
-| **collections-db** (AWS RDS, ap-southeast-2) | ⭐ **Where the finance tables sit right now** — finance-api connects here via `DATABASE_URL` ("collections agent database") | remote (live — **read-only**) |
+| **collections-db** (AWS RDS, ap-southeast-2) | ⭐ where the finance tables sit now — finance-api connects via `DATABASE_URL` | remote (live — **read-only**) |
 
-> Each dependent repo has its own finance-system branches (checkable). admincontrols/admin-bff are NOT in `../` — locate/clone before inspecting. The live DB is shared/production — **inspect read-only, never mutate.**
+> The live DB is shared/production — inspect read-only, never mutate. Dependent repos have their own finance-system branches.
 
 ### 4.1 Finance ↔ TMS obligations
 
-**Source of truth for cross-service contracts:** `tms-trips-service/docs/migration/CROSS-SERVICE.md` (DP-2). Recorded here because finance owns several obligations in the TMS line-item ledger migration.
+Source of truth: `tms-trips-service/docs/migration/CROSS-SERVICE.md`. Finance owns:
 
-| # | What finance owns / must do | Status |
-|---|------|--------|
-| F-1 | **Owns the `code → category_id` COA map** (PGW/Payout store the FK) | Pending — finance to publish map |
-| F-2 | **Provides the GST taxability map** (which line-item codes are taxable, incl. non-GST-registered-host) → seeds `ps_line_item_definitions.gst_treatment` | Pending — **the single outstanding blocker for the TMS pricing lane** |
-| F-3 | **Migrate finance reporting to consume the new TMS two-party line-item ledger** — retire the raw-Stripe revenue/COGS source | Not started |
-| F-4 | **Owns USD consolidation** as a reporting layer ABOVE per-tenant ledgers (ledger stays per-tenant local currency; finance owns the FX rate) | Not started |
-| F-5 | `earned_at` rule (finance-confirmed): trip-revenue lines = trip completion; all others = invoice creation | Locked 2026-05-21 |
+| # | Obligation | Status |
+|---|------------|--------|
+| F-1 | Owns the `code → category_id` COA map (PGW/Payout store the FK) | Pending — publish map |
+| F-2 | Provides the GST taxability map → seeds `ps_line_item_definitions.gst_treatment` | Pending — **single outstanding blocker for the TMS pricing lane** |
+| F-3 | Migrate finance reporting to consume the TMS two-party line-item ledger; retire the raw-Stripe revenue/COGS source | Not started |
+| F-4 | Owns USD consolidation as a reporting layer above per-tenant ledgers (owns the FX rate) | Not started |
+| F-5 | `earned_at`: trip-revenue lines = trip completion; all others = invoice creation | Locked 2026-05-21 |
 
-> **Strategic note:** the PGW ledger becomes a future **economic-event source** (revenue/COGS), slotting in behind the source-adapter seam (§2.2). It does **not** replace the cash rails — Stripe/Grab remain bank accounts for fees, payouts, deposits, disputes. So plan for Stripe + PGW sources running **concurrently**, each owning a slice of the JE taxonomy.
+> The PGW ledger is a future economic-event source slotting in behind the source-adapter seam — it does NOT replace the cash rails (Stripe/Grab stay bank accounts). Plan for Stripe + PGW sources concurrently.
 
-### 4.2 Front-end / BFF wiring NEEDED (cross-service — owned by admincontrols + admin-bff)
+### 4.2 Front-end / BFF wiring NEEDED (owned by admincontrols + admin-bff)
 
-These finance-api endpoints exist and work but are **not yet surfaced in the UI**. To make HR/payroll usable, the front end (`admincontrols` / `new-monitor-api`) + middleware (`admin-bff`, proxies with JWT) must wire each UI action to its endpoint:
+These finance-api endpoints work but are **not yet surfaced in the UI**. Wire each UI action → endpoint (via admin-bff, JWT):
 
-| UI action (screen) | Method + endpoint | Notes |
-|--------------------|-------------------|-------|
-| Onboard roster (bulk) | `POST /api/hr/onboard/bulk` | from CSV/JSON; idempotent (re-runnable) |
-| Onboard one employee | `POST /api/hr/onboard/{user_id}` | 409 if already onboarded |
-| Offboard employee | `POST /api/hr/offboard/{user_id}` | sets end date, deactivates counterparty |
-| Sync employees (button + cron) | `POST /api/jobs/sync-employees` | keeps HrEmployee ↔ users |
-| Set / raise salary | `POST /api/hr/employees/{id}/compensation` | effective-dated |
-| Add deduction rule | `POST /api/hr/employees/{id}/deduction-rules` | CPF/Super/tax/custom |
-| List employees / runs | `GET /api/hr/employees` · `GET /api/hr/payroll-runs` | |
-| **Create payroll run (DRAFT)** | `POST /api/hr/payroll-runs` | canonical (rich) path; **dup-guarded** → returns 400 if a run for that (entity, period) exists — FE should surface the message (ideally as a 409) |
-| Review payslips | `GET /api/hr/payroll-runs/{id}/items` | |
-| **Submit run (posts JE)** | `POST /api/hr/payroll-runs/{id}/submit` | DRAFT → POSTED |
+| UI action | Endpoint |
+|-----------|----------|
+| Onboard roster (bulk) / one / offboard | `POST /api/hr/onboard/bulk` · `/onboard/{user_id}` · `/offboard/{user_id}` |
+| Sync employees (button + cron) | `POST /api/jobs/sync-employees` |
+| Set salary / add deduction rule | `POST /api/hr/employees/{id}/compensation` · `/deduction-rules` |
+| Create payroll run (DRAFT) → review → submit | `POST /api/hr/payroll-runs` (dup-guarded, 400 on duplicate) · `GET .../{id}/items` · `POST .../{id}/submit` |
 
-> The `/api/payroll/*` endpoint has been **removed** — `/api/hr/*` is the only payroll API now (see §3 decision). Bank import/categorization screens already exist; these HR/payroll screens are the gap.
+> `/api/payroll/*` was removed — `/api/hr/*` is the only payroll API. Bank import + categorization screens already exist; HR/payroll screens are the gap.
 
 ---
 
-## 5. Module Maturity (verified confidence)
+## 5. Module Maturity
 
-| Module | Code | Test confidence | Status |
-|--------|------|-----------------|--------|
-| COA / Entities / Ledger / JE posting | Complete | High | ✅ Ready |
-| Bank import (OCBC/CBA/DBS/Wise) | Complete | Good | ✅ Ready |
-| Categorization engine | Complete | Good | ✅ Ready |
-| GST handling | Complete | Medium | ✅ Ready |
-| Counterparties + HR/Employee sync | Complete | Medium | ⚠️ Onboarding gap (§2.3) |
-| Invoices / AP | Complete | Thin | ⚠️ Code OK, under-tested |
-| Payroll | Complete | Thin | ⚠️ Code OK, under-tested |
-| Depreciation / Amortization | Complete | Very thin | ⚠️ Code OK, barely tested |
-| Reconciliation | Complete | Partial | ⚠️ No full bank-statement tie-out |
-| Financial Reporting | Trial balance only | Low | ❌ Gap (P&L/BS/margin missing) |
-| Stripe Sync | Views-based source restored + cleaned | Tests pending rewrite | 🔁 Code ready; E2E-vs-ClickHouse + `code='2'` patch pending (§2.2) |
-| Multi-entity Consolidation | IC accounts only | None | ❌ Gap |
-| Period Close / GST Returns | — | None | ❌ Gap |
+| Module | Status |
+|--------|--------|
+| COA / Entities / Ledger / JE posting | ✅ Ready (high confidence) |
+| Bank import (OCBC/CBA/DBS/Wise) | ✅ Ready |
+| Categorization engine | ✅ Ready (hardening items in §2.2) |
+| GST handling | ✅ Computation ready (no return report) |
+| Counterparties + HR/Employee sync | ✅ Onboarding now creates comp/deductions |
+| Invoices / AP | ⚠️ Code OK, under-tested |
+| Payroll | ⚠️ Engine works; needs real salary data (§2.3) |
+| Depreciation / Amortization | ⚠️ Code OK, barely tested |
+| Reconciliation | ⚠️ Suggestions + confirm; no full bank-statement tie-out |
+| Financial Reporting | ❌ Trial balance only (§2.1) |
+| Stripe Sync | 🔁 Views adapter ready; E2E-vs-ClickHouse + `code='2'` pending (§2.4) |
+| Multi-entity Consolidation | ❌ IC accounts only; nothing runs (§2.5) |
+| Period Close / GST Returns | ❌ Not built (§2.5) |
 
 ---
 
-## 6. Reference & Points to Note
+## 6. Reference
 
-- **Verification commands:** `venv/bin/python -m pytest tests/ -q` · `venv/bin/python -m mypy src/ --ignore-missing-imports` · run Flask via venv for pdfplumber: `venv/bin/python -m flask --app src/app.py run --port 8081 --debug`.
-- **Test reality:** 565 pass / 0 fail (`tests/ --ignore=tests/stripe_sync`). stripe_sync tests removed pending rewrite against the views path; obsolete `test_docs.py` removed.
-- **mypy this session:** 112 → 30. The `.text` fixes use `cast("TextBlock", message.content[0])` (runtime no-op) + `TYPE_CHECKING` imports — zero behavior change.
-- **Stashed work:** `stash@{0}` = the old stripe_sync WIP + tests. The reusable views-based `query_builder` has been restored into the tree (`ae4019c`); the stash is retained only as a reference (old tests + the `code='2'` learning).
+- **Verify:** `venv/bin/python -m pytest tests/ --ignore=tests/stripe_sync -q` · `venv/bin/python -m mypy src/ --ignore-missing-imports` · Flask: `venv/bin/python -m flask --app src/app.py run --port 8081 --debug`.
 - **Accounting basis:** accrual. Cash path (providers/bank) and accrual path (invoices/payroll/depreciation) reconcile via payable/clearing accounts.
-- **Migrations:** Alembic, 001 → 036 (`alembic upgrade head`).
-- **⭐ Live data state (`collections-db`, read-only, 2026-05-21) — what's actually used:**
-  - **LIVE with real data:** COA `finance_accounts`=155 · `finance_entities`=**3** (Ventures Holding SG, DL Singapore SG, DL Australia AU — *not 4*) · `finance_bank_accounts`=21 · `finance_categorization_rules`=**244** · `finance_counterparties`=278 (186 vendor / **81 employee** / 6 customer / 2 investor / 2 other / 1 bank) · `finance_transactions`=730 · `finance_journal_entries`=245 (151 DRAFT / 89 POSTED / 5 VOID; entry_date 2020-01-01 → 2026-03-18) · `finance_journal_lines`=490.
-  - **BUILT BUT EMPTY (never used):** all `hr_*` tables = 0 · `finance_payroll_runs`=0 · depreciation (`finance_asset_schedules` / `finance_coa_amortization_policies`)=0 · `finance_tags`=0 · `finance_contracts`=0 · `finance_approval_rules`=0 · `finance_invoices`=only 6 (4 draft/1 pending/1 void).
-  - **Takeaway:** the **core ledger + categorization engine are operational with real 2020→2026 data**; HR/payroll, depreciation, AP, tags, contracts are scaffolding that has barely or never been exercised. (Note: code/docs say 134 COA + 4 entities; live DB has 155 COA + 3 entities — minor drift.)
+- **Migrations:** Alembic 001 → 036 (`alembic upgrade head`).
+- **Stashed:** `stash@{0}` = old stripe_sync WIP + tests (reference only; views-based `query_builder` is restored in-tree).
+- **⭐ Live data state (`collections-db`, read-only, 2026-05-21):**
+  - **LIVE with real data:** COA = 155 · entities = **3** (Ventures Holding SG, DL Singapore SG, DL Australia AU) · bank accts = 21 · categorization rules = **244** · counterparties = 278 (186 vendor / **81 employee**) · transactions = 730 · journal entries = 245 (151 DRAFT / 89 POSTED; 2020 → 2026-03).
+  - **BUILT BUT EMPTY:** all `hr_*` = 0 · `finance_payroll_runs` = 0 · depreciation = 0 · tags/contracts/approval_rules = 0 · invoices = only 6.
+  - **Takeaway:** core ledger + categorization run on real 2020→2026 data; HR/payroll, depreciation, AP are scaffolding barely exercised. (Code says 134 COA / 4 entities; live = 155 / 3 — minor drift.)
