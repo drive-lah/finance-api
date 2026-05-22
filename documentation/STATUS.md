@@ -177,7 +177,19 @@ Goal: a bank transaction can knock off an **AP invoice**, a **payroll** run, pai
 3. **`intercompany_group_id` persistence** — ensure both paired JEs commit with the group id set.
 4. **Payroll knock-off entity guard** — filter the payroll-run query by entity (+ tighten matching).
 5. **Narrow the broad `except` blocks** so the next bug surfaces instead of hiding.
-6. Remove the dead `categorized_counter` param. (`_find_counter_transaction` is NOT dead — verified.) Dead-code candidates to verify before deleting: `reconciliation_service.get_score`, `transaction_service.import_csv`, `wise_service.get_business_profile` (singular), `stripe_sync/sync_service` `sync_month`/`_persist_journal_entries`/`_reconcile`. See `visuals/ARCHITECTURE.html`.
+6. Remove the dead `categorized_counter` param.
+
+**Dead-code investigation (2026-05-22, traced actual callers — NOT deleted, awaiting sign-off):**
+| Method | Verdict |
+|--------|---------|
+| `reconciliation_service.get_score` | ❌ NOT dead — nested local fn used as `matches.sort(key=get_score)`. Keep. |
+| `stripe_sync/sync_service.sync_month` | ❌ NOT dead — public entry point, just **not wired yet** (no route/job). Keep; needs wiring. |
+| `wise_service.get_business_profile` (singular) | ⚠️ App uses plural `get_business_profiles`; only `scripts/test_wise_api.py` calls singular. Dead in-app, script depends on it. |
+| `transaction_service.import_csv` | ✅ **Orphaned** — import route + tests use `import_file`; nothing calls `import_csv`. Safe to delete. |
+| `stripe_sync/sync_service._persist_journal_entries` | ✅ **Orphaned** — `sync_month` uses `_create_journal_entries`. Safe to delete. |
+| `stripe_sync/sync_service._reconcile` | ✅ **Orphaned** — no caller; superseded. Safe to delete. |
+
+Genuinely dead (3): `import_csv`, `_persist_journal_entries`, `_reconcile`. Script-only (1): `get_business_profile`. False positives (2): `get_score`, `sync_month`. (`_find_counter_transaction` also confirmed NOT dead — called at categorization:1289.)
 
 ---
 
