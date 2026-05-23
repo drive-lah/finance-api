@@ -297,6 +297,107 @@ class PayrollService:
         db.flush()
         return bank_entry  # Return primary (bank) JE
 
+    def run_retroactive_knockoff(self, db: Session, run: FinancePayrollRun) -> list[dict]:
+        """
+        After a payroll run is POSTED, re-open any bank transactions that were
+        already (mis)categorized BEFORE the run existed but actually settle this
+        run's net pay or CPF, and link them to the run.
+
+        Why: the run JE credits the bank directly for net pay. A salary paid before
+        its run is created gets booked as a standalone expense (also Cr Bank) — so
+        once the run posts, the expense AND the bank outflow are double-counted.
+        This re-opens that premature txn (voids its wrong JE) and links it to the
+        run instead — the analog of invoice_service.run_retroactive_knockoff, and
+        essential for the historical reconciliation where runs are created after
+        the payments landed.
+
+        Same-entity → links to the existing run JE (no new JE). Cross-entity →
+        paired IC JEs. Skips txns already settled via a payroll knock-off.
+        """
+        from src.models.transaction import FinanceTransaction, TransactionStatus
+        from src.models.bank_account import FinanceBankAccount
+        from datetime import timedelta, datetime, UTC
+
+        results: list[dict] = []
+        if run.status != "POSTED" or not run.journal_entry_id:
+            return results
+
+        ba_ids = [
+            r[0] for r in db.query(FinanceBankAccount.id)
+            .filter(FinanceBankAccount.entity_id == run.entity_id).all()
+        ]
+        if not ba_ids:
+            return results
+
+        date_low = run.run_date - timedelta(days=7)
+        date_high = run.run_date + timedelta(days=7)
+
+        slots: list[tuple[str, float]] = []
+        if run.net_payment_transaction_id is None and float(run.net_amount) > 0:
+            slots.append(("net", float(run.net_amount)))
+        if run.cpf_payment_transaction_id is None and float(run.cpf_payable_amount) > 0:
+            slots.append(("cpf", float(run.cpf_payable_amount)))
+
+        for match_type, target in slots:
+            candidates = (
+                db.query(FinanceTransaction)
+                .filter(
+                    FinanceTransaction.bank_account_id.in_(ba_ids),
+                    FinanceTransaction.amount < 0,
+                    FinanceTransaction.transaction_date.between(date_low, date_high),
+                    FinanceTransaction.status.in_([
+                        TransactionStatus.PENDING,
+                        TransactionStatus.MATCHED,
+                        TransactionStatus.RECONCILED,
+                    ]),
+                )
+                .order_by(FinanceTransaction.transaction_date.asc(), FinanceTransaction.id.asc())
+                .all()
+            )
+            match = None
+            for txn in candidates:
+                if txn.categorized_by_logic == "payroll_knockoff":
+                    continue  # already settled via a payroll knock-off
+                amt = abs(float(txn.amount))
+                if abs(amt - target) / target <= 0.02:
+                    match = txn
+                    break
+            if match is None:
+                continue
+
+            # Re-open: void the premature (wrong) JE so it can't double-count.
+            if match.reconciled_journal_entry_id:
+                journal_service.void_entry(
+                    db, match.reconciled_journal_entry_id,
+                    reason=f"retroactive_payroll_knockoff: run {run.id}",
+                )
+
+            bank_account = db.get(FinanceBankAccount, match.bank_account_id)
+            if bank_account is None:
+                continue
+            primary_je = self.create_payroll_payment_entries(
+                db=db, bank_account=bank_account, payroll_run=run,
+                txn_date=match.transaction_date,
+                abs_amount=Decimal(str(abs(float(match.amount)))),
+                match_type=match_type,
+            )
+            match.status = TransactionStatus.MATCHED
+            match.reconciled_journal_entry_id = primary_je.id
+            match.matched_at = datetime.now(UTC)
+            match.categorized_by_logic = "payroll_knockoff"
+            if match_type == "net":
+                run.net_payment_transaction_id = match.id
+            else:
+                run.cpf_payment_transaction_id = match.id
+            results.append({
+                "transaction_id": match.id, "match_type": match_type,
+                "journal_entry_id": primary_je.id,
+            })
+
+        if results:
+            db.commit()
+        return results
+
     def _get_ic_codes(
         self,
         db: Session,

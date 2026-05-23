@@ -473,6 +473,14 @@ class HrPayrollService:
 
         db.commit()
         db.refresh(fin_run)
+
+        # Retroactively knock off any salary/CPF payments that were categorized
+        # before this run existed — prevents double-counting (salary booked as a
+        # standalone expense AND in the run JE). Critical for the historical
+        # reconciliation where runs are created after the payments already landed.
+        from src.services.payroll_service import payroll_service
+        payroll_service.run_retroactive_knockoff(db, fin_run)
+
         return fin_run
 
     def get_run(self, db: Session, run_id: int) -> Optional[FinancePayrollRun]:
