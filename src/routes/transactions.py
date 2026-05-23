@@ -152,6 +152,9 @@ def import_transactions():
 
     # Optional import_batch_id
     import_batch_id = request.form.get('import_batch_id')
+    # auto_categorize=false → stage transactions as IMPORTED and skip categorization
+    # (for bulk historical loads; categorize deliberately later).
+    auto_categorize = request.form.get('auto_categorize', 'true').strip().lower() != 'false'
 
     # Process import
     with db_session() as db:
@@ -160,13 +163,14 @@ def import_transactions():
                 db=db,
                 bank_account_id=bank_account_id,
                 file_bytes=file_bytes,
-                import_batch_id=import_batch_id
+                import_batch_id=import_batch_id,
+                auto_categorize=auto_categorize,
             )
         except ValueError as e:
             raise BadRequestError(str(e))
 
-        # Auto-categorize newly imported transactions
-        if result.get('transactions_created', 0) > 0:
+        # Auto-categorize newly imported transactions (unless staged)
+        if auto_categorize and result.get('transactions_created', 0) > 0:
             try:
                 cat = categorization_service.run(db, bank_account_id=bank_account_id)
                 result['categorization'] = {

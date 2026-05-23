@@ -560,7 +560,8 @@ class TestTransactionStatus:
     def test_enum_members(self):
         """Test that TransactionStatus has all expected members."""
         members = list(TransactionStatus)
-        assert len(members) == 5
+        assert len(members) == 6
+        assert TransactionStatus.IMPORTED in members
         assert TransactionStatus.PENDING in members
         assert TransactionStatus.AWAITING_MATCH in members
         assert TransactionStatus.MATCHED in members

@@ -18,7 +18,9 @@ class TransactionStatus(enum.Enum):
     """
     Status of a bank transaction in the reconciliation workflow.
 
-    - PENDING:         Imported from CSV or Stripe. Awaiting categorization.
+    - IMPORTED:        Staged — imported but the categorization engine has NOT run on
+                       it yet (bulk historical loads). Categorize deliberately later.
+    - PENDING:         Awaiting categorization, or categorization ran with no match.
     - AWAITING_MATCH:  Internal transfer detected (Step 0). Waiting for the
                        counter-transaction on the destination bank account.
                        expected_counterpart_ba_id tells us which account to watch.
@@ -29,6 +31,7 @@ class TransactionStatus(enum.Enum):
     - RECONCILED:      Confirmed correct. Initially approved by a human reviewer;
                        later by an AI agent. Locked for accounting purposes.
     """
+    IMPORTED = "Imported"
     PENDING = "Pending"
     AWAITING_MATCH = "Awaiting Match"
     MATCHED = "Matched"

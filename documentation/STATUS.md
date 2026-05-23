@@ -5,7 +5,7 @@
 **Last updated:** 2026-05-23
 **Overall:** Multi-entity (SG + AU) double-entry accounting platform. The **Capture → Classify → Record** core is strong and green; the **last mile** — financial reports (P&L / Balance Sheet / Business-Line Margin), period close, consolidation — is the thin, mostly-unbuilt part. We're ~75% an ingestion engine, ~25% an accounting system.
 
-**Verified ground truth (2026-05-23):** `pytest tests/ --ignore=tests/stripe_sync` = **576 pass / 0 fail**; `mypy src/ --ignore-missing-imports` = **23 errors / 9 files** (mechanical). Branch `feature/us-018-mypy` ≈ **18 commits ahead of origin** (unpushed since last push).
+**Verified ground truth (2026-05-23):** `pytest tests/ --ignore=tests/stripe_sync` = **584 pass / 0 fail**; `mypy src/ --ignore-missing-imports` = **23 errors / 9 files** (mechanical). Branch `feature/us-018-mypy` is well ahead of origin (unpushed since last push).
 
 **Pointers:** ideal state + mental model → `IDEAL_STATE.md` (vision only; the *gap* + current state live here in STATUS) · deep architecture (archived) → `wip/SYSTEM_OVERVIEW.md` (§-refs below) · diagrams → `visuals/` (`ARCHITECTURE`, `CATEGORIZATION_ROUTES`, `JOURNAL_ENTRY_FLOWS`, `HR_PAYROLL_PROCESS_DIAGRAM`, `FINANCE_SYSTEM_STATE_VS_IDEAL`).
 
@@ -95,7 +95,7 @@ Close each section to "done" before moving on. **Reporting is fixed at the very 
 
 The historical reconciliation needs raw data loaded *without* auto-categorizing, then categorized deliberately in the right order (invoices→accruals first, then bank knock-off). To do:
 
-1. **`IMPORTED` status + decouple import** *(in progress)* — add the enum value (no migration), an `auto_categorize=False` import mode, and have `run()` pick up `IMPORTED` (+ flip ran-but-unmatched → `PENDING`). See §3 decision.
+1. ✅ **`IMPORTED` status + decouple import (DONE 2026-05-23)** — enum value added (no migration), `import_file`/`import_from_rows` gained `auto_categorize` (False → stage as `IMPORTED`, no run), the import route honours `auto_categorize=false`, and `run()` picks up `IMPORTED` + flips the processed batch → `PENDING`. Tests: `test_import_staging.py` (3). See §3 decision.
 2. **Bulk-import the full bank history** → `IMPORTED` (all entities, 2019→now). *(needs the data + the import mode above)*
 3. **Bulk-approve historical invoices** → creates the AP accruals at scale (no per-invoice clicking). Invoices already stage at `DRAFT` (§3).
 4. **Run categorization** on the staged bank txns → AP knock-off settles the invoices; rest categorized. Pairs with the rules/counterparty/RAG analysis (§2.2.3 + the QuickBooks GL data).

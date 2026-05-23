@@ -90,7 +90,7 @@ class CategorizationService:
             Summary: total_processed, categorized, uncategorized, errors, results
         """
         query = db.query(FinanceTransaction).filter(
-            FinanceTransaction.status == TransactionStatus.PENDING
+            FinanceTransaction.status.in_([TransactionStatus.PENDING, TransactionStatus.IMPORTED])
         )
 
         if bank_account_id is not None:
@@ -117,6 +117,15 @@ class CategorizationService:
             query = query.filter(FinanceTransaction.bank_account_id.in_(bank_account_ids))
 
         transactions = query.limit(limit).all()
+
+        # Staged (IMPORTED) txns being processed are now "run on" → mark them PENDING so
+        # the rest of the pipeline (all the `== PENDING` filters) sees them, and IMPORTED
+        # strictly means "engine never ran". Out-of-scope IMPORTED txns stay staged.
+        _staged = [t for t in transactions if t.status == TransactionStatus.IMPORTED]
+        for t in _staged:
+            t.status = TransactionStatus.PENDING
+        if _staged:
+            db.flush()
 
         results: list[dict[str, Any]] = []
         categorized = 0

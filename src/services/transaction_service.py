@@ -202,7 +202,8 @@ class TransactionService:
         db: Session,
         bank_account_id: int,
         file_bytes: bytes,
-        import_batch_id: Optional[str] = None
+        import_batch_id: Optional[str] = None,
+        auto_categorize: bool = True,
     ) -> Dict[str, Any]:
         """
         Import transactions from a file (CSV or PDF) using a bank-specific adapter.
@@ -247,6 +248,7 @@ class TransactionService:
             import_batch_id=import_batch_id,
             source="file_import",
             extra_errors=parse_errors,
+            auto_categorize=auto_categorize,
         )
 
     def import_from_rows(
@@ -258,6 +260,7 @@ class TransactionService:
         import_batch_id: Optional[str] = None,
         source: str = "api_sync",
         extra_errors: Optional[list] = None,
+        auto_categorize: bool = True,
     ) -> Dict[str, Any]:
         """
         Shared import loop used by both CSV and API sync paths.
@@ -321,7 +324,7 @@ class TransactionService:
                     running_balance=normalized.running_balance,
                     value_date=normalized.value_date,
                     fingerprint=fingerprint,
-                    status=TransactionStatus.PENDING,
+                    status=(TransactionStatus.PENDING if auto_categorize else TransactionStatus.IMPORTED),
                     source=source,
                     import_batch_id=import_batch_id,
                     original_csv_row=json.dumps(normalized.to_dict(), default=str),
