@@ -2,10 +2,10 @@
 
 # Status — finance-api
 
-**Last updated:** 2026-05-22
+**Last updated:** 2026-05-23
 **Overall:** Multi-entity (SG + AU) double-entry accounting platform. The **Capture → Classify → Record** core is strong and green; the **last mile** — financial reports (P&L / Balance Sheet / Business-Line Margin), period close, consolidation — is the thin, mostly-unbuilt part. We're ~75% an ingestion engine, ~25% an accounting system.
 
-**Verified ground truth (2026-05-22):** `pytest tests/ --ignore=tests/stripe_sync` = **572 pass / 0 fail**; `mypy src/ --ignore-missing-imports` = **23 errors / 9 files** (mechanical). Branch `feature/us-018-mypy` ≈ **10 commits ahead of origin** (unpushed since last push).
+**Verified ground truth (2026-05-23):** `pytest tests/ --ignore=tests/stripe_sync` = **575 pass / 0 fail**; `mypy src/ --ignore-missing-imports` = **23 errors / 9 files** (mechanical). Branch `feature/us-018-mypy` ≈ **16 commits ahead of origin** (unpushed since last push).
 
 **Pointers:** ideal state + mental model → `IDEAL_STATE.md` (vision only; the *gap* + current state live here in STATUS) · deep architecture (archived) → `wip/SYSTEM_OVERVIEW.md` (§-refs below) · diagrams → `visuals/` (`ARCHITECTURE`, `CATEGORIZATION_ROUTES`, `JOURNAL_ENTRY_FLOWS`, `HR_PAYROLL_PROCESS_DIAGRAM`, `FINANCE_SYSTEM_STATE_VS_IDEAL`).
 
@@ -15,7 +15,7 @@
 
 Close each section to "done" before moving on. **Reporting is fixed at the very end** (Gaurav, 2026-05-22).
 
-1. **Categorization engine** — close the hardening items: cross-entity transfer IC pair · `intercompany_group_id` persistence · payroll-knockoff entity guard · narrow the broad `except` blocks. No external dependency — **start here.** *(§2.2)*
+1. **Categorization engine** — ✅ correctness fixes done (AP, transfers incl. cross-entity pair, payroll entity-preference, except-logging). **Remaining: (a) phase-structure review** — route map done (`visuals/CATEGORIZATION_ROUTES.html`), now evaluating order/precedence; **(b) the RAG pipeline.** *(§2.2)*
 2. **Payroll** — resolve the salary-data source, onboard a pilot, run one real payroll JE end-to-end. *(§2.3)*
 3. **Stripe sync** — E2E-verify the views adapter vs ClickHouse + patch the `code='2'` gap. *(§2.4 — needs ClickHouse)*
 4. **Reconciliation + categorization vs real data** — bank-statement tie-out loop; verify the 244 live rules fire correctly. *(§2.5 — needs a data env)*
