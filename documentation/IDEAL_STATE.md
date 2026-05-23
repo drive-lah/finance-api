@@ -83,6 +83,8 @@ The job of the system, in 8 layers from economic event to financial statement. (
 | 7 | **Report** | P&L, Balance Sheet, Business-Line Margin, cash flow |
 | 8 | **Trust** | Immutable posted JEs, period locks, segregation of duties |
 
+> **Capture is decoupled from Classify.** Raw transactions are *staged* on import (status `IMPORTED`) and classified **deliberately** — never forced at import time. This lets the full history be loaded, the rules/counterparties/RAG corpus prepared, and categorization run in a controlled order (e.g. invoice accruals first, then the bank-payment knock-off). It also makes **historical reconstruction = replay both legs**: load + approve invoices (accrual) and import + categorize bank payments (settlement); the knock-off reconciles them with no double-count (see §3 → order-independent knock-off).
+
 ---
 
 *Visual companions: `visuals/ARCHITECTURE.html`, `visuals/CATEGORIZATION_ROUTES.html`, `visuals/FINANCE_SYSTEM_STATE_VS_IDEAL.html`, `visuals/JOURNAL_ENTRY_FLOWS.html`, `visuals/HR_PAYROLL_PROCESS_DIAGRAM.html`.*

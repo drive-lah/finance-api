@@ -91,6 +91,15 @@ Close each section to "done" before moving on. **Reporting is fixed at the very 
 
 > **Correctness fixes COMPLETE** (2026-05-23): AP fixed · transfer pairing sound · cross-entity allocation + transfer both use IC recv/payable pair · payroll entity-preference + except-logging · intercompany_group_id verified fine. **Remaining to close the engine: (1) phase-structure review, (2) the RAG pipeline.**
 
+### 2.2.2 Bulk historical import + `IMPORTED` decoupling (enabler for the 6-year reconciliation)
+
+The historical reconciliation needs raw data loaded *without* auto-categorizing, then categorized deliberately in the right order (invoices→accruals first, then bank knock-off). To do:
+
+1. **`IMPORTED` status + decouple import** *(in progress)* — add the enum value (no migration), an `auto_categorize=False` import mode, and have `run()` pick up `IMPORTED` (+ flip ran-but-unmatched → `PENDING`). See §3 decision.
+2. **Bulk-import the full bank history** → `IMPORTED` (all entities, 2019→now). *(needs the data + the import mode above)*
+3. **Bulk-approve historical invoices** → creates the AP accruals at scale (no per-invoice clicking). Invoices already stage at `DRAFT` (§3).
+4. **Run categorization** on the staged bank txns → AP knock-off settles the invoices; rest categorized. Pairs with the rules/counterparty/RAG analysis (§2.2.3 + the QuickBooks GL data).
+
 ### 2.3 Payroll — make it real
 
 Engine verified (mock SG CPF + AU Super/PAYG → balanced JEs) and onboarding now wires comp + deductions. **Live DB: every `hr_*` table + `finance_payroll_runs` = 0** — built but never run; 81 employees exist only as counterparties; the roster CSV's salary columns are **blank**. **The one blocker: source/fill each employee's salary + deduction data**, then onboard a pilot and run one real payroll. Triggers + FE wiring: §4.2. Canonical service: `hr_payroll_service` (§3). **For the historical reconciliation:** runs created after the fact now auto-correct already-categorized salary payments via the retroactive payroll knock-off (§2.2) — no double-counting when out-of-order runs are posted.
@@ -132,6 +141,9 @@ Views-based adapter is restored + clean (`sync_month` → `_generate_all_je_spec
 | Employees as counterparties | `finance_counterparties.type="employee"`; `users` table is source of truth; counterparty is a synced read-copy (§3.7.1) |
 | Salary expense COA (Option C) | Derived from `teams` at onboarding (CS→5063, On-Ground→5061, else→6000); recalc on team change |
 | Categorization: rules before defaults | Phase 4A rules win over Phase 4B `default_account_code` (§3.7) |
+| **Import decoupled from categorization** (2026-05-23) | Add an `IMPORTED` transaction status (= imported, engine never run). Import gains `auto_categorize` (default True = current behaviour; False = stage as `IMPORTED`, no run). `run()` processes `IMPORTED` + `PENDING`; an `IMPORTED` txn the engine *ran on* but didn't match → `PENDING` (so `IMPORTED` strictly = untouched). Status is a string column (`native_enum=False`) → **no DB migration**. |
+| **Historical reconciliation = replay both legs** (2026-05-23) | To rebuild 6 years of books: **stage bank txns (`IMPORTED`) → bulk-import + bulk-approve invoices (creates AP accruals) → run categorization on the bank txns** (AP knock-off settles them; rest categorized). Replaying invoice accrual + bank payment nets to `Dr Expense / Cr Bank`, AP → 0, no double-count. Retroactive AP + payroll knock-offs cover out-of-order arrivals. |
+| **No separate historical-invoice mode** (2026-05-23) | Invoice `DRAFT` is *already* the "imported, LLM-extracted, not posted" stage (the invoice analog of `IMPORTED`). Accrual JE fires only at `APPROVED`; settlement via `record_payment` (the knock-off). So historical invoices use the standard path — just need a **bulk-approve**. |
 
 ---
 
