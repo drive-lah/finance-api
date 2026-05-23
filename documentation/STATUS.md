@@ -5,7 +5,7 @@
 **Last updated:** 2026-05-23
 **Overall:** Multi-entity (SG + AU) double-entry accounting platform. The **Capture → Classify → Record** core is strong and green; the **last mile** — financial reports (P&L / Balance Sheet / Business-Line Margin), period close, consolidation — is the thin, mostly-unbuilt part. We're ~75% an ingestion engine, ~25% an accounting system.
 
-**Verified ground truth (2026-05-23):** `pytest tests/ --ignore=tests/stripe_sync` = **575 pass / 0 fail**; `mypy src/ --ignore-missing-imports` = **23 errors / 9 files** (mechanical). Branch `feature/us-018-mypy` ≈ **16 commits ahead of origin** (unpushed since last push).
+**Verified ground truth (2026-05-23):** `pytest tests/ --ignore=tests/stripe_sync` = **576 pass / 0 fail**; `mypy src/ --ignore-missing-imports` = **23 errors / 9 files** (mechanical). Branch `feature/us-018-mypy` ≈ **18 commits ahead of origin** (unpushed since last push).
 
 **Pointers:** ideal state + mental model → `IDEAL_STATE.md` (vision only; the *gap* + current state live here in STATUS) · deep architecture (archived) → `wip/SYSTEM_OVERVIEW.md` (§-refs below) · diagrams → `visuals/` (`ARCHITECTURE`, `CATEGORIZATION_ROUTES`, `JOURNAL_ENTRY_FLOWS`, `HR_PAYROLL_PROCESS_DIAGRAM`, `FINANCE_SYSTEM_STATE_VS_IDEAL`).
 
@@ -89,7 +89,7 @@ Close each section to "done" before moving on. **Reporting is fixed at the very 
 
 ### 2.3 Payroll — make it real
 
-Engine verified (mock SG CPF + AU Super/PAYG → balanced JEs) and onboarding now wires comp + deductions. **Live DB: every `hr_*` table + `finance_payroll_runs` = 0** — built but never run; 81 employees exist only as counterparties; the roster CSV's salary columns are **blank**. **The one blocker: source/fill each employee's salary + deduction data**, then onboard a pilot and run one real payroll. Triggers + FE wiring: §4.2. Canonical service: `hr_payroll_service` (§3).
+Engine verified (mock SG CPF + AU Super/PAYG → balanced JEs) and onboarding now wires comp + deductions. **Live DB: every `hr_*` table + `finance_payroll_runs` = 0** — built but never run; 81 employees exist only as counterparties; the roster CSV's salary columns are **blank**. **The one blocker: source/fill each employee's salary + deduction data**, then onboard a pilot and run one real payroll. Triggers + FE wiring: §4.2. Canonical service: `hr_payroll_service` (§3). **For the historical reconciliation:** runs created after the fact now auto-correct already-categorized salary payments via the retroactive payroll knock-off (§2.2) — no double-counting when out-of-order runs are posted.
 
 ### 2.4 Stripe sync — finish (needs ClickHouse access)
 

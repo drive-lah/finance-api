@@ -109,7 +109,9 @@ The job of the system, in 8 layers from economic event to financial statement. (
 
 **Cross-entity** (bank entity ≠ invoice entity) — paired intercompany JEs sharing one `intercompany_group_id`, using a proper **receivable/payable pair** (not one shared code): bank entity `Dr IC Receivable / Cr Bank`; invoice entity `Dr 2000 AP / Cr IC Payable`. (Handled by `invoice_service.create_ap_payment_entries` via the IC-pair lookup.)
 
-> **Implementation:** the engine should *select* the invoice (3-case) then call `invoice_service.match_transaction(invoice_id, txn_id)` — which does the JE + `record_payment` + marks Matched. The candidate list comes from `get_open_for_match`. (Fixes BUG-1, which called a non-existent `find_matching_invoice`.)
+**Order-independent (retroactive) — a general knock-off principle.** The payment may arrive *before* the obligation is recorded. Both directions must be handled with no double-count: **forward** (obligation exists → payment matched live) and **retroactive** (payment booked first as a plain expense → when the obligation is later recorded, a retroactive pass re-opens the premature payment, voids its wrong JE, and knocks it off). **This applies equally to payroll** — a salary paid before its run exists is re-opened and linked when the run posts (`payroll_service.run_retroactive_knockoff`, triggered by `submit_run`). Essential whenever obligations are entered after the fact (e.g. historical reconciliation).
+
+> **Implementation:** the engine should *select* the invoice (3-case) then call `invoice_service.match_transaction(invoice_id, txn_id)` — which does the JE + `record_payment` + marks Matched. The candidate list comes from `get_open_for_match`. (Fixes BUG-1, which called a non-existent `find_matching_invoice`.) Retroactive AP = `invoice_service.run_retroactive_knockoff` (on approval); retroactive payroll = `payroll_service.run_retroactive_knockoff` (on run post).
 
 ### Categorization engine — design principle (ideal state, 2026-05-22)
 
