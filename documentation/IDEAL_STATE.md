@@ -85,7 +85,7 @@ The job of the system, in 8 layers from economic event to financial statement. (
 
 ---
 
-*Visual companions: `visuals/ARCHITECTURE.html`, `visuals/FINANCE_SYSTEM_STATE_VS_IDEAL.html`, `visuals/JOURNAL_ENTRY_FLOWS.html`, `visuals/HR_PAYROLL_PROCESS_DIAGRAM.html`.*
+*Visual companions: `visuals/ARCHITECTURE.html`, `visuals/CATEGORIZATION_ROUTES.html`, `visuals/FINANCE_SYSTEM_STATE_VS_IDEAL.html`, `visuals/JOURNAL_ENTRY_FLOWS.html`, `visuals/HR_PAYROLL_PROCESS_DIAGRAM.html`.*
 
 ---
 

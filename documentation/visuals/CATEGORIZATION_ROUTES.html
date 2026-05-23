@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Categorization Engine — Every Route a Transaction Takes to a JE</title>
+<style>
+  :root{
+    --ink:#0f1729; --muted:#5b6677; --line:#e6e9ef; --panel:#fff;
+    --green:#16a34a; --green-bg:#e9f8ef; --amber:#d97706; --amber-bg:#fdf3e3;
+    --red:#dc2626; --red-bg:#fdeceb; --blue:#1e6fd9; --blue-bg:#eaf2fd;
+    --purple:#7c3aed; --purple-bg:#f1eafe; --slate:#334155; --gray:#94a0b0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#eef1f6;color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1240px;margin:0 auto;padding:28px 24px 56px;}
+  .hero{background:linear-gradient(135deg,#10243f 0%,#0f1419 60%,#15243a 100%);color:#fff;
+    border-radius:16px;padding:24px 30px;box-shadow:0 12px 30px rgba(15,20,25,.18);}
+  .hero h1{margin:0 0 5px;font-size:25px;font-weight:760;letter-spacing:-.4px;}
+  .hero p{margin:0;color:#aebbcd;font-size:14px;max-width:900px;line-height:1.5;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:14px 2px 0;font-size:12px;color:var(--slate);}
+  .legend span{display:inline-flex;align-items:center;gap:6px;font-weight:600;}
+  .sw{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid rgba(0,0,0,.1)}
+  .sw-claim{background:var(--blue-bg);border-color:var(--blue)} .sw-tf{background:var(--amber-bg);border-color:var(--amber)}
+  .sw-je{background:#0f1729} .sw-no{background:#eef1f6;border-color:var(--gray)}
+  .start{text-align:center;margin:20px auto 0;max-width:520px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px;font-weight:700;font-size:13.5px;box-shadow:0 3px 10px rgba(20,30,50,.05)}
+  .start small{display:block;font-weight:500;color:var(--muted);font-size:11.5px;margin-top:2px}
+  .down{text-align:center;color:#9aa6b6;font-size:12px;font-weight:700;margin:7px 0;letter-spacing:.3px}
+  .row{display:grid;grid-template-columns:300px 70px 1fr;gap:10px;align-items:center;margin:0 auto;max-width:1040px;}
+  .stage{border-radius:12px;padding:12px 15px;box-shadow:0 3px 10px rgba(20,30,50,.06);}
+  .stage.claim{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--blue)}
+  .stage.transform{background:var(--amber-bg);border:1px solid #f0d9a8;border-left:5px solid var(--amber)}
+  .stage h3{margin:0 0 3px;font-size:14px;font-weight:740}
+  .stage .ph{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--blue)}
+  .stage.transform .ph{color:var(--amber)}
+  .stage p{margin:3px 0 0;font-size:11.5px;color:var(--slate);line-height:1.45}
+  .arrow{text-align:center;font-size:11px;font-weight:800;color:var(--green)}
+  .arrow.none{color:var(--amber)}
+  .outs{display:flex;flex-direction:column;gap:7px}
+  .route{border-radius:9px;padding:8px 12px;font-size:12px;display:flex;gap:9px;align-items:flex-start}
+  .route.je{background:#0f1729;color:#dbe6f5}
+  .route.je b{color:#fff}
+  .route.no{background:#eef1f6;border:1px dashed var(--gray);color:var(--slate)}
+  .route.tf{background:#fff;border:1px solid #f0d9a8;color:#7a4d05}
+  .rid{font-weight:800;font-size:11px;background:rgba(255,255,255,.14);border-radius:5px;padding:1px 7px;white-space:nowrap}
+  .route.no .rid,.route.tf .rid{background:rgba(0,0,0,.06)}
+  .dep{font-size:9.5px;font-weight:800;color:#13509f;background:var(--blue-bg);border-radius:999px;padding:1px 7px;margin-left:6px;white-space:nowrap}
+  .je .je-detail{color:#9fc4f5;font-size:11px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px 18px;margin-top:22px;box-shadow:0 3px 10px rgba(20,30,50,.05)}
+  .panel h2{margin:0 0 8px;font-size:12.5px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:800}
+  .panel ul{margin:0;padding-left:18px;font-size:12.5px;color:var(--slate);line-height:1.6}
+  .panel code{background:#f3f5f9;padding:1px 5px;border-radius:5px;font-size:11.5px}
+  @media(max-width:820px){.row{grid-template-columns:1fr}.arrow{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <h1>Categorization — Every Route a Transaction Takes</h1>
+    <p>A <b>first-claim-wins cascade</b>: a PENDING bank transaction is offered to each stage in order. A <b>claim stage</b> either claims it (→ a journal entry) or passes it down. The one <b>transform stage</b> (enrichment) claims nothing — it just resolves <i>who</i> the counterparty is, which several later routes depend on.</p>
+    <div class="legend">
+      <span><span class="sw sw-claim"></span> Claim stage</span>
+      <span><span class="sw sw-tf"></span> Transform stage (enrichment)</span>
+      <span><span class="sw sw-je"></span> Outcome with a JE</span>
+      <span><span class="sw sw-no"></span> Outcome with no JE (awaits human)</span>
+      <span><span class="dep" style="margin:0">needs cp</span> route depends on enrichment</span>
+    </div>
+  </div>
+
+  <div class="start">Bank file imported → transaction = <code style="background:#eef1f6;padding:1px 5px;border-radius:4px">PENDING</code> (no JE) → import auto-runs <code style="background:#eef1f6;padding:1px 5px;border-radius:4px">run()</code><small>Each stage below runs in order; the first to claim wins.</small></div>
+  <div class="down">▼</div>
+
+  <!-- Phase 0 -->
+  <div class="row">
+    <div class="stage claim"><div class="ph">Phase 0</div><h3>Transfer pairing</h3><p>Is this the counter-leg of an existing <code>AWAITING_MATCH</code> transfer? (opposite sign, ±2%, ±5 days, on the expected account)</p></div>
+    <div class="arrow">claims&nbsp;▶</div>
+    <div class="outs"><div class="route je"><span class="rid">1</span><div><b>MATCHED</b> — attaches to the <b>existing</b> transfer JE. <span class="je-detail">(no new JE — shares the first leg's)</span></div></div></div>
+  </div>
+  <div class="down">↓ not claimed</div>
+
+  <!-- Phase 0.5 -->
+  <div class="row">
+    <div class="stage claim"><div class="ph">Phase 0.5</div><h3>Internal-transfer rules</h3><p>Matches an <code>INTERNAL_TRANSFER</code> rule (description text)? Deterministic, counterparty-independent → runs before enrichment.</p></div>
+    <div class="arrow">claims&nbsp;▶</div>
+    <div class="outs">
+      <div class="route je"><span class="rid">2a</span><div><b>AWAITING_MATCH</b> + <b>new transfer JE</b> <span class="je-detail">(counter not imported yet; intra = 1 JE, cross-entity = 2 paired IC JEs)</span></div></div>
+      <div class="route je"><span class="rid">2b</span><div>both <b>MATCHED</b> + transfer JE <span class="je-detail">(counter already present → paired immediately)</span></div></div>
+    </div>
+  </div>
+  <div class="down">↓ not claimed</div>
+
+  <!-- Phase 1 ENRICHMENT -->
+  <div class="row">
+    <div class="stage transform"><div class="ph">Phase 1 · transform</div><h3>★ Counterparty enrichment</h3><p>Resolves raw bank text → a known party: <b>L1</b> exact → <b>L2</b> fuzzy (≥88) → <b>L3</b> LLM. Sets <code>counterparty_id</code> (the <i>WHO</i>).</p></div>
+    <div class="arrow none">no&nbsp;claim</div>
+    <div class="outs"><div class="route tf"><span class="rid">—</span><div><b>No JE, no claim.</b> Only annotates the txn with its counterparty, then passes it on. (Transfers claimed above never reach here.) The routes marked <span class="dep" style="margin:0">needs cp</span> below depend on this.</div></div></div>
+  </div>
+  <div class="down">↓ passes through (now enriched)</div>
+
+  <!-- Phase 2 AP -->
+  <div class="row">
+    <div class="stage claim"><div class="ph">Phase 2</div><h3>AP invoice knock-off <span class="dep">needs cp</span></h3><p>Counterparty has open invoices? 3-case match (ref → FIFO → none).</p></div>
+    <div class="arrow">claims&nbsp;▶</div>
+    <div class="outs">
+      <div class="route je"><span class="rid">3a</span><div><b>MATCHED</b> + AP payment JE <span class="je-detail">(Dr 2000 / Cr Bank; cross-entity → paired IC JEs); invoice marked paid</span></div></div>
+      <div class="route je"><span class="rid">3b</span><div><b>MATCHED</b> + asset-park JE <span class="je-detail">(amount matches no invoice → Dr 1300 / Cr Bank)</span></div></div>
+    </div>
+  </div>
+  <div class="down">↓ not claimed</div>
+
+  <!-- Phase 3 Payroll -->
+  <div class="row">
+    <div class="stage claim"><div class="ph">Phase 3</div><h3>Payroll knock-off</h3><p>Outgoing txn matches a POSTED payroll run's net/CPF? (±2% / ±7d, same-entity preferred)</p></div>
+    <div class="arrow">claims&nbsp;▶</div>
+    <div class="outs"><div class="route je"><span class="rid">4</span><div><b>MATCHED</b> + payroll payment JE <span class="je-detail">(same-entity link / cross-entity paired IC JEs)</span></div></div></div>
+  </div>
+  <div class="down">↓ not claimed</div>
+
+  <!-- Phase 4 -->
+  <div class="row">
+    <div class="stage claim"><div class="ph">Phase 4</div><h3>Classification ladder<br>4A rules → 4B default → 4D AI</h3><p>The fallback ladder, in order.</p></div>
+    <div class="arrow">claims&nbsp;▶</div>
+    <div class="outs">
+      <div class="route je"><span class="rid">5</span><div><b>4A rule match</b> → MATCHED + JE per rule (±GST)</div></div>
+      <div class="route je"><span class="rid">6</span><div><b>4B counterparty default</b> <span class="dep">needs cp</span> → MATCHED + JE on <code style="color:#9fc4f5">default_account_code</code></div></div>
+      <div class="route je"><span class="rid">7a</span><div><b>4D AI</b>, confidence ≥ 0.80 → MATCHED + JE (AI COA) &nbsp;◀ <b>RAG plugs in here</b></div></div>
+      <div class="route no"><span class="rid">7b</span><div><b>4D AI</b>, confidence &lt; 0.80 → <b>NEEDS_REVIEW</b> (no JE — awaits human)</div></div>
+      <div class="route no"><span class="rid">8</span><div>Nothing matched → stays <b>PENDING</b> (manual queue — no JE)</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Human / secondary routes (after the cascade)</h2>
+    <ul>
+      <li><b>7b NEEDS_REVIEW</b> → <code>resolve_needs_review</code> → JE + MATCHED.</li>
+      <li><b>8 PENDING</b> → <code>manual_categorize</code> → JE + MATCHED.</li>
+      <li><b>Any MATCHED / AWAITING</b> → <b>approve</b> → the DRAFT JE flips to <b>POSTED</b>, txn → <b>RECONCILED</b> <i>(the ledger gate — only now is it in the reports)</i>; <b>reject</b> → JE voided, txn → PENDING.</li>
+      <li><b>Retroactive AP</b>: an invoice approved later can re-open a previously-categorized payment and knock it off.</li>
+    </ul>
+  </div>
+
+  <div class="panel">
+    <h2>Reading it for the phase review</h2>
+    <ul>
+      <li>Every JE-producing route (1–7a) creates a <b>DRAFT</b> JE; reconcile/approve posts it. "Lands as a JE" = claimed by routes 1–7a.</li>
+      <li><b>Enrichment is the only non-claiming stage</b> — it gates routes <b>3a/3b</b>, <b>6</b>, and counterparty-<i>type</i> rules inside <b>5</b>. Routes keyed on description/amount don't need it.</li>
+      <li>Strict <b>first-claim-wins</b> — the open question for the review: can two stages plausibly both claim the same txn (precedence ambiguity)? e.g. a salary payment that also matches an expense rule.</li>
+      <li><b>RAG's home is Route 7</b> (4D AI) — it only ever sees what routes 1–6 couldn't claim.</li>
+    </ul>
+  </div>
+
+</div>
+</body>
+</html>
