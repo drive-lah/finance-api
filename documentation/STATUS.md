@@ -170,7 +170,7 @@ Source of truth: `tms-trips-service/docs/migration/CROSS-SERVICE.md`. Finance ow
 |---|------------|--------|
 | F-1 | Owns the `code → category_id` COA map (PGW/Payout store the FK) | Pending — publish map |
 | F-2 | Provides the GST taxability map → seeds `ps_line_item_definitions.gst_treatment` | Pending — **single outstanding blocker for the TMS pricing lane** |
-| F-3 | Migrate finance reporting to consume the TMS two-party line-item ledger; retire the raw-Stripe revenue/COGS source | Not started |
+| F-3 | Migrate finance reporting to consume the TMS economic-event source; retire the raw-Stripe revenue/COGS source. **Mechanism DECIDED 2026-05-25 (TMS CROSS-SERVICE `XSD-76`): an EVENT FEED, not finance-api querying PGW's DB.** PGW + Payout **emit events** (`{event_type, payment/payin refs, actual amount, pricingId}`, transactional outbox) → finance-api's **economic-event adapter** (the `EconomicEventSource` seam) projects them into JEs (`event_type → JE template` + per-line `account`/`gst`/`earned_at` from pricing). PGW/Payout post NO JEs. Awaiting the **PGW event catalog** (TMS PGW STATUS TD-22 — every emitted event + payload + which finance-api consumes). | Not started (event-feed; XSD-76) |
 | F-4 | Owns USD consolidation as a reporting layer above per-tenant ledgers (owns the FX rate) | Not started |
 | F-5 | `earned_at`: trip-revenue lines = trip completion; all others = invoice creation | Locked 2026-05-21 |
 
