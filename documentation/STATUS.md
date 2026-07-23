@@ -2,10 +2,10 @@
 
 # Status — finance-api
 
-**Last updated:** 2026-05-23
-**Overall:** Multi-entity (SG + AU) double-entry accounting platform. The **Capture → Classify → Record** core is strong and green; the **last mile** — financial reports (P&L / Balance Sheet / Business-Line Margin), period close, consolidation — is the thin, mostly-unbuilt part. We're ~75% an ingestion engine, ~25% an accounting system.
+**Last updated:** 2026-07-23
+**Overall:** Multi-entity (SG + AU) double-entry accounting platform. The **Capture → Classify → Record** core is strong and green; the **last mile** — financial reports (P&L / Balance Sheet / Business-Line Margin), period close, consolidation — is the thin, mostly-unbuilt part. We're ~75% an ingestion engine, ~25% an accounting system. **Active workstream (2026-06-01):** the **6-year historical reconciliation** — full QuickBooks GL received for all 3 entities; bank statements partial (recent ~12–18 mo missing). Stage-1 corpus/rule mining now exists as the `CorpusMining` skill (§2.2.3).
 
-**Verified ground truth (2026-05-23):** `pytest tests/ --ignore=tests/stripe_sync` = **584 pass / 0 fail**; `mypy src/ --ignore-missing-imports` = **23 errors / 9 files** (mechanical). Branch `feature/us-018-mypy` is well ahead of origin (unpushed since last push).
+**Verified ground truth (2026-07-23):** `pytest tests/ --ignore=tests/stripe_sync` = **584 pass / 0 fail** and `mypy src/ --ignore-missing-imports` = **23 errors / 9 files** as of 2026-05-23; the entire reconciliation workstream since then lives under `.claude/` + `documentation/` (`src/` + `tests/` untouched, so those counts hold). **Committed locally 2026-07-23** (branch `feature/us-018-mypy`, ahead of origin, unpushed). Canonical docs: STATUS (state) · IDEAL_STATE (vision) · KNOWLEDGE (business facts).
 
 **Pointers:** ideal state + mental model → `IDEAL_STATE.md` (vision only; the *gap* + current state live here in STATUS) · deep architecture (archived) → `wip/SYSTEM_OVERVIEW.md` (§-refs below) · diagrams → `visuals/` (`ARCHITECTURE`, `CATEGORIZATION_ROUTES`, `JOURNAL_ENTRY_FLOWS`, `HR_PAYROLL_PROCESS_DIAGRAM`, `FINANCE_SYSTEM_STATE_VS_IDEAL`).
 
@@ -91,6 +91,31 @@ Close each section to "done" before moving on. **Reporting is fixed at the very 
 
 > **Correctness fixes COMPLETE** (2026-05-23): AP fixed · transfer pairing sound · cross-entity allocation + transfer both use IC recv/payable pair · payroll entity-preference + except-logging · intercompany_group_id verified fine. **Remaining to close the engine: (1) phase-structure review, (2) the RAG pipeline.**
 
+### 2.2.1 Reconciliation data on hand (inventory as of 2026-06-01)
+
+Raw data lives in `documentation/wip/qb_ledgers/` (QuickBooks GL) and `documentation/wip/bank_statements/` (PDF statements). **3 real entities** (Fleet entities folded in — see §3 decision).
+
+**QuickBooks General Ledger — ✅ COMPLETE for all entities** (the categorization corpus + the authoritative "answer key"):
+
+| Entity | GL span | Notes |
+|--------|---------|-------|
+| Drive lah Pte Ltd (SG) | 2019-06 → 2026 | 4 overlapping export windows (dedup on load); **+ Drive lah Fleet folded in** |
+| Drive lah Ventures Holding (SG) | 2019 → 2026 | all-time |
+| Drive lah Australia (AU) | 2022 → 2025 | all-time CSV; **+ Drive mate fleet folded in** |
+
+**Bank statements — partial; all four formats parse with existing adapters** (`ocbc`, `cba`, `dbs` — DBS PDF routes SGD+USD per-currency from one file):
+
+| Account | Entity | Have | ❌ Missing (user to supply) |
+|---------|--------|------|------------------------------|
+| OCBC 1001 (713147601001) | DL Pte Ltd (SG) | Feb 2020 → Dec 2024 (monthly, clean) | **Jan 2025 → now** |
+| OCBC 3001 (588154393001) | DL Pte Ltd (SG) | all 2023–2024; parts of 2020–21 | **all 2022**, scattered 2020–21, **Jan 2025 → now** |
+| DBS (072-669493-3, SGD+USD) | Ventures Holding | Jun 2022 → Oct 2025 (both currencies/file) | Jan–May 2022, **Nov 2025 → now** |
+| CBA (06-2246-10347311) | DL Australia | Sep 2022 → Sep 2025 (stmts 5–17, quarterly, continuous) | stmts 1–4 (pre-Sep 2022), **Oct 2025 → now** |
+
+Duplicates found (safe to ignore/delete): ~10 byte-identical CBA re-downloads (same statement #), 1 DBS (Sep 2022). No content loss.
+
+**Net:** the **bulk of 2020–2024/25 is reconcilable now**; the main hole is the **recent ~12–18 months** (all SG accounts) + OCBC-3001's 2022. QB GL has zero gaps.
+
 ### 2.2.2 Bulk historical import + `IMPORTED` decoupling (enabler for the 6-year reconciliation)
 
 The historical reconciliation needs raw data loaded *without* auto-categorizing, then categorized deliberately in the right order (invoices→accruals first, then bank knock-off). To do:
@@ -99,6 +124,28 @@ The historical reconciliation needs raw data loaded *without* auto-categorizing,
 2. **Bulk-import the full bank history** → `IMPORTED` (all entities, 2019→now). *(needs the data + the import mode above)*
 3. **Bulk-approve historical invoices** → creates the AP accruals at scale (no per-invoice clicking). Invoices already stage at `DRAFT` (§3).
 4. **Run categorization** on the staged bank txns → AP knock-off settles the invoices; rest categorized. Pairs with the rules/counterparty/RAG analysis (§2.2.3 + the QuickBooks GL data).
+
+### 2.2.3 Stage-1 corpus + rule mining — `CorpusMining` skill (built 2026-06-01)
+
+The "analyze the GL before categorizing" step is now a **re-runnable project skill**: `.claude/skills/CorpusMining/` (SKILL.md + `Buckets.md` + `DataLayout.md` + `Workflows/{MineBuckets,PromoteBuckets}.md` + `Tools/MineBuckets.py`). It decomposes every **bank-section** GL line into 7 handling buckets — A vendors · B rule-candidates · C transfers/IC · D AP settlements · E accrual/depreciation (excluded) · F revenue/Stripe boundary · **G RAG residual (the corpus, only what's left after A–F)** — and writes them to `documentation/wip/reconciliation/` (`_aggregate/` + `per_entity/` + `README.md` index).
+
+Handles **two GL shapes** (AU GL-CSV with a `Split` contra; SG/Ventures grouped xlsx → contra read from `Journal.xlsx` double-entry blocks), folds the mock Fleet entities into their parent, dedupes overlapping SG windows, and **diffs A vs the live `finance_counterparties` export and B vs the live `qb_rules` export** to flag NEW items.
+
+**First full run (all 3 entities, 72,837 bank records):** A=776 vendors · B=346 rule-candidates (≥90% purity, ≥5 hits) · C=27,394 transfers/IC · D=2,023 AP · E=138 accrual patterns · F=21 revenue patterns · **G=6,944 corpus residual**. Already surfaced data-quality findings (SG Stripe payouts booked to "Uncategorised Income"; Ventures inflows = investor share capital). **Counterparty seeds (bucket A) DONE + rule seeds (bucket B) DONE + bridge AUDITED (2026-07-23, see §2.2.4 + `wip/reconciliation/TRIAGE_2026-07-23.md`):** SG = 61 rules + 3 transfer-rules (Stripe settlements), AU = 24 rules, all gate-checked vs COA v2; bridge = 140/238 labels resolved (audit: June wave 94% clean, 2 errors fixed, 3 UNSURE answered by Gaurav — Security Deposit → 2110 held-liability; R&D-Software + Gross-Other-Income → review at replay). Remaining bridge tail (71 review rows) = low-usage, non-blocking. **Next:** persist the G corpus into `CategorizationRetriever`, then wire RAG into Phase 4D (§2.2 item 3a).
+
+**Scope:** `CorpusMining` = **Stage 1 only** (read-only GL analysis, runs per-entity + aggregate; reads the ledger, NOT the bank statements — the GL already carries each bank line's shape + COA translation). **Stage 2 (the reconciliation *execution*: import bank statements → categorize → reconcile) is a separate concern — structure DEFERRED (2026-06-01, "decide later").** ⚠️ **Stage-2 requirement (confirmed):** before relying on the Stage-1 rules/corpus, **cross-check raw bank-statement descriptions vs the GL `Memo`** the corpus was trained on — catch QuickBooks-renamed descriptions (drift) so the rules actually fire on import text. Also do a bank↔GL coverage diff (every bank line recorded?).
+
+### 2.2.4 Historical reconciliation — workstream state (canonical; business facts live in `KNOWLEDGE.md`)
+
+| # | Item | State |
+|---|------|-------|
+| S-1 | **COA bridge** (238 QB labels → COA v2) | 140 resolved (June wave audited: 94% clean, 2 fixed; all high-impact labels approved incl. Fleet family, RMS decision); 71-row low-usage tail parked; 2 labels deliberately "review at replay" (R&D-Software, Gross-Other-Income). Sentinels: `TRANSFER` / `SPLIT` / `ENTITY-DEPENDENT`. |
+| S-2 | **Counterparties** | ✅ **CLOSED 2026-07-23** — `wip/reconciliation/seed_counterparties_FINAL.csv` = **556 rows / 534 active** (post identity-harvest + red-team audit + Gaurav's 14-decision walk of rule-name identities: +60 rule-derived aliases, 41 parties created incl. RMS individuals/support team/photographers/SaaS vendors, CircleCI merge, dead-alias fixes, new COA account 6004 Staff Health Insurance); manifest **240 insert · 62 enrich · 25 correct · 162 no-op · 22 deactivate**; both-way live-DB capture verified (0 live records missing); gates green (codes ∈ COA v2, names paired from COA, zero alias collisions). 6 Gaurav review passes; per-entity provenance files beside it. |
+| S-3 | **Rules** | Mined 346 → **29 survivors** (patterns naming known parties dropped per POL-13). Vs 244 live rules: 8 exist · **1 conflict · 20 new — GAURAV REVIEW PENDING** (paused). Identity harvest DONE: 90 identity-setting live rules audited — 72 alias-covered, junk rejected, 4 conflicts resolved by Gaurav; at apply those 90 rules lose their counterparty action (POL-12). Still queued: scope the 240 unscoped live rules (DQ-7). File: `wip/reconciliation/seed_rules_FINAL.csv`. |
+| S-4 | **Corpus (bucket G → retriever)** | Not started — sequenced after counterparties apply (Gaurav). |
+| S-5 | **Apply to DB** | Blocked on: target-DB decision (Gaurav paused: live-with-dry-run vs non-prod copy) + guarded apply path (UPSERT per POL-15, backup-first, transactional, incl. 22 deactivations). |
+| S-6 | **Data gaps (Gaurav to supply)** | Recent ~12–18 mo bank statements (all SG accts) + OCBC-3001 2022 · booking-level RMS data (FLOW-6) · a non-prod DB. |
+| S-7 | **Deferred** | Raw-bank-statement pattern mining (aliases from true bank text + bank↔GL coverage diff) · live COA drift 155 vs 135 (DQ-11) · live artifact-vendor cleanup (DQ-8). |
 
 ### 2.3 Payroll — make it real
 
@@ -144,6 +191,8 @@ Views-based adapter is restored + clean (`sync_month` → `_generate_all_je_spec
 | **Import decoupled from categorization** (2026-05-23) | Add an `IMPORTED` transaction status (= imported, engine never run). Import gains `auto_categorize` (default True = current behaviour; False = stage as `IMPORTED`, no run). `run()` processes `IMPORTED` + `PENDING`; an `IMPORTED` txn the engine *ran on* but didn't match → `PENDING` (so `IMPORTED` strictly = untouched). Status is a string column (`native_enum=False`) → **no DB migration**. |
 | **Historical reconciliation = replay both legs** (2026-05-23) | To rebuild 6 years of books: **stage bank txns (`IMPORTED`) → bulk-import + bulk-approve invoices (creates AP accruals) → run categorization on the bank txns** (AP knock-off settles them; rest categorized). Replaying invoice accrual + bank payment nets to `Dr Expense / Cr Bank`, AP → 0, no double-count. Retroactive AP + payroll knock-offs cover out-of-order arrivals. |
 | **No separate historical-invoice mode** (2026-05-23) | Invoice `DRAFT` is *already* the "imported, LLM-extracted, not posted" stage (the invoice analog of `IMPORTED`). Accrual JE fires only at `APPROVED`; settlement via `record_payment` (the knock-off). So historical invoices use the standard path — just need a **bulk-approve**. |
+| **Only 3 real entities — "Fleet" entities are mock RMS buckets** (2026-06-01) | `Drive lah Fleet` (SG) and `Drive mate fleet` (AU) are **mock entities** created only to separate out **RMS (Rental Management Service) payments**. They are NOT independent legal entities. Fold their QuickBooks GL into the parent on import: **Drive lah Fleet → Drive lah Pte Ltd (SG)**; **Drive mate fleet → Drive lah Australia Pty Ltd (AU)**. Real entity set = **3**: Drive lah Pte Ltd (SG), Drive lah Ventures Holding (SG), Drive lah Australia Pty Ltd (AU). |
+| **RMS Fleet flows: eliminate at mapping, recognize revenue once** (2026-07-10) | On RMS trips we were the **registered host**: guest's payment = revenue, recognized **once, at Stripe** (old COA had no RMS line → blended). The "host share" flowing platform → **our own connected account → our bank** ("Due to Fleet") is **our own money moving** — map as **internal transfer, never P&L** (mapping 4001 GBV-RMS to these inflows would double-count revenue). Payouts to the real car owners ("Due from Fleet") → **5001 Host Payouts – P2P RMS** (COGS). This replicates, at the mapping level, the elimination the mock-Fleet consolidation used to do ($100 rev − $80 self-payout ⊕ $80 rev − $60 owner cost ⇒ $100 rev − $60 cost). RMS is a **business line** in the new COA (4001/4003 · 5001/5003 · 2120) — no clearing accounts, no mock entity. The historical **4000 vs 4001 revenue split requires booking-level RMS data** (agreed; bank lines can't provide it). Locked in `coa_bridge.csv` (approved) — do not revisit. |
 
 ---
 

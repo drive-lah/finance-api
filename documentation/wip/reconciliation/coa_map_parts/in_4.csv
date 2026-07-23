@@ -1,0 +1,45 @@
+qb_label,qb_leaf,usage_count,entities,machine_rec_code
+Accounts Payable (A/P),Accounts Payable (A/P),724,au,2010
+Due from Singapore,Due from Singapore,535,"au,sg_,ven",8010
+Cost of Overhead Related to Service:Operating Expenses:Stripe Monthly Fees (deleted),Stripe Monthly Fees (deleted),145,au,5050
+"Operating Expenses:AI, Internet & Website maintenance fees","AI, Internet & Website maintenance fees",115,au,6104
+Other Operating Expenses:Travel-Transportation,Travel-Transportation,92,sg_,6401
+Uncategorised Income,Uncategorised Income,62,sg_,2210
+Other Income-Refund,Other Income-Refund,45,sg_,7000
+Other Operating Expenses:Human Resource - CPF Contribution,Human Resource - CPF Contribution,31,sg_,6001
+Cost of Overhead Related to Service:Salary Expense - Local Ops Staff,Salary Expense - Local Ops Staff,24,sg_,6003
+Loan,Loan,19,au,1320
+Cost of Service:Payment Gateway,Payment Gateway,12,sg_,5010
+Operating Expenses:Human Resource-Salary Expense,Human Resource-Salary Expense,11,au,6003
+Other Operating Expenses:Travel - Airfare,Travel - Airfare,9,sg_,6400
+Cost of Overhead Related to Service:Operating Expenses:Damages,Damages,6,au,4021
+Other Operating Expenses:Corporate - Entertainment (Local),Corporate - Entertainment (Local),5,sg_,6402
+Other Operating Expenses:Corporate - Other Equipment and Software,Corporate - Other Equipment and Software,4,sg_,7300
+Cost of Service:Host Earnings,Host Earnings,3,"au,sg_",3100
+Due to Singapore Account,Due to Singapore Account,3,au,8110
+Gross Revenue -Other Income,Gross Revenue -Other Income,2,sg_,4025
+Operating Expenses:Corporate - Insurance  Expense,Corporate - Insurance  Expense,2,au,4030
+Due to Directors,Due to Directors,2,ven,6003
+Hardware:Accumulated Depreciation - Hardware,Accumulated Depreciation - Hardware,1,sg_,1610
+Other Operating Expenses:Bad debts,Bad debts,1,sg_,6600
+Cost of Service,Cost of Service,1,sg_,5030
+Other Operating Expenses:Corporate - Utilities,Corporate - Utilities,1,sg_,6400
+RMS Expense,RMS Expense,1,au,4001
+Insurance,Insurance,1,au,4030
+Other Revenue,Other Revenue,1,ven,4025
+Investment in Subsidiaries:Investment in subsidiary - Drive Lah Pty Ltd (AU),Investment in subsidiary - Drive Lah Pty Ltd (AU),1,ven,5035
+Operating Expenses:Bank Fees,Bank Fees,1108,au,6600
+Trade and other payables - USD,Trade and other payables - USD,198,sg_,2000
+Other Operating Expenses:Marketing - Advertising (new customers):Sticker payouts,Sticker payouts,52,sg_,5041
+Other Operating Expenses:Corporate - Legal Fees,Corporate - Legal Fees,39,sg_,6501
+Other Operating Expenses:Corporate - Office Rent,Corporate - Office Rent,21,sg_,6300
+Cost of Overhead Related to Service:Marketing - Discount & Promotions:Superhost payouts,Superhost payouts,17,sg_,5040
+Computer and Peripherals,Computer and Peripherals,10,sg_,1500
+Share Capital,Share Capital,7,sg_,3000
+Hardware Devices,Hardware Devices,4,au,1510
+Suspense Account,Suspense Account,2,sg_,3300
+In-car Devices:Accumulated Depreciation-In-car Devices,Accumulated Depreciation-In-car Devices,1,sg_,7301
+Hardware,Hardware,1,sg_,1510
+Intangible Assets:Technology Development:Technology Development - At Cost,Technology Development - At Cost,1,ven,1710
+Income Tax Expense,Income Tax Expense,1,ven,9000
+Intangible Assets:Brand:Brand - Cost,Brand - Cost,1,ven,1700

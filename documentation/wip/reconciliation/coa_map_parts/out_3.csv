@@ -1,0 +1,45 @@
+qb_label,code,confidence,reason
+Due from Fleet,,low,intra-entity RMS Fleet clearing — needs a decision
+Other Operating Expenses:Human Resource - Salary Expense,6000,med,Corporate/admin HR salary; on-ground (5061) only if ops team — generic HR salary maps to 6000
+Due From Australian Account,8000,high,SG books receivable from AU = Due from AU (SG books)
+Other Operating Expenses:Marketing - Advertising (new customers),6100,high,New-customer acquisition advertising = digital advertising
+Cost of Service:Insurance,5035,high,Cost of Service (not recovery): per-trip insurance premium cost
+Cost of Overhead Related to Service:Operating Expenses:Parking,5060,high,RMS fleet parking cost
+Cost of Overhead Related to Service:Operating Expenses:Damage,5021,high,Under Cost of Service = damage payout to host, not damage revenue
+Cost of Overhead Related to Service:Operating Expenses:Extensions,4025,low,Trip extension charge — likely incidental/other revenue; classification unclear
+Other Operating Expenses:Travel - Accommodation,6400,med,Business travel; no accommodation-specific code, tickets/travel bucket 6400 closest
+Operating Expenses:Corporate - Legal and professional fees,6501,high,Legal & professional fees = Legal Fees
+Employee Expense,6014,med,Generic employee reimbursement claim = Employee Claims - Other
+Other Operating Expenses:Human Resource - Recruitment Advertising Fees,6200,high,Recruitment advertising = HR Recruitment
+Operating Expenses:Marketing Acquisition-New Customer,6100,med,New-customer acquisition = digital advertising (not partnerships)
+Other Operating Expenses:Corporate-Other Corporate,2010,low,Vague corporate catch-all; could be other payables/misc expense
+Other Operating Expenses:Corporate - Office Supplies,6013,med,Office supplies; 6013 is employee-claim supplies, 6310 office equipment — supplies maps 6013
+Other Operating Expenses:Corporate - Audit and Tax Fees,6500,med,Audit & tax fees = Accounting & Bookkeeping Fees, not income tax expense
+Gross Revenue-Car Rental Usage,4000,high,Car rental usage = GBV P2P trip revenue, not toll incidentals
+Other Operating Expenses:Research and Development - Software,1710,high,Capitalised software development = Technology Development asset
+Depreciation - Branding,7401,high,Brand depreciation/amortisation = Amortisation - Brand
+Computer at Cost,1500,high,Computer asset at cost = Computer & Peripherals
+Insurance Payable,2010,med,Insurance amount owed = Other Payables (statutory/non-trade)
+Gross Revenue,4025,low,Unspecified gross revenue; defaults to incidentals-other absent detail
+Security Deposit Refundable,1310,high,Refundable deposit paid by company = Customer Deposits (asset)
+FL A/c (deleted),,low,Deleted/unknown account — needs a decision
+Other Operating Expenses:Legal Settlement Expense,6501,med,Legal settlement = Legal Fees (could be 6502 if penalty)
+11111 Receivable from Guests,1200,med,Receivable from guests = Trade Receivables (customer balances)
+Cost of Service:Payment Gateway:Stripe Fees (deleted),5010,high,Stripe payment gateway fees = Payment Processing Fees
+"Operating Expenses:Corporate-COSEC, FS & Tax",6500,med,CoSec/financial-statements/tax compliance fees = Accounting & Bookkeeping Fees
+Investment in Subsidiaries:Investment in Subsidiary - Drive Lah Pte Ltd (SG),,low,Equity investment in subsidiary — no COA account exists; needs a decision
+Operating Expenses:Corporate - Company Secretary Fees,6500,med,Company secretary fees = professional/accounting fees, not agency
+Due to Ventures,8101,high,SG books owed to Ventures = Due to Ventures (SG books)
+Other Operating Expenses:Marketing Asset Creation,6103,high,Marketing creative asset production = Marketing - Asset Creation
+Cost of Overhead Related to Service:Marketing - Discount & Promotions:Discounts,5050,high,Promotional discounts on bookings = Monthly Discounts
+Due From Ventures,8001,high,SG books receivable from Ventures = Due from Ventures (SG books)
+Trade and other payables - INR,2000,high,Trade & other payables = Trade & Other Payables
+Cost of Overhead Related to Service:Marketing - Advertising (retargeting),6100,high,Retargeting advertising = digital advertising
+In-car Devices,1510,med,In-car device account = Hardware Devices asset (not depreciation)
+Accounts Payable,2000,high,Accounts Payable = Trade & Other Payables
+Cost of Service:Host Earnings:Flex+ payouts,5002,high,Flex+ host payouts = Host Payouts - Flex+
+Technology Development:Accumulated amortisation - Technology Development,1810,high,Accumulated amortisation contra-asset = Accum Amort - Technology Development
+Allowance for doubtful accounts,1900,high,Bad debt provision contra-asset = Allowance for Doubtful Accounts
+4301 CMB - Incidental Revenue,4025,med,Incidental revenue = Incidentals Revenue - Other
+Suspense,3300,high,Suspense holding account = Suspense Account
+In-car devices...,1510,med,In-car device account = Hardware Devices asset (not depreciation)

@@ -1,0 +1,144 @@
+entity,date,bank_account,contra_account,amount,kind
+ventures,20/06/2022,DBS - 4933 - SGD,Due to Singapore,10000.0,IC
+ventures,09/08/2022,DBS - 4933 - SGD,Due from Singapore,-125000.0,IC
+ventures,29/08/2022,DBS - 4933 - USD,Due from Singapore,-101125.08,IC
+ventures,31/08/2022,DBS - 4933 - SGD,Due from Singapore,-200000.0,IC
+ventures,31/08/2022,DBS - 4933 - USD,Due from Singapore,0.0,IC
+ventures,26/09/2022,DBS - 4933 - SGD,Due from Singapore,-350000.0,IC
+ventures,11/11/2022,DBS - 4933 - SGD,Due from Singapore,-35000.0,IC
+ventures,03/01/2023,DBS - 4933 - USD,Due from Singapore,-75000.0,IC
+ventures,18/01/2023,DBS - 4933 - USD,Due from Singapore,-100000.0,IC
+ventures,30/01/2023,DBS - 4933 - SGD,Due from Singapore,-68000.0,IC
+ventures,09/02/2023,DBS - 4933 - SGD,Due from Singapore,-60000.0,IC
+ventures,16/02/2023,DBS - 4933 - SGD,Due from Singapore,-70000.0,IC
+ventures,27/02/2023,DBS - 4933 - SGD,Due from Singapore,-50000.0,IC
+ventures,02/03/2023,DBS - 4933 - USD,Due From Australian Account,-26891.9,IC
+ventures,09/03/2023,DBS - 4933 - SGD,Due from Singapore,-40000.0,IC
+ventures,29/03/2023,DBS - 4933 - SGD,Due from Singapore,-22000.0,IC
+ventures,11/04/2023,DBS - 4933 - SGD,Due from Singapore,-75000.0,IC
+ventures,17/04/2023,DBS - 4933 - SGD,Due from Singapore,-50000.0,IC
+ventures,17/04/2023,DBS - 4933 - SGD,Due from Singapore,-150000.0,IC
+ventures,17/04/2023,DBS - 4933 - USD,Due From Australian Account,-19.98,IC
+ventures,17/04/2023,DBS - 4933 - USD,Due From Australian Account,-66603.25,IC
+ventures,20/04/2023,DBS - 4933 - SGD,Due from Singapore,-125000.0,IC
+ventures,30/04/2023,DBS - 4933 - SGD,Due from Singapore,-20000.0,IC
+ventures,02/05/2023,DBS - 4933 - SGD,Due from Singapore,-100000.0,IC
+ventures,25/05/2023,DBS - 4933 - USD,Due From Australian Account,-20.28,IC
+ventures,25/05/2023,DBS - 4933 - USD,Due From Australian Account,-67604.1,IC
+ventures,29/05/2023,DBS - 4933 - USD,Due from Singapore,-101467.5,IC
+ventures,05/06/2023,DBS - 4933 - USD,Due from Singapore,-67155.0,IC
+ventures,19/06/2023,DBS - 4933 - USD,Due From Australian Account,-26790.4,IC
+ventures,19/06/2023,DBS - 4933 - USD,Due from Singapore,-39924.0,IC
+ventures,28/06/2023,DBS - 4933 - USD,Due from Singapore,-100710.0,IC
+ventures,29/06/2023,Operating Expenses:Corporate - Bank Fees,Due to Singapore,745.5,IC
+ventures,04/07/2023,DBS - 4933 - USD,Due From Australian Account,-40507.65,IC
+ventures,13/07/2023,DBS - 4933 - SGD,Due from Singapore,-50000.0,IC
+ventures,25/07/2023,DBS - 4933 - USD,Due from Singapore,-100654.03,IC
+ventures,04/08/2023,DBS - 4933 - USD,Due from Singapore,-33515.0,IC
+ventures,10/08/2023,DBS - 4933 - USD,Due from Singapore,-50364.13,IC
+ventures,21/08/2023,DBS - 4933 - USD,Due from Singapore,-33942.5,IC
+ventures,28/08/2023,DBS - 4933 - SGD,Due From Australian Account,-30000.0,IC
+ventures,28/08/2023,DBS - 4933 - SGD,Due from Singapore,-110000.0,IC
+ventures,12/09/2023,DBS - 4933 - USD,Due from Singapore,-10064.0,IC
+ventures,15/09/2023,DBS - 4933 - USD,Due from Singapore,-20115.11,IC
+ventures,27/09/2023,DBS - 4933 - USD,Due from Singapore,-82240.5,IC
+ventures,04/10/2023,DBS - 4933 - USD,Due from Singapore,-273400.0,IC
+ventures,05/10/2023,DBS - 4933 - USD,Due From Australian Account,-102677.25,IC
+ventures,16/10/2023,DBS - 4933 - USD,Due from Singapore,-108920.0,IC
+ventures,19/10/2023,DBS - 4933 - USD,Due From Australian Account,-34343.95,IC
+ventures,19/10/2023,DBS - 4933 - USD,Due from Singapore,-102457.5,IC
+ventures,27/10/2023,DBS - 4933 - USD,Due From Australian Account,-20540.18,IC
+ventures,27/10/2023,DBS - 4933 - USD,Due from Singapore,-81588.0,IC
+ventures,13/11/2023,DBS - 4933 - USD,Due from Singapore,-94577.0,IC
+ventures,27/11/2023,DBS - 4933 - USD,Due From Australian Account,-13403.0,IC
+ventures,27/11/2023,DBS - 4933 - USD,Due from Singapore,-99727.5,IC
+ventures,28/11/2023,DBS - 4933 - USD,Due From Australian Account,-53412.0,IC
+ventures,04/12/2023,DBS - 4933 - USD,Due from Singapore,-50000.0,IC
+ventures,08/12/2023,DBS - 4933 - USD,Due from Singapore,-23000.0,IC
+ventures,13/12/2023,DBS - 4933 - USD,Due from Singapore,-66705.0,IC
+ventures,15/12/2023,DBS - 4933 - USD,Due from Singapore,-100000.0,IC
+ventures,27/12/2023,DBS - 4933 - USD,Due from Singapore,-40000.0,IC
+ventures,11/01/2024,DBS - 4933 - USD,Due from Singapore,-76343.69,IC
+ventures,17/01/2024,DBS - 4933 - SGD,Due to Directors,-1000.0,IC
+ventures,18/01/2024,DBS - 4933 - USD,Due From Australian Account,-214305.54,IC
+ventures,25/01/2024,DBS - 4933 - SGD,Due to Directors,1000.0,IC
+ventures,29/01/2024,DBS - 4933 - USD,Due from Singapore,-80820.0,IC
+ventures,30/01/2024,DBS - 4933 - USD,Due from Singapore,-50611.09,IC
+ventures,12/02/2024,DBS - 4933 - USD,Due from Singapore,-27106.0,IC
+ventures,23/02/2024,DBS - 4933 - USD,Due from Singapore,-101647.5,IC
+ventures,29/02/2024,DBS - 4933 - USD,Due from Singapore,-50696.31,IC
+ventures,13/03/2024,DBS - 4933 - USD,Due from Singapore,-103003.58,IC
+ventures,22/03/2024,DBS - 4933 - USD,Due from Singapore,-101864.96,IC
+ventures,02/04/2024,DBS - 4933 - USD,Due from Singapore,-101986.27,IC
+ventures,29/04/2024,DBS - 4933 - USD,Due from Singapore,-76016.47,IC
+ventures,08/05/2024,DBS - 4933 - USD,Due from Singapore,-74668.0,IC
+ventures,27/05/2024,DBS - 4933 - USD,Due from Singapore,-76030.53,IC
+ventures,06/06/2024,DBS - 4933 - USD,Due from Singapore,-102290.68,IC
+ventures,21/06/2024,DBS - 4933 - USD,Due from Singapore,-101731.92,IC
+ventures,09/07/2024,DBS - 4933 - USD,Due from Singapore,-55304.19,IC
+ventures,15/07/2024,DBS - 4933 - USD,Due from Singapore,-40482.0,IC
+ventures,26/07/2024,DBS - 4933 - USD,Due from Singapore,-35374.26,IC
+ventures,26/07/2024,DBS - 4933 - USD,Due from Singapore,-75777.26,IC
+ventures,14/08/2024,DBS - 4933 - USD,Due from Singapore,-30204.74,IC
+ventures,16/08/2024,DBS - 4933 - USD,Due from Singapore,-20086.62,IC
+ventures,22/08/2024,DBS - 4933 - USD,Due from Singapore,-26370.0,IC
+ventures,27/08/2024,DBS - 4933 - USD,Due from Singapore,-52740.0,IC
+ventures,28/08/2024,DBS - 4933 - USD,Due From Australian Account,-32962.5,IC
+ventures,28/08/2024,DBS - 4933 - USD,Due from Singapore,-79110.0,IC
+ventures,03/09/2024,DBS - 4933 - USD,Due From Australian Account,-65020.0,IC
+ventures,13/09/2024,DBS - 4933 - USD,Due From Australian Account,-26008.0,IC
+ventures,16/09/2024,DBS - 4933 - USD,Due from Singapore,-26008.0,IC
+ventures,23/09/2024,DBS - 4933 - USD,Due from Singapore,-26008.0,IC
+ventures,24/09/2024,DBS - 4933 - USD,Due From Australian Account,-26008.0,IC
+ventures,24/09/2024,DBS - 4933 - USD,Due from Singapore,-78024.0,IC
+ventures,27/09/2024,DBS - 4933 - USD,Due from Singapore,-32510.0,IC
+ventures,08/10/2024,DBS - 4933 - USD,Due from Singapore,-40128.0,IC
+ventures,18/10/2024,DBS - 4933 - USD,Due from Singapore,-53504.0,IC
+ventures,21/10/2024,DBS - 4933 - USD,Due from Singapore,-33440.0,IC
+ventures,28/10/2024,DBS - 4933 - USD,Due from Singapore,-26752.0,IC
+ventures,04/11/2024,DBS - 4933 - USD,Due from Singapore,-10316.28,IC
+ventures,05/11/2024,DBS - 4933 - USD,Due from Singapore,-40707.0,IC
+ventures,15/11/2024,DBS - 4933 - USD,Due from Singapore,-47491.5,IC
+ventures,26/11/2024,DBS - 4933 - USD,Due from Singapore,-40707.0,IC
+ventures,10/12/2024,DBS - 4933 - USD,Due from Singapore,-62077.5,IC
+ventures,19/12/2024,DBS - 4933 - USD,Due from Singapore,-48282.5,IC
+ventures,19/12/2024,DBS - 4933 - USD,Due From Australian Account,-48282.5,IC
+ventures,30/12/2024,DBS - 4933 - USD,Due from Singapore,-18457.19,IC
+ventures,17/01/2025,DBS - 4933 - SGD,Loan Payable,10000.0,IC
+ventures,24/01/2025,DBS - 4933 - USD,Due from Singapore,-68560.0,IC
+ventures,03/02/2025,DBS - 4933 - USD,Due From Australian Account,-81594.0,IC
+ventures,07/02/2025,DBS - 4933 - SGD,Due From Australian Account,-64535.1,IC
+ventures,07/02/2025,DBS - 4933 - SGD,Due from Singapore,-60000.0,IC
+ventures,12/02/2025,DBS - 4933 - SGD,Due from Singapore,-25000.0,IC
+ventures,12/02/2025,DBS - 4933 - USD,Due From Australian Account,-67995.0,IC
+ventures,24/02/2025,DBS - 4933 - SGD,Loan Payable,6761.0,IC
+ventures,24/02/2025,DBS - 4933 - USD,Due from Singapore,-54396.0,IC
+ventures,24/02/2025,DBS - 4933 - USD,Due From Australian Account,-81594.0,IC
+ventures,04/03/2025,DBS - 4933 - USD,Due From Australian Account,-12204.9,IC
+ventures,26/03/2025,DBS - 4933 - USD,Due from Singapore,-135610.0,IC
+ventures,26/03/2025,DBS - 4933 - USD,Due From Australian Account,-135610.0,IC
+ventures,28/03/2025,DBS - 4933 - USD,Due from Singapore,-120692.9,IC
+ventures,28/03/2025,DBS - 4933 - USD,Due From Australian Account,-120692.9,IC
+ventures,14/04/2025,DBS - 4933 - USD,Due From Australian Account,-67615.0,IC
+ventures,21/04/2025,DBS - 4933 - USD,Due From Australian Account,-81138.0,IC
+ventures,24/04/2025,DBS - 4933 - USD,Due from Singapore,-63558.1,IC
+ventures,24/04/2025,DBS - 4933 - USD,Due From Australian Account,-54092.0,IC
+ventures,07/05/2025,DBS - 4933 - USD,Due from Singapore,-38934.0,IC
+ventures,07/05/2025,DBS - 4933 - USD,Due From Australian Account,-51912.0,IC
+ventures,26/05/2025,DBS - 4933 - USD,Due From Australian Account,-71282.12,IC
+ventures,26/06/2025,DBS - 4933 - USD,Due From Australian Account,-128560.0,IC
+ventures,26/06/2025,DBS - 4933 - USD,Due from Singapore,-64280.0,IC
+ventures,02/07/2025,DBS - 4933 - EURO,Due from Singapore,-40040.95,IC
+ventures,24/07/2025,DBS - 4933 - USD,Due From Australian Account,-44638.02,IC
+ventures,24/07/2025,DBS - 4933 - USD,Due from Singapore,-19551.0,IC
+ventures,08/08/2025,DBS - 4933 - SGD,Due from Singapore,-8000.0,IC
+ventures,22/08/2025,DBS - 4933 - SGD,Due from Singapore,-200000.0,IC
+ventures,22/08/2025,DBS - 4933 - SGD,Due from Singapore,200000.0,IC
+ventures,23/08/2025,DBS - 4933 - SGD,Due from Singapore,-1000.0,IC
+ventures,23/08/2025,DBS - 4933 - SGD,Due from Singapore,-200000.0,IC
+ventures,25/08/2025,DBS - 4933 - USD,Due from Singapore,-64105.75,IC
+ventures,25/08/2025,DBS - 4933 - USD,Due From Australian Account,-417500.0,IC
+ventures,25/08/2025,DBS - 4933 - USD,Due From Australian Account,-64105.75,IC
+ventures,04/09/2025,DBS - 4933 - USD,Due from Singapore,-128874.5,IC
+ventures,22/09/2025,DBS - 4933 - SGD,Due from Singapore,-56000.0,IC
+ventures,30/09/2025,DBS - 4933 - USD,Due from Singapore,-14074.74,IC

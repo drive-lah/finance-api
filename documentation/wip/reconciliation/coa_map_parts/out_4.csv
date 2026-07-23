@@ -1,0 +1,45 @@
+qb_label,code,confidence,reason
+Accounts Payable (A/P),2000,high,Trade & other payables; AP anchor maps to 2000.
+Due from Singapore,8010,med,IC receivable from SG; AU books (dominant entity) Due from SG=8010; mixed-books label.
+Cost of Overhead Related to Service:Operating Expenses:Stripe Monthly Fees (deleted),5010,high,Stripe processing/monthly fees -> Payment Processing Fees 5010.
+"Operating Expenses:AI, Internet & Website maintenance fees",6700,high,AI/Internet/Website maintenance -> Technology Infrastructure 6700 (anchor).
+Other Operating Expenses:Travel-Transportation,6401,low,Travel transportation; could be 6400 tickets or 6401 meals; transport reimbursement leans 6401 but uncertain.
+Uncategorised Income,3300,low,Uncategorised income with no detail -> Suspense 3300 pending classification.
+Other Income-Refund,7001,med,Refund received as other income -> Cash Rebate 7001 (vendor/bank refund).
+Other Operating Expenses:Human Resource - CPF Contribution,6001,high,Employer CPF contribution -> 6001.
+Cost of Overhead Related to Service:Salary Expense - Local Ops Staff,5061,high,Local ops staff salary -> On-Ground Team Salary 5061 (COS).
+Loan,,low,Bare "Loan" with no direction; could be 1320 (given) or 2400 (received) - needs decision.
+Cost of Service:Payment Gateway,5010,high,Payment gateway fees -> Payment Processing Fees 5010.
+Operating Expenses:Human Resource-Salary Expense,6000,high,Corporate HR salary expense -> Salaries & Wages 6000.
+Other Operating Expenses:Travel - Airfare,6400,high,Airfare tickets -> Travel - Tickets 6400 (anchor).
+Cost of Overhead Related to Service:Operating Expenses:Damages,5021,low,Damages under expenses; likely damage payout to host 5021 (not revenue 4021); direction uncertain.
+Other Operating Expenses:Corporate - Entertainment (Local),6402,high,Entertainment -> 6402 (anchor).
+Other Operating Expenses:Corporate - Other Equipment and Software,6310,med,Other equipment & software (below-cap) -> Office Equipment 6310; could be 6701 if pure SaaS.
+Cost of Service:Host Earnings,5000,med,Host earnings = host payout COGS -> 5000 P2P (machine 3100 retained-earnings is wrong); split unknown.
+Due to Singapore Account,8110,high,IC payable to SG in AU books -> Due to SG 8110.
+Gross Revenue -Other Income,4025,med,Misc revenue catch-all -> Incidentals Revenue Other 4025.
+Operating Expenses:Corporate - Insurance  Expense,5035,med,Corporate insurance expense -> Cost of Insurance Trip Premium 5035 (not revenue 4030); could be 6xx admin insurance.
+Due to Directors,2400,med,Money owed to directors = loan from others (liability) 2400; not salary expense 6003.
+Hardware:Accumulated Depreciation - Hardware,1610,high,Accumulated depreciation on Hardware Devices -> 1610.
+Other Operating Expenses:Bad debts,1900,med,Bad debts -> Allowance for Doubtful Accounts 1900; if direct write-off may differ.
+Cost of Service,5030,low,Generic "Cost of Service" with no detail; defaulting to a COS line; needs decision.
+Other Operating Expenses:Corporate - Utilities,2200,low,Utilities expense; no dedicated COA line; closest is Accrued Expenses 2200 - needs decision.
+RMS Expense,4001,low,"RMS Expense" ambiguous; machine maps to GBV RMS revenue 4001 but label says expense - needs decision.
+Insurance,5035,low,Bare "Insurance"; likely trip insurance premium cost 5035; could be 4011/4030 - uncertain.
+Other Revenue,4025,med,Generic other revenue -> Incidentals Revenue Other 4025.
+Investment in Subsidiaries:Investment in subsidiary - Drive Lah Pty Ltd (AU),3300,low,Investment in subsidiary; no equity-investment COA line; route to Suspense 3300 - needs decision.
+Operating Expenses:Bank Fees,6600,high,Bank Fees -> 6600 (anchor).
+Trade and other payables - USD,2000,high,Trade & other payables -> 2000.
+Other Operating Expenses:Marketing - Advertising (new customers):Sticker payouts,5041,high,Sticker payouts to hosts -> Host Payouts Sticker 5041.
+Other Operating Expenses:Corporate - Legal Fees,6501,high,Legal Fees -> 6501 (anchor).
+Other Operating Expenses:Corporate - Office Rent,6300,high,Office Rent -> 6300.
+Cost of Overhead Related to Service:Marketing - Discount & Promotions:Superhost payouts,5040,high,Superhost payouts to hosts -> Host Payouts Superhost 5040.
+Computer and Peripherals,1500,high,Computer & Peripherals fixed asset -> 1500.
+Share Capital,3000,high,Share Capital equity -> 3000 (anchor).
+Hardware Devices,1510,high,In-car hardware/telematics devices -> Hardware Devices 1510.
+Suspense Account,3300,high,Suspense Account -> 3300.
+In-car Devices:Accumulated Depreciation-In-car Devices,1610,high,Accumulated depreciation on in-car devices -> Accum Depr Hardware Devices 1610 (machine 7301 is the P&L charge - wrong).
+Hardware,1510,high,Hardware = in-car devices fixed asset -> 1510.
+Intangible Assets:Technology Development:Technology Development - At Cost,1710,high,Technology Development intangible at cost -> 1710.
+Income Tax Expense,9000,high,Income Tax Expense -> 9000.
+Intangible Assets:Brand:Brand - Cost,1700,high,Brand intangible at cost -> 1700.

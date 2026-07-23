@@ -1,0 +1,45 @@
+qb_label,qb_leaf,usage_count,entities,machine_rec_code
+Due to Fleet,Due to Fleet,18090,sg_,8100
+Due to Aus Fleet,Due to Aus Fleet,686,au,8100
+Due to SG,Due to SG,324,sg_,8100
+Employees Expense,Employees Expense,131,sg_,6014
+Operating Expenses:Corporate-Other Corporate Expense,Corporate-Other Corporate Expense,96,au,5062
+Operating Expenses:General Expense,General Expense,87,au,9000
+Cost of Overhead Related to Service:Operating Expenses:Fuel,Fuel,51,"au,sg_",5023
+Cost of Overhead Related to Service:Operating Expenses:Late return,Late return,34,sg_,5044
+Prepaid Insurance,Prepaid Insurance,27,"au,sg_",4030
+Cost of Overhead Related to Service:Marketing - Discount & Promotions,Marketing - Discount & Promotions,22,sg_,6103
+Other Operating Expenses:Corporate - General Liability Insurance,Corporate - General Liability Insurance,15,sg_,4011
+Other Operating Expenses:Human Resource - Recruitment Agency Fees,Human Resource - Recruitment Agency Fees,12,sg_,6104
+Other Operating Expenses:Human Resource - Other Recruitment Fees,Human Resource - Other Recruitment Fees,10,sg_,6200
+Cost of Overhead Related to Service:In-car devices - running/maintenance costs,In-car devices - running/maintenance costs,7,sg_,7301
+Other Operating Expenses:Research and Development - Hardware,Research and Development - Hardware,5,sg_,1710
+Intangible Asset,Intangible Asset,4,sg_,6103
+Prepaid Expenses,Prepaid Expenses,4,au,2200
+Sales of Product Revenue,Sales of Product Revenue,3,"au,sg_",4025
+Tax Paid,Tax Paid,3,au,9000
+Other Operating Expenses:Other Marketing Expense,Other Marketing Expense,2,sg_,6102
+Accounts Payable (A/P) - USD,Accounts Payable (A/P) - USD,2,au,2010
+Computer and Peripherals:Accumulated Depreciation-Computer and peripherals,Accumulated Depreciation-Computer and peripherals,1,sg_,1500
+Depreciation - Hardware,Depreciation - Hardware,1,sg_,7301
+Fleet Account (deleted),Fleet Account (deleted),1,sg_,5060
+Cost of Service:Host Earnings:Car Rental usage,Car Rental usage,1,sg_,7301
+Other Operating Expenses:Corporate - Communications,Corporate - Communications,1,sg_,6400
+4101 CMB - Trip Revenue,4101 CMB - Trip Revenue,1,au,2100
+Depreciation Expenses,Depreciation Expenses,1,ven,7301
+Accruals,Accruals,1,ven,2200
+Other Revenue:Other Income-Refund,Other Income-Refund,1,ven,7000
+Other Income,Other Income,393,"au,sg_",7000
+Accrued Expense,Accrued Expense,113,"au,sg_",2200
+Other Operating Expenses:Travel-Meals,Travel-Meals,49,sg_,6401
+Subscriptions/ Software expenses,Subscriptions/ Software expenses,37,au,6701
+Share Capital - Ordinary:Share Capital - Preference,Share Capital - Preference,20,ven,3000
+Flex+,Flex+,16,sg_,4002
+Operating Expenses:Marketing Asset Creation,Marketing Asset Creation,9,au,6103
+Loans to Others,Loans to Others,7,sg_,1320
+Motor vehicles at cost,Motor vehicles at cost,3,au,1520
+Fines & Penalties,Fines & Penalties,2,au,6502
+Trade and other receivables,Trade and other receivables,1,sg_,1200
+Accumulated Depreciation-In-car Devices,Accumulated Depreciation-In-car Devices,1,sg_,7301
+Currency Exchange,Currency Exchange,1,ven,1330
+Prepayments,Prepayments,1,ven,1300

@@ -1,0 +1,45 @@
+qb_label,code,confidence,reason
+Due to Fleet,,low,intra-entity RMS Fleet clearing — needs a decision
+Due to Aus Fleet,,low,intra-entity RMS Fleet clearing — needs a decision
+Due to SG,,low,"Due to SG on SG's own books is self-referential — likely intra-entity/Fleet clearing, needs a decision"
+Employees Expense,6014,med,"generic employee expense reimbursement, no specific category — Employee Claims - Other"
+Operating Expenses:Corporate-Other Corporate Expense,6014,low,"vague catch-all corporate expense; best fit Employee Claims/Other expense, ambiguous"
+Operating Expenses:General Expense,6014,low,"generic unclassified operating expense; no clear category, catch-all"
+Cost of Overhead Related to Service:Operating Expenses:Fuel,5023,med,fuel cost in COS overhead — Incidentals Payout - Fuel
+Cost of Overhead Related to Service:Operating Expenses:Late return,5044,high,late return compensation — Host Payouts - Late Return
+Prepaid Insurance,1300,med,"prepaid insurance premium is a prepayment asset (1300), not revenue"
+Cost of Overhead Related to Service:Marketing - Discount & Promotions,5050,med,"trip discounts/promotions reduce revenue — Monthly Discounts (COS), not marketing opex"
+Other Operating Expenses:Corporate - General Liability Insurance,6014,low,"corporate general liability insurance premium; no dedicated insurance-opex code, ambiguous"
+Other Operating Expenses:Human Resource - Recruitment Agency Fees,6200,high,recruitment agency fees — HR - Recruitment
+Other Operating Expenses:Human Resource - Other Recruitment Fees,6200,high,other recruitment fees — HR - Recruitment
+Cost of Overhead Related to Service:In-car devices - running/maintenance costs,5030,med,"running/maintenance cost of in-car devices — Cost of Device Subscriptions, not depreciation"
+Other Operating Expenses:Research and Development - Hardware,1710,med,"capitalised R&D hardware/tech development — Technology Development asset (per machine rec); could be device hardware 1510"
+Intangible Asset,1710,med,"generic intangible asset — Technology Development (largest intangible); could be Brand 1700"
+Prepaid Expenses,1300,high,prepaid expenses are a prepayment asset — Prepayments
+Sales of Product Revenue,4025,low,"product sales revenue; no product-sales code, mapped to Incidentals Revenue - Other as nearest revenue"
+Tax Paid,9000,high,income tax paid — Income Tax Expense
+Other Operating Expenses:Other Marketing Expense,6102,med,"other/unspecified marketing expense — Marketing - Partnerships nearest, could be 6101 branding"
+Accounts Payable (A/P) - USD,2000,high,accounts payable — Trade & Other Payables
+Computer and Peripherals:Accumulated Depreciation-Computer and peripherals,1600,high,accumulated depreciation on computers — Accum Depr - Computer & Peripherals
+Depreciation - Hardware,7301,high,depreciation of in-car hardware devices — Depreciation - In-Car Devices
+Fleet Account (deleted),,low,deleted Fleet clearing account — intra-entity RMS Fleet clearing — needs a decision
+Cost of Service:Host Earnings:Car Rental usage,5000,med,"host earnings for car rental usage — Host Payouts - P2P (default host payout); machine rec 7301 looks wrong"
+Other Operating Expenses:Corporate - Communications,6701,med,"corporate communications/telecom — Technology - Software Subscriptions nearest; could be utilities"
+4101 CMB - Trip Revenue,2100,med,"CMB trip revenue collected; if unearned booking payment then Deferred Trip Revenue (2100), else 4000"
+Depreciation Expenses,7300,med,"generic depreciation expense — Depreciation - Computer & Equipment default; machine rec 7301 specific to devices"
+Accruals,2200,high,accruals — Accrued Expenses
+Other Revenue:Other Income-Refund,7000,low,"other income refund; ambiguous — mapped to Other Income, could be an expense refund"
+Other Income,7000,high,other income — Other Income - Grants (group-level other income)
+Accrued Expense,2200,high,accrued expense — Accrued Expenses
+Other Operating Expenses:Travel-Meals,6401,high,travel meals — Travel - Meals
+Subscriptions/ Software expenses,6701,high,software subscriptions — Technology - Software Subscriptions
+Share Capital - Ordinary:Share Capital - Preference,3000,high,share capital (equity) — Share Capital
+Flex+,4002,high,Flex+ long-term rental revenue — GBV - Flex+
+Operating Expenses:Marketing Asset Creation,6103,high,marketing creative asset production — Marketing - Asset Creation
+Loans to Others,1320,high,loans extended to others (asset) — Loans to Others
+Motor vehicles at cost,1520,high,motor vehicles at cost — Motor Vehicles
+Fines & Penalties,6502,high,fines and penalties — Fines & Penalties
+Trade and other receivables,1200,high,trade receivables — Trade Receivables
+Accumulated Depreciation-In-car Devices,1610,high,accumulated depreciation on in-car devices — Accum Depr - Hardware Devices
+Currency Exchange,1330,high,currency exchange clearing — Currency Exchange
+Prepayments,1300,high,prepayments — Prepayments

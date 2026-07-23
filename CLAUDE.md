@@ -176,4 +176,43 @@ Then in SYSTEM_OVERVIEW.md, reference it:
 
 ---
 
+## Rule 6: `documentation/KNOWLEDGE.md` — the CANONICAL business-facts file. Update it the moment you learn anything.
+
+Gaurav's explanations of the business are **gold**. The moment he (or verified data) reveals a business
+fact — who a vendor is, what a bank-text pattern means, how a money flow works, an accounting ruling, a
+data trap — **append it to `documentation/KNOWLEDGE.md` in the same session.** The smallest of lines counts.
+
+Canonical format (non-negotiable):
+- ONE fact per bullet, numbered with a stable section-prefixed ID: `ENT-n` (entities), `FLOW-n` (money
+  flows), `CP-n` (counterparties), `POL-n` (policies/principles), `DQ-n` (data quirks).
+- IDs are append-only: never renumber, never delete — strike (`~~…~~`) and add the superseding fact.
+- Every fact carries `(source, date)` — e.g. `(Gaurav, 2026-07-23)`.
+- Facts only. No task state, no progress, no "next steps" — that is STATUS.md's job.
+
+KNOWLEDGE.md is the **"company facts" input for the RAG/AI pipeline** (IDEAL_STATE §3) and the context base
+for future agents. **The test: if Gaurav says something a future agent would need and it isn't in
+KNOWLEDGE.md by end of session, the session isn't done.**
+
+*(Documentation root is therefore exactly three files: `STATUS.md`, `IDEAL_STATE.md`, `KNOWLEDGE.md` —
+amends Rule 2.)*
+
+---
+
+## Rule 7: STATUS.md must stay CANONICAL — numbered, lean, no paragraph dumps
+
+STATUS.md is the living tracker and it must remain **scannable**:
+
+- Every state item is **numbered** (tables with stable row IDs like `S-n`, or numbered lists) — never
+  free-flowing paragraph bullets that grow by appending sentences.
+- Each item is **state, not story**: what it is + where it stands + what unblocks it. One to three lines.
+- Business substance discovered along the way goes to `KNOWLEDGE.md` (Rule 6); STATUS references IDs
+  (e.g. "per POL-13", "see DQ-6") instead of restating facts.
+- When an item completes, compress it: outcome + date + artifact path. Prune superseded detail — git
+  history keeps the archaeology.
+- Same-session update discipline as Rule 5; verified numbers only.
+
+**If a STATUS section can't be skimmed in ten seconds, it's in violation — restructure it.**
+
+---
+
 **These rules apply to all future work in this repository.**

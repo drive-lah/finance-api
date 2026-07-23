@@ -1,0 +1,87 @@
+Drive mate fleet,,,,,,,,,
+General Ledger,,,,,,,,,
+"January, 2021-April, 2026",,,,,,,,,
+
+,Distribution account,Transaction date,Transaction type,No.,Name,Description,Split,Amount,Balance
+Due from Australia,,,,,,,,,
+,Due from Australia,31/01/2024,Journal Entry,1,,,,"3,298.58","3,298.58"
+,Due from Australia,29/02/2024,Journal Entry,2,,,,"14,869.52","18,168.10"
+,Due from Australia,31/03/2024,Journal Entry,3,,Revenue for Mar 24,,"30,606.09","48,774.19"
+,Due from Australia,30/04/2024,Journal Entry,0424-01 Revenue,,Revenue for Apr24,,"29,113.83","77,888.02"
+,Due from Australia,31/05/2024,Journal Entry,6,,Revenue for May24,,"34,948.74","112,836.76"
+,Due from Australia,30/06/2024,Journal Entry,7,,Revenue for June 24,,"4,099.00","116,935.76"
+,Due from Australia,31/07/2024,Journal Entry,8,,Revenue for July24,,"5,757.05","122,692.81"
+,Due from Australia,31/08/2024,Journal Entry,9,,Revenue fir Aug 24,,"5,037.93","127,730.74"
+,Due from Australia,30/09/2024,Journal Entry,10,,Revenue for Sept 24,,"6,128.70","133,859.44"
+,Due from Australia,31/10/2024,Journal Entry,11,,Revenue for Oct 24,,"5,893.78","139,753.22"
+,Due from Australia,30/11/2024,Journal Entry,1124-01 Revenue,,Fleet revenue for Nov24,,"2,216.59","141,969.81"
+,Due from Australia,31/12/2024,Journal Entry,1224-01 Revenue,,Fleet revenue for Dec'24,,"2,916.17","144,885.98"
+,Due from Australia,31/01/2025,Journal Entry,1224-09 COS,,Fleet revenue for Dec'24,,"19,142.00","164,027.98"
+,Due from Australia,28/02/2025,Journal Entry,1224-10 COS,,Fleet revenue for Dec'24,,"5,145.33","169,173.31"
+,Due from Australia,31/03/2025,Journal Entry,1224-11 COS,,Fleet revenue for Dec'24,,"7,740.03","176,913.34"
+,Due from Australia,30/04/2025,Journal Entry,1224-12 COS,,Fleet revenue for Dec'24,,"9,197.40","186,110.74"
+,Due from Australia,31/05/2025,Journal Entry,1224-13 COS,,Fleet revenue for Dec'24,,"8,781.58","194,892.32"
+,Due from Australia,30/06/2025,Journal Entry,1224-14 COS,,Fleet revenue for Dec'24,,"29,511.62","224,403.94"
+Total for Due from Australia,,,,,,,,"A$224,403.94",
+Due to Australia,,,,,,,,,
+,Due to Australia,19/02/2024,Journal Entry,4,,CDC Fleet Pty Ltd,,"12,996.18","12,996.18"
+,Due to Australia,16/03/2024,Journal Entry,5,,CDC Fleet Pty Ltd,,"26,636.46","39,632.64"
+,Due to Australia,20/04/2024,Journal Entry,0424-01,,CDC Fleet Pty Ltd,,"35,179.09","74,811.73"
+,Due to Australia,21/05/2024,Journal Entry,0524-01,,CDC Fleet Pty Ltd,,"37,426.56","112,238.29"
+,Due to Australia,19/06/2024,Journal Entry,0624-01,,CDC Fleet Pty Ltd,,"42,034.00","154,272.29"
+,Due to Australia,30/07/2024,Journal Entry,0724-02,,CDC Fleet Pty Ltd,,"42,192.00","196,464.29"
+,Due to Australia,31/08/2024,Journal Entry,1224-03 COS,,CDC Fleet Pty Ltd,,"42,823.00","239,287.29"
+,Due to Australia,05/09/2024,Journal Entry,0924-01,,CDC Fleet Pty Ltd,,"48,075.00","287,362.29"
+,Due to Australia,10/10/2024,Journal Entry,1024-01,,CDC Fleet Pty Ltd,,"47,790.00","335,152.29"
+,Due to Australia,30/11/2024,Journal Entry,1124-01 COS,,CDC cost Nov24,,"48,154.00","383,306.29"
+,Due to Australia,31/12/2024,Journal Entry,1224-02 COS,,CDC Cost Dec24,,"48,835.00","432,141.29"
+,Due to Australia,31/01/2025,Journal Entry,1224-04 COS,,CDC Cost Dec24,,"33,918.00","466,059.29"
+,Due to Australia,28/02/2025,Journal Entry,1224-05 COS,,CDC Cost Dec24,,"25,122.00","491,181.29"
+,Due to Australia,31/03/2025,Journal Entry,1224-06 COS,,CDC Cost Dec24,,"26,417.00","517,598.29"
+,Due to Australia,30/04/2025,Journal Entry,1224-07 COS,,CDC Cost Dec24,,"25,072.00","542,670.29"
+,Due to Australia,31/05/2025,Journal Entry,1224-08 COS,,CDC Cost Dec24,,"25,454.00","568,124.29"
+,Due to Australia,30/06/2025,Journal Entry,1224-15 COS,,CDC Cost Dec24,,"26,451.00","594,575.29"
+Total for Due to Australia,,,,,,,,"A$594,575.29",
+Gross Revenue,,,,,,,,,
+,Gross Revenue,31/01/2024,Journal Entry,1,,Revenue for Jan 2024,,"3,298.58","3,298.58"
+,Gross Revenue,29/02/2024,Journal Entry,2,,Revenue for Feb 2024,,"14,869.52","18,168.10"
+,Gross Revenue,31/03/2024,Journal Entry,3,,Revenue for Mar 24,,"30,606.09","48,774.19"
+,Gross Revenue,30/04/2024,Journal Entry,0424-01 Revenue,,Revenue for Apr24,,"29,113.83","77,888.02"
+,Gross Revenue,31/05/2024,Journal Entry,6,,Revenue for May24,,"34,948.74","112,836.76"
+,Gross Revenue,30/06/2024,Journal Entry,7,,Revenue for June 24,,"4,099.00","116,935.76"
+,Gross Revenue,31/07/2024,Journal Entry,8,,Revenue for July24,,"5,757.05","122,692.81"
+,Gross Revenue,31/08/2024,Journal Entry,9,,Revenue fir Aug 24,,"5,037.93","127,730.74"
+,Gross Revenue,30/09/2024,Journal Entry,10,,Revenue for Sept 24,,"6,128.70","133,859.44"
+,Gross Revenue,31/10/2024,Journal Entry,11,,Revenue for Oct 24,,"5,893.78","139,753.22"
+,Gross Revenue,30/11/2024,Journal Entry,1124-01 Revenue,,Fleet revenue for Nov24,,"2,216.59","141,969.81"
+,Gross Revenue,31/12/2024,Journal Entry,1224-01 Revenue,,Fleet revenue for Dec'24,,"2,916.17","144,885.98"
+,Gross Revenue,31/01/2025,Journal Entry,1224-09 COS,,Fleet revenue for Dec'24,,"19,142.00","164,027.98"
+,Gross Revenue,28/02/2025,Journal Entry,1224-10 COS,,Fleet revenue for Dec'24,,"5,145.33","169,173.31"
+,Gross Revenue,31/03/2025,Journal Entry,1224-11 COS,,Fleet revenue for Dec'24,,"7,740.03","176,913.34"
+,Gross Revenue,30/04/2025,Journal Entry,1224-12 COS,,Fleet revenue for Dec'24,,"9,197.40","186,110.74"
+,Gross Revenue,31/05/2025,Journal Entry,1224-13 COS,,Fleet revenue for Dec'24,,"8,781.58","194,892.32"
+,Gross Revenue,30/06/2025,Journal Entry,1224-14 COS,,Fleet revenue for Dec'24,,"29,511.62","224,403.94"
+Total for Gross Revenue,,,,,,,,"A$224,403.94",
+Business General & Administrative Expense,,,,,,,,,
+,Business General & Administrative Expense,19/02/2024,Journal Entry,4,,CDC Fleet Pty Ltd,,"12,996.18","12,996.18"
+,Business General & Administrative Expense,16/03/2024,Journal Entry,5,,CDC Fleet Pty Ltd,,"26,636.46","39,632.64"
+,Business General & Administrative Expense,20/04/2024,Journal Entry,0424-01,,CDC Fleet Pty Ltd,,"35,179.09","74,811.73"
+,Business General & Administrative Expense,21/05/2024,Journal Entry,0524-01,,CDC Fleet Pty Ltd,,"37,426.56","112,238.29"
+,Business General & Administrative Expense,19/06/2024,Journal Entry,0624-01,,CDC Fleet Pty Ltd,,"42,034.00","154,272.29"
+,Business General & Administrative Expense,30/07/2024,Journal Entry,0724-02,,CDC Fleet Pty Ltd,,"42,192.00","196,464.29"
+,Business General & Administrative Expense,31/08/2024,Journal Entry,1224-03 COS,,CDC Fleet Pty Ltd,,"42,823.00","239,287.29"
+,Business General & Administrative Expense,05/09/2024,Journal Entry,0924-01,,CDC Fleet Pty Ltd,,"48,075.00","287,362.29"
+,Business General & Administrative Expense,10/10/2024,Journal Entry,1024-01,,CDC Fleet Pty Ltd,,"47,790.00","335,152.29"
+,Business General & Administrative Expense,30/11/2024,Journal Entry,1124-01 COS,,CDC cost Nov24,,"48,154.00","383,306.29"
+,Business General & Administrative Expense,31/12/2024,Journal Entry,1224-02 COS,,CDC Cost Dec24,,"48,835.00","432,141.29"
+,Business General & Administrative Expense,31/01/2025,Journal Entry,1224-04 COS,,CDC Cost Dec24,,"33,918.00","466,059.29"
+,Business General & Administrative Expense,28/02/2025,Journal Entry,1224-05 COS,,CDC Cost Dec24,,"25,122.00","491,181.29"
+,Business General & Administrative Expense,31/03/2025,Journal Entry,1224-06 COS,,CDC Cost Dec24,,"26,417.00","517,598.29"
+,Business General & Administrative Expense,30/04/2025,Journal Entry,1224-07 COS,,CDC Cost Dec24,,"25,072.00","542,670.29"
+,Business General & Administrative Expense,31/05/2025,Journal Entry,1224-08 COS,,CDC Cost Dec24,,"25,454.00","568,124.29"
+,Business General & Administrative Expense,30/06/2025,Journal Entry,1224-15 COS,,CDC Cost Dec24,,"26,451.00","594,575.29"
+Total for Business General & Administrative Expense,,,,,,,,"A$594,575.29",
+
+
+
+"Accrual Basis Saturday, 23 May 2026 06:02 PM GMT+10:00",,,,,,,,,
