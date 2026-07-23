@@ -304,8 +304,6 @@ class TestRuleService:
             name="Office Supplies",
             description_operator=MatchOperator.CONTAINS,
             description_value="OFFICE DEPOT",
-            counterparty_name="Office Depot",
-            counterparty_type="vendor",
         ))
         assert rule.id is not None
         assert rule.name == "Office Supplies"
@@ -503,8 +501,6 @@ class TestCategorizationEngine:
             name="Grab Match",
             description_operator=MatchOperator.CONTAINS,
             description_value="GRAB",
-            counterparty_name="Grab",
-            counterparty_type="vendor",
         ))
         txn = _make_transaction(db_session, test_bank_account, description="GRAB RIDE SG-123", amount=-25.50)
         result = categorization_service.run(db_session)
@@ -514,7 +510,8 @@ class TestCategorizationEngine:
 
         db_session.refresh(txn)
         assert txn.status == TransactionStatus.MATCHED    # engine → MATCHED, not RECONCILED
-        assert txn.counterparty_name == "Grab"
+        # POL-12: the rule categorizes but never assigns a counterparty
+        assert txn.counterparty_id is None
         assert txn.reconciled_journal_entry_id is not None
 
     def test_description_not_contains(self, db_session, test_accounts, test_bank_account):
@@ -2228,3 +2225,49 @@ class TestAiClassificationFallback:
 
         db_session.refresh(txn)
         assert txn.status == TransactionStatus.MATCHED
+
+
+# ============================================================================
+# POL-12: identity belongs to enrichment — rules never assign counterparties
+# ============================================================================
+
+class TestPol12IdentitySeparation:
+    def test_legacy_rule_counterparty_action_is_ignored(self, db_session, test_accounts, test_bank_account):
+        """A legacy rule row carrying a counterparty_name ACTION still categorizes,
+        but must NOT write the counterparty onto the transaction (POL-12)."""
+        rule_service.create(db_session, _expense_rule(
+            name="Legacy identity rule",
+            description_operator=MatchOperator.CONTAINS, description_value="MYSTERY CHARGE",
+        ))
+        legacy = db_session.query(FinanceCategorizationRule).filter_by(name="Legacy identity rule").one()
+        legacy.counterparty_name = "Legacy Vendor"   # simulate a pre-POL-12 migrated row
+        db_session.commit()
+
+        txn = _make_transaction(db_session, test_bank_account, description="MYSTERY CHARGE 123", amount=-42.0)
+        result = categorization_service.run(db_session)
+        db_session.refresh(txn)
+
+        assert result["categorized"] == 1
+        assert txn.coa_account_code == "5000"          # accounting action applied
+        assert txn.counterparty_name != "Legacy Vendor"  # identity action ignored
+        assert txn.counterparty_id is None
+
+    def test_rule_create_and_update_reject_counterparty_assignment(self):
+        from pydantic import ValidationError
+        from src.models.schemas import RuleUpdate
+        with pytest.raises(ValidationError, match="POL-12"):
+            _expense_rule(counterparty_name="Twilio")
+        with pytest.raises(ValidationError, match="POL-12"):
+            RuleUpdate(counterparty_type="vendor")
+
+    def test_text_matches_pipe_patterns_are_alternatives(self):
+        """' | '-packed patterns (QB-migration convention) act as OR alternatives."""
+        C, N, E = MatchOperator.CONTAINS, MatchOperator.NOT_CONTAINS, MatchOperator.IS_EXACTLY
+        assert _text_matches("paid DOCSEND monthly", C, "Hotjar | docsend")
+        assert _text_matches("HOTJAR renewal", C, "Hotjar | docsend")
+        assert not _text_matches("something else", C, "Hotjar | docsend")
+        assert not _text_matches("paid docsend", N, "Hotjar | docsend")
+        assert _text_matches("something else", N, "Hotjar | docsend")
+        assert _text_matches("hotjar", E, "Hotjar | docsend")
+        # single patterns unchanged
+        assert _text_matches("ANTHROPIC SAN", C, "anthropic")

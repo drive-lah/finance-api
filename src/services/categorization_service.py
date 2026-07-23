@@ -1330,9 +1330,9 @@ Return only the JSON object, no explanation."""
                 rule=rule,
             )
 
-        # Update transaction metadata
-        if rule.counterparty_name:
-            transaction.counterparty_name = rule.counterparty_name
+        # POL-12: rules never assign counterparties — identity belongs to enrichment
+        # (names + aliases). rule.counterparty_name/type are legacy action fields,
+        # deliberately ignored here; counterparty_* CONDITIONS remain supported.
 
         # Set COA account code for non-internal-transfer categorizations
         if rule.category != TransactionCategory.INTERNAL_TRANSFER:
@@ -2052,12 +2052,17 @@ def _text_matches(value: Optional[str], operator: MatchOperator, pattern: str) -
     v_lower = value.lower()
     p_lower = pattern.lower()
 
+    # ' | '-separated patterns are alternatives (authoring convention carried over
+    # from the QB-rule migration): CONTAINS/IS_EXACTLY match ANY alternative,
+    # NOT_CONTAINS requires NONE present. Regex patterns are never split.
+    alternatives = [p.strip() for p in p_lower.split("|") if p.strip()] or [p_lower]
+
     if operator == MatchOperator.CONTAINS:
-        return p_lower in v_lower
+        return any(alt in v_lower for alt in alternatives)
     if operator == MatchOperator.NOT_CONTAINS:
-        return p_lower not in v_lower
+        return all(alt not in v_lower for alt in alternatives)
     if operator == MatchOperator.IS_EXACTLY:
-        return v_lower == p_lower
+        return any(v_lower == alt for alt in alternatives)
     if operator == MatchOperator.MATCHES_REGEX:
         try:
             return bool(re.search(pattern, value, re.IGNORECASE))

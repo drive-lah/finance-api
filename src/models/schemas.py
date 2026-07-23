@@ -496,10 +496,21 @@ class RuleCreate(BaseModel):
     contra_account_code: Optional[str] = Field(None, max_length=20, description="Required for expense/deposit/cross_entity_allocation")
     target_bank_account_id: Optional[int] = Field(None, gt=0, description="Required for internal_transfer")
     allocation_entity_id: Optional[int] = Field(None, gt=0, description="Required for cross_entity_allocation — entity that bears the cost")
-    counterparty_name: Optional[str] = Field(None, max_length=255)
-    counterparty_type: Optional[str] = Field(None, max_length=50)
+    counterparty_name: Optional[str] = Field(None, max_length=255, deprecated=True, description="REJECTED — rules never assign counterparties (POL-12)")
+    counterparty_type: Optional[str] = Field(None, max_length=50, deprecated=True, description="REJECTED — rules never assign counterparties (POL-12)")
     tag_ids: Optional[list[int]] = None
     gst_override: Optional[bool] = None
+
+    @field_validator('counterparty_name', 'counterparty_type')
+    @classmethod
+    def _reject_counterparty_action(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            raise ValueError(
+                "Rules cannot assign a counterparty (POL-12): identity belongs to "
+                "enrichment (counterparty names/aliases). Use counterparty_operator/"
+                "counterparty_value to CONDITION on a counterparty instead."
+            )
+        return v
 
 
 class RuleUpdate(BaseModel):
@@ -529,10 +540,21 @@ class RuleUpdate(BaseModel):
     contra_account_code: Optional[str] = Field(None, max_length=20)
     target_bank_account_id: Optional[int] = Field(None, gt=0)
     allocation_entity_id: Optional[int] = Field(None, gt=0)
-    counterparty_name: Optional[str] = Field(None, max_length=255)
-    counterparty_type: Optional[str] = Field(None, max_length=50)
+    counterparty_name: Optional[str] = Field(None, max_length=255, deprecated=True, description="REJECTED — rules never assign counterparties (POL-12)")
+    counterparty_type: Optional[str] = Field(None, max_length=50, deprecated=True, description="REJECTED — rules never assign counterparties (POL-12)")
     tag_ids: Optional[list[int]] = None
     gst_override: Optional[bool] = None
+
+    @field_validator('counterparty_name', 'counterparty_type')
+    @classmethod
+    def _reject_counterparty_action(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            raise ValueError(
+                "Rules cannot assign a counterparty (POL-12): identity belongs to "
+                "enrichment (counterparty names/aliases). Use counterparty_operator/"
+                "counterparty_value to CONDITION on a counterparty instead."
+            )
+        return v
 
 
 class RuleResponse(BaseModel):
