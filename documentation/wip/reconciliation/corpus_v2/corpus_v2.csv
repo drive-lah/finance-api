@@ -1,0 +1,782 @@
+entity,date,description,qb_label,coa_code,coa_name,amount,source
+sg_pte_ltd,19/01/2022,COLL 201900261MCPFGIROBIZ,Other Operating Expenses:Human Resource - CPF Contribution,6001,Employer CPF (SG),-6366.0,quickbooks_gl_v2
+sg_pte_ltd,28/01/2022,SALA LE VU ANH PHUOJOSHUAFAST PAYMENTFAST PAYMENT,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-1000.0,quickbooks_gl_v2
+sg_pte_ltd,31/01/2022,GIRO PAYMENT,Other Operating Expenses:Human Resource - Directors' Salary,6003,Directors Salary,-11200.0,quickbooks_gl_v2
+sg_pte_ltd,17/02/2022,GIROCOLL 201900261MCPFBIZ,Other Operating Expenses:Human Resource - CPF Contribution,6001,Employer CPF (SG),-6366.0,quickbooks_gl_v2
+sg_pte_ltd,19/02/2022,FAST PAYMENT SALA MADHUR MIHAL MADHURFULLNFINAL Drive lah Pie Ltd,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2000.0,quickbooks_gl_v2
+sg_pte_ltd,24/02/2022,DEBIT PURCHASE44611xx-6882 LUCHA LOCOSIN,Other Operating Expenses:Travel-Meals,6401,Travel - Meals,-20.01,quickbooks_gl_v2
+sg_pte_ltd,26/02/2022,DEBIT PURCHASE44617xx-6882 WINE CONNECTIONBISTRO-HIS,Other Operating Expenses:Travel-Meals,6401,Travel - Meals,-39.78,quickbooks_gl_v2
+sg_pte_ltd,28/02/2022,Host earnings,Cost of Service:Payment Gateway,5010,Payment Processing Fees,-135841.0,quickbooks_gl_v2
+sg_pte_ltd,29/03/2022,GIRO PAYMENT,Other Operating Expenses:Human Resource - Directors' Salary,6003,Directors Salary,-11200.0,quickbooks_gl_v2
+sg_pte_ltd,12/05/2022,OTHR PAYMENT/TRANSFERPAYMENT/TRANSFER OTHRSINGHAL GAURAVTransfer,Accrued Expense,2200,Accrued Expenses,2000.0,quickbooks_gl_v2
+sg_pte_ltd,14/05/2022,DEBIT PURCHASExx-6882 BARBARY COAST DEBIT PURCHASExx-6882 BARBARY COAST,Other Operating Expenses:Travel-Meals,6401,Travel - Meals,-310.73,quickbooks_gl_v2
+sg_pte_ltd,27/05/2022,"CCY CONVERSION REVFOR: -1,337.50 SGD CCY CONVERSION REVFOR: -1,337.50 SGD",Other Income-Refund,7001,Other Income - Cash Rebate,13.38,quickbooks_gl_v2
+sg_pte_ltd,31/05/2022,GIRO PAYMENTGIRO PAYMENT,Other Operating Expenses:Human Resource - Directors' Salary,6003,Directors Salary,-11200.0,quickbooks_gl_v2
+sg_pte_ltd,22/06/2022,EVONTLY,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-1731.05,quickbooks_gl_v2
+sg_pte_ltd,29/06/2022,SALRY RUPAL,Accrued Expense,2200,Accrued Expenses,-2194.01,quickbooks_gl_v2
+sg_pte_ltd,31/07/2022,44769 DEBIT PURCHASExx-6882 BEER BASKET KATONG     SIN DEBIT PURCHASExx-6882 BEER BASKET KATONG     SIN,Other Operating Expenses:Travel-Meals,6401,Travel - Meals,-350.53,quickbooks_gl_v2
+sg_pte_ltd,31/07/2022,JAY JULY22 INC FUND TRANSFER,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-200.0,quickbooks_gl_v2
+sg_pte_ltd,14/08/2022,JUST CO FAST PAYMENT,Other Operating Expenses:Corporate - Office Rent,6300,Office Rent,-853.55,quickbooks_gl_v2
+sg_pte_ltd,16/08/2022,GIRO PAYMENT SMGP220814775828,Other Operating Expenses:Corporate - Office Rent,6300,Office Rent,-4580.56,quickbooks_gl_v2
+sg_pte_ltd,18/08/2022,COLL CPF GIRO BIZ,Other Operating Expenses:Human Resource - CPF Contribution,6001,Employer CPF (SG),-8861.0,quickbooks_gl_v2
+sg_pte_ltd,20/08/2022,SALA SHAHANAND NAIUD BOBBY FNF,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-477.28,quickbooks_gl_v2
+sg_pte_ltd,29/08/2022,FUND TRANSFER FROM COREY ALASTAIR,Other Operating Expenses:Marketing - Advertising (new customers),6100,Marketing - Digital Advertising,28.3,quickbooks_gl_v2
+sg_pte_ltd,31/08/2022,GIRO PAYMENT,Other Operating Expenses:Human Resource - Directors' Salary,6003,Directors Salary,-14689.74,quickbooks_gl_v2
+sg_pte_ltd,07/09/2022,INV IV2022070195 FUND TRANSFER TO ACCOUNT 9001,Other Operating Expenses:Human Resource - Recruitment Agency Fees,6200,HR - Recruitment,-71.9,quickbooks_gl_v2
+sg_pte_ltd,08/09/2022,INV IV2022080021 FUND TRANSFER,Other Operating Expenses:Human Resource - Recruitment Agency Fees,6200,HR - Recruitment,-323.57,quickbooks_gl_v2
+sg_pte_ltd,19/09/2022,GIRO CPF,Other Operating Expenses:Human Resource - CPF Contribution,6001,Employer CPF (SG),-7929.0,quickbooks_gl_v2
+sg_pte_ltd,20/09/2022,FUND TRANSFER,Accrued Expense,2200,Accrued Expenses,-950.0,quickbooks_gl_v2
+sg_pte_ltd,29/09/2022,GIRO PAYMENT,Other Operating Expenses:Human Resource - Directors' Salary,6003,Directors Salary,-15120.0,quickbooks_gl_v2
+sg_pte_ltd,07/10/2022,DEBIT PURCHASExx-6882 PAYPAL *2CHECKOUTCO    880 DEBIT PURCHASEUSD 3397.00,Other Operating Expenses:Marketing - Advertising (new customers),6100,Marketing - Digital Advertising,-5043.24,quickbooks_gl_v2
+sg_pte_ltd,13/10/2022,DEBIT PURCHASExx-6882 AIRASIA_AK  A4K64T     SIN DEBIT PURCHASEINR 41214.00,Other Operating Expenses:Travel - Airfare,6400,Travel - Tickets,-738.53,quickbooks_gl_v2
+sg_pte_ltd,01/11/2022,Sent Roseanne Dimaranan,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-935.6,quickbooks_gl_v2
+sg_pte_ltd,01/11/2022,Sent Kamille Kassandra Esperanzate Abeleda,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-699.93,quickbooks_gl_v2
+sg_pte_ltd,02/11/2022,Sent Sandra L. Capanang,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-630.34,quickbooks_gl_v2
+sg_pte_ltd,02/11/2022,Sent Joya Mae Noynay,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-699.94,quickbooks_gl_v2
+sg_pte_ltd,16/11/2022,Sent Kamille Kassandra Esperanzate Abeleda,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-679.07,quickbooks_gl_v2
+sg_pte_ltd,17/11/2022,CPFBIZ GIROCOLL 201900261MGIRO,Other Operating Expenses:Human Resource - CPF Contribution,6001,Employer CPF (SG),-9233.0,quickbooks_gl_v2
+sg_pte_ltd,17/11/2022,Sent Joya Mae Noynay,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-679.07,quickbooks_gl_v2
+sg_pte_ltd,17/11/2022,Sent Sandra L. Capanang,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-610.46,quickbooks_gl_v2
+sg_pte_ltd,17/11/2022,Sent Roseanne Dimaranan,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-906.78,quickbooks_gl_v2
+sg_pte_ltd,27/11/2022,Sent Bavani Srinu,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-205.96,quickbooks_gl_v2
+sg_pte_ltd,27/11/2022,Sent Shreya Srivastava,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-108.23,quickbooks_gl_v2
+sg_pte_ltd,28/11/2022,Sent Mats ter Horst,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-997.91,quickbooks_gl_v2
+sg_pte_ltd,29/11/2022,Sent Pankaj M Patidar,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-1960.19,quickbooks_gl_v2
+sg_pte_ltd,03/12/2022,Sent Roseanne Dimaranan,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-896.35,quickbooks_gl_v2
+sg_pte_ltd,03/12/2022,Sent Kamille Kassandra Esperanzate Abeleda,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-670.63,quickbooks_gl_v2
+sg_pte_ltd,05/12/2022,Sent Sandra L. Capanang,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-605.02,quickbooks_gl_v2
+sg_pte_ltd,05/12/2022,Sent Joya Mae Noynay,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-671.85,quickbooks_gl_v2
+sg_pte_ltd,16/12/2022,Sent Roseanne Dimaranan,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-893.87,quickbooks_gl_v2
+sg_pte_ltd,16/12/2022,Sent Kamille Kassandra Esperanzate Abeleda,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-669.23,quickbooks_gl_v2
+sg_pte_ltd,19/12/2022,Sent Sandra L. Capanang,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-601.98,quickbooks_gl_v2
+sg_pte_ltd,19/12/2022,Sent Joya Mae Noynay,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-535.64,quickbooks_gl_v2
+sg_pte_ltd,19/12/2022,GIRO COLL 201900261M CPF BIZ,Other Operating Expenses:Human Resource - CPF Contribution,6001,Employer CPF (SG),-9233.0,quickbooks_gl_v2
+sg_pte_ltd,22/12/2022,TRANSFER CT0027116390 CT0026872858 RTN,Other Income-Refund,7001,Other Income - Cash Rebate,3500.0,quickbooks_gl_v2
+sg_pte_ltd,29/12/2022,Sent RUPALBEN ARVINDBHAI PATEL,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2021.28,quickbooks_gl_v2
+sg_pte_ltd,29/12/2022,Sent Milan Harshadkumar Vadgama,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-1057.81,quickbooks_gl_v2
+sg_pte_ltd,29/12/2022,Sent Bavani Srinu,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-3254.96,quickbooks_gl_v2
+sg_pte_ltd,29/12/2022,Sent Pankaj M Patidar,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-1898.68,quickbooks_gl_v2
+sg_pte_ltd,29/12/2022,Sent Mats ter Horst,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-1002.76,quickbooks_gl_v2
+sg_pte_ltd,04/01/2023,Shreya Srivastava,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-27.34,quickbooks_gl_v2
+sg_pte_ltd,13/01/2023,Ujjwal Khatri,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-487.71,quickbooks_gl_v2
+sg_pte_ltd,17/01/2023,Sandra L. Capanang,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-589.56,quickbooks_gl_v2
+sg_pte_ltd,17/01/2023,Roseanne Dimaranan,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-874.95,quickbooks_gl_v2
+sg_pte_ltd,31/01/2023,Shreya Srivastava,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-1054.42,quickbooks_gl_v2
+sg_pte_ltd,01/02/2023,Sandra L. Capanang,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-585.59,quickbooks_gl_v2
+sg_pte_ltd,01/02/2023,Roseanne Dimaranan,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-868.99,quickbooks_gl_v2
+sg_pte_ltd,09/02/2023,Muhammad Nawaz Akram Malik,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-337.82,quickbooks_gl_v2
+sg_pte_ltd,18/02/2023,Roseanne Dimaranan,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-37.37,quickbooks_gl_v2
+sg_pte_ltd,18/02/2023,Roseanne Dimaranan,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-893.99,quickbooks_gl_v2
+sg_pte_ltd,19/02/2023,Muhammad Asif,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-133.67,quickbooks_gl_v2
+sg_pte_ltd,26/02/2023,Muhammad Asif,Other Operating Expenses:Corporate - Bookkeeping Fees,6500,Accounting & Bookkeeping Fees,-449.5,quickbooks_gl_v2
+sg_pte_ltd,27/02/2023,Pankaj M Patidar,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-1901.1,quickbooks_gl_v2
+sg_pte_ltd,27/02/2023,RUPALBEN ARVINDBHAI PATEL,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2023.26,quickbooks_gl_v2
+sg_pte_ltd,27/02/2023,Bavani Srinu,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-3258.16,quickbooks_gl_v2
+sg_pte_ltd,06/03/2023,Ujjwal Khatri,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-260.04,quickbooks_gl_v2
+sg_pte_ltd,07/03/2023,Muhammad Asif,Other Operating Expenses:Corporate - Bookkeeping Fees,6500,Accounting & Bookkeeping Fees,-414.43,quickbooks_gl_v2
+sg_pte_ltd,19/03/2023,FAST PAYMENT,Other Operating Expenses:Marketing - Advertising (new customers),6100,Marketing - Digital Advertising,-5000.0,quickbooks_gl_v2
+sg_pte_ltd,19/03/2023,Muhammad Asif,Other Operating Expenses:Corporate - Bookkeeping Fees,6500,Accounting & Bookkeeping Fees,-621.85,quickbooks_gl_v2
+sg_pte_ltd,24/03/2023,FUND TRANSFER Fund Transfer to account 595110172001 SGD 1 794.00@1 EV-21032023  dated 21/03/23,Cost of Overhead Related to Service:Marketing - Advertising (retargeting),6100,Marketing - Digital Advertising,-1794.0,quickbooks_gl_v2
+sg_pte_ltd,27/03/2023,Pankaj M Patidar,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-1888.74,quickbooks_gl_v2
+sg_pte_ltd,27/03/2023,RUPALBEN ARVINDBHAI PATEL,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2010.54,quickbooks_gl_v2
+sg_pte_ltd,27/03/2023,Bavani Srinu,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-3237.83,quickbooks_gl_v2
+sg_pte_ltd,18/04/2023,GIRO PAYMENT,Prepaid Expense,1300,Prepayments,-13986.0,quickbooks_gl_v2
+sg_pte_ltd,28/04/2023,Bavani Srinu,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-1630.56,quickbooks_gl_v2
+sg_pte_ltd,28/04/2023,Bavani Srinu,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-1792.97,quickbooks_gl_v2
+sg_pte_ltd,28/04/2023,Pankaj M Patidar,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-1903.07,quickbooks_gl_v2
+sg_pte_ltd,28/04/2023,Bavani Srinu,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-3260.96,quickbooks_gl_v2
+sg_pte_ltd,02/05/2023,Bavani Srinu,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-68.1,quickbooks_gl_v2
+sg_pte_ltd,06/05/2023,CASH DEPOSIT     CDM,Other Income-Refund,7001,Other Income - Cash Rebate,330.0,quickbooks_gl_v2
+sg_pte_ltd,08/05/2023,TT-EUR336.62 TT IN SGD 1/INVERS GMBH 2/UNTERE INDUSTRIESTR. 20 3/DE/57250 NETPHEN GA-39605 ./. OPEN INVOICES RA36877/ 36878/37260/37261,Other Income-Refund,7001,Other Income - Cash Rebate,476.01,quickbooks_gl_v2
+sg_pte_ltd,08/05/2023,Muhammad Asif,Other Operating Expenses:Corporate - Bookkeeping Fees,6500,Accounting & Bookkeeping Fees,-775.33,quickbooks_gl_v2
+sg_pte_ltd,11/05/2023,xx-6882 DRIVE MATE             BRI DEBIT CREDIT,Other Income-Refund,7001,Other Income - Cash Rebate,29.81,quickbooks_gl_v2
+sg_pte_ltd,11/05/2023,xx-6882 DRIVE MATE             BRI DEBIT CREDIT,Other Income-Refund,7001,Other Income - Cash Rebate,32.74,quickbooks_gl_v2
+sg_pte_ltd,11/05/2023,xx-6882 DRIVE MATE             GLE DEBIT CREDIT,Other Income-Refund,7001,Other Income - Cash Rebate,39.74,quickbooks_gl_v2
+sg_pte_ltd,13/05/2023,xx-6882 MY ASKAI               LON DEBIT CREDIT,Other Income-Refund,7001,Other Income - Cash Rebate,13.72,quickbooks_gl_v2
+sg_pte_ltd,30/05/2023,Sent money to RUPALBEN ARVINDBHAI PATEL,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-3728.59,quickbooks_gl_v2
+sg_pte_ltd,05/06/2023,xx-7313 MY ASKAI               LON DEBIT CREDIT,Other Income-Refund,7001,Other Income - Cash Rebate,28.0,quickbooks_gl_v2
+sg_pte_ltd,08/06/2023,Kamille Kassandra Esperanzate Abeleda,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-604.62,quickbooks_gl_v2
+sg_pte_ltd,19/06/2023,mohammad hamizan bin tussin,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-374.51,quickbooks_gl_v2
+sg_pte_ltd,19/06/2023,mohammad hamizan bin tussin,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2.9,quickbooks_gl_v2
+sg_pte_ltd,02/07/2023,Kamille Kassandra Esperanzate Abeleda 16th to 30th jun 2023,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-603.59,quickbooks_gl_v2
+sg_pte_ltd,03/07/2023,Ujjwal Khatri,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-268.0,quickbooks_gl_v2
+sg_pte_ltd,06/07/2023,Andrienne Eliza George,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-763.08,quickbooks_gl_v2
+sg_pte_ltd,15/07/2023,Joya Mae Noynay 1st to 15th july 2023,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-470.59,quickbooks_gl_v2
+sg_pte_ltd,15/07/2023,Sent money to Wong Fong KiewINV 001290,Other Operating Expenses:Marketing Asset Creation,6103,Marketing - Asset Creation,4794.35,quickbooks_gl_v2
+sg_pte_ltd,10/08/2023,Venturehaven Pte Ltd VHPI23004625,Other Operating Expenses:Corporate - Legal Fees,6501,Legal Fees,-1802.52,quickbooks_gl_v2
+sg_pte_ltd,10/08/2023,LE VU ANH PHUONG,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-790.0,quickbooks_gl_v2
+sg_pte_ltd,04/09/2023,Pankaj M Patidar Fyle claim goa,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-282.39,quickbooks_gl_v2
+sg_pte_ltd,14/09/2023,LE VU ANH PHUONG payout approved by G,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-1080.0,quickbooks_gl_v2
+sg_pte_ltd,06/10/2023,Syed Mohamad Farhan Bin Syed Othman,Cost of Overhead Related to Service:Market -Asset Creation,6103,Marketing - Asset Creation,-30.0,quickbooks_gl_v2
+sg_pte_ltd,06/11/2023,Ryan Tan Jun Rong,Cost of Overhead Related to Service:Market -Asset Creation,6103,Marketing - Asset Creation,-30.0,quickbooks_gl_v2
+sg_pte_ltd,06/11/2023,Michelle Sorvida,Cost of Overhead Related to Service:Market -Asset Creation,6103,Marketing - Asset Creation,-270.0,quickbooks_gl_v2
+sg_pte_ltd,15/11/2023,Kamille Kassandra Esperanzate Abeleda,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-642.29,quickbooks_gl_v2
+sg_pte_ltd,21/11/2023,Pankaj M Patidar,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-32.09,quickbooks_gl_v2
+sg_pte_ltd,21/11/2023,Jay Nikhilbhai Poojara,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-20.04,quickbooks_gl_v2
+sg_pte_ltd,27/11/2023,Bavani Srinu,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-3341.32,quickbooks_gl_v2
+sg_pte_ltd,27/11/2023,Kamille Kassandra Esperanzate Abeleda,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-598.64,quickbooks_gl_v2
+sg_pte_ltd,27/11/2023,Pankaj M Patidar,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-1871.08,quickbooks_gl_v2
+sg_pte_ltd,27/11/2023,Jay Nikhilbhai Poojara,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2780.42,quickbooks_gl_v2
+sg_pte_ltd,01/12/2023,Venturehaven Pte Ltd,Other Operating Expenses:Corporate - Bookkeeping Fees,6500,Accounting & Bookkeeping Fees,-432.0,quickbooks_gl_v2
+sg_pte_ltd,11/12/2023,Pankaj M Patidar,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-52.88,quickbooks_gl_v2
+sg_pte_ltd,03/01/2024,Vmax Solutions Pte Ltd,Cost of Overhead Related to Service:Operating Expenses:Sticker payouts,5041,Host Payouts - Sticker,-264.0,quickbooks_gl_v2
+sg_pte_ltd,04/01/2024,MACHAVARAM SANJEEV KUMAR,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-1329.28,quickbooks_gl_v2
+sg_pte_ltd,16/01/2024,Krystine Anne M. Cuarteros,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-594.17,quickbooks_gl_v2
+sg_pte_ltd,17/01/2024,MOHAMED RISWAN S o SHAHABUDEEN,Other Operating Expenses:Human Resource - CPF Contribution,6001,Employer CPF (SG),-1266.0,quickbooks_gl_v2
+sg_pte_ltd,29/01/2024,MACHAVARAM SANJEEV KUMAR,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-3361.03,quickbooks_gl_v2
+sg_pte_ltd,29/01/2024,Bavani Srinu,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-3775.73,quickbooks_gl_v2
+sg_pte_ltd,29/01/2024,Pankaj M Patidar,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2420.32,quickbooks_gl_v2
+sg_pte_ltd,29/01/2024,MAXICARE HEALTHCARE CORPORATION,Cost of Service:Insurance,5035,Cost of Insurance - Trip Premium,-11.87,quickbooks_gl_v2
+sg_pte_ltd,01/02/2024,Ho Shyan Tien,Cost of Overhead Related to Service:Operating Expenses:Cleaning,5022,Incidentals Payout - Cleaning,-26.0,quickbooks_gl_v2
+sg_pte_ltd,16/02/2024,MAXICARE HEALTHCARE CORPORATION,Cost of Service:Insurance,5035,Cost of Insurance - Trip Premium,-893.74,quickbooks_gl_v2
+sg_pte_ltd,21/02/2024,MAXICARE HEALTHCARE CORPORATION,Cost of Service:Insurance,5035,Cost of Insurance - Trip Premium,-4.37,quickbooks_gl_v2
+sg_pte_ltd,28/02/2024,Arjay Labao Sasan,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-598.65,quickbooks_gl_v2
+sg_pte_ltd,28/02/2024,Bavani Srinu,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-3799.35,quickbooks_gl_v2
+sg_pte_ltd,28/02/2024,Pankaj M Patidar,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2435.38,quickbooks_gl_v2
+sg_pte_ltd,29/02/2024,Tan Jun Wen Benjamin,Cost of Overhead Related to Service:Operating Expenses:Parking,5060,Parking - RMS Fleet,-120.0,quickbooks_gl_v2
+sg_pte_ltd,09/03/2024,Michelle Sorvida,Cost of Overhead Related to Service:Market -Asset Creation,6103,Marketing - Asset Creation,-630.0,quickbooks_gl_v2
+sg_pte_ltd,19/03/2024,Antron Lim Hong Ru,Cost of Overhead Related to Service:Operating Expenses:Parking,5060,Parking - RMS Fleet,-161.38,quickbooks_gl_v2
+sg_pte_ltd,19/03/2024,MACHAVARAM SANJEEV KUMAR,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2246.69,quickbooks_gl_v2
+sg_pte_ltd,23/03/2024,Venturehaven Pte Ltd,Accrued Expense,2200,Accrued Expenses,-2100.0,quickbooks_gl_v2
+sg_pte_ltd,23/03/2024,Venturehaven Pte Ltd,Other Operating Expenses:Corporate - Legal Fees,6501,Legal Fees,-2100.0,quickbooks_gl_v2
+sg_pte_ltd,26/03/2024,N. SUNDARAM,Cost of Overhead Related to Service:Operating Expenses:Parking,5060,Parking - RMS Fleet,-41.02,quickbooks_gl_v2
+sg_pte_ltd,27/03/2024,Gabriel John Ebreo Limjoco,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-603.12,quickbooks_gl_v2
+sg_pte_ltd,27/03/2024,Bavani Srinu,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-3780.71,quickbooks_gl_v2
+sg_pte_ltd,27/03/2024,Pankaj M Patidar,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2423.92,quickbooks_gl_v2
+sg_pte_ltd,29/03/2024,Afiq Sufyan Bin Azman,Cost of Overhead Related to Service:Operating Expenses:Parking,5060,Parking - RMS Fleet,-42.64,quickbooks_gl_v2
+sg_pte_ltd,08/04/2024,Michelle Sorvida,Cost of Overhead Related to Service:Market -Asset Creation,6103,Marketing - Asset Creation,-540.0,quickbooks_gl_v2
+sg_pte_ltd,12/04/2024,Vmax Solutions Pte Ltd,Cost of Overhead Related to Service:Operating Expenses:Sticker payouts,5041,Host Payouts - Sticker,-264.0,quickbooks_gl_v2
+sg_pte_ltd,17/04/2024,Arjay Labao Sasan,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-282.98,quickbooks_gl_v2
+sg_pte_ltd,29/04/2024,Pankaj M Patidar,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2451.35,quickbooks_gl_v2
+sg_pte_ltd,29/04/2024,Bavani Srinu,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-3822.64,quickbooks_gl_v2
+sg_pte_ltd,02/05/2024,Venturehaven Pte Ltd,Other Operating Expenses:Corporate - Legal Fees,6501,Legal Fees,-10.9,quickbooks_gl_v2
+sg_pte_ltd,06/05/2024,FAST PAYMENT LOAN MANVINDER KAUR SM3P240506894493 SM3P240506894493,Loans to Others,1320,Loans to Others,-6000.0,quickbooks_gl_v2
+sg_pte_ltd,08/05/2024,Michelle Sorvida,Cost of Overhead Related to Service:Market -Asset Creation,6103,Marketing - Asset Creation,-480.0,quickbooks_gl_v2
+sg_pte_ltd,27/05/2024,Pankaj M Patidar,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2436.75,quickbooks_gl_v2
+sg_pte_ltd,27/05/2024,Bavani Srinu,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-3801.34,quickbooks_gl_v2
+sg_pte_ltd,27/05/2024,Kenneth Zapanta Estera,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-562.48,quickbooks_gl_v2
+sg_pte_ltd,14/06/2024,Michelle Sorvida,Other Operating Expenses:Marketing - Advertising (new customers),6100,Marketing - Digital Advertising,-690.0,quickbooks_gl_v2
+sg_pte_ltd,15/06/2024,Krystine Anne M. Cuarteros,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-804.47,quickbooks_gl_v2
+sg_pte_ltd,18/06/2024,Kenneth Zapanta Estera,Other Operating Expenses:Marketing - Advertising (new customers),6100,Marketing - Digital Advertising,-172.51,quickbooks_gl_v2
+sg_pte_ltd,28/06/2024,Bavani Srinu,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-3811.4,quickbooks_gl_v2
+sg_pte_ltd,28/06/2024,Pankaj M Patidar,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2442.86,quickbooks_gl_v2
+sg_pte_ltd,28/06/2024,Gabriel John Ebreo Limjoco,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-607.54,quickbooks_gl_v2
+sg_pte_ltd,28/06/2024,Sweta Bhargava,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2074.88,quickbooks_gl_v2
+sg_pte_ltd,08/07/2024,John Koo,Cost of Overhead Related to Service:Operating Expenses:Parking,5060,Parking - RMS Fleet,-39.48,quickbooks_gl_v2
+sg_pte_ltd,10/07/2024,Michelle Sorvida,Other Operating Expenses:Marketing - Advertising (new customers),6100,Marketing - Digital Advertising,-390.0,quickbooks_gl_v2
+sg_pte_ltd,10/07/2024,Antron Lim Hong Ru,Cost of Overhead Related to Service:Operating Expenses:Parking,5060,Parking - RMS Fleet,-480.0,quickbooks_gl_v2
+sg_pte_ltd,11/07/2024,Sazali Rahmat,Cost of Overhead Related to Service:Operating Expenses:Parking,5060,Parking - RMS Fleet,-101.9,quickbooks_gl_v2
+sg_pte_ltd,15/07/2024,Vmax Solutions Pte Ltd,Cost of Overhead Related to Service:Operating Expenses:Sticker payouts,5041,Host Payouts - Sticker,-264.0,quickbooks_gl_v2
+sg_pte_ltd,15/07/2024,Krystine Anne M. Cuarteros,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-798.51,quickbooks_gl_v2
+sg_pte_ltd,15/07/2024,Jayson Carson Mendoza,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-838.49,quickbooks_gl_v2
+sg_pte_ltd,26/07/2024,Pankaj M Patidar,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2407.5,quickbooks_gl_v2
+sg_pte_ltd,26/07/2024,Bavani Srinu,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-3755.44,quickbooks_gl_v2
+sg_pte_ltd,26/07/2024,Sweta Bhargava,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2274.49,quickbooks_gl_v2
+sg_pte_ltd,03/08/2024,Pankaj M Patidar,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-791.55,quickbooks_gl_v2
+sg_pte_ltd,16/08/2024,Kenneth Zapanta Estera,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-229.89,quickbooks_gl_v2
+sg_pte_ltd,17/08/2024,Gabriel John Ebreo Limjoco,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-194.52,quickbooks_gl_v2
+sg_pte_ltd,28/08/2024,Pankaj M Patidar,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2329.5,quickbooks_gl_v2
+sg_pte_ltd,28/08/2024,Bavani Srinu,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-3633.33,quickbooks_gl_v2
+sg_pte_ltd,28/08/2024,Sweta Bhargava,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2199.46,quickbooks_gl_v2
+sg_pte_ltd,03/09/2024,muhammad razali abdul kahar,Cost of Overhead Related to Service:Operating Expenses:Parking,5060,Parking - RMS Fleet,-17.0,quickbooks_gl_v2
+sg_pte_ltd,09/09/2024,Gabriel John Ebreo Limjoco,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-214.84,quickbooks_gl_v2
+sg_pte_ltd,12/09/2024,Michelle Sorvida,Other Operating Expenses:Marketing - Advertising (new customers),6100,Marketing - Digital Advertising,-540.0,quickbooks_gl_v2
+sg_pte_ltd,16/09/2024,Myrna Lynne Ligoyligoy Alcala,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-697.28,quickbooks_gl_v2
+sg_pte_ltd,16/09/2024,Manuelito Jr Aquino Sta Ana,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-532.36,quickbooks_gl_v2
+sg_pte_ltd,16/09/2024,Elmer Tomenio,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-813.68,quickbooks_gl_v2
+sg_pte_ltd,23/09/2024,Syed Haleem bin Syed Yasim,Cost of Overhead Related to Service:Operating Expenses:Parking,5060,Parking - RMS Fleet,-65.96,quickbooks_gl_v2
+sg_pte_ltd,27/09/2024,Alice Jorgina Diaz,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-846.78,quickbooks_gl_v2
+sg_pte_ltd,27/09/2024,Pankaj M Patidar,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2298.41,quickbooks_gl_v2
+sg_pte_ltd,27/09/2024,Bavani Srinu,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-3585.13,quickbooks_gl_v2
+sg_pte_ltd,27/09/2024,Carren Balucas,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-808.23,quickbooks_gl_v2
+sg_pte_ltd,27/09/2024,Manuelito Jr Aquino Sta Ana,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-591.44,quickbooks_gl_v2
+sg_pte_ltd,09/10/2024,Michelle Sorvida,Other Operating Expenses:Marketing - Advertising (new customers),6100,Marketing - Digital Advertising,-600.0,quickbooks_gl_v2
+sg_pte_ltd,09/10/2024,Gabriel John Ebreo Limjoco,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-235.55,quickbooks_gl_v2
+sg_pte_ltd,09/10/2024,Gabriel John Ebreo Limjoco,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-238.14,quickbooks_gl_v2
+sg_pte_ltd,09/10/2024,Kenneth Zapanta Estera,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-402.75,quickbooks_gl_v2
+sg_pte_ltd,18/10/2024,Goh Wei Guo,Cost of Overhead Related to Service:Operating Expenses:Parking,5060,Parking - RMS Fleet,-40.52,quickbooks_gl_v2
+sg_pte_ltd,22/10/2024,Manuelito Jr Aquino Sta Ana,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-116.16,quickbooks_gl_v2
+sg_pte_ltd,23/10/2024,Pridave Sugunan,Cost of Overhead Related to Service:Operating Expenses:Parking,5060,Parking - RMS Fleet,-18.52,quickbooks_gl_v2
+sg_pte_ltd,25/10/2024,Vmax Solutions Pte Ltd,Cost of Overhead Related to Service:Operating Expenses:Sticker payouts,5041,Host Payouts - Sticker,-264.0,quickbooks_gl_v2
+sg_pte_ltd,28/10/2024,Adelia Agus Suryani,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-591.52,quickbooks_gl_v2
+sg_pte_ltd,28/10/2024,Pankaj M Patidar,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2363.17,quickbooks_gl_v2
+sg_pte_ltd,28/10/2024,Lorie Ann Victoria Loyola,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-590.43,quickbooks_gl_v2
+sg_pte_ltd,28/10/2024,Sugar Llagas Tingson,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-511.55,quickbooks_gl_v2
+sg_pte_ltd,28/10/2024,Judy Anne Valdez Baet,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-669.31,quickbooks_gl_v2
+sg_pte_ltd,28/10/2024,Wencar Legaspi Delfin,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-511.56,quickbooks_gl_v2
+sg_pte_ltd,09/11/2024,Myrna Lynne Ligoyligoy Alcala,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-191.92,quickbooks_gl_v2
+sg_pte_ltd,09/11/2024,Bavani Srinu,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-4532.17,quickbooks_gl_v2
+sg_pte_ltd,15/11/2024,Wencar Legaspi Delfin,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-598.8,quickbooks_gl_v2
+sg_pte_ltd,15/11/2024,Adelia Agus Suryani,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-599.89,quickbooks_gl_v2
+sg_pte_ltd,15/11/2024,Krystine Anne M. Cuarteros,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-798.78,quickbooks_gl_v2
+sg_pte_ltd,16/11/2024,Gabriel John Ebreo Limjoco,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-393.23,quickbooks_gl_v2
+sg_pte_ltd,16/11/2024,Kan Meng Chun Vincent,Cost of Overhead Related to Service:Operating Expenses:Parking,5060,Parking - RMS Fleet,-83.72,quickbooks_gl_v2
+sg_pte_ltd,27/11/2024,Pankaj M Patidar,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2386.58,quickbooks_gl_v2
+sg_pte_ltd,27/11/2024,Danyial Samim,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-3141.78,quickbooks_gl_v2
+sg_pte_ltd,16/12/2024,Kenneth Zapanta Estera,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-555.59,quickbooks_gl_v2
+sg_pte_ltd,27/12/2024,Krystine Anne M. Cuarteros,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-811.49,quickbooks_gl_v2
+sg_pte_ltd,27/12/2024,Kamille Kassandra Esperanzate Abeleda,Cost of Overhead Related to Service:Salary Expense Ops - Customer Service,5063,Customer Support - Salary,-608.32,quickbooks_gl_v2
+sg_pte_ltd,27/12/2024,Ganesh Rana,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-238.9,quickbooks_gl_v2
+sg_pte_ltd,27/12/2024,Pankaj M Patidar,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2392.28,quickbooks_gl_v2
+sg_pte_ltd,21/02/2025,INV-1663 late fee,Cost of Overhead Related to Service:Operating Expenses:Sticker payouts,5041,Host Payouts - Sticker,-13.2,quickbooks_gl_v2
+sg_pte_ltd,06/03/2025,xx-8724 SOLARWINDS             866 DEBIT CREDIT | Auto-categorized: Operating Expenses:Technology System Cost (100%),"AI, Internet & Website Maintenance fees",6700,Technology - Infrastructure,209.37,quickbooks_gl_v2
+sg_pte_ltd,17/04/2025,BIZ  RR000000000003044621 GIRO | Auto-categorized: Operating Expenses:Human Resource - CPF Contribution (100%),Other Operating Expenses:Human Resource - CPF Contribution,6001,Employer CPF (SG),-4393.0,quickbooks_gl_v2
+sg_pte_ltd,30/04/2025,INV-1738,Cost of Overhead Related to Service:Operating Expenses:Sticker payouts,5041,Host Payouts - Sticker,-80.0,quickbooks_gl_v2
+sg_pte_ltd,30/04/2025,INV-1731,Cost of Overhead Related to Service:Operating Expenses:Sticker payouts,5041,Host Payouts - Sticker,-50.0,quickbooks_gl_v2
+sg_pte_ltd,19/05/2025,BIZ  RR000000000003752348 GIRO | Auto-categorized: Operating Expenses:Human Resource - CPF Contribution (100%),Other Operating Expenses:Human Resource - CPF Contribution,6001,Employer CPF (SG),-4393.0,quickbooks_gl_v2
+sg_pte_ltd,19/06/2025,BIZ  RR000000000004503272 GIRO | Auto-categorized: Operating Expenses:Technology System Cost (100%),Other Operating Expenses:Human Resource - CPF Contribution,6001,Employer CPF (SG),-4393.0,quickbooks_gl_v2
+sg_pte_ltd,04/08/2025,Sent money to SHANMUGAN SO KASEE  DL - Insurance broker   with 27/06/2025 Exp Offset,Cost of Service:Insurance,5035,Cost of Insurance - Trip Premium,1000.0,quickbooks_gl_v2
+sg_pte_ltd,26/08/2025,Repairs for SLP585C	Vignesh,Cost of Overhead Related to Service:Operating Expenses:Workshop,5032,Incidentals Payout - Workshop,-1250.0,quickbooks_gl_v2
+sg_pte_ltd,02/09/2025,Sent money to Elanzaran Pavadaisamy-DL Damage pay,Cost of Overhead Related to Service:Operating Expenses:Damage,5021,Incidentals Payout - Damage (Host),-600.0,quickbooks_gl_v2
+sg_pte_ltd,08/09/2025,Sent money to Kwah Wee Hong-DL key retrieval,"AI, Internet & Website Maintenance fees",6700,Technology - Infrastructure,-80.0,quickbooks_gl_v2
+sg_pte_ltd,06/11/2025,Sent money to Commissioner of Inland Revenue	15813800000000,Other Operating Expenses:Corporate - Fines and Penalties,6502,Fines & Penalties,-1000.0,quickbooks_gl_v2
+sg_pte_ltd,12/11/2025,Sent money to Muhammad Abul Barakaath,Cost of Overhead Related to Service:Operating Expenses:Parking,5060,Parking - RMS Fleet,-53.0,quickbooks_gl_v2
+sg_pte_ltd,08/12/2025,Charles Teo Jia Ler	DL repair SLM7691Z R23850,Cost of Overhead Related to Service:Operating Expenses:Workshop,5032,Incidentals Payout - Workshop,-600.0,quickbooks_gl_v2
+sg_pte_ltd,06/06/2019,TT PURCHASE,Other Operating Expenses:Marketing Asset Creation,6103,Marketing - Asset Creation,-160.93,quickbooks_gl_v2
+sg_pte_ltd,19/06/2019,CHQ1 CHEQUE,Other Operating Expenses:Marketing Asset Creation,6103,Marketing - Asset Creation,-80.25,quickbooks_gl_v2
+sg_pte_ltd,13/12/2019,xx-6882 REGUS - SGD EMOTO (PUR TOW DEBIT CREDIT,Other Income-Refund,7001,Other Income - Cash Rebate,482.4,quickbooks_gl_v2
+sg_pte_ltd,10/01/2020,FUND TRANSFER Fund Transfer to account 565054962001 SGD 1 175.00@1,Other Operating Expenses:Marketing Asset Creation,6103,Marketing - Asset Creation,-1175.0,quickbooks_gl_v2
+sg_pte_ltd,22/01/2020,PAYMENT/TRANSFER LOAN SINGHAL GAURAV loan,Share Capital,3000,Share Capital,8311.0,quickbooks_gl_v2
+sg_pte_ltd,05/02/2020,Advance for event,Cost of Overhead Related to Service:Marketing - Advertising (retargeting),6100,Marketing - Digital Advertising,-1011.15,quickbooks_gl_v2
+sg_pte_ltd,17/03/2020,GIRO PAYMENT,Other Operating Expenses:Marketing - Advertising (new customers),6100,Marketing - Digital Advertising,-4601.0,quickbooks_gl_v2
+sg_pte_ltd,17/03/2020,GIRO PAYMENT,Other Operating Expenses:Marketing - Advertising (new customers),6100,Marketing - Digital Advertising,-3317.0,quickbooks_gl_v2
+sg_pte_ltd,19/03/2020,xx-6882 GA-INSIGHTS/CLOUDBOT   IRE DEBIT CREDIT,Other Income-Refund,7001,Other Income - Cash Rebate,135.17,quickbooks_gl_v2
+sg_pte_ltd,30/03/2020,GIRO PAYMENT,Other Operating Expenses:Corporate - Office Rent,6300,Office Rent,-2400.0,quickbooks_gl_v2
+sg_pte_ltd,08/04/2020,xx-6882 CRAZY EGG.COM          LA DEBIT CREDIT,Other Income-Refund,7001,Other Income - Cash Rebate,388.37,quickbooks_gl_v2
+sg_pte_ltd,09/04/2020,GIRO PAYMENT,Other Operating Expenses:Marketing Asset Creation,6103,Marketing - Asset Creation,-19942.0,quickbooks_gl_v2
+sg_pte_ltd,18/05/2020,GIRO PAYMENT,Other Operating Expenses:Marketing Asset Creation,6103,Marketing - Asset Creation,-13950.0,quickbooks_gl_v2
+sg_pte_ltd,18/05/2020,GIRO PAYMENT,Prepaid Expense,1300,Prepayments,-13950.0,quickbooks_gl_v2
+sg_pte_ltd,22/05/2020,FUND TRANSFER Fund Transfer to account 588094524001 SGD 106.30@1 VH201540,Other Operating Expenses:Corporate - Legal Fees,6501,Legal Fees,-106.3,quickbooks_gl_v2
+sg_pte_ltd,28/05/2020,GIRO PAYMENT,Other Operating Expenses:Human Resource - Directors' Salary,6003,Directors Salary,-8960.0,quickbooks_gl_v2
+sg_pte_ltd,02/06/2020,OTHR  MANVINDER KAUR,Loans to Others,1320,Loans to Others,10000.0,quickbooks_gl_v2
+sg_pte_ltd,03/06/2020,FUND TRANSFER  CT0018730908   LEGAL FEES,Other Operating Expenses:Corporate - Legal Fees,6501,Legal Fees,-69.55,quickbooks_gl_v2
+sg_pte_ltd,17/06/2020,PAYMENT TRANSFER MUHAMAD ZA'IM NURIM,Other Income-Refund,7001,Other Income - Cash Rebate,585.81,quickbooks_gl_v2
+sg_pte_ltd,29/06/2020,FUND TRANSFER  CT0018912957                 CPF FOR MAY,Other Operating Expenses:Human Resource - CPF Contribution,6001,Employer CPF (SG),-3700.0,quickbooks_gl_v2
+sg_pte_ltd,01/07/2020,GIRO PAYMENT,Technology Development,1710,Technology Development,-14130.0,quickbooks_gl_v2
+sg_pte_ltd,02/07/2020,GIRO PAYMENT,Other Operating Expenses:Corporate - Legal Fees,6501,Legal Fees,-2710.0,quickbooks_gl_v2
+sg_pte_ltd,02/07/2020,GIRO PAYMENT,Other Operating Expenses:Corporate - Legal Fees,6501,Legal Fees,-5750.0,quickbooks_gl_v2
+sg_pte_ltd,28/07/2020,GIRO PAYMENT,Other Operating Expenses:Human Resource - Directors' Salary,6003,Directors Salary,-8960.0,quickbooks_gl_v2
+sg_pte_ltd,28/08/2020,GIRO PAYMENT,Other Operating Expenses:Human Resource - Directors' Salary,6003,Directors Salary,-8960.0,quickbooks_gl_v2
+sg_pte_ltd,05/10/2020,"USD 5000.00DEBIT PURCHASExx-6882 LUCID STUDIOS, LLC BRODEBIT PURCHASExx-6882 LUCID STUDIO",Cost of Overhead Related to Service:Market -Asset Creation,6103,Marketing - Asset Creation,-7053.52,quickbooks_gl_v2
+sg_pte_ltd,05/10/2020,"USD 5000.00DEBIT PURCHASExx-6882 LUCID STUDIOS, LLC BRODEBIT PURCHASExx-6882 LUCID STUDIO",Prepaid Expense,1300,Prepayments,-7053.52,quickbooks_gl_v2
+sg_pte_ltd,11/10/2020,USD 29.00DEBIT PURCHASExx-6882 SENTRY855,Technology Development,1710,Technology Development,-40.73,quickbooks_gl_v2
+sg_pte_ltd,28/10/2020,GIRO PAYMENT,Other Operating Expenses:Human Resource - Directors' Salary,6003,Directors Salary,-6148.0,quickbooks_gl_v2
+sg_pte_ltd,06/11/2020,GIRO PAYMENT,Share Capital,3000,Share Capital,-10000.0,quickbooks_gl_v2
+sg_pte_ltd,20/11/2020,GIRO PAYMENT,Share Capital,3000,Share Capital,-1414.0,quickbooks_gl_v2
+sg_pte_ltd,20/11/2020,xx-6882 WWW.TRYRELEVANCE.COM SAN DEBIT CREDIT,Other Income-Refund,7001,Other Income - Cash Rebate,144.95,quickbooks_gl_v2
+sg_pte_ltd,30/11/2020,GIRO PAYMENT,Other Operating Expenses:Human Resource - Directors' Salary,6003,Directors Salary,-11200.0,quickbooks_gl_v2
+sg_pte_ltd,03/12/2020,SALA GOYAL AARUSHI          AARUSHI SAL,Accrued Expense,2200,Accrued Expenses,-3000.0,quickbooks_gl_v2
+sg_pte_ltd,30/12/2020,GIRO PAYMENT,Other Operating Expenses:Human Resource - Directors' Salary,6003,Directors Salary,-11200.0,quickbooks_gl_v2
+sg_pte_ltd,15/01/2021,GIRO PAYMENT,Cost of Overhead Related to Service:Market -Asset Creation,6103,Marketing - Asset Creation,-58.9,quickbooks_gl_v2
+sg_pte_ltd,01/02/2021,GIRO PAYMENT,Accrued Expense,2200,Accrued Expenses,-9700.0,quickbooks_gl_v2
+sg_pte_ltd,20/02/2021,DEBIT PURCHASExx-6882 QUICKBOOKSLON,Other Operating Expenses:Corporate - Bookkeeping Fees,6500,Accounting & Bookkeeping Fees,-21.4,quickbooks_gl_v2
+sg_pte_ltd,20/02/2021,DIVD WORK-SPHERE VEFAST PAYMENT  WORKSPACEvia PayNow: Drive la,Other Operating Expenses:Corporate - Office Rent,6300,Office Rent,-1196.0,quickbooks_gl_v2
+sg_pte_ltd,28/02/2021,CT0020991237M001TT PURCHASESANJAYSAL DEC'20,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2045.0,quickbooks_gl_v2
+sg_pte_ltd,30/03/2021,PAYMENT/TRANSFER LOAN SINGHAL GAURAV loan,Share Capital,3000,Share Capital,5000.0,quickbooks_gl_v2
+sg_pte_ltd,08/04/2021,CPFB RFM GXXXX45 501600001001 GIRO,Accrued Expense,2200,Accrued Expenses,1850.0,quickbooks_gl_v2
+sg_pte_ltd,29/04/2021,CT0021527771M001             SANJAYSAL APR'21TT PURCHASE,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2045.0,quickbooks_gl_v2
+sg_pte_ltd,29/04/2021,CT0021529477M001             KARAN SAL APR'21,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-1695.0,quickbooks_gl_v2
+sg_pte_ltd,30/04/2021,SALA MADHUR MITTALFAST PAYMENT,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-1000.0,quickbooks_gl_v2
+sg_pte_ltd,08/05/2021,DEBIT PURCHASExx-6882 ANGELLIST PROMOTED JOB NEW,Other Operating Expenses:Human Resource - Recruitment Advertising Fees,6200,HR - Recruitment,-207.42,quickbooks_gl_v2
+sg_pte_ltd,17/06/2021,COLL 201900261MBIZ GIRO,Other Operating Expenses:Human Resource - CPF Contribution,6001,Employer CPF (SG),-1861.0,quickbooks_gl_v2
+sg_pte_ltd,18/06/2021,CT0021981055M001                MACBOOK PAYMENT,Computer and Peripherals,1500,Computer & Peripherals,-1353.17,quickbooks_gl_v2
+sg_pte_ltd,19/06/2021,FUND TRANSFER Fund Transfer to account 537334492001,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-1800.0,quickbooks_gl_v2
+sg_pte_ltd,27/06/2021,FAST PAYMENT SALA MADHUR MITTAL,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-1000.0,quickbooks_gl_v2
+sg_pte_ltd,27/06/2021,FAST PAYMENT SALA LI MATHO,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-2000.0,quickbooks_gl_v2
+sg_pte_ltd,11/08/2021,GIRO PAYMENT,Cost of Overhead Related to Service:Market -Asset Creation,6103,Marketing - Asset Creation,-13743.5,quickbooks_gl_v2
+sg_pte_ltd,27/08/2021,"FUND TRANSFER TRANSFER Fund Transfer from CITIBANK N.A. USD 2,764.75@1.3437 CT0022361920M001 - RETURN OF FUNDS DUE TO NON-TRANSACTION ACCOUNT",Other Income-Refund,7001,Other Income - Cash Rebate,3714.99,quickbooks_gl_v2
+sg_pte_ltd,30/08/2021,GIRO PAYMENT,Other Operating Expenses:Human Resource - Directors' Salary,6003,Directors Salary,-11200.0,quickbooks_gl_v2
+sg_pte_ltd,17/09/2021,COLL 201900261MCPFGIROBIZ GIRO,Other Operating Expenses:Human Resource - CPF Contribution,6001,Employer CPF (SG),-4132.0,quickbooks_gl_v2
+sg_pte_ltd,20/09/2021,CT0022834361M001 MM MARKETING ASS  TT PURCHASE,Other Operating Expenses:Marketing Asset Creation,6103,Marketing - Asset Creation,-187.77,quickbooks_gl_v2
+sg_pte_ltd,29/09/2021,GIRO PAYMENT,Other Operating Expenses:Human Resource - Directors' Salary,6003,Directors Salary,-11200.0,quickbooks_gl_v2
+sg_pte_ltd,13/10/2021,CT0023053569                         CT0022940948 RTNTRANSFER Fund Transfer from CHINA BANKING CORPORATION,Other Income-Refund,7001,Other Income - Cash Rebate,366.12,quickbooks_gl_v2
+sg_pte_ltd,19/10/2021,COLL 201900261MCPF GIRO BIZ,Other Operating Expenses:Human Resource - CPF Contribution,6001,Employer CPF (SG),-4132.0,quickbooks_gl_v2
+sg_pte_ltd,21/10/2021,DEBIT PURCHASE250 xx-6882 ANGELLIST PROMOTED JOB NEW,Other Operating Expenses:Human Resource - Recruitment Advertising Fees,6200,HR - Recruitment,-69.84,quickbooks_gl_v2
+sg_pte_ltd,22/10/2021,USD 50.00                                20/10/21DEBIT PURCHASE xx-6882 ANGELLIST PROMOTED JOB NEW,Other Operating Expenses:Human Resource - Recruitment Agency Fees,6200,HR - Recruitment,-69.69,quickbooks_gl_v2
+sg_pte_ltd,02/11/2021,"FUND TRANSFER Fund Transfer to account 501600001001 SGD 4,287.00@1 201900261M-PTE-01",Other Operating Expenses:Human Resource - CPF Contribution,6001,Employer CPF (SG),-4287.0,quickbooks_gl_v2
+sg_pte_ltd,02/11/2021,PAYMENT/TRANSFER OTHR LIM CAIRONG Transfer,Accrued Expense,2200,Accrued Expenses,353.5,quickbooks_gl_v2
+sg_pte_ltd,09/11/2021,PAYMENT/TRANSFER OTHR ONG ZHEN LONG BRAND Transfer,Accrued Expense,2200,Accrued Expenses,149.06,quickbooks_gl_v2
+sg_pte_ltd,10/11/2021,PAYMENT/TRANSFER OTHR ONG ZHEN LONG BRAND Transfer,Accrued Expense,2200,Accrued Expenses,746.0,quickbooks_gl_v2
+sg_pte_ltd,11/11/2021,CCY CONVERSION REV  FOR: -71.61 SGD,Other Income-Refund,7001,Other Income - Cash Rebate,0.72,quickbooks_gl_v2
+sg_pte_ltd,14/11/2021,OTHR S$ CHOY YIN WAH (CAIY PAYMENT TRANSFER,Accrued Expense,2200,Accrued Expenses,25.0,quickbooks_gl_v2
+sg_pte_ltd,17/11/2021,OTHER SUKARTINI BINTI OMA PAYMENTS/TRASNFER,Accrued Expense,2200,Accrued Expenses,20.0,quickbooks_gl_v2
+sg_pte_ltd,18/11/2021,CCY CONVERSION REV  FOR: 166.04 SGD,Other Income-Refund,7001,Other Income - Cash Rebate,1.66,quickbooks_gl_v2
+sg_pte_ltd,18/11/2021,COLL 201900261M CPF GIRO,Other Operating Expenses:Human Resource - CPF Contribution,6001,Employer CPF (SG),-4132.0,quickbooks_gl_v2
+sg_pte_ltd,18/11/2021,OTHR S$ KRISHNANI HIREN PAYMENT/TRANSFER,Other Income-Refund,7001,Other Income - Cash Rebate,25.0,quickbooks_gl_v2
+sg_pte_ltd,21/11/2021,OTHR S$ MUHAMMAD NURBIN AB,Accrued Expense,2200,Accrued Expenses,90.0,quickbooks_gl_v2
+sg_pte_ltd,30/11/2021,FOR: -433.97 SGD CCY CONVERSION REV,Other Income-Refund,7001,Other Income - Cash Rebate,4.34,quickbooks_gl_v2
+sg_pte_ltd,30/11/2021,GIRO PAYMENT,Other Operating Expenses:Human Resource - Directors' Salary,6003,Directors Salary,-11200.0,quickbooks_gl_v2
+sg_pte_ltd,17/12/2021,COLL 201900261MGIROBIZBIZ,Other Operating Expenses:Human Resource - CPF Contribution,6001,Employer CPF (SG),-6366.0,quickbooks_gl_v2
+sg_pte_ltd,30/12/2021,SALA LE VU ANH PHUOFAST PAYMENTFAST PAYMENTJOSHUA,Other Operating Expenses:Human Resource - Salary Expense,6000,Salaries & Wages,-1000.0,quickbooks_gl_v2
+au,22/03/2026,METRO PETROLEUMCROW WOLLONGONG AU,Operating Expenses:Travel Expense,6400,Travel - Tickets,-174.81,quickbooks_gl_v2
+au,17/03/2026,gotogate1121872211,Operating Expenses:Travel Expense,6400,Travel - Tickets,-725.65,quickbooks_gl_v2
+au,28/02/2026,BP CLOVELLY 9005 CLOVELLY AU Card xx1999 Value Date: 25/02/2026,Operating Expenses:Travel Expense,6400,Travel - Tickets,-36.81,quickbooks_gl_v2
+au,07/02/2026,SALSAS M/AIR/DEPARTURE DR MELB AIRPORT AU Card xx1999 Value Date: 05/02/2026,Operating Expenses:Travel Expense,6400,Travel - Tickets,-33.78,quickbooks_gl_v2
+au,05/02/2026,YARRA BOTANICA SOUTHBANK AU Card xx1999 Value Date: 03/02/2026,Operating Expenses:Travel Expense,6400,Travel - Tickets,-95.14,quickbooks_gl_v2
+au,20/12/2025,SQ *JANUS BAR Sydney AU Card xx9039 Value Date: 18/12/2025,Operating Expenses:Meals and Entertainment,6402,Entertainment,-12.19,quickbooks_gl_v2
+au,10/12/2025,SPEEDWAY ROSEVILLE ROSEVILLE NSWAU,Operating Expenses:Travel Expense,6400,Travel - Tickets,-49.14,quickbooks_gl_v2
+au,03/12/2025,SPEEDW AY KENT ROAD NORTH RYDE AU Card xx9039 Value Date: 28/11/2025,Operating Expenses:Travel Expense,6400,Travel - Tickets,-113.95,quickbooks_gl_v2
+au,22/11/2025,BABYLON ROOFTOP RESTAU BRISBANE AU Card xx9039 Value Date: 20/11/2025,Operating Expenses:Meals and Entertainment,6402,Entertainment,-155.83,quickbooks_gl_v2
+au,12/11/2025,BLACKWOOD BONDI Bondi Beach AU,Operating Expenses:Meals and Entertainment,6402,Entertainment,-67.5,quickbooks_gl_v2
+au,06/11/2025,HCHAIN PTE LTD N/A SG Card xx9039 SGD 6.00 Value Date: 03/11/2025,Operating Expenses:Travel Expense,6400,Travel - Tickets,-7.06,quickbooks_gl_v2
+au,04/11/2025,BP MASCOT 2266 MASCOT AU Card xx9039 Value Date: 30/10/2025,Operating Expenses:Travel Expense,6400,Travel - Tickets,-67.23,quickbooks_gl_v2
+au,04/11/2025,VERANDAH BAR SYDNEY AU Card xx9039 Value Date: 31/10/2025,Operating Expenses:Meals and Entertainment,6402,Entertainment,-28.96,quickbooks_gl_v2
+au,04/11/2025,VERANDAH BAR SYDNEY AU Card xx9039 Value Date: 31/10/2025,Operating Expenses:Meals and Entertainment,6402,Entertainment,-25.6,quickbooks_gl_v2
+au,02/11/2025,PappaRich Sydney Airp Mascot AU,Operating Expenses:Travel Expense,6400,Travel - Tickets,-36.87,quickbooks_gl_v2
+au,21/10/2025,COLES 5676 ST IVES AU Card xx9039 Value Date: 19/10/2025,Operating Expenses:Meals and Entertainment,6402,Entertainment,-10.0,quickbooks_gl_v2
+au,23/09/2025,SKYBUS COACH SERVICES MELBOURNE AIR AU,Operating Expenses:Travel Expense,6400,Travel - Tickets,-24.6,quickbooks_gl_v2
+au,23/09/2025,Piccolo Me Lonsdale St Melbourne AU,Operating Expenses:Meals and Entertainment,6402,Entertainment,-5.97,quickbooks_gl_v2
+au,23/09/2025,Piccolo Me Lonsdale St Melbourne AU,Operating Expenses:Meals and Entertainment,6402,Entertainment,-21.15,quickbooks_gl_v2
+au,14/09/2025,KFC Sydney T2 Airside Sydney T2 AirAU,Operating Expenses:Meals and Entertainment,6402,Entertainment,-12.95,quickbooks_gl_v2
+au,13/09/2025,SPEEDWAY KENT ROAD NORTH RYDE AU (Card xx9039),Operating Expenses:Travel Expense,6400,Travel - Tickets,-123.74,quickbooks_gl_v2
+au,11/09/2025,EXPEDIA 73235196980475 EXPEDIACOMAU AU (Card xx9039),Operating Expenses:Travel Expense,6400,Travel - Tickets,-472.98,quickbooks_gl_v2
+au,11/09/2025,EXPEDIA 73235362183011 EXPEDIACOMAU AU (Card xx9039),Operating Expenses:Travel Expense,6400,Travel - Tickets,-234.09,quickbooks_gl_v2
+au,11/09/2025,The Naked Duck Bond Sydney AU (Card xx9039),Operating Expenses:Meals and Entertainment,6402,Entertainment,-5.38,quickbooks_gl_v2
+au,02/09/2025,COFFEE ZONE PRIVATE LI SINGAPORE SG xx9039 SGD 6.00,Operating Expenses:Meals and Entertainment,6402,Entertainment,-7.18,quickbooks_gl_v2
+au,02/09/2025,TIONG BAHRU BAKERY Singapore SG xx9039 SGD 4.58,Operating Expenses:Meals and Entertainment,6402,Entertainment,-5.48,quickbooks_gl_v2
+au,02/09/2025,HCHAIN PTE LTD N/A SG xx9039 SGD 6.00,Operating Expenses:Travel Expense,6400,Travel - Tickets,-7.21,quickbooks_gl_v2
+au,02/09/2025,TIONG BAHRU BAKERY Singapore SG xx9039 SGD 17.27,Operating Expenses:Meals and Entertainment,6402,Entertainment,-20.74,quickbooks_gl_v2
+au,30/08/2025,THE COFFEE BEAN-HBF SINGAPORE SG Card xx9039 SGD 8.10,Operating Expenses:Meals and Entertainment,6402,Entertainment,-9.75,quickbooks_gl_v2
+au,30/08/2025,MARCHE - 313@SOMERSET SINGAPORE SG Card xx9039 SGD 16.80,Operating Expenses:Travel Expense,6400,Travel - Tickets,-20.23,quickbooks_gl_v2
+au,29/08/2025,BREADTALK@CHINATOWN POINT SINGAPORE SG Card xx9039 SGD 2.20,Operating Expenses:Meals and Entertainment,6402,Entertainment,-2.66,quickbooks_gl_v2
+au,24/08/2025,KFC Sydney T1 Airside Sydney T1 AirAU,Operating Expenses:Meals and Entertainment,6402,Entertainment,-17.45,quickbooks_gl_v2
+au,01/08/2025,CAFE MARKUSYINJIE AUSTRALCHATSWOOD AU,Operating Expenses:Meals and Entertainment,6402,Entertainment,-10.28,quickbooks_gl_v2
+au,28/07/2025,Transfer to xx3529 CommBank app Parking,Cost of Overhead Related to Service:Operating Expenses:Parking,5060,Parking - RMS Fleet,-24.0,quickbooks_gl_v2
+au,04/07/2025,VERANDAH BAR SYDNEY AU Card xx9039 Value Date: 02/07/2025,Operating Expenses:Meals and Entertainment,6402,Entertainment,-61.16,quickbooks_gl_v2
+au,01/07/2025,BREADTALK@CHINATOWN POINT SINGAPORE SG Card xx9039 SGD 2.20 Value Date: 26/06/2025,Operating Expenses:Meals and Entertainment,6402,Entertainment,-2.65,quickbooks_gl_v2
+au,28/06/2025,CULINA-DEMPSEY SINGAPORE SG Card xx9039 SGD 53.90 Value Date: 25/06/2025 | Auto-categorized: Operating Expenses:Travel Expense (100%),Operating Expenses:Travel Expense,6400,Travel - Tickets,-65.23,quickbooks_gl_v2
+au,28/06/2025,MARCHE - 313@SOMERSET SINGAPORE SG Card xx9039 SGD 44.50 Value Date: 25/06/2025 | Auto-categorized: Operating Expenses:Travel Expense (100%),Operating Expenses:Travel Expense,6400,Travel - Tickets,-53.85,quickbooks_gl_v2
+au,28/06/2025,HCHAIN PTE LTD N/A SG Card xx9039 SGD 12.00 Value Date: 25/06/2025 | Auto-categorized: Operating Expenses:Travel Expense (100%),Operating Expenses:Travel Expense,6400,Travel - Tickets,-14.52,quickbooks_gl_v2
+au,28/06/2025,HCHAIN PTE LTD N/A SG Card xx9039 SGD 6.00 Value Date: 25/06/2025 | Auto-categorized: Operating Expenses:Travel Expense (100%),Operating Expenses:Travel Expense,6400,Travel - Tickets,-7.26,quickbooks_gl_v2
+au,27/06/2025,IWG SINGAPORE (GROUP) BUS WWW.IWGPLC.CO SG Card xx9039 SGD 88.29 Value Date: 24/06/2025 | Auto-categorized: Operating Expenses:Travel Expense (100%),Operating Expenses:Travel Expense,6400,Travel - Tickets,-107.16,quickbooks_gl_v2
+au,27/06/2025,IWG SINGAPORE (GROUP) BUS WWW.IWGPLC.CO SG Card xx9039 SGD 88.29 Value Date: 25/06/2025 | Auto-categorized: Operating Expenses:Travel Expense (100%),Operating Expenses:Travel Expense,6400,Travel - Tickets,-106.84,quickbooks_gl_v2
+au,27/06/2025,DRIVE MATE | Auto-categorized: Operating Expenses:Travel Expense (100%),Operating Expenses:Travel Expense,6400,Travel - Tickets,-48.83,quickbooks_gl_v2
+au,27/06/2025,COLLIN'S - PAYA LEBAR QUA SINGAPORE SG Card xx9039 SGD 27.58 Value Date: 24/06/2025 | Auto-categorized: Operating Expenses:Travel Expense (100%),Operating Expenses:Travel Expense,6400,Travel - Tickets,-33.47,quickbooks_gl_v2
+au,27/06/2025,FINEST PAYA LEBAR QUARTER SINGAPORE SG Card xx9039 SGD 20.06 Value Date: 24/06/2025 | Auto-categorized: Operating Expenses:Travel Expense (100%),Operating Expenses:Travel Expense,6400,Travel - Tickets,-24.35,quickbooks_gl_v2
+au,27/06/2025,SUSHI EXPRESS PLQ SINGAPORE SG Card xx9039 SGD 15.59 Value Date: 24/06/2025 | Auto-categorized: Operating Expenses:Travel Expense (100%),Operating Expenses:Travel Expense,6400,Travel - Tickets,-18.92,quickbooks_gl_v2
+au,27/06/2025,HCHAIN PTE LTD N/A SG Card xx9039 SGD 6.00 Value Date: 24/06/2025 | Auto-categorized: Operating Expenses:Travel Expense (100%),Operating Expenses:Travel Expense,6400,Travel - Tickets,-7.28,quickbooks_gl_v2
+au,26/06/2025,HEINEKEN HOUSE SYD AIRPOR MELBOURNE AU Card xx9039 Value Date: 23/06/2025 | Auto-categorized: Operating Expenses:Travel Expense (100%),Operating Expenses:Travel Expense,6400,Travel - Tickets,-39.68,quickbooks_gl_v2
+au,24/06/2025,EXPORTCOMMENTS.COM BUCHAREST RO Card xx9039 USD 15.00 Value Date: 20/06/2025 | Auto-categorized: Operating Expenses:Travel Expense (100%),Operating Expenses:Travel Expense,6400,Travel - Tickets,-23.28,quickbooks_gl_v2
+au,21/06/2025,gotogate1074185873889 Sidney AU Card xx9039 Value Date: 18/06/2025 | Auto-categorized: Operating Expenses:Travel Expense (100%),Operating Expenses:Travel Expense,6400,Travel - Tickets,-905.28,quickbooks_gl_v2
+au,05/06/2025,SQ *STOCK MARKET KITCH Sydney AU | Auto-categorized: Operating Expenses:Travel Expense (100%),Operating Expenses:Travel Expense,6400,Travel - Tickets,-17.9,quickbooks_gl_v2
+au,03/06/2025,PRIMI ITALIAN Sydney AU | Auto-categorized: Operating Expenses:Travel Expense (100%),Operating Expenses:Travel Expense,6400,Travel - Tickets,-99.47,quickbooks_gl_v2
+au,03/06/2025,SQ *STOCK MARKET KITCH Sydney AU | Auto-categorized: Operating Expenses:Travel Expense (100%),Operating Expenses:Travel Expense,6400,Travel - Tickets,-17.9,quickbooks_gl_v2
+au,01/06/2025,Transfer to xx3529 CommBank app Parking,Operating Expenses:Travel Expense,6400,Travel - Tickets,-36.0,quickbooks_gl_v2
+au,16/04/2025,BRILHAR CAR WASH MAS MASCOT AU Card xx9039 Value Date: 14/04/2025,Cost of Overhead Related to Service:Operating Expenses:Cleaning,5022,Incidentals Payout - Cleaning,-78.73,quickbooks_gl_v2
+au,25/03/2025,DRIVE MATE SURFERS PARAD AU Card xx9039 Value Date: 23/03/2025,Operating Expenses:Meals and Entertainment,6402,Entertainment,-36.08,quickbooks_gl_v2
+au,21/03/2025,DRIVE MATE SURFERS PARAD AU Card xx9039 Value Date: 19/03/2025,Operating Expenses:Meals and Entertainment,6402,Entertainment,-119.89,quickbooks_gl_v2
+au,05/03/2025,TAX OFFICE PAYMENTS CommBank app BPAY 75556 XXXXXXXXXXXX334621,PAYG Liability,2301,PAYG Withholding Payable (AU),-17022.74,quickbooks_gl_v2
+au,27/02/2025,VERANDAH BAR SYDNEY AU Card xx9039,Operating Expenses:Meals and Entertainment,6402,Entertainment,-61.61,quickbooks_gl_v2
+au,18/02/2025,ZLR*Daily Shine Car Was Mascot AU Card xx9039 Value Date: 14/02/2025,Cost of Overhead Related to Service:Operating Expenses:Cleaning,5022,Incidentals Payout - Cleaning,-300.0,quickbooks_gl_v2
+au,15/02/2025,Transfer To UR Drive CommBank App Airport parking,Cost of Overhead Related to Service:Operating Expenses:Parking,5060,Parking - RMS Fleet,-8800.0,quickbooks_gl_v2
+au,13/02/2025,TAX OFFICE PAYMENTS NetBank BPAY 75556 XXXXXXXXXXXX333221 XXXXXXXXXXXX333221,PAYG Liability,2301,PAYG Withholding Payable (AU),-6901.4,quickbooks_gl_v2
+au,13/02/2025,TAX OFFICE PAYMENTS NetBank BPAY 75556 XXXXXXXXXXXX969260 XXXXXXXXXXXX969260,PAYG Liability,2301,PAYG Withholding Payable (AU),-23220.88,quickbooks_gl_v2
+au,06/02/2025,Transfer to xx3529 CommBank app,Operating Expenses:Travel Expense,6400,Travel - Tickets,-75.0,quickbooks_gl_v2
+au,06/02/2025,Transfer To Collision Management CommBank App Invoice 02025016,Cost of Overhead Related to Service:Operating Expenses:Workshop,5032,Incidentals Payout - Workshop,-731.85,quickbooks_gl_v2
+au,05/02/2025,VERANDAH BAR SYDNEY AU Card xx9039,Operating Expenses:Meals and Entertainment,6402,Entertainment,-449.34,quickbooks_gl_v2
+au,05/02/2025,VAPIANO KING STREET BRISBANE AU Card xx9039 Value Date: 03/02/2025,Operating Expenses:Meals and Entertainment,6402,Entertainment,-67.12,quickbooks_gl_v2
+au,04/02/2025,SQ *STOCK MARKET KITCH Sydney AU,Operating Expenses:Meals and Entertainment,6402,Entertainment,-35.8,quickbooks_gl_v2
+au,31/01/2025,Beijing Jingyunze Hotel M Beijing CN Card xx9039 CNY 431.42 Value Date: 26/01/2025,Operating Expenses:Travel Expense,6400,Travel - Tickets,-94.69,quickbooks_gl_v2
+au,28/01/2025,Transfer to xx3529 CommBank app,Operating Expenses:Travel Expense,6400,Travel - Tickets,-265.0,quickbooks_gl_v2
+au,26/01/2025,Wdl ATM BeiJingShiChaoYangQu00 XXXXXXXX00000 CN CNY1000.00,Operating Expenses:Travel Expense,6400,Travel - Tickets,-219.49,quickbooks_gl_v2
+au,22/01/2025,Hotel at Booking.com,Operating Expenses:Travel Expense,6400,Travel - Tickets,-137.7,quickbooks_gl_v2
+au,17/01/2025,NSW POLICE FORCE PARRAMATTA AU Card xx9039 Value Date: 15/01/2025,Operating Expenses:Travel Expense,6400,Travel - Tickets,-55.8,quickbooks_gl_v2
+au,14/01/2025,ZLR*Daily Shine Car Was Mascot AU Card xx9039 Value Date: 10/01/2025,Cost of Overhead Related to Service:Operating Expenses:Cleaning,5022,Incidentals Payout - Cleaning,-350.0,quickbooks_gl_v2
+au,31/12/2024,uangzhou Hotel Residences GuangZhou CN Card xx9039 CNY 543.38 Value Date: 28/12/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-120.17,quickbooks_gl_v2
+au,25/12/2024,BP TOWER 1025 WILLOUGHBY AU Card xx9039 Value Date: 22/12/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-111.05,quickbooks_gl_v2
+au,24/12/2024,LS Bellevue Cottage By Glebe AU Card xx9039 Value Date: 22/12/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-4.0,quickbooks_gl_v2
+au,12/12/2024,Cabrito Coffee Sydney AU Card xx9039 Value Date: 10/12/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-5.13,quickbooks_gl_v2
+au,12/12/2024,Return Ace Hotel Sydney Sydney AU Card xx9039 Value Date: 27/08/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,550.0,quickbooks_gl_v2
+au,10/12/2024,7-ELEVEN -CHINA SQ SINGAPORE SG Card xx9039 SGD 3.00 Value Date: 05/12/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-3.48,quickbooks_gl_v2
+au,10/12/2024,KING AND THE PAWN SINGAPORE 188 SG Card xx9039 SGD 1228.98 Value Date: 06/12/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-1426.11,quickbooks_gl_v2
+au,10/12/2024,Da Paolo Gastronomia Sing Singapore SG Card xx9039 SGD 8.27 Value Date: 05/12/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-9.6,quickbooks_gl_v2
+au,10/12/2024,7-ELEVEN - T1 #02-75 SINGAPORE SG Card xx9039 SGD 3.49 Value Date: 06/12/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-4.05,quickbooks_gl_v2
+au,10/12/2024,WINE CONNECTION-CAPITAL S SINGAPORE SG Card xx9039 SGD 65.95 Value Date: 04/12/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-75.98,quickbooks_gl_v2
+au,10/12/2024,BREADTALK@CHINATOWN POINT SINGAPORE SG Card xx9039 SGD 5.10 Value Date: 05/12/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-5.92,quickbooks_gl_v2
+au,07/12/2024,COMFORT/CITYCAB TAXI Singapore SG Card xx9039 SGD 15.37 Value Date: 04/12/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-17.71,quickbooks_gl_v2
+au,07/12/2024,SANTA GRAND SINGAPORE SG Card xx9039 SGD 281.29 Value Date: 04/12/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-323.96,quickbooks_gl_v2
+au,07/12/2024,FIVE GUYS SINGAPORE SG Card xx9039 SGD 11.80 Value Date: 05/12/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-13.59,quickbooks_gl_v2
+au,07/12/2024,FIVE GUYS SINGAPORE SG Card xx9039 SGD 30.30 Value Date: 04/12/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-34.91,quickbooks_gl_v2
+au,07/12/2024,BRIDGE CAFE NAIA PASAY CITY PH Card xx9039 PHP 120.00 Value Date: 03/12/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-3.18,quickbooks_gl_v2
+au,06/12/2024,CAFE MARY GRACE NEWPOR PASAY PH Card xx9039 PHP 2583.77 Value Date: 03/12/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-68.39,quickbooks_gl_v2
+au,05/12/2024,GO HOTELS ORTIGAS PASIG PH Card xx9039 PHP 2340.00 Value Date: 02/12/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-61.5,quickbooks_gl_v2
+au,04/12/2024,CEBU AIR INC PASAY CITY PH Card xx9039 PHP 100.00 Value Date: 01/12/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-2.63,quickbooks_gl_v2
+au,04/12/2024,CAMPOS MASCOT AU Card xx9039 Value Date: 01/12/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-6.39,quickbooks_gl_v2
+au,01/12/2024,HEINEMANN DUTY FREE Mascot AU,Operating Expenses:Travel Expense,6400,Travel - Tickets,-63.0,quickbooks_gl_v2
+au,30/11/2024,UNIVERSAL PALACE PTY L HAYMARKET AU Card xx9039 Value Date: 26/11/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-74.1,quickbooks_gl_v2
+au,29/11/2024,Transfer to xx3529 CommBank app,Operating Expenses:Technology System Costs,6700,Technology - Infrastructure,-75.0,quickbooks_gl_v2
+au,28/11/2024,Hickson Distilling Co Dawes Point AU,Operating Expenses:Meals and Entertainment,6402,Entertainment,-393.96,quickbooks_gl_v2
+au,28/11/2024,THE SQUIRE S LANDING THE ROCKS NSWAU,Operating Expenses:Meals and Entertainment,6402,Entertainment,-86.51,quickbooks_gl_v2
+au,28/11/2024,SHOW NEUA THAI Haymarket AU Card xx9039 Value Date: 26/11/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-83.13,quickbooks_gl_v2
+au,27/11/2024,Transfer to xx3529 CommBank app,Operating Expenses:Technology System Costs,6700,Technology - Infrastructure,-25.0,quickbooks_gl_v2
+au,25/11/2024,Transfer to CBA A/c CommBank app,Operating Expenses:Technology System Costs,6700,Technology - Infrastructure,-80.0,quickbooks_gl_v2
+au,25/11/2024,Transfer to CBA A/c CommBank app,Operating Expenses:Technology System Costs,6700,Technology - Infrastructure,-30.0,quickbooks_gl_v2
+au,25/11/2024,Transfer to xx3529 CommBank app,Operating Expenses:Technology System Costs,6700,Technology - Infrastructure,-100.68,quickbooks_gl_v2
+au,25/11/2024,Transfer to CBA A/c CommBank app,Operating Expenses:Technology System Costs,6700,Technology - Infrastructure,-8.0,quickbooks_gl_v2
+au,22/11/2024,Booking.comXXXXXX2177 Southbank AU Card xx9039 Value Date: 20/11/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-1040.99,quickbooks_gl_v2
+au,18/11/2024,Transfer to xx3529 CommBank app,Operating Expenses:Technology System Costs,6700,Technology - Infrastructure,-60.0,quickbooks_gl_v2
+au,08/11/2024,COLES EXPRESS 1598 PYMBLE AU Card xx9039 Value Date: 06/11/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-20.0,quickbooks_gl_v2
+au,31/10/2024,DEPT HOME AFFAIRS CommBank app BPAY 115683 XXXXXXX5803 Visa application,Operating Expenses:Travel Expense,6400,Travel - Tickets,-195.0,quickbooks_gl_v2
+au,26/10/2024,IPPUDO Macquarie Park North Ryde AU Card xx9039 Value Date: 24/10/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-79.95,quickbooks_gl_v2
+au,18/10/2024,The Duke of Clarence Sydney AU Card xx9039 Value Date: 15/10/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-92.0,quickbooks_gl_v2
+au,18/10/2024,DM BBI INSURANCE,Cost of Service:Insurance,5035,Cost of Insurance - Trip Premium,-8.52,quickbooks_gl_v2
+au,17/10/2024,DM BBI INSURANCE,Cost of Service:Insurance,5035,Cost of Insurance - Trip Premium,-8.52,quickbooks_gl_v2
+au,17/10/2024,DM BBI INSURANCE,Cost of Service:Insurance,5035,Cost of Insurance - Trip Premium,-3.55,quickbooks_gl_v2
+au,16/10/2024,BP SMITHFIELD 7007 SMITHFIELD AU Card xx9039 Value Date: 12/10/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-77.41,quickbooks_gl_v2
+au,16/10/2024,DM BBI INSURANCE,Cost of Service:Insurance,5035,Cost of Insurance - Trip Premium,-8.52,quickbooks_gl_v2
+au,15/10/2024,Calypso Club Cairns AU Card xx9039 Value Date: 10/10/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-14.0,quickbooks_gl_v2
+au,15/10/2024,Calypso Club Cairns AU Card xx9039 Value Date: 10/10/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-27.0,quickbooks_gl_v2
+au,12/10/2024,La Pizza Trattoria Cairns City AU Card xx9039 Value Date: 10/10/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-26.39,quickbooks_gl_v2
+au,08/10/2024,THE OCCIDENTAL HOTEL SYDNEY AU Card xx9039 Value Date: 03/10/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-14.0,quickbooks_gl_v2
+au,05/10/2024,Ivy - MuMu Sydney AU Card xx9039 Value Date: 03/10/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-149.55,quickbooks_gl_v2
+au,01/10/2024,CITYOFSYDNEY PARKING SYDNEY AU Card xx9039 Value Date: 27/09/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-6.9,quickbooks_gl_v2
+au,01/10/2024,BINGE KITCHEN SYDNEY NSW AU Card xx9039,Operating Expenses:Travel Expense,6400,Travel - Tickets,-81.0,quickbooks_gl_v2
+au,01/10/2024,THE OCCIDENTAL HOTEL SYDNEY AU Card xx9039 Value Date: 26/09/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-21.0,quickbooks_gl_v2
+au,26/09/2024,Salt & Light Cafe Chatswood AU,Operating Expenses:Meals and Entertainment,6402,Entertainment,-5.08,quickbooks_gl_v2
+au,24/09/2024,WINE CONNECTION-CAPITAL S SINGAPORE SG Card xx9039 SGD 76.75 Value Date: 19/09/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-87.95,quickbooks_gl_v2
+au,24/09/2024,7-ELEVEN-RAFFLES PLC MRT SINGAPORE SG Card xx9039 SGD 4.70 Value Date: 19/09/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-5.39,quickbooks_gl_v2
+au,24/09/2024,NET*TAG ESPRESSO SINGAPORE SG Card xx9039 SGD 12.57 Value Date: 19/09/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-14.4,quickbooks_gl_v2
+au,24/09/2024,PSCAFE - EAST COAST PARK SINGAPORE SG Card xx9039 SGD 42.56 Value Date: 19/09/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-48.77,quickbooks_gl_v2
+au,24/09/2024,IJOOZ AI PTE LTD Singapore SG Card xx9039 SGD 2.00 Value Date: 18/09/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-2.29,quickbooks_gl_v2
+au,21/09/2024,THE PROVIDORE VIVO CIT SINGAPORE SG Card xx9039 SGD 31.78 Value Date: 18/09/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-36.42,quickbooks_gl_v2
+au,21/09/2024,THE PROVIDORE VIVO CIT SINGAPORE SG Card xx9039 SGD 35.97 Value Date: 18/09/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-41.22,quickbooks_gl_v2
+au,21/09/2024,BREADTALK@CHINATOWN POINT SINGAPORE SG Card xx9039 SGD 4.40 Value Date: 18/09/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-5.04,quickbooks_gl_v2
+au,21/09/2024,COMFORT/CITYCAB TAXI Singapore SG Card xx9039 SGD 13.75 Value Date: 18/09/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-15.76,quickbooks_gl_v2
+au,20/09/2024,BREADTALK@CHINATOWN POINT SINGAPORE SG Card xx9039 SGD 4.40 Value Date: 17/09/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-5.07,quickbooks_gl_v2
+au,20/09/2024,WINE CONNECTION-CAPITAL S SINGAPORE SG Card xx9039 SGD 27.60 Value Date: 17/09/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-31.81,quickbooks_gl_v2
+au,20/09/2024,AWFULLY CHOCOLATE - RAFFL SINGAPORE SG Card xx9039 SGD 11.90 Value Date: 17/09/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-13.72,quickbooks_gl_v2
+au,20/09/2024,MUJI-RAFFLES CITY SINGAPORE SG Card xx9039 SGD 10.90 Value Date: 17/09/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-12.56,quickbooks_gl_v2
+au,20/09/2024,PRIVE @ CHIJMES SINGAPORE SG Card xx9039 SGD 24.58 Value Date: 17/09/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-28.33,quickbooks_gl_v2
+au,19/09/2024,FIVE GUYS SINGAPORE SG Card xx9039 SGD 30.30 Value Date: 16/09/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-34.87,quickbooks_gl_v2
+au,19/09/2024,TRANSCAB Singapore SG Card xx9039 SGD 39.04 Value Date: 16/09/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-44.93,quickbooks_gl_v2
+au,19/09/2024,CPS*GREATWOOD RESIDENCE SINGAPORE SG Card xx9039 SGD 300.00 Value Date: 16/09/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-345.23,quickbooks_gl_v2
+au,19/09/2024,CAMPOS MASCOT AU Card xx9039 Value Date: 16/09/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-18.77,quickbooks_gl_v2
+au,17/09/2024,Booking.comXXXXXX7387 Southbank AU Card xx9039 Value Date: 14/09/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-956.99,quickbooks_gl_v2
+au,14/09/2024,LITTLE CREATURES PERTH AIRPORT AU Card xx9039 Value Date: 11/09/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-69.08,quickbooks_gl_v2
+au,13/09/2024,AIRBNB * HMKMF59YCF SURRY HILLS AU Card xx9039 Value Date: 10/09/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-323.48,quickbooks_gl_v2
+au,13/09/2024,QT Perth ICP Perth AU Card xx9039 Value Date: 11/09/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-392.81,quickbooks_gl_v2
+au,13/09/2024,QT Perth ICP Perth AU Card xx9039 Value Date: 12/09/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-103.53,quickbooks_gl_v2
+au,12/09/2024,Senso Espresso Cannington AU,Operating Expenses:Meals and Entertainment,6402,Entertainment,-35.01,quickbooks_gl_v2
+au,10/09/2024,TRANSLINK SMARTTICKET QLD AU Card xx9039 Value Date: 06/09/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-2.5,quickbooks_gl_v2
+au,10/09/2024,AIRBNB * HMH5XPBJEA SURRY HILLS AU Card xx9039 Value Date: 05/09/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-444.8,quickbooks_gl_v2
+au,09/09/2024,Transfer to xx3529 CommBank app Parking,Operating Expenses:Travel Expense,6400,Travel - Tickets,-56.0,quickbooks_gl_v2
+au,07/09/2024,Coffee Commune Retail Bowen Hills AU Card xx9039 Value Date: 05/09/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-12.64,quickbooks_gl_v2
+au,07/09/2024,Luna's Pizza & Wine Broadbeach AU Card xx9039 Value Date: 05/09/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-107.59,quickbooks_gl_v2
+au,07/09/2024,HUDSON CORNER ALBION AU Card xx9039 Value Date: 04/09/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-79.0,quickbooks_gl_v2
+au,07/09/2024,Guzman y Gomez Bowen Hills AU Card xx9039 Value Date: 05/09/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-38.2,quickbooks_gl_v2
+au,07/09/2024,Guzman y Gomez Bowen Hills AU Card xx9039 Value Date: 05/09/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-20.0,quickbooks_gl_v2
+au,07/09/2024,LS Cucina by La Dolce Fortitude Val AU Card xx9039 Value Date: 04/09/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-100.29,quickbooks_gl_v2
+au,05/09/2024,AIRBNB * HMRRRY2E35 SURRY HILLS AU Card xx9039 Value Date: 02/09/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-385.0,quickbooks_gl_v2
+au,03/09/2024,The Boathouse Rose Bay Rose Bay AU Card xx9039 Value Date: 30/08/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-133.89,quickbooks_gl_v2
+au,03/09/2024,ZLR*Billys Bar Espresso Maroubra AU Card xx9039 Value Date: 30/08/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-17.24,quickbooks_gl_v2
+au,02/09/2024,Transfer to xx3529 CommBank app Parking,Operating Expenses:Travel Expense,6400,Travel - Tickets,-36.0,quickbooks_gl_v2
+au,31/08/2024,SKYBUS COACH SERVICE MELBOURNE AIR AU Card xx9039 Value Date: 28/08/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-23.9,quickbooks_gl_v2
+au,31/08/2024,SKYBUS COACH SERVICE MELBOURNE AIR AU Card xx9039 Value Date: 28/08/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-40.0,quickbooks_gl_v2
+au,31/08/2024,SKYLER FINCH NEIN IP SYDNEY AU Card xx9039 Value Date: 29/08/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-45.45,quickbooks_gl_v2
+au,30/08/2024,SQ *MEATBALL & WINE BAR Melbourne AU Card xx9039 Value Date: 28/08/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-160.0,quickbooks_gl_v2
+au,30/08/2024,GYG 567 COLLINS Melbourne AU Card xx9039 Value Date: 28/08/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-38.9,quickbooks_gl_v2
+au,29/08/2024,Ace Hotel Sydney Sydney AU Card xx9039 Value Date: 27/08/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-558.25,quickbooks_gl_v2
+au,29/08/2024,SQ *ACE HOTEL SYDNEY Surry Hills AU,Operating Expenses:Travel Expense,6400,Travel - Tickets,-632.61,quickbooks_gl_v2
+au,29/08/2024,ZLR*Soho Espresso Sydney AU,Operating Expenses:Meals and Entertainment,6402,Entertainment,-9.6,quickbooks_gl_v2
+au,28/08/2024,VIRGIN AUSTRXXXXXXXX97335 BRISBANE AU Card xx9039 Value Date: 25/08/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-39.99,quickbooks_gl_v2
+au,23/08/2024,VERANDAH BAR SYDNEY AU Card xx9039,Operating Expenses:Meals and Entertainment,6402,Entertainment,-25.38,quickbooks_gl_v2
+au,23/08/2024,VERANDAH BAR SYDNEY AU Card xx9039,Operating Expenses:Meals and Entertainment,6402,Entertainment,-25.58,quickbooks_gl_v2
+au,23/08/2024,Transfer to xx3529 CommBank app Baggage,Operating Expenses:Travel Expense,6400,Travel - Tickets,-62.0,quickbooks_gl_v2
+au,19/08/2024,Transfer to xx3529 CommBank app Lunch,Operating Expenses:Meals and Entertainment,6402,Entertainment,-55.0,quickbooks_gl_v2
+au,18/08/2024,Transfer to xx3529 CommBank app Bags,Operating Expenses:Travel Expense,6400,Travel - Tickets,-85.0,quickbooks_gl_v2
+au,16/08/2024,Transfer to xx3529 CommBank app Aiport parking,Operating Expenses:Travel Expense,6400,Travel - Tickets,-72.0,quickbooks_gl_v2
+au,13/08/2024,CALVI PETROL STATION NORTH RYDE AU Card xx9039 Value Date: 09/08/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-56.43,quickbooks_gl_v2
+au,12/08/2024,Transfer to xx3529 CommBank app Fyle,Operating Expenses:Technology System Costs,6700,Technology - Infrastructure,-1928.0,quickbooks_gl_v2
+au,08/08/2024,Transfer to CBA A/c CommBank app SG ticket,Operating Expenses:Travel Expense,6400,Travel - Tickets,-713.0,quickbooks_gl_v2
+au,02/08/2024,VELOCE EXPRESSO PL MASCOT AU Card xx9039 Value Date: 31/07/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-6.6,quickbooks_gl_v2
+au,01/08/2024,SKYBUS COACH SERVICE MELBOURNE AIRAU Card xx9039,Operating Expenses:Travel Expense,6400,Travel - Tickets,-23.9,quickbooks_gl_v2
+au,01/08/2024,ZLR*T4 Two Johns Taphou Tullamarine AU,Operating Expenses:Meals and Entertainment,6402,Entertainment,-35.5,quickbooks_gl_v2
+au,31/07/2024,AIRPORT RETAIL ENTER MELBOURNE AU Card xx9039,Operating Expenses:Travel Expense,6400,Travel - Tickets,-14.07,quickbooks_gl_v2
+au,31/07/2024,SKYBUS COACH SERVICE MELBOURNE AIRAU Card xx9039,Operating Expenses:Travel Expense,6400,Travel - Tickets,-23.9,quickbooks_gl_v2
+au,30/07/2024,THE OCCIDENTAL HOTEL SYDNEY AU Card xx9039 Value Date: 25/07/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-21.0,quickbooks_gl_v2
+au,30/07/2024,The Baxter Inn Sydney AU Card xx9039 Value Date: 25/07/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-79.36,quickbooks_gl_v2
+au,23/07/2024,Transfer to xx3529 CommBank app Airport parking,Operating Expenses:Travel Expense,6400,Travel - Tickets,-24.0,quickbooks_gl_v2
+au,12/07/2024,SPEEDWAY WEST RYDE WEST RYDE AU Card xx9039 Value Date: 09/07/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-107.18,quickbooks_gl_v2
+au,09/07/2024,COLES EXPRESS 1598 PYMBLE AU,Operating Expenses:Meals and Entertainment,6402,Entertainment,-10.02,quickbooks_gl_v2
+au,28/06/2024,IPPUDO Macquarie Park North Ryde AU Card xx9039 Value Date: 26/06/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-73.37,quickbooks_gl_v2
+au,28/06/2024,MUUM MAAM BARANGAR BARANGAROO AU Card xx9039 Value Date: 25/06/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-156.31,quickbooks_gl_v2
+au,28/06/2024,THE OCCIDENTAL HOTEL SYDNEY AU Card xx9039 Value Date: 25/06/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-21.0,quickbooks_gl_v2
+au,23/06/2024,Transfer to xx3529 CommBank app Airport parking,Operating Expenses:Travel Expense,6400,Travel - Tickets,-48.0,quickbooks_gl_v2
+au,19/06/2024,Transfer to xx3529 NetBank Syd tickets,Operating Expenses:Travel Expense,6400,Travel - Tickets,-217.0,quickbooks_gl_v2
+au,04/06/2024,AIRPORT RETAIL ENTER MASCOT AU Card xx9039 Value Date: 29/05/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-6.07,quickbooks_gl_v2
+au,01/06/2024,TRANSCAB Singapore SG Card xx9039 SGD 40.12 Value Date: 29/05/2024 | Auto-categorized: Operating Expenses:Travel Expense (100%),Operating Expenses:Travel Expense,6400,Travel - Tickets,-44.79,quickbooks_gl_v2
+au,29/05/2024,Sushia (Sydney Intl) Sydney InternAU,Operating Expenses:Meals and Entertainment,6402,Entertainment,-22.4,quickbooks_gl_v2
+au,28/05/2024,FLYSCOOT.COM0000000O4RMRL SINGAPORE SG Card xx9039 SGD 617.43 Value Date: 24/05/2024,Operating Expenses:Technology System Costs,6700,Technology - Infrastructure,-692.45,quickbooks_gl_v2
+au,28/05/2024,THE OCCIDENTAL HOTEL SYDNEY AU Card xx9039 Value Date: 23/05/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-14.0,quickbooks_gl_v2
+au,17/05/2024,COLES EXPRESS 1598 PYMBLE AU,Operating Expenses:Meals and Entertainment,6402,Entertainment,-100.97,quickbooks_gl_v2
+au,16/05/2024,ROZZIS ELIZABETH ST Melbourne AU,Operating Expenses:Meals and Entertainment,6402,Entertainment,-24.8,quickbooks_gl_v2
+au,14/05/2024,AIRPORT RETAIL ENTERPR MASCOT AU Card xx9039,Operating Expenses:Travel Expense,6400,Travel - Tickets,-5.56,quickbooks_gl_v2
+au,29/04/2024,Transfer to xx3529 CommBank app Fuel 1YW4OR,Operating Expenses:Travel Expense,6400,Travel - Tickets,-100.0,quickbooks_gl_v2
+au,23/04/2024,FRUITS VENDING PTE LTD Singapore SG Card xx9039 SGD 3.00 Value Date: 19/04/2024,Meals and entertainment (deleted),6402,Entertainment,-3.44,quickbooks_gl_v2
+au,19/04/2024,Transfer to xx3529 CommBank app NZETA,Operating Expenses:Travel Expense,6400,Travel - Tickets,-23.0,quickbooks_gl_v2
+au,17/04/2024,CAMPOS MASCOT AU Card xx9039 Value Date: 14/04/2024,Meals and entertainment (deleted),6402,Entertainment,-6.26,quickbooks_gl_v2
+au,17/04/2024,mytrip_XXXXXXXX984040 Sidney AU Card xx9039 Value Date: 14/04/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-800.75,quickbooks_gl_v2
+au,14/04/2024,Transfer to xx3529 CommBank app Parking,Operating Expenses:Travel Expense,6400,Travel - Tickets,-36.0,quickbooks_gl_v2
+au,11/04/2024,Transfer to xx3529 CommBank app Glockapps,Operating Expenses:Technology System Costs,6700,Technology - Infrastructure,-5.0,quickbooks_gl_v2
+au,11/04/2024,Transfer to xx3529 CommBank app Glockapps,Operating Expenses:Technology System Costs,6700,Technology - Infrastructure,-75.0,quickbooks_gl_v2
+au,09/04/2024,AuntBetty Australia South Brisban AU Card xx9039 Value Date: 06/04/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-1562.37,quickbooks_gl_v2
+au,26/03/2024,COLES EXPRESS 1598 PYMBLE AU Card xx9039 Value Date: 24/03/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-31.89,quickbooks_gl_v2
+au,23/03/2024,The Sporting Globe Sydney AU Card xx9039 Value Date: 21/03/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-18.11,quickbooks_gl_v2
+au,22/03/2024,THE PYMBLE GRIND Pymble AU Card xx9039 Value Date: 20/03/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-9.92,quickbooks_gl_v2
+au,20/03/2024,CALVI PETROL STATION NORTH RYDE AU Card xx9039 Value Date: 17/03/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-92.55,quickbooks_gl_v2
+au,20/03/2024,THE PYMBLE GRIND Pymble AU Card xx9039 Value Date: 18/03/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-9.92,quickbooks_gl_v2
+au,19/03/2024,CALVI PETROL STATION NORTH RYDE AU Card xx9039 Value Date: 14/03/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-108.91,quickbooks_gl_v2
+au,13/03/2024,SPEEDWAY WEST RYDE WEST RYDE AU Card xx9039 Value Date: 09/03/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-110.1,quickbooks_gl_v2
+au,12/03/2024,AMPOL GOSFORD W 22582F WEST GOSFORD AU Card xx9039 Value Date: 06/03/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-93.96,quickbooks_gl_v2
+au,08/03/2024,7-ELEVEN 2285 TURRAMURRA AU Card xx9039 Value Date: 06/03/2024,Operating Expenses:Meals and Entertainment,6402,Entertainment,-23.05,quickbooks_gl_v2
+au,05/03/2024,CALVI PETROL STATION NORTH RYDE AU Card xx9039 Value Date: 02/03/2024,Operating Expenses:Travel Expense,6400,Travel - Tickets,-91.07,quickbooks_gl_v2
+au,23/02/2024,Transfer to xx3529 CommBank app KL ticket,Operating Expenses:Travel Expense,6400,Travel - Tickets,-73.0,quickbooks_gl_v2
+au,22/02/2024,Transfer To Abdul Saaqib CommBank App Caddy,Cost of Overhead Related to Service:Salary Expense - Local Ops Salary,5061,On-Ground Team - Salary,-914.0,quickbooks_gl_v2
+au,21/02/2024,Transfer to CBA A/c CommBank app Pravin tickets,Operating Expenses:Travel Expense,6400,Travel - Tickets,-840.0,quickbooks_gl_v2
+au,14/02/2024,TAX OFFICE PAYMENTS NetBank BPAY 75556 XXXXXXXXXXXX333221 XXXXXXXXXXXX333221,Superannuation payable,2302,Superannuation Payable (AU),-3204.65,quickbooks_gl_v2
+au,02/02/2024,Transfer to CBA A/c CommBank app Agha tickets,Operating Expenses:Travel Expense,6400,Travel - Tickets,-946.32,quickbooks_gl_v2
+au,29/01/2024,Transfer to xx3529 CommBank app SG tickets,Operating Expenses:Travel Expense,6400,Travel - Tickets,-694.0,quickbooks_gl_v2
+au,20/01/2024,TELSTRA PREPAID MELBOURNE AU Card xx8866 Value Date: 18/01/2024,"Operating Expenses:AI, Internet & Website maintenance fees",6700,Technology - Infrastructure,-35.0,quickbooks_gl_v2
+au,20/01/2024,TELSTRA PREPAID MELBOURNE AU Card xx8866 Value Date: 18/01/2024,"Operating Expenses:AI, Internet & Website maintenance fees",6700,Technology - Infrastructure,-12.0,quickbooks_gl_v2
+au,12/01/2024,TAX OFFICE PAYMENTS CommBank app BPAY 75556 XXXXXXXXXXXX334621,Superannuation payable,2302,Superannuation Payable (AU),-3166.34,quickbooks_gl_v2
+au,19/12/2023,BP ROSE BAY 0970 ROSE BAY AU Card xx8866 Value Date: 14/12/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-81.5,quickbooks_gl_v2
+au,16/12/2023,SAROVA PETROLEUM PTY ALEXANDRIA AU Card xx8866 Value Date: 12/12/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-33.86,quickbooks_gl_v2
+au,14/12/2023,BP MASCOT 2266 MASCOT AU Card xx8866 Value Date: 11/12/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-18.64,quickbooks_gl_v2
+au,14/12/2023,987Pin* Chargefox Pty Ltd,Operating Expenses:Travel Expense,6400,Travel - Tickets,-33.6,quickbooks_gl_v2
+au,13/12/2023,3335 Matthew Flinders Chadstone AU Card xx8866 Value Date: 10/12/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-225.1,quickbooks_gl_v2
+au,13/12/2023,APEX WEST RYDE WEST RYDE AU Card xx8866 Value Date: 09/12/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-89.32,quickbooks_gl_v2
+au,13/12/2023,METRO ROSEBERY ROSEBERY AU Card xx8866 Value Date: 11/12/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-79.48,quickbooks_gl_v2
+au,12/12/2023,Hotel at Booking.com Sydney AU Card xx8866 Value Date: 09/12/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-89.1,quickbooks_gl_v2
+au,12/12/2023,FORESTWAY FRESH TERREY HILLS AU Card xx8866 Value Date: 08/12/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-9.99,quickbooks_gl_v2
+au,12/12/2023,THE TASTING DECK FOR TERREY HILLS AU Card xx8866 Value Date: 08/12/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-13.5,quickbooks_gl_v2
+au,09/12/2023,WWW.ALHGROUP.COM* ME&U SYDNEY AU Card xx8866 Value Date: 07/12/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-89.39,quickbooks_gl_v2
+au,08/12/2023,THE TASTING DECK FOR TERREY HILLS AU Card xx8866 Value Date: 06/12/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-8.0,quickbooks_gl_v2
+au,05/12/2023,Hotel at Booking.com Sydney AU Card xx8866 Value Date: 03/12/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-275.5,quickbooks_gl_v2
+au,05/12/2023,AMPOL NORTH BON 22180F NORTH BONDI AU Card xx8866,Operating Expenses:Travel Expense,6400,Travel - Tickets,-94.3,quickbooks_gl_v2
+au,02/12/2023,PLOUGH MOTEL FOOTSCRAY AU Card xx8866,Operating Expenses:Travel Expense,6400,Travel - Tickets,-200.0,quickbooks_gl_v2
+au,02/12/2023,PLOUGH MOTEL FOOTSCRAY AU Card xx8866,Operating Expenses:Travel Expense,6400,Travel - Tickets,-148.5,quickbooks_gl_v2
+au,24/10/2023,970Pin* Chargefox Pty Ltd,Operating Expenses:Technology System Costs,6700,Technology - Infrastructure,-25.09,quickbooks_gl_v2
+au,21/10/2023,AIRASIA-AK-FLIGHT-INR KUALA LUMPUR MY Card xx8866 INR 65546.00 Value Date: 18/10/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-1244.71,quickbooks_gl_v2
+au,14/10/2023,MCDONALDS THE STRAND SYDNEY AU Card xx8866 Value Date: 11/10/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-28.65,quickbooks_gl_v2
+au,12/10/2023,814Pin* Chargefox Pty Ltd,Operating Expenses:Technology System Costs,6700,Technology - Infrastructure,-23.8,quickbooks_gl_v2
+au,07/10/2023,Transfer to xx3529 CommBank app Airport cab,Operating Expenses:Travel Expense,6400,Travel - Tickets,-100.5,quickbooks_gl_v2
+au,07/10/2023,Transfer to xx3529 CommBank app Value car park,Operating Expenses:Travel Expense,6400,Travel - Tickets,-24.0,quickbooks_gl_v2
+au,06/10/2023,Transfer to xx3529 CommBank app DM domain,Operating Expenses:Technology System Costs,6700,Technology - Infrastructure,-43.89,quickbooks_gl_v2
+au,06/10/2023,Transfer to xx3529 CommBank app Sydney tickets,Operating Expenses:Travel Expense,6400,Travel - Tickets,-174.0,quickbooks_gl_v2
+au,30/09/2023,Transfer to xx3529 CommBank app MY tickets,Operating Expenses:Travel Expense,6400,Travel - Tickets,-96.0,quickbooks_gl_v2
+au,25/09/2023,Transfer to xx3529 CommBank app SG baggage,Operating Expenses:Travel Expense,6400,Travel - Tickets,-75.0,quickbooks_gl_v2
+au,23/09/2023,Transfer to xx3529 CommBank app MY VISA,Operating Expenses:Travel Expense,6400,Travel - Tickets,-51.7,quickbooks_gl_v2
+au,22/09/2023,Transfer to xx3529 CommBank app KL tickets,Operating Expenses:Travel Expense,6400,Travel - Tickets,-131.0,quickbooks_gl_v2
+au,26/08/2023,SURFSHARK* SURFSHARK.C HTTPSSURFSHAR DE US Card xx0338 USD 65.74 Value Date: 24/08/2023,Operating Expenses:Technology System Costs,6700,Technology - Infrastructure,-102.57,quickbooks_gl_v2
+au,19/08/2023,Transfer to CBA A/c CommBank app SG tickets,Operating Expenses:Travel Expense,6400,Travel - Tickets,-791.45,quickbooks_gl_v2
+au,18/08/2023,CORAL PETROLEUM WILEY PARK AU Card xx0338,Operating Expenses:Travel Expense,6400,Travel - Tickets,-106.54,quickbooks_gl_v2
+au,18/08/2023,CORAL PETROLEUM WILEY PARK AU Card xx0338,Operating Expenses:Travel Expense,6400,Travel - Tickets,-10.0,quickbooks_gl_v2
+au,12/08/2023,WWW.FOCALX.AI KBENHAVN K DK Card xx0338 USD 30.00 Value Date: 09/08/2023,Operating Expenses:Technology System Costs,6700,Technology - Infrastructure,-46.2,quickbooks_gl_v2
+au,11/08/2023,TAX OFFICE PAYMENTS CommBank app BPAY 75556 004006359065333221 004006359065333221,Superannuation payable,2302,Superannuation Payable (AU),-4772.7,quickbooks_gl_v2
+au,08/08/2023,PARKROYAL COLLECTION KUAL KUALA LUMPUR MY Card xx0338 MYR 830.91 Value Date: 03/08/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-279.67,quickbooks_gl_v2
+au,08/08/2023,THE REFINERY BAR T2 SEPANG MY Card xx0338 MYR 25.00 Value Date: 05/08/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-8.45,quickbooks_gl_v2
+au,26/07/2023,ONLYDOMAINS.COM 649-925-0327 GB Card xx0338 AUD 162.00 Value Date: 24/07/2023,Operating Expenses:Technology System Costs,6700,Technology - Infrastructure,-162.0,quickbooks_gl_v2
+au,25/07/2023,eBay O*02-10327-04172 Sydney AU Card xx0338 Value Date: 23/07/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-17.95,quickbooks_gl_v2
+au,23/07/2023,WHSMITH SYD PIERC SAT MASCOT AU,Operating Expenses:Travel Expense,6400,Travel - Tickets,-11.45,quickbooks_gl_v2
+au,23/07/2023,AIRPORT RETAIL ENTER MASCOT AU Card xx0338,Operating Expenses:Travel Expense,6400,Travel - Tickets,-26.79,quickbooks_gl_v2
+au,20/07/2023,MELBOURNE AIRPORT TULLAMARINE AU Card xx0338 Value Date: 17/07/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-12.0,quickbooks_gl_v2
+au,20/07/2023,TRIP AU SYDNEY AU Card xx0338 Value Date: 17/07/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-200.5,quickbooks_gl_v2
+au,18/07/2023,TAX OFFICE PAYMENTS NetBank BPAY 75556 003006359065334621,Superannuation payable,2302,Superannuation Payable (AU),-2257.5,quickbooks_gl_v2
+au,06/07/2023,AIRASIA-D7-FLIGHT-AUD KUALA LUMPUR AU Card xx0338 Value Date: 03/07/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-461.62,quickbooks_gl_v2
+au,06/07/2023,FLYSCOOT.COM0000000C4QRMV SYDNEY AU Card xx0338 Value Date: 03/07/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-382.3,quickbooks_gl_v2
+au,30/06/2023,MAROUBRA BEACH PAV MAROUBRA AU Card xx0338 Value Date: 28/06/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-59.0,quickbooks_gl_v2
+au,24/06/2023,MAROUBRA BEACH PAV MAROUBRA AU Card xx0338 Value Date: 22/06/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-83.5,quickbooks_gl_v2
+au,17/06/2023,TRANSACTIONPRO/AUTOFY WWW.TRANSACTI NH US Card xx0338 USD 10.00 Value Date: 15/06/2023,Operating Expenses:Technology System Costs,6700,Technology - Infrastructure,-14.8,quickbooks_gl_v2
+au,01/06/2023,MCDONALDS DT 0023 PUNCHBOWL AU Card xx0338 Value Date: 28/05/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-13.95,quickbooks_gl_v2
+au,28/05/2023,Transfer to xx3529 CommBank app Syd tickets,Operating Expenses:Travel Expense,6400,Travel - Tickets,-309.54,quickbooks_gl_v2
+au,16/05/2023,AQUEEN LITTLE INDIA SINGAPORE SG Card xx0338 SGD 132.05 Value Date: 11/05/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-147.48,quickbooks_gl_v2
+au,10/05/2023,AGODA.COM THE SNOOZE INTERNET AU Card xx0338 Value Date: 07/05/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-195.66,quickbooks_gl_v2
+au,09/05/2023,MORNING GRIND SINGAPORE 048 SG Card xx0338 SGD 4.20 Value Date: 03/05/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-4.76,quickbooks_gl_v2
+au,09/05/2023,MAISON KAYSER - CHINA SQU SINGAPORE SG Card xx0338 SGD 10.30 Value Date: 04/05/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-11.63,quickbooks_gl_v2
+au,09/05/2023,LEON @ TTDI KUALA LUMPUR MY Card xx0338 MYR 576.30 Value Date: 06/05/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-194.38,quickbooks_gl_v2
+au,09/05/2023,JIO WINE BAR PETALING JAYA MY Card xx0338 MYR 161.25 Value Date: 05/05/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-54.61,quickbooks_gl_v2
+au,09/05/2023,YEW YEW SELANGOR MY Card xx0338 MYR 26.50 Value Date: 05/05/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-8.98,quickbooks_gl_v2
+au,09/05/2023,SB032-BANDAR UTAMA 1 PETALING JAYA MY Card xx0338 MYR 31.80 Value Date: 05/05/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-10.77,quickbooks_gl_v2
+au,09/05/2023,SINGPOST - CHINATOWN SINGAPORE SG Card xx0338 SGD 4.70 Value Date: 04/05/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-5.31,quickbooks_gl_v2
+au,06/05/2023,BREADTALK@CHINATOWN POINT SINGAPORE SG Card xx0338 SGD 4.40 Value Date: 03/05/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-4.99,quickbooks_gl_v2
+au,06/05/2023,KOPITIAM @ LAU PA SAT SINGAPORE SG Card xx0338 SGD 7.00 Value Date: 03/05/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-7.93,quickbooks_gl_v2
+au,06/05/2023,THE SOUTHBRIDGE HOTEL SINGAPORE SG Card xx0338 SGD 25.75 Value Date: 03/05/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-29.23,quickbooks_gl_v2
+au,06/05/2023,BA DAO GUAN PTE LTD SINGAPORE SG Card xx0338 SGD 57.90 Value Date: 03/05/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-65.61,quickbooks_gl_v2
+au,05/05/2023,AIRASIA_AK RZHH7Y SINGAPORE SG Card xx0338 SGD 125.14 Value Date: 29/04/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-142.37,quickbooks_gl_v2
+au,05/05/2023,AND ALL THINGS DELICIOUS SINGAPORE SG Card xx0338 SGD 9.72 Value Date: 02/05/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-11.03,quickbooks_gl_v2
+au,05/05/2023,COMFORT/CITYCAB TAXI SINGAPORE SG Card xx0338 SGD 34.96 Value Date: 01/05/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-39.77,quickbooks_gl_v2
+au,05/05/2023,MORNING GRIND SINGAPORE 048 SG Card xx0338 SGD 8.40 Value Date: 02/05/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-9.54,quickbooks_gl_v2
+au,05/05/2023,HERITAGE COLLECTION SINGAPORE SG Card xx0338 SGD 64.00 Value Date: 02/05/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-72.65,quickbooks_gl_v2
+au,05/05/2023,ONLINE JOB ADS INDEED SINGAPORE SG Card xx0338 AUD 70.00 Value Date: 02/05/2023,Operating Expenses:Recruitment Expense,6200,HR - Recruitment,-70.0,quickbooks_gl_v2
+au,04/05/2023,MADD PIZZA SINGAPORE SG Card xx0338 SGD 28.51 Value Date: 01/05/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-32.44,quickbooks_gl_v2
+au,04/05/2023,MCDONALDS INTERAIRIII MASCOT AU Card xx0338 Value Date: 01/05/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-13.45,quickbooks_gl_v2
+au,04/05/2023,ASTONS CrossStreeqlub Singapore SG Card xx0338 SGD 46.40 Value Date: 02/05/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-52.67,quickbooks_gl_v2
+au,28/04/2023,Hotel at Booking.com Amsterdam NL Card xx0338 AUD 461.73 Value Date: 26/04/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-461.73,quickbooks_gl_v2
+au,25/04/2023,SSP AUSTRALIA AIRPOR MELBOURNE AIR AU Card xx0338 Value Date: 21/04/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-37.9,quickbooks_gl_v2
+au,21/04/2023,Hotel at Booking.com Amsterdam NL Card xx0338 AUD 924.53 Value Date: 19/04/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-924.53,quickbooks_gl_v2
+au,18/04/2023,AuntBetty Australia South Brisban AU Card xx0338 Value Date: 14/04/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-300.66,quickbooks_gl_v2
+au,10/04/2023,Transfer To CHEN W CommBank App 27th March 10th April,Operating Expenses:Human Resource-Salary Expense,6000,Salaries & Wages,-440.0,quickbooks_gl_v2
+au,31/03/2023,Cafe Catalina Southport AU Card xx0338 Value Date: 29/03/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-5.58,quickbooks_gl_v2
+au,31/03/2023,COLES EXPRESS 1971 SOUTHPORT AU Card xx0338 Value Date: 29/03/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-25.08,quickbooks_gl_v2
+au,30/03/2023,ALH VENUES/724 OLD CLEVEL CAMP HILL AU Card xx0338 Value Date: 28/03/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-25.2,quickbooks_gl_v2
+au,30/03/2023,ALH VENUES/724 OLD CLEVEL CAMP HILL AU Card xx0338 Value Date: 28/03/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-129.0,quickbooks_gl_v2
+au,29/03/2023,THE LORD LAMINGTON BRISBANE AIRPO QLD AU,Operating Expenses:Travel Expense,6400,Travel - Tickets,-24.5,quickbooks_gl_v2
+au,29/03/2023,REX AIRLINES MASCOT AU Card xx0338 Value Date: 27/03/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-80.74,quickbooks_gl_v2
+au,28/03/2023,AIRPORT RETAIL ENTERPR MASCOT AU Card xx0338,Operating Expenses:Travel Expense,6400,Travel - Tickets,-6.27,quickbooks_gl_v2
+au,17/03/2023,The Thai Mascot Mascot AU Card xx0338 Value Date: 15/03/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-30.45,quickbooks_gl_v2
+au,16/03/2023,SQ *REGIMENT SPECIALIT Sydney AU,Operating Expenses:Travel Expense,6400,Travel - Tickets,-9.54,quickbooks_gl_v2
+au,28/02/2023,COLES EXPRESS 1544 DRUMMOYNE AU Card xx0338 Value Date: 24/02/2023,Operating Expenses:Travel Expense,6400,Travel - Tickets,-76.55,quickbooks_gl_v2
+au,24/02/2023,Transfer to xx3529 CommBank app Tickets SG,Operating Expenses:Travel Expense,6400,Travel - Tickets,-880.0,quickbooks_gl_v2
+au,17/02/2023,TAX OFFICE PAYMENTS NetBank BPAY 75556 002196404214969260 002196404214969260,Tax Paid,9000,Income Tax Expense,-368.0,quickbooks_gl_v2
+au,17/02/2023,TAX OFFICE PAYMENTS NetBank BPAY 75556 003006359065334621 2410759115427,Superannuation payable,2302,Superannuation Payable (AU),-2257.0,quickbooks_gl_v2
+au,17/02/2023,TAX OFFICE PAYMENTS NetBank BPAY 75556 004006359065333221 004006359065333221,Tax Paid,9000,Income Tax Expense,-226.39,quickbooks_gl_v2
+au,10/12/2022,Transfer To Edgewear Australia Pty Ltd CommBank App Invoice 1180,Operating Expenses:Marketing Asset Creation,6103,Marketing - Asset Creation,-598.2,quickbooks_gl_v2
+au,03/12/2022,THE PUBLIC HOUSE KUALA LUMPUR MY Card xx0338 MYR 164.15 Value Date: 01/12/2022,Operating Expenses:Meals and Entertainment,6402,Entertainment,-55.26,quickbooks_gl_v2
+au,02/12/2022,Voided - TASTE OF THAI MASCOT AU Card xx0338,Operating Expenses:Travel Expense,6400,Travel - Tickets,0.0,quickbooks_gl_v2
+au,24/11/2022,TAX OFFICE PAYMENTS CommBank app BPAY 75556 003006359065334621,Superannuation payable,2302,Superannuation Payable (AU),-2257.5,quickbooks_gl_v2
+au,24/11/2022,TAX OFFICE PAYMENTS CommBank app BPAY 75556 003006359065334621,Tax Paid,9000,Income Tax Expense,-2257.5,quickbooks_gl_v2
+au,20/11/2022,AIRPORT RETAIL ENTER MASCOT AU Card xx0338,Operating Expenses:Meals and Entertainment,6402,Entertainment,-6.07,quickbooks_gl_v2
+au,20/11/2022,WHSMITH SYD PIERC SAT MASCOT AU,Operating Expenses:Travel Expense,6400,Travel - Tickets,-6.02,quickbooks_gl_v2
+au,15/11/2022,mytrip_au_LW9PMC Sidney AU Card xx0338 Value Date: 12/11/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-1197.06,quickbooks_gl_v2
+au,02/11/2022,Voided - 4CYTE PATHOLOGY PTY LT NORTH RYDE AU Card xx0338 Value Date: 10/02/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,0.0,quickbooks_gl_v2
+au,16/10/2022,AIRPORT RETAIL ENTERPR MASCOT AU Card xx0338,Operating Expenses:Meals and Entertainment,6402,Entertainment,-6.07,quickbooks_gl_v2
+au,02/10/2022,Voided - THE BUTCHERS B G PL GRANVILLE AU Card xx0338 Value Date: 04/02/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,0.0,quickbooks_gl_v2
+au,29/09/2022,BUDGETAIR.COM.AU SYDNEY AU Card xx0338 Value Date: 26/09/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-552.0,quickbooks_gl_v2
+au,28/09/2022,Tickets*flightnetwork Sidney AU Card xx0338 Value Date: 26/09/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-1108.26,quickbooks_gl_v2
+au,28/09/2022,Tickets*flightnetwork Sidney AU Card xx0338 Value Date: 26/09/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-1346.76,quickbooks_gl_v2
+au,24/09/2022,DELHI CAPITAL DELHI IN Card xx0338 INR 125.00 Value Date: 21/09/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-2.35,quickbooks_gl_v2
+au,24/09/2022,TRAVEL FOOD SERVICES D NEW DELHI IN Card xx0338 INR 620.00 Value Date: 21/09/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-11.67,quickbooks_gl_v2
+au,15/09/2022,Return GETAROUND PARIS 02 FR Card xx0338 EUR 220.00 Value Date: 12/09/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,323.06,quickbooks_gl_v2
+au,15/09/2022,Return TIER NL 9-21580 Amsterdam NL Card xx0338 EUR 1.60 Value Date: 12/09/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,2.35,quickbooks_gl_v2
+au,15/09/2022,TIER NL 9-21580 Amsterdam NL Card xx0338 EUR 1.60 Value Date: 12/09/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-2.37,quickbooks_gl_v2
+au,15/09/2022,TIER NL 9-21612 Amsterdam NL Card xx0338 EUR 1.40 Value Date: 13/09/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-2.08,quickbooks_gl_v2
+au,14/09/2022,TIER NL SHOP Package Amsterdam NL Card xx0338 EUR 7.99 Value Date: 11/09/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-11.87,quickbooks_gl_v2
+au,09/09/2022,AIR INDIA LTD (INR) DELHI IN Card xx0338 INR 37415.00 Value Date: 05/09/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-697.8,quickbooks_gl_v2
+au,30/08/2022,GETAROUND PARIS 02 FR Card xx0338 EUR 539.00 Value Date: 27/08/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-784.04,quickbooks_gl_v2
+au,25/08/2022,BUDGETAIR.COM.AU SYDNEY AU Card xx0338 Value Date: 23/08/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-3198.0,quickbooks_gl_v2
+au,25/08/2022,Tickets*flightnetwork Sidney AU Card xx0338 Value Date: 23/08/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-3524.74,quickbooks_gl_v2
+au,13/08/2022,TRANSACTIONPRO/AUTOFY WWW.TRANSACTI NH US Card xx0338 USD 10.00 Value Date: 10/08/2022,Accounting and bookkeeping,6500,Accounting & Bookkeeping Fees,-14.4,quickbooks_gl_v2
+au,13/08/2022,TRANSACTIONPRO/AUTOFY WWW.TRANSACTI NH US Card xx0338 USD 20.00 Value Date: 10/08/2022,Accounting and bookkeeping,6500,Accounting & Bookkeeping Fees,-28.8,quickbooks_gl_v2
+au,12/08/2022,TRANSACTIONPRO/AUTOFY WWW.TRANSACTI NH US Card xx0338 USD 10.00 Value Date: 10/08/2022,Accounting and bookkeeping,6500,Accounting & Bookkeeping Fees,-14.39,quickbooks_gl_v2
+au,09/08/2022,FLYSCOOT.COM0000000DG35PB SYDNEY AU Card xx0338 Value Date: 04/08/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-42.0,quickbooks_gl_v2
+au,09/08/2022,Grab* A-3PV7R32GWE4Q Singapore SG Card xx0338 SGD 32.80 Value Date: 05/08/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-34.27,quickbooks_gl_v2
+au,09/08/2022,Grab* A-3PV7R32GWE4Q Singapore SG Card xx0338 SGD 5.00 Value Date: 05/08/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-5.22,quickbooks_gl_v2
+au,09/08/2022,Transfer from CommBank app Subscription costs,Accrued Expense,2200,Accrued Expenses,411.0,quickbooks_gl_v2
+au,01/08/2022,Transfer To NTC NetBank Yellow VW Caddy car 2,Hardware Devices,1510,Hardware Devices,-17000.0,quickbooks_gl_v2
+au,23/07/2022,Transfer To NTC CommBank App Yellow VW Caddy,Motor vehicles at cost,1520,Motor Vehicles,-18000.0,quickbooks_gl_v2
+au,22/07/2022,Chrysler Cafe Pitt St sydney AU,Operating Expenses:Travel Expense,6400,Travel - Tickets,-44.8,quickbooks_gl_v2
+au,05/06/2022,TASTE OF THAI MASCOT AU Card xx0338,Operating Expenses:Travel Expense,6400,Travel - Tickets,-24.0,quickbooks_gl_v2
+au,02/06/2022,SPRESSO CAFE AND SALAD SYDNEY AU Card xx0338 Value Date: 31/05/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-16.9,quickbooks_gl_v2
+au,27/04/2022,Voided - Transfer to xx3529 CommBank app Tickets GS Bavani,Operating Expenses:Travel Expense,6400,Travel - Tickets,0.0,quickbooks_gl_v2
+au,27/04/2022,Transfer to xx3529 CommBank app Tickets GS Bavani,Operating Expenses:Travel Expense,6400,Travel - Tickets,-977.0,quickbooks_gl_v2
+au,13/04/2022,Transfer to other Bank NetBank FLE21030780A0401,Cost of Service:Insurance,5035,Cost of Insurance - Trip Premium,-8551.55,quickbooks_gl_v2
+au,02/04/2022,Voided - FLYSCOOT.COM0000000W8Y32Z SINGAPORE SG Card xx0338 SGD 753.67 Value Date: 01/02/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,0.0,quickbooks_gl_v2
+au,24/03/2022,Transfer To Varun Kumar NetBank didi trip fare to the pickup ...,Operating Expenses:Travel Expense,6400,Travel - Tickets,-28.12,quickbooks_gl_v2
+au,22/03/2022,SOCIAL BREW CAFE PYRMONT AU Card xx0338 Value Date: 18/03/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-28.5,quickbooks_gl_v2
+au,16/03/2022,Voided - Coogee Ground Coogee AU Card xx0338 Value Date: 14/03/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,0.0,quickbooks_gl_v2
+au,16/03/2022,Voided - MUUM MAAM - BARANGAR BARANGAROO NSWAU,Operating Expenses:Travel Expense,6400,Travel - Tickets,0.0,quickbooks_gl_v2
+au,16/03/2022,Voided - OINOI & KAMPI PTY LT BONDI JUNCTIO AU Card xx0338 Value Date: 14/03/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,0.0,quickbooks_gl_v2
+au,16/03/2022,Coogee Ground Coogee AU Card xx0338 Value Date: 14/03/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-12.0,quickbooks_gl_v2
+au,16/03/2022,MUUM MAAM - BARANGAR BARANGAROO NSWAU,Operating Expenses:Travel Expense,6400,Travel - Tickets,-156.31,quickbooks_gl_v2
+au,16/03/2022,OINOI & KAMPI PTY LT BONDI JUNCTIO AU Card xx0338 Value Date: 14/03/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-74.1,quickbooks_gl_v2
+au,02/03/2022,Voided - Hotel at Booking.com Amsterdam NL Card xx0338 SGD 1460.75 Value Date: 01/02/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,0.0,quickbooks_gl_v2
+au,18/02/2022,Voided - SQ *CLINICAL LABORATOR Clayton AU Card xx0338 Value Date: 15/02/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,0.0,quickbooks_gl_v2
+au,18/02/2022,SQ *CLINICAL LABORATOR Clayton AU Card xx0338 Value Date: 15/02/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-150.0,quickbooks_gl_v2
+au,17/02/2022,Voided - 2C2P*CHANGI SAFE TRAVE-EC SINGAPORE SG Card xx0338 SGD 125.00 Value Date: 14/02/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,0.0,quickbooks_gl_v2
+au,17/02/2022,Voided - GOCHI-SO SHOKUDO SINGAPORE SG Card xx0338 SGD 22.95 Value Date: 14/02/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,0.0,quickbooks_gl_v2
+au,17/02/2022,2C2P*CHANGI SAFE TRAVE-EC SINGAPORE SG Card xx0338 SGD 125.00 Value Date: 14/02/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-130.74,quickbooks_gl_v2
+au,17/02/2022,GOCHI-SO SHOKUDO SINGAPORE SG Card xx0338 SGD 22.95 Value Date: 14/02/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-24.0,quickbooks_gl_v2
+au,12/02/2022,TASTE OF THAI MASCOT AU Card xx0338,Operating Expenses:Travel Expense,6400,Travel - Tickets,-21.0,quickbooks_gl_v2
+au,11/02/2022,4CYTE PATHOLOGY PTY LT NORTH RYDE AU Card xx0338 Value Date: 10/02/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-120.0,quickbooks_gl_v2
+au,10/02/2022,THE BUTCHERS B G PL GRANVILLE AU Card xx0338 Value Date: 04/02/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-56.0,quickbooks_gl_v2
+au,04/02/2022,FLYSCOOT.COM0000000W8Y32Z SINGAPORE SG Card xx0338 SGD 753.67 Value Date: 01/02/2022,Operating Expenses:Travel Expense,6400,Travel - Tickets,-793.17,quickbooks_gl_v2
+au,29/01/2022,Voided - Transfer To Luke Leslie Host NetBank Drive Mate Website,Operating Expenses:Marketing Asset Creation,6103,Marketing - Asset Creation,0.0,quickbooks_gl_v2
+au,29/01/2022,Transfer To Luke Leslie Host NetBank Drive Mate Website,Operating Expenses:Marketing Asset Creation,6103,Marketing - Asset Creation,-924.0,quickbooks_gl_v2
+au,22/12/2021,DONUT KING CAIRNS AU Card xx0338 Value Date: 17/12/2021,Operating Expenses:Travel Expense,6400,Travel - Tickets,-17.0,quickbooks_gl_v2
+au,21/12/2021,Voided - L UNICO TRATTORIA P L TRINITY BEACH AU Card xx0338 Value Date: 16/12/2021,Operating Expenses:Travel Expense,6400,Travel - Tickets,0.0,quickbooks_gl_v2
+au,21/12/2021,Voided - COLES EXPRESS 1755 CAIRNS AU Card xx0338 Value Date: 17/12/2021,Operating Expenses:Travel Expense,6400,Travel - Tickets,0.0,quickbooks_gl_v2
+au,21/12/2021,Aqua Cafe Cairns AU Card xx0338 Value Date: 17/12/2021,Operating Expenses:Travel Expense,6400,Travel - Tickets,-7.56,quickbooks_gl_v2
+au,21/12/2021,Waterbar & Grill Cairns AU Card xx0338 Value Date: 17/12/2021,Operating Expenses:Travel Expense,6400,Travel - Tickets,-63.0,quickbooks_gl_v2
+au,21/12/2021,COLES EXPRESS 1755 CAIRNS AU Card xx0338 Value Date: 17/12/2021,Operating Expenses:Travel Expense,6400,Travel - Tickets,-25.75,quickbooks_gl_v2
+au,21/12/2021,L UNICO TRATTORIA P L TRINITY BEACH AU Card xx0338 Value Date: 16/12/2021,Operating Expenses:Travel Expense,6400,Travel - Tickets,-10.3,quickbooks_gl_v2
+au,21/12/2021,Lighthouse Cafe PD Port Douglas AU Card xx0338 Value Date: 17/12/2021,Operating Expenses:Travel Expense,6400,Travel - Tickets,-25.5,quickbooks_gl_v2
+au,18/12/2021,BARGAIN CAR RENTALS HOBART AU Card xx0338 Value Date: 16/12/2021,Operating Expenses:Travel Expense,6400,Travel - Tickets,-1.0,quickbooks_gl_v2
+au,18/12/2021,Return BARGAIN CAR RENTALS HOBART AU Card xx0338 Value Date: 16/12/2021,Operating Expenses:Travel Expense,6400,Travel - Tickets,1.0,quickbooks_gl_v2
+au,18/12/2021,CAIRNS REGIONAL COUN CAIRNS AU Card xx0338 Value Date: 17/12/2021,Operating Expenses:Travel Expense,6400,Travel - Tickets,-3.78,quickbooks_gl_v2
+au,18/12/2021,VIRGIN AUSTR7952171842830 BRISBANE AU Card xx0338 Value Date: 16/12/2021,Operating Expenses:Travel Expense,6400,Travel - Tickets,-81.0,quickbooks_gl_v2
+au,18/12/2021,Strait on the Beach Holloways Bea AU Card xx0338 Value Date: 16/12/2021,Operating Expenses:Travel Expense,6400,Travel - Tickets,-17.7,quickbooks_gl_v2
+au,16/12/2021,Voided - Cairns Queens Court Cairns North AU,Operating Expenses:Travel Expense,6400,Travel - Tickets,0.0,quickbooks_gl_v2
+au,16/12/2021,Cairns Queens Court Cairns North AU,Operating Expenses:Travel Expense,6400,Travel - Tickets,-89.0,quickbooks_gl_v2
+au,11/12/2021,TRAVEL RESERVATION SYDNEY AU Card xx0338 Value Date: 08/12/2021,Operating Expenses:Travel Expense,6400,Travel - Tickets,-71.82,quickbooks_gl_v2
+au,08/12/2021,Transfer To Thomson Geer Melbourne CommBank App Invoice 1000631,Operating Expenses:Corporate - Legal and professional fees,6501,Legal Fees,-2475.0,quickbooks_gl_v2
+au,12/11/2021,Voided - TRAVEL RESERVATION SYDNEY AU Card xx0338 Value Date: 08/12/2021,Operating Expenses:Travel Expense,6400,Travel - Tickets,0.0,quickbooks_gl_v2
+au,09/10/2021,Transfer To Edgewear Australia Pty Ltd CommBank App Attack pack,Operating Expenses:Marketing Asset Creation,6103,Marketing - Asset Creation,-663.0,quickbooks_gl_v2
+au,08/10/2021,Transfer to other Bank NetBank Attack pack,Operating Expenses:Marketing Asset Creation,6103,Marketing - Asset Creation,-20000.0,quickbooks_gl_v2
+au,07/10/2021,Transfer to other Bank NetBank Attack Pack Adv,Operating Expenses:Marketing Asset Creation,6103,Marketing - Asset Creation,-5000.0,quickbooks_gl_v2
+au,10/09/2021,Voided - Transfer To Edgewear Australia Pty Ltd CommBank App Attack pack,Operating Expenses:Marketing Asset Creation,6103,Marketing - Asset Creation,0.0,quickbooks_gl_v2
+au,23/03/2026,Card transaction of 4.39 AUD issued by Reddy Express 6762 Carlton,Operating Expenses:Travel Expense,6400,Travel - Tickets,-4.39,quickbooks_gl_v2
+au,12/03/2026,Card transaction of 42.00 AUD issued by Care Park MELBOURNE,Cost of Overhead Related to Service:Operating Expenses:Parking,5060,Parking - RMS Fleet,-42.0,quickbooks_gl_v2
+au,01/03/2026,Card transaction of 436.00 SGD issued by Pg Singapore Network Info SINGAPORE (fee: 1.16 AUD),"Operating Expenses:AI, Internet & Website maintenance fees",6700,Technology - Infrastructure,-484.35,quickbooks_gl_v2
+au,26/02/2026,Card transaction of 40.00 USD issued by Unprompted 501(c)(3) UNPROMPTEDCON (fee: 0.14 AUD),Operating Expenses:Travel Expense,6400,Travel - Tickets,-56.16,quickbooks_gl_v2
+au,19/02/2026,Card transaction of 60.53 AUD issued by Bp Connect 0811 ASHFIELD,Operating Expenses:Travel Expense,6400,Travel - Tickets,-60.53,quickbooks_gl_v2
+au,19/02/2026,Card transaction of 59.89 AUD issued by Trendsetter Syd Pty Lt SUMMER HILL,Operating Expenses:Travel Expense,6400,Travel - Tickets,-59.89,quickbooks_gl_v2
+au,18/02/2026,Card transaction of 12.80 AUD issued by Cityofsydney Parking SYDNEY,Cost of Overhead Related to Service:Operating Expenses:Parking,5060,Parking - RMS Fleet,-12.8,quickbooks_gl_v2
+au,13/02/2026,Card transaction of 22.30 AUD issued by Translink Ticketing QLD,Operating Expenses:Travel Expense,6400,Travel - Tickets,-22.3,quickbooks_gl_v2
+au,12/02/2026,Card transaction of 11.18 AUD issued by Black Fire Restauran BRISBANE CITY,Operating Expenses:Travel Expense,6400,Travel - Tickets,-11.18,quickbooks_gl_v2
+au,11/02/2026,Card transaction of 15.00 AUD issued by Bac Parking ASCOT,Cost of Overhead Related to Service:Operating Expenses:Parking,5060,Parking - RMS Fleet,-15.0,quickbooks_gl_v2
+au,11/02/2026,Card transaction of 44.44 AUD issued by Secure Parking 800142 FORTITUDE VAL,Cost of Overhead Related to Service:Operating Expenses:Parking,5060,Parking - RMS Fleet,-44.44,quickbooks_gl_v2
+au,11/02/2026,Card transaction of 18.52 AUD issued by Wickham Hotel App Fortitude Val,Operating Expenses:Travel Expense,6400,Travel - Tickets,-18.52,quickbooks_gl_v2
+au,11/02/2026,Card transaction of 93.82 AUD issued by Port Office Hotel Brisbane,Operating Expenses:Travel Expense,6400,Travel - Tickets,-93.82,quickbooks_gl_v2
+au,11/02/2026,Card transaction of 25.00 AUD issued by Port Office Hotel Brisbane,Operating Expenses:Travel Expense,6400,Travel - Tickets,-25.0,quickbooks_gl_v2
+au,11/02/2026,Card transaction of 30.00 AUD issued by The Great Southern Brisba Brisbane,Operating Expenses:Travel Expense,6400,Travel - Tickets,-30.0,quickbooks_gl_v2
+au,04/02/2026,Card transaction of 244.98 AUD issued by The Meat And Wine Co Hawt Hawthorne Eas,Operating Expenses:Travel Expense,6400,Travel - Tickets,-244.98,quickbooks_gl_v2
+au,12/11/2025,file:///G:/My%20Drive/Drive%20Lah/Monthly%20files%20finance/2025/Dec%2025/00000606_20251010_220209.pdf,Cost of Overhead Related to Service:Operating Expenses:Towing,5033,Incidentals Payout - Towing,-165.0,quickbooks_gl_v2
+au,23/09/2025,Mobile Tyre Legends,Cost of Overhead Related to Service:Operating Expenses:Workshop,5032,Incidentals Payout - Workshop,-600.0,quickbooks_gl_v2
+au,01/08/2025,Harrison Sawyer,Cost of Overhead Related to Service:Operating Expenses:Workshop,5032,Incidentals Payout - Workshop,-266.5,quickbooks_gl_v2
+au,09/07/2025,ref3070984,Cost of Overhead Related to Service:Operating Expenses:Workshop,5032,Incidentals Payout - Workshop,-330.0,quickbooks_gl_v2
+au,04/07/2025,Ref220049,Operating Expenses:Corporate - Legal and professional fees,6501,Legal Fees,-5000.0,quickbooks_gl_v2
+au,18/01/2025,Sent money to Department of State Growth-PTS -117965,Operating Expenses:Corporate - Legal and professional fees,6501,Legal Fees,-147.73,quickbooks_gl_v2
+au,03/12/2024,Milagros Lomoljo,Cost of Overhead Related to Service:Salary Expense - Local Ops Salary,5061,On-Ground Team - Salary,-224.93,quickbooks_gl_v2
+au,02/12/2024,Milagros Lomoljo,Cost of Overhead Related to Service:Salary Expense - Local Ops Salary,5061,On-Ground Team - Salary,-643.09,quickbooks_gl_v2
+au,06/07/2024,B. Van Der Ryken - Part timer,Cost of Overhead Related to Service:Salary Expense - Local Ops Salary,5061,On-Ground Team - Salary,-54.0,quickbooks_gl_v2
+au,25/03/2024,INVOICE Number  FTIA00003611,Cost of Overhead Related to Service:Operating Expenses:Workshop,5032,Incidentals Payout - Workshop,-120.0,quickbooks_gl_v2
+au,21/12/2023,Sent money to Exclusive Wraps INV5114,Cost of Overhead Related to Service:Operating Expenses:Workshop,5032,Incidentals Payout - Workshop,-120.0,quickbooks_gl_v2
+au,22/09/2023,Sent money to All Aces Clean Pty Ltd INV49793,Cost of Overhead Related to Service:Operating Expenses:Cleaning,5022,Incidentals Payout - Cleaning,-1120.0,quickbooks_gl_v2
+au,11/09/2023,Sent money to Nathalia Kurniawan,Operating Expenses:Travel Expense,6400,Travel - Tickets,-1586.5,quickbooks_gl_v2
+au,16/01/2026,Card transaction of USD issued by Firefliesai FIREFLIESAI,Subscriptions/ Software expenses,6701,Technology - Software Subscriptions,-24.75,quickbooks_gl_v2
+ventures,31/12/2021,21733@1.42,Share Capital - Ordinary,3000,Share Capital,0.0,quickbooks_gl_v2
+ventures,31/12/2021,41250@1.42,Share Capital - Ordinary,3000,Share Capital,0.0,quickbooks_gl_v2
+ventures,31/12/2021,84000@1.42,Share Capital - Ordinary,3000,Share Capital,0.0,quickbooks_gl_v2
+ventures,31/12/2021,127119@1.42,Share Capital - Ordinary,3000,Share Capital,0.0,quickbooks_gl_v2
+ventures,31/12/2021,127118@1.42,Share Capital - Ordinary,3000,Share Capital,0.0,quickbooks_gl_v2
+ventures,31/12/2021,84400@1.42,Share Capital - Ordinary,3000,Share Capital,-135040.0,quickbooks_gl_v2
+ventures,31/12/2021,84400@1.42,Share Capital - Ordinary,3000,Share Capital,-34772.8,quickbooks_gl_v2
+ventures,31/12/2021,84400@1.42,Share Capital - Ordinary,3000,Share Capital,-92400.0,quickbooks_gl_v2
+ventures,31/12/2021,84400@1.42,Share Capital - Ordinary,3000,Share Capital,-405600.0,quickbooks_gl_v2
+ventures,31/12/2021,84400@1.42,Share Capital - Ordinary,3000,Share Capital,-203390.4,quickbooks_gl_v2
+ventures,31/12/2021,84400@1.42,Share Capital - Ordinary,3000,Share Capital,-203388.8,quickbooks_gl_v2
+ventures,31/12/2021,84400@1.42,Share Capital - Ordinary,3000,Share Capital,-202560.0,quickbooks_gl_v2
+ventures,31/12/2021,126600@1.42,Share Capital - Ordinary,3000,Share Capital,0.0,quickbooks_gl_v2
+ventures,21/06/2022,TT - INWARD TELEGRAPHIC TRANSFER 3838142172ES 0016IT4079548 VICTORIA K ONG OR XIAO TAN USD 200000,Share Capital - Ordinary,3000,Share Capital,277687.0,quickbooks_gl_v2
+ventures,22/06/2022,INWARD TELEGRAPHIC TRANSFER 3838142172ES 0016IT4079548 VICTORIA K ONG OR XIAO TAN USD 200000,Share Capital - Ordinary,3000,Share Capital,277599.0,quickbooks_gl_v2
+ventures,22/06/2022,Offsetting to make adj for USD bank deleted deposit transaction,Share Capital - Ordinary,3000,Share Capital,-277687.0,quickbooks_gl_v2
+ventures,30/06/2022,Convertible 2022,Share Capital - Ordinary,3000,Share Capital,-173928.13,quickbooks_gl_v2
+ventures,30/06/2022,Convertible 2022,Share Capital - Ordinary,3000,Share Capital,-139142.5,quickbooks_gl_v2
+ventures,30/06/2022,Convertible 2022,Share Capital - Ordinary,3000,Share Capital,-34785.63,quickbooks_gl_v2
+ventures,05/07/2022,INWARD TELEGRAPHIC TRANSFER  P6277701 232 1 0016IT4152250 PETER STAM USD 49000,Share Capital - Ordinary,3000,Share Capital,68794.78,quickbooks_gl_v2
+ventures,05/07/2022,INWARD TELEGRAPHIC TRANSFER  P6095801 232 1 0016IT4147159 PETER STAM USD 1000,Share Capital - Ordinary,3000,Share Capital,1403.98,quickbooks_gl_v2
+ventures,06/07/2022,INWARD TELEGRAPHIC TRANSFER  P6540764 232 1 0016IT4160104 PETER STAM USD 50000,Share Capital - Ordinary,3000,Share Capital,70140.25,quickbooks_gl_v2
+ventures,19/08/2022,INTERBANK GIRO IBG IVPT ENTERPRISE SINGAPORE 14013- 024,Deferred Income,2210,Deferred Income,22441.3,quickbooks_gl_v2
+ventures,12/09/2022,INTERBANK GIRO IBG IVPT ENTERPRISE SINGAPORE 00246- 001,Deferred Income,2210,Deferred Income,101580.03,quickbooks_gl_v2
+ventures,11/01/2023,230110-QPBXHM929 Verzonden van Revo 20230111DBSSSGSGBRT7740225 OTHER The Currencycloud Limited SGD 100,Share Capital - Ordinary,3000,Share Capital,100.0,quickbooks_gl_v2
+ventures,09/02/2023,ITT  PET448182039 0016IT5371191 KALLE BLOM SGD 131400,Share Capital - Ordinary,3000,Share Capital,131400.0,quickbooks_gl_v2
+ventures,20/04/2023,C472409BBK042023 0016IT5778051 DERKJAN LUTGERT USD 99975,Share Capital - Ordinary,3000,Share Capital,133383.15,quickbooks_gl_v2
+ventures,25/04/2023,3612293114ES 0016IT5802672 XIAO TAN OR VICTORIA K ONG USD 200000   UETR Ref:94c43cea-7e6f-4484-a5aa-18cf53915a3e,Share Capital - Ordinary,3000,Share Capital,266811.0,quickbooks_gl_v2
+ventures,26/04/2023,P8301142 232 1 0016IT5804821 PETER STAM USD 100000   UETR Ref:f962ee14-2f9b-44b4-a1e3-31d5413efd89,Share Capital - Ordinary,3000,Share Capital,133775.5,quickbooks_gl_v2
+ventures,20/06/2024,REMITTANCE TRANSFER OF FUNDS 0016RF7597603 SLEEK TECH (PTE. LTD SLEEK TECH (PTE. LTD.) USD 100000,Share Capital - Ordinary:Share Capital - Preference,3000,Share Capital,136980.0,quickbooks_gl_v2
+ventures,20/06/2024,REMITTANCE TRANSFER OF FUNDS 0016RF7597603 SLEEK TECH (PTE. LTD SLEEK TECH (PTE. LTD.) USD 100000,Exchange Gain or Loss,7100,Foreign Exchange Gains/Losses,136980.0,quickbooks_gl_v2
+ventures,20/06/2024,REMITTANCE TRANSFER OF FUNDS 0016RF7597636 SLEEK TECH (PTE. LTD SLEEK TECH (PTE. LTD.) USD 75000,Share Capital - Ordinary:Share Capital - Preference,3000,Share Capital,102735.0,quickbooks_gl_v2
+ventures,20/06/2024,REMITTANCE TRANSFER OF FUNDS 0016RF7597636 SLEEK TECH (PTE. LTD SLEEK TECH (PTE. LTD.) USD 75000,Exchange Gain or Loss,7100,Foreign Exchange Gains/Losses,102735.0,quickbooks_gl_v2
+ventures,23/12/2024,ICT 20241223OCBCSGSGBRT2983913 SPREAD PAYMENT TO DRIVELAH OTHR,Payable to Others,2010,Other Payables,5000.0,quickbooks_gl_v2
+ventures,05/02/2025,"KALLE BLOM - SGD 134000 = USD 100,000  INWARD TELEGRAPHIC TRANSFER ITT  PET624162035  0016IT0004992 KALLE BLOM SGD 134000 | Auto-categorized: Share Capital - Ordinary:Share Capital - Preference (Equity) (100%)",Convertible loan,2400,Loans from Others,134000.0,quickbooks_gl_v2
+ventures,22/08/2025,INWARD TELEGRAPHIC TRANSFER 9892599234FS 0016IT1508668 APEX FUND SERVICES PTY LTD USD 654500 UETR Ref:10148321-a2c3-4076-99de-f833230da917,Convertible loan,2400,Loans from Others,848101.1,quickbooks_gl_v2
