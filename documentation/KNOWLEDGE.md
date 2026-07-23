@@ -42,7 +42,8 @@ Feeds: (1) the RAG "company facts" input (IDEAL_STATE §3 — the AI never runs 
 
 ### Technology vendors
 - **CP-8** Twilio powers product SMS/OTP → 6700. Vercel and Render host/serve the product → 6700. Apple defaults 6700 with a future rule to split App Store purchases. *(Gaurav, 2026-07-23)*
-- **CP-9** Anthropic, ChatGPT, Onfido, Rightworks, Amplitude, Lovable, CircleCI, SGNIC → 6701 subscriptions. OpenAI API spend is distinct from ChatGPT subscriptions. *(Gaurav, 2026-07-23)*
+- **CP-9** ~~Anthropic, ChatGPT, Onfido, Rightworks, Amplitude, Lovable, CircleCI, SGNIC → 6701 subscriptions. OpenAI API spend is distinct from ChatGPT subscriptions.~~ Superseded by CP-40 on the OpenAI clause; the 6701 list stands. *(Gaurav, 2026-07-23)*
+- **CP-40** OpenAI and ChatGPT are ONE party ("OpenAI") — ALL OpenAI/ChatGPT spend is ALWAYS 6701 Technology - Software Subscriptions, API or subscription alike. *(Gaurav, 2026-07-23)*
 - **CP-10** "Technology" as a QB payee is an artifact — bulk-tagged over 1,248 card purchases; the real vendors (DocuSign, Dropbox Sign, Anthropic, OpenAI…) are in the bank memo text. *(verified, 2026-07-23)*
 - **CP-11** Google is TWO parties by product economics: **Google Ads** (→ 6100) and **Google** (Cloud/Storage/Workspace tech → 6700). *(Gaurav, 2026-07-23)*
 - **CP-12** KORE Wireless provides SIM/data connectivity inside the in-car devices → 5030 (a device running cost, not office tech). *(Gaurav, 2026-07-23)*
@@ -51,7 +52,7 @@ Feeds: (1) the RAG "company facts" input (IDEAL_STATE §3 — the AI never runs 
 ### Vehicle & ops vendors
 - **CP-14** Digital Matter, Humax, SentriLock make the in-car GPS/telematics/lockbox devices; purchases are EXPENSED → 5030, not capitalized. The Fleet Dr Pty Ltd does device installations → 5064. *(Gaurav, 2026-07-23)*
 - **CP-15** Elite Car Ventures (= "Elite car") is a workshop → 5032. Cheng Chuan is the car-repair vendor Cheng Chuan Motor Services → 5032. *(Gaurav, 2026-07-23)*
-- **CP-16** Detailing vendors (Car mobile detailing, Arena Detailing) are workshop-class → 5032; pure washes (Wash and Go) → 5022. *(Gaurav, 2026-07-23)*
+- **CP-16** ~~Detailing vendors (Car mobile detailing, Arena Detailing) are workshop-class → 5032~~ Car mobile detailing → 5032 Workshop; **Arena Detailing → 6103 Marketing - Asset Creation** (corrected — they did marketing/photography work); pure washes (Wash and Go) → 5022. *(Gaurav, 2026-07-23)*
 - **CP-17** Towlah ("Tow lah", "TOWLAH SG RECOVERY") is the SG towing vendor → 5033. RACQ is roadside assistance → 5033. AU has ~20 distinct towing companies from the claims workflow — all separate parties. *(2026-07-23)*
 - **CP-18** RMS hosts (car owners under our management) we pay: Abwin Leasing, CDC Australia, Norman Chan, Bombora → 5001. CDC Australia ≠ CDG/ComfortDelGro. RMS leasing-style hosts are P2P RMS (5001), not Flex+ (5003). *(Gaurav, 2026-07-23)*
 - **CP-19** U R Drive and URA charges are parking → 5060; URA is a government body. Transport for NSW lines are staff public-transport travel → 6400 (NOT vehicle tolls). *(Gaurav, 2026-07-23)*
@@ -63,7 +64,7 @@ Feeds: (1) the RAG "company facts" input (IDEAL_STATE §3 — the AI never runs 
 
 ### Government & statutory
 - **CP-23** ATO, IRAS, Service NSW, WorkCover QLD: NO default account — payments mix tax types; every line ruled individually. *(Gaurav, 2026-07-23)*
-- **CP-24** CPF payments settle the payroll-accrued liability → 2300 CPF Payable. *(Gaurav, 2026-07-23)*
+- **CP-24** ~~CPF payments settle the payroll-accrued liability → 2300 CPF Payable.~~ Superseded: **CPF party defaults to 6001 Employer CPF (SG) — expense, not liability** (Gaurav: "counterparty default to expense not liability"); the payroll knock-off still claims CPF lines against runs when they exist. *(Gaurav, 2026-07-24)*
 - **CP-25** ACRA and ASIC charges are statutory filing fees → 6500. Fines Victoria → 6502. *(Gaurav, 2026-07-23)*
 
 ### Investors
@@ -81,6 +82,10 @@ Feeds: (1) the RAG "company facts" input (IDEAL_STATE §3 — the AI never runs 
 - **CP-37** Ho Sze Yie is called "Jared" — PH support team → 5063. "Ana Ash" may be bank truncation of Anas Ashfaq — verify at replay. *(Gaurav, 2026-07-23)*
 - **CP-38** Care Corporation provides the PH team's HEALTH INSURANCE → new account **6004 Staff Health Insurance** (added to COA v2 2026-07-23; distinct from product insurance 5031/5035 and claims 6010-14). *(Gaurav, 2026-07-23)*
 - **CP-39** Paddle (merchant-of-record billing platform) deliberately NOT a party — replay learns its lines. Cycle & Carriage is an RMS leasing host → 5001 (live 5003 corrected). *(Gaurav, 2026-07-23)*
+- **CP-41** Google sub-products billed as subscriptions keep EXCEPTION rules → 6701 (GSuite/Workspace, Google Play, Google Storage); bare Google/Cloud stays 6700; apple.com store text → 6701 against Apple's 6700 default. *(Gaurav, 2026-07-24)*
+- **CP-42** Accounting SOFTWARE (Xero, QuickBooks/Intuit) → 6500 Accounting & Bookkeeping Fees, not 6701. *(Gaurav, 2026-07-24)*
+- **CP-43** Founders' party defaults = 6003 Directors Salary (Gaurav Singhal, Dirk-Jan ter Horst). Jay Balan = salaried on-ground staff → 5061 (acct 6218104856). Vighnesh R Vighnesh + Mythri S = employees → 6000; Noraisa Domado + Emmanuel Jacobo = PH support → 5063; "Nipa Riten Mody" = alias of Ankish Mody; Benjamin Gotto Smith = AU employee → 6000 (not the lawyer the mined rule guessed). *(Gaurav, 2026-07-24)*
+- **CP-44** Device-connectivity vendors → 5030 (Liberty Wireless joins KORE). Domain registrars → 6701 (GoDaddy joins SGNIC). Dev-tool SaaS → 6701 (Fingerprint, Papertrail, Uptime, Glocksoft/2Checkout, Superblog, Stonly). ComfortDelGro (CDG + Rent-A-Car merged) + Eurokars = RMS leasing hosts → 5001; Sabrina Lin Yan Xiu → 5001; YS Auto works → 5032 (acct 601344831001). *(Gaurav, 2026-07-24)*
 - **CP-31** Terminology: they are "counterparties" (parties we do business with — suppliers, investors, employees, related entities), not "vendors". *(Gaurav, 2026-06-01)*
 
 ## 4. Accounting policies & principles (POL)
@@ -99,6 +104,9 @@ Feeds: (1) the RAG "company facts" input (IDEAL_STATE §3 — the AI never runs 
 - **POL-12** IDENTITY belongs to enrichment (names + aliases on the party); rules decide ACCOUNTING only — a rule may condition on a counterparty but never assign one. *(Gaurav, 2026-07-23)*
 - **POL-13** Rules fire BEFORE counterparty defaults; a rule that merely names a known party is harmful redundancy — such patterns are dropped, the party default governs. *(2026-07-23)*
 - **POL-14** A party's default account is a fallback, not a law — multi-role parties exist; rules and knock-offs override per line. *(Gaurav, 2026-06-01)*
+- **POL-16** Rules are NEVER deleted — only deactivated (`status=INACTIVE`); the engine evaluates ACTIVE rules only. History stays auditable. *(Gaurav, 2026-07-23)*
+- **POL-17** The rules model/engine must not support counterparty as an ACTION (assignment) — counterparty is a CONDITION only; code change queued: engine ignores + validation rejects assignment fields, columns dropped in a later migration. *(Gaurav, 2026-07-23)*
+- **POL-18** Prefer a LEAN rule book: for small-count text patterns (travel cards, one-off refunds, A/R collection texts, ex-people), do NOT load convenience rules — replay review + the feedback loop handle them. Rules are for high-value deterministic streams only. *(Gaurav, 2026-07-24)*
 - **POL-15** A counterparty seed loads by UPSERT (normalized name + aliases); never blind-insert against a live directory. *(2026-07-23)*
 
 ## 5. Data quirks & traps (DQ)

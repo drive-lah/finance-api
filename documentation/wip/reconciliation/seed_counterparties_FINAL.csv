@@ -45,7 +45,6 @@ Calendly,vendor,global,DL SG,6701,Technology - Software Subscriptions,,88,triage
 Canva,vendor,global,DL SG,6701,Technology - Software Subscriptions,,42,triaged,new,,
 Cashify,vendor,global,GLOBAL,,,,0,live,deactivate-live,,GAURAV: remove -> deactivate in live at apply
 Cedar towing,vendor,global,GLOBAL,5033,Incidentals Payout - Towing,,0,live,live-only,5033,
-ChatGPT,vendor,global,DL AU|DL SG,6701,Technology - Software Subscriptions,CHATGPT | OPENAI (ChatGPT Subscription),23,decided,exists,,
 checked.com.au,vendor,global,GLOBAL,6200,HR - Recruitment,,0,live,live-only,6200,
 Christopher J Malan,vendor,global,GLOBAL,,,,0,live,deactivate-live,,GAURAV: remove -> deactivate in live at apply
 CircleCI,vendor,global,DL AU|DL SG,6701,Technology - Software Subscriptions,CIRCLE BUILDS | CIRCLECI.COM,53,decided,exists-resolved,6701,
@@ -54,7 +53,6 @@ Clayton Towing,vendor,global,GLOBAL,5033,Incidentals Payout - Towing,,0,live,liv
 CLEAN EMAIL,vendor,global,DL SG,6701,Technology - Software Subscriptions,,2,triaged,new,,
 Cloudhq,vendor,global,DL SG,6701,Technology - Software Subscriptions,,8,triaged,new,,
 Collision Towing & Recovery Services,vendor,global,GLOBAL,5033,Incidentals Payout - Towing,,0,live,live-only,5033,
-ComfortDelGro Rent-A-Car Pte Ltd,vendor,global,GLOBAL,5003,Host Payouts - Flex+ RMS,,0,live,live-only,5003,
 Common Design Pty Ltd,vendor,global,GLOBAL,6103,Marketing - Asset Creation,,0,live,live-only,6103,
 Connect Repair Logistics,vendor,global,GLOBAL,5032,Incidentals Payout - Workshop,,0,live,live-only,5032,
 Conquer technologies,vendor,global,GLOBAL,1500,Computer & Peripherals,,0,live,live-only,1500,
@@ -78,18 +76,18 @@ Express vpn,vendor,global,DL SG,6701,Technology - Software Subscriptions,,1,tria
 Facebook,vendor,global,DL AU|DL SG,6100,Marketing - Digital Advertising,FACEBK | FACEBOOK,630,approved,new,,
 Faculty of Management Studies,vendor,global,GLOBAL,6101,Marketing - Branding,,0,live,live-only,6101,
 FIGMA,vendor,global,DL SG,6701,Technology - Software Subscriptions,,6,approved,new,,
-Finger Print,vendor,global,DL SG,6700,Technology - Infrastructure,Fingerprint,26,triaged,new,,
+Finger Print,vendor,global,DL SG,6701,Technology - Software Subscriptions,Fingerprint,26,decided,new,,
 Fireflies.ai,vendor,global,DL AU,6700,Technology - Infrastructure,Fireflies.ai FIREFLIES.AI,3,triaged,new,,
 Fiverr,vendor,global,DL SG,6103,Marketing - Asset Creation,,11,decided,new,,
 Fixedlah,vendor,global,GLOBAL,5032,Incidentals Payout - Workshop,,0,live,live-only,5032,
 FLM,vendor,global,GLOBAL,5034,Incidentals Payout - Assessor,,0,live,live-only,5034,
 Focussed Assessing Pty Ltd,vendor,global,GLOBAL,5034,Incidentals Payout - Assessor,AIM MANAGEMENT,0,live,live-only,5034,
 Gardenstate Towing,vendor,global,GLOBAL,5033,Incidentals Payout - Towing,,0,live,live-only,5033,
-Gaurav Singhal,employee,global,DL AU|DL SG,6014,Employee Claims - Other,GAURAV SINGHAL | RR Ventures Pty Ltd,8,decided,exists,,Director
+Gaurav Singhal,employee,global,DL AU|DL SG,6003,Directors Salary,GAURAV SINGHAL | RR Ventures Pty Ltd,8,decided,exists,,Director
 Github,vendor,global,DL SG,6701,Technology - Software Subscriptions,,55,triaged,new,,
 GLOBAL TRANSPORT,vendor,global,GLOBAL,6400,Travel - Tickets,,0,live,live-only,6400,LIVE-ARTIFACT?
-Glocksoft.com,vendor,global,DL AU,6700,Technology - Infrastructure,2Checkout,3,approved,new,,
-GoDaddy,vendor,global,DL SG,6700,Technology - Infrastructure,Go daddy | Godaddy,97,triaged,new,,
+Glocksoft.com,vendor,global,DL AU,6701,Technology - Software Subscriptions,2Checkout,3,decided,new,,
+GoDaddy,vendor,global,DL SG,6701,Technology - Software Subscriptions,Go daddy | Godaddy,97,decided,new,,
 Google,vendor,global,DL SG,6700,Technology - Infrastructure,GOOGLE *ADS9173773995 | GOOGLE Chrome | GOOGLE Cloud | GOOGLE Drive | GOOGLE Storage | GOOGLE*GSUITE | GSuite | Google ADS9173773995 | Google Play | Google insights,122,decided,new,,
 Google Ads,vendor,global,DL SG,6100,Marketing - Digital Advertising,GOOGLE ADS,1022,decided,new,,
 gotogate,vendor,global,GLOBAL,6400,Travel - Tickets,,0,live,live-only,6400,
@@ -159,11 +157,11 @@ OCTOPODS,vendor,global,DL SG,6701,Technology - Software Subscriptions,OCTOPODS O
 OMNITAS,vendor,global,DL AU,6700,Technology - Infrastructure,OMNITAS.DEV,5,approved,exists,,
 ONELINK.TO,vendor,global,DL SG,6701,Technology - Software Subscriptions,ONEINK,4,triaged,new,,
 Onfido PTE LTD,vendor,global,DL SG,6701,Technology - Software Subscriptions,Onfido,14,decided,exists-resolved,6701,
-OPENAI,vendor,global,DL AU|DL SG,6700,Technology - Infrastructure,OpenAI | Openai OPENAI.COM,58,triaged,new,,
+OpenAI,vendor,global,DL AU|DL SG,6701,Technology - Software Subscriptions,CHATGPT | ChatGPT | OPENAI | OPENAI (ChatGPT Subscription) | Openai OPENAI.COM,81,decided,new,,
 Overflow.io,vendor,global,DL SG,6701,Technology - Software Subscriptions,OVERFLOW,12,triaged,new,,
 Pack & Send,vendor,global,GLOBAL,5066,Warehousing Costs,,0,live,live-only,5066,
 Palms Bistro,vendor,global,GLOBAL,6401,Travel - Meals,,0,live,live-only,6401,
-Papertrail,vendor,global,DL SG,6700,Technology - Infrastructure,,47,triaged,new,,
+Papertrail,vendor,global,DL SG,6701,Technology - Software Subscriptions,,47,decided,new,,
 Perplexity,vendor,global,DL AU,6700,Technology - Infrastructure,Www.perplexity.ai WWW.PERPLEXIT,1,triaged,new,,
 POST SYDNEY GPO,vendor,global,GLOBAL,6013,Employee Claims - Office Supplies,,0,live,live-only,6013,
 PR NEWSWIRE,vendor,global,DL SG,6100,Marketing - Digital Advertising,,1,approved,new,,
@@ -179,7 +177,6 @@ Render,vendor,global,DL AU,6700,Technology - Infrastructure,RENDER.COM,9,decided
 Retool,vendor,global,GLOBAL,6701,Technology - Software Subscriptions,,0,decided,new,,from live-rule identity walk (Gaurav 2026-07-23)
 Rightworks,vendor,global,DL AU,6701,Technology - Software Subscriptions,Rightworks Www Rightwork Nh Us,14,decided,exists-resolved,6701,
 Rohde Smash Repair,vendor,global,GLOBAL,5032,Incidentals Payout - Workshop,,0,decided,live-only,,
-Roobykon Software OÜ,vendor,global,DL AU,6700,Technology - Infrastructure,,1,approved,new,,
 RUNWAY,vendor,global,GLOBAL,6701,Technology - Software Subscriptions,,0,live,live-only,6701,
 SafetyCulture,vendor,global,GLOBAL,6701,Technology - Software Subscriptions,SAFETYCULTURE.COM,0,decided,new,,from live-rule identity walk (Gaurav 2026-07-23)
 SCOOT,vendor,global,DL AU|DL SG,6400,Travel - Tickets,Flyscoot.com | SCOOT PTE. LTD | Scoot,17,triaged,new,,
@@ -206,10 +203,10 @@ SQ *STOCK MARKET KITCHEN,vendor,global,GLOBAL,6402,Entertainment,,0,live,live-on
 SSN Smash repairs,vendor,global,GLOBAL,5032,Incidentals Payout - Workshop,,0,live,live-only,5032,
 STARBUCKS,vendor,global,DL SG,6401,Travel - Meals,,2,approved,new,,
 Stephen Inner West Smash Repairs Pty Ltd,vendor,global,GLOBAL,5032,Incidentals Payout - Workshop,,0,live,live-only,5032,
-Stonly,vendor,global,DL AU|DL SG,6700,Technology - Infrastructure,STONLY.COM,27,triaged,new,,
+Stonly,vendor,global,DL AU|DL SG,6701,Technology - Software Subscriptions,STONLY.COM,27,decided,new,,
 Stuttgart Autos,vendor,global,GLOBAL,5032,Incidentals Payout - Workshop,,0,live,live-only,5032,
 Supabase,vendor,global,DL AU,6701,Technology - Software Subscriptions,SUPABASE SINGAPORE,3,triaged,exists,6701,
-Superblog,vendor,global,DL AU,6700,Technology - Infrastructure,,26,approved,new,,
+Superblog,vendor,global,DL AU,6701,Technology - Software Subscriptions,,26,decided,new,,
 Superblog.ai,vendor,global,DL SG,6701,Technology - Software Subscriptions,,3,triaged,new,,
 Surveymonkey,vendor,global,DL SG,6701,Technology - Software Subscriptions,SURVEYMONK,53,triaged,new,,
 Sydney Transport Provider,vendor,global,GLOBAL,,,,0,live,deactivate-live,,GAURAV: remove -> deactivate in live at apply
@@ -230,7 +227,7 @@ Twilio,vendor,global,DL AU|DL SG,6700,Technology - Infrastructure,Twilio SGD | T
 Typeform,vendor,global,DL SG,6701,Technology - Software Subscriptions,type form,42,triaged,new,,
 U R Drive,vendor,global,GLOBAL,5060,Parking - RMS Fleet,,0,decided,live-only,,
 Uber,vendor,global,DL AU,6400,Travel - Tickets,UBER *TRIP | Uber.com,224,triaged,exists,,
-Uptime,vendor,global,DL SG,6700,Technology - Infrastructure,,4,triaged,new,,
+Uptime,vendor,global,DL SG,6701,Technology - Software Subscriptions,,4,decided,new,,
 Upwork,vendor,global,DL SG,6700,Technology - Infrastructure,,266,triaged,new,,
 URA,government,global,GLOBAL,5060,Parking - RMS Fleet,,0,decided,live-only,,
 UX Pilot,vendor,global,DL AU,6700,Technology - Infrastructure,UX PILOT AI UXPILOT.AI/TE NY,2,triaged,new,,
@@ -246,7 +243,7 @@ Wells O'Callaghan Watterson Pty Limited,vendor,global,GLOBAL,6501,Legal Fees,,0,
 West Melbourne Smash Repairs,vendor,global,GLOBAL,5032,Incidentals Payout - Workshop,,0,live,live-only,5032,
 Wispr Flow,vendor,global,DL AU,6700,Technology - Infrastructure,WISPR | WISPR WISPRFLOW.AI,4,triaged,exists,,
 WP Towing,vendor,global,GLOBAL,5033,Incidentals Payout - Towing,,0,live,live-only,5033,
-Xero,vendor,global,DL SG,6701,Technology - Software Subscriptions,XERO,50,triaged,new,,
+Xero,vendor,global,DL SG,6500,Accounting & Bookkeeping Fees,XERO,50,decided,new,,
 YAMM,vendor,global,DL AU,6701,Technology - Software Subscriptions,YAMM.COM,1,triaged,new,,
 YUEN LAW LLC,vendor,global,GLOBAL,6501,Legal Fees,,0,live,live-only,6501,
 Zapier,vendor,global,DL SG,6701,Technology - Software Subscriptions,ZAPIER.COM | Zepier,49,triaged,new,,
@@ -274,19 +271,20 @@ Anas Ashfaq,employee,entity,DL AU,5061,On-Ground Team - Salary,,0,decided,live-o
 ANC Towing,vendor,entity,DL AU,5033,Incidentals Payout - Towing,,2,triaged,new,,
 Andrea,employee,entity,DL SG,6000,Salaries & Wages,,2,approved,new,,
 Angeline Lau,vendor,entity,DL SG,5001,Host Payouts - P2P RMS,,0,decided,new,,from live-rule identity walk (Gaurav 2026-07-23)
-ANKISH R. MODY,employee,entity,DL SG,6000,Salaries & Wages,ANKISH RITEN MODY | Ankish Mody,1,decided,exists,,
+ANKISH R. MODY,employee,entity,DL SG,6000,Salaries & Wages,ANKISH RITEN MODY | Ankish Mody | Nipa Riten Mody,1,decided,exists,,
 Ankit Kumar Singh,employee,entity,DL SG,6000,Salaries & Wages,,0,decided,new,,from live-rule identity walk (Gaurav 2026-07-23)
 Annabelle Gayda Luching,employee,entity,DL SG,5063,Customer Support - Salary,,0,decided,live-only,,
 ANTHONY G PIKE,customer,entity,DL AU,4025,Incidentals Revenue - Other,,0,live,deactivate-live,4025,GAURAV: remove -> deactivate in live at apply
 Anusha Krishnakumar & Sivaramakrishnan,investor,entity,DL Ventures,3000,Share Capital,"KRISHNAKUMAR ANUSHA,SIVARAMAKRISHNA",1,decided,new,,
 Aquid Shahwar,employee,entity,DL SG,6000,Salaries & Wages,,0,decided,new,,from live-rule identity walk (Gaurav 2026-07-23)
-Arena Detailing,vendor,entity,DL SG,5032,Incidentals Payout - Workshop,ARENA DETAILIG | ARENA DETAILING PTE. LTD,12,decided,exists-resolved,6101,
+Arena Detailing,vendor,entity,DL SG,6103,Marketing - Asset Creation,ARENA DETAILIG | ARENA DETAILING PTE. LTD,12,decided,exists-resolved,6101,
 ASIC,government,entity,DL AU,6500,Accounting & Bookkeeping Fees,ASIC COMMBANK | ASIC Netbank,5,decided,new,,
 ATO,government,entity,DL AU,,,ATO direct | Tax Payments Netbank Bpay,18,decided,exists,9000,
 AUD ridhi karan and associates,vendor,entity,DL SG,6500,Accounting & Bookkeeping Fees,,7,approved,new,,
 Aussie Broadband,vendor,entity,DL AU,6700,Technology - Infrastructure,,30,approved,new,,
 Australia Post,vendor,entity,DL AU,5065,Cost of Device - Courier/Shipping,Aust Postal Corp | POST ST IVES | Post Gordon,5,decided,exists-resolved,4025,
 Auto Glass,vendor,entity,DL AU,5032,Incidentals Payout - Workshop,,2,triaged,new,,
+Benjamin Gotto Smith,employee,entity,DL AU,6000,Salaries & Wages,,6,decided,new,,from mined-rule walk (Gaurav 2026-07-24)
 Benjamin Lai,vendor,entity,DL SG,6103,Marketing - Asset Creation,,0,decided,new,,from live-rule identity walk (Gaurav 2026-07-23)
 Benjamin Obaje,vendor,entity,DL AU,5062,On-Ground Team - Expenses,,3,triaged,new,,
 BEXP,vendor,entity,DL SG,6014,Employee Claims - Other,,26,triaged,new,,
@@ -306,7 +304,6 @@ Carousell,vendor,entity,DL SG,6100,Marketing - Digital Advertising,CAROUSELL,0,d
 CASSIE CROWDER,customer,entity,DL AU,4025,Incidentals Revenue - Other,,0,live,deactivate-live,4025,GAURAV: remove -> deactivate in live at apply
 CDC Australia,vendor,entity,DL AU,5001,Host Payouts - P2P RMS,,2,decided,exists-resolved,5003,
 CDC Fleet,vendor,entity,DL AU,5060,Parking - RMS Fleet,CDC National,2,triaged,new,,
-CDG,vendor,entity,DL SG,6103,Marketing - Asset Creation,FAST PAYMENT BEXP COMFORT DELGRO,2,approved,new,,
 Chad Fordham,vendor,entity,DL AU,5062,On-Ground Team - Expenses,,2,decided,new,,
 Cheng Auto Body works,vendor,entity,DL SG,5032,Incidentals Payout - Workshop,552852873001,0,decided,new,,"QB-only payee, pre-created (Gaurav 2026-07-23)"
 Cheng Chuan Motor Services,vendor,entity,DL SG,5032,Incidentals Payout - Workshop,CHENG CHUAN MOTOR SERVICES | Cheng Chuan | Cheng Chuan motor | FAST PAYMENT BEXP CHENG CHUAN,105,decided,exists,5032,
@@ -317,9 +314,10 @@ Chuan Quan Koh,vendor,entity,DL SG,6103,Marketing - Asset Creation,,0,decided,ne
 City Auto,vendor,entity,DL SG,5032,Incidentals Payout - Workshop,656433778001,0,decided,new,,"QB-only payee, pre-created (Gaurav 2026-07-23)"
 CND Locksmith,vendor,entity,DL AU,5062,On-Ground Team - Expenses,,5,triaged,new,,
 Comfort City Cab,vendor,entity,DL SG,6012,Employee Claims - Transport,,5,triaged,new,,
+ComfortDelGro,vendor,entity,DL SG,5001,Host Payouts - P2P RMS,CDG | COMFORT DELGRO | ComfortDelGro Rent-A-Car Pte Ltd | FAST PAYMENT BEXP COMFORT DELGRO,2,decided,exists-resolved,,
 COMFORTDELGRO CORPORATION LIMITED,investor,entity,DL Ventures,2400,Loans from Others,,1,decided,new,,
 Cosmic Galactic CommBank,other,entity,DL AU,,,,0,live,deactivate-live,,GAURAV: remove -> deactivate in live at apply
-CPF,government,entity,DL SG,2300,CPF Payable (SG),BIZ GIRO | BIZ RR GIRO,34,triaged,new,,
+CPF,government,entity,DL SG,6001,Employer CPF (SG),BIZ GIRO | BIZ RR GIRO,34,decided,new,,
 Craig Anthony Letters,employee,entity,DL AU,5061,On-Ground Team - Salary,,0,decided,live-only,,
 CreditLine NetBank BPAY,bank,entity,DL AU,,,,0,live,deactivate-live,,GAURAV: remove -> deactivate in live at apply
 CROWDER C S,customer,entity,DL AU,4025,Incidentals Revenue - Other,,0,live,deactivate-live,4025,GAURAV: remove -> deactivate in live at apply
@@ -330,7 +328,7 @@ DEEP KOTHARI OR RITU KOTHARI,investor,entity,DL Ventures,3000,Share Capital,,2,d
 Derkjan Adriaan Lutgert,investor,entity,DL Ventures,3000,Share Capital,Derkjan Adriaan,4,decided,new,,
 Dhevnesh,employee,entity,DL SG,,,,0,live,deactivate-live,,GAURAV: remove -> deactivate in live at apply
 Diana Kelly,employee,entity,DL SG,6000,Salaries & Wages,,0,decided,live-only,,
-Dirk-Jan ter Horst,employee,entity,DL SG,6003,Directors Salary,Dirk Jan | Dirk-Jan,17,approved,new,,
+Dirk-Jan ter Horst,employee,entity,DL SG,6003,Directors Salary,Dirk Jan | Dirk-Jan,17,decided,new,,
 Dom Drive lah,employee,entity,DL SG,5063,Customer Support - Salary,,0,decided,live-only,,
 DOMINADOR GAMIT,vendor,entity,DL SG,5063,Customer Support - Salary,,1,triaged,new,,
 Doris Eto,employee,entity,DL SG,5063,Customer Support - Salary,,0,decided,live-only,,
@@ -342,10 +340,11 @@ Edgardo Buenaventura,vendor,entity,DL SG,5063,Customer Support - Salary,,1,triag
 EDGE WEAR,vendor,entity,DL AU,6103,Marketing - Asset Creation,,2,approved,new,,
 edwin,employee,entity,DL SG,6000,Salaries & Wages,,2,triaged,new,,
 Elite Car Ventures,vendor,entity,DL SG,5032,Incidentals Payout - Workshop,511283640001 | Elite car,101,decided,exists-resolved,5032,
+Emmanuel Jacobo,employee,entity,DL SG,5063,Customer Support - Salary,,6,decided,new,,from mined-rule walk (Gaurav 2026-07-24)
 Eric De Jesus Ramos,employee,entity,DL SG,5063,Customer Support - Salary,,0,decided,live-only,,
 Ernie Javines Biason,employee,entity,DL SG,5063,Customer Support - Salary,,0,decided,live-only,,
 Esso-Fairprice,vendor,entity,DL SG,5062,On-Ground Team - Expenses,,3,triaged,new,,
-Eurokars,vendor,entity,DL SG,5032,Incidentals Payout - Workshop,EUROKARS,0,decided,new,,"QB-only payee, pre-created (Gaurav 2026-07-23)"
+Eurokars,vendor,entity,DL SG,5001,Host Payouts - P2P RMS,EUROKARS,0,decided,new,,"QB-only payee, pre-created (Gaurav 2026-07-23)"
 Evelyn Chua Aquino,employee,entity,DL SG,5063,Customer Support - Salary,,0,decided,live-only,,
 Eventila Technologies Pvt Ltd,vendor,entity,DL SG,1710,Technology Development,,3,decided,exists-resolved,6701,
 Expat living,vendor,entity,DL SG,6100,Marketing - Digital Advertising,,2,approved,new,,
@@ -383,7 +382,7 @@ Izzah L. Carandang Dela Cruz,vendor,entity,DL SG,5063,Customer Support - Salary,
 Jacob Hyde,employee,entity,DL AU,6000,Salaries & Wages,,0,decided,live-only,,
 James Stanley,employee,entity,DL AU,6000,Salaries & Wages,,1,approved,new,,
 Jay,employee,entity,DL SG,6000,Salaries & Wages,,3,approved,new,,
-Jay Balan,vendor,entity,DL SG,5062,On-Ground Team - Expenses,6218104856,73,decided,exists,,
+Jay Balan,employee,entity,DL SG,5061,On-Ground Team - Salary,6218104856,73,decided,exists,,
 Jen Reyes,employee,entity,DL SG,5063,Customer Support - Salary,,0,decided,live-only,,
 Jenalyn Fan,employee,entity,DL SG,5063,Customer Support - Salary,,0,decided,new,,from live-rule identity walk (Gaurav 2026-07-23)
 Jennifer Esguerra Gajudo,employee,entity,DL SG,5063,Customer Support - Salary,,0,decided,live-only,,
@@ -423,7 +422,7 @@ Lai Mei T,employee,entity,DL SG,6000,Salaries & Wages,Lai Mei Regina Teh,0,decid
 LEGAL FEES PIER,vendor,entity,DL SG,6501,Legal Fees,,3,approved,new,,
 LI ELECTRONICS,vendor,entity,DL SG,6013,Employee Claims - Office Supplies,,1,triaged,new,,
 Liang Long Ho,vendor,entity,DL SG,5060,Parking - RMS Fleet,,4,approved,new,,
-Liberty Wireless,vendor,entity,DL SG,6700,Technology - Infrastructure,Liberty Wireless Pte Ltd,7,triaged,new,,
+Liberty Wireless,vendor,entity,DL SG,5030,Cost of Device Subscriptions,Liberty Wireless Pte Ltd,7,decided,new,,
 Lightminds,vendor,entity,DL SG,6103,Marketing - Asset Creation,,7,approved,new,,
 Lim Jun Jie Jabez,vendor,entity,DL SG,5060,Parking - RMS Fleet,Jabez Jun Jie Lim,44,approved,exists,,
 Linkt,vendor,entity,DL AU,5020,Incidentals Payout - Tolls,Linkt Melbourne,47,triaged,exists,5020,
@@ -450,6 +449,7 @@ Muhammad Umar,employee,entity,DL SG,6000,Salaries & Wages,,0,decided,new,,from l
 Muhammad Uzair Tanveer,employee,entity,DL AU,6000,Salaries & Wages,,0,decided,live-only,,
 Mycar,vendor,entity,DL AU,5032,Incidentals Payout - Workshop,,5,triaged,exists,5032,
 Myrna Lynne Alcala,vendor,entity,DL SG,5063,Customer Support - Salary,,1,triaged,exists,,
+Mythri S,employee,entity,DL SG,6000,Salaries & Wages,mythri s,8,decided,new,,from mined-rule walk (Gaurav 2026-07-24)
 Naitik Padsala,employee,entity,DL SG,6000,Salaries & Wages,,0,decided,live-only,,
 Nashruk Mohammed Wasik Ataher,employee,entity,DL SG,6000,Salaries & Wages,,0,decided,live-only,,
 NCIS Pty Ltd,vendor,entity,DL AU,5032,Incidentals Payout - Workshop,NCIS,3,triaged,exists,5032,
@@ -457,8 +457,9 @@ ND PHOTOGRAPHY,vendor,entity,DL SG,6103,Marketing - Asset Creation,,20,approved,
 Netrust Pte Ltd,vendor,entity,DL SG,6701,Technology - Software Subscriptions,,0,decided,new,,from live-rule identity walk (Gaurav 2026-07-23)
 NEWS PTY LIMITED,vendor,entity,DL AU,6100,Marketing - Digital Advertising,,16,triaged,exists,,
 Nick Leijten,investor,entity,DL Ventures,3000,Share Capital,,2,decided,new,,
+Noraisa Domado,employee,entity,DL SG,5063,Customer Support - Salary,,6,decided,new,,from mined-rule walk (Gaurav 2026-07-24)
 NTUC,vendor,entity,DL SG,5035,Cost of Insurance - Trip Premium,INCOME INSURANCE,22,triaged,exists,5035,
-OCBC,vendor,entity,DL SG,6701,Technology - Software Subscriptions,CCY CONVERSION FEE | Cable charge,36,approved,new,,
+OCBC,vendor,entity,DL SG,6600,Bank Fees,CCY CONVERSION FEE | Cable charge,36,decided,new,,
 Officeworks,vendor,entity,DL AU,6310,Office Equipment,Officeworks 0313 FERNTREE GLY | Officeworks 0313 Fernt FERNTREE GULL,3,triaged,new,,
 Pankaj Patidar,employee,entity,DL SG,6000,Salaries & Wages,,0,decided,live-only,,
 Paramjeet Paramjeet,employee,entity,DL SG,6000,Salaries & Wages,,1,decided,exists,,
@@ -473,7 +474,7 @@ Poh Yang Shan,vendor,entity,DL SG,5001,Host Payouts - P2P RMS,,0,decided,new,,fr
 Pyiee Thin Nwe,employee,entity,DL SG,6000,Salaries & Wages,,0,decided,live-only,,
 QUANTUM INVENTIONS,vendor,entity,DL SG,6700,Technology - Infrastructure,,5,triaged,new,,
 RACQ,vendor,entity,DL AU,5033,Incidentals Payout - Towing,,3,decided,exists-resolved,5033,
-Rahul Moitra,vendor,entity,DL SG,6014,Employee Claims - Other,,5,triaged,exists,,
+Rahul Moitra,vendor,entity,DL SG,6000,Salaries & Wages,,5,decided,exists,,
 RAJIV GUPTA,investor,entity,DL Ventures,3000,Share Capital,,2,decided,new,,
 Ralph E. Seronga,vendor,entity,DL SG,5063,Customer Support - Salary,Ralph E. SEronga | Ralph Efrenson S. Eronga | Ralphs,9,decided,new,,
 Ralph Efrenson Eronga,employee,entity,DL SG,5063,Customer Support - Salary,,0,decided,live-only,,
@@ -485,15 +486,15 @@ Rheazel Martinez Adolfo,employee,entity,DL SG,5063,Customer Support - Salary,,0,
 Ridhi Karan,vendor,entity,DL SG,6500,Accounting & Bookkeeping Fees,Ridhi Karan SGD | ridhi karan and associates,13,approved,exists,6500,
 Riezel Basilio Villanueva,employee,entity,DL SG,5063,Customer Support - Salary,,0,decided,live-only,,
 Rimsha Khan,employee,entity,DL AU,5061,On-Ground Team - Salary,,0,decided,live-only,,
-Roobykon,vendor,entity,DL SG,1710,Technology Development,Roobykon SGD,5,decided,exists-resolved,1710,
+Roobykon,vendor,entity,DL SG,1710,Technology Development,Roobykon SGD | Roobykon Software OÜ,6,decided,exists-resolved,1710,
 Rose Ann Ferrer Naredo,employee,entity,DL SG,5063,Customer Support - Salary,,0,decided,live-only,,
 Rosemarie Timbol Basilio,employee,entity,DL SG,5063,Customer Support - Salary,,0,decided,live-only,,
 Roxanne Reyes,employee,entity,DL SG,5063,Customer Support - Salary,,0,decided,live-only,,
-Sabrina Lin Yan Xiu,vendor,entity,DL SG,5060,Parking - RMS Fleet,,5,approved,new,,
+Sabrina Lin Yan Xiu,vendor,entity,DL SG,5001,Host Payouts - P2P RMS,,5,decided,new,,
 Sagar Mahesh Prasad,employee,entity,DL SG,6000,Salaries & Wages,,0,decided,live-only,,
 Sam Chan,vendor,entity,DL SG,5001,Host Payouts - P2P RMS,,0,decided,new,,from live-rule identity walk (Gaurav 2026-07-23)
 Sandra C. Ramos,employee,entity,DL SG,5063,Customer Support - Salary,Sandra C.,0,decided,new,,from live-rule identity walk (Gaurav 2026-07-23)
-Sanjay Kumar,employee,entity,DL SG,6014,Employee Claims - Other,SANJAY KUMAR | Sanjay,4,decided,exists,,
+Sanjay Kumar,employee,entity,DL SG,6000,Salaries & Wages,SANJAY KUMAR | Sanjay,4,decided,exists,,
 Sapna Prakash Dabade,vendor,entity,DL SG,6103,Marketing - Asset Creation,,0,decided,new,,from live-rule identity walk (Gaurav 2026-07-23)
 Sarahh Letchumenan,employee,entity,DL SG,,,,0,live,deactivate-live,,GAURAV: remove -> deactivate in live at apply
 Sarala D O Letchumenan,employee,entity,DL SG,6000,Salaries & Wages,FAST PAYMENT SALA SARALA | LET SARAH,18,decided,new,,
@@ -537,7 +538,7 @@ Veda Advantage,vendor,entity,DL AU,6700,Technology - Infrastructure,,12,approved
 Venture Haven,vendor,entity,DL SG,6500,Accounting & Bookkeeping Fees,Venture Haven-1,12,decided,exists-resolved,6500,
 Vernika,employee,entity,DL SG,6000,Salaries & Wages,,6,approved,new,,
 Vicson H. Cuarteros,employee,entity,DL SG,5063,Customer Support - Salary,,0,decided,new,,from live-rule identity walk (Gaurav 2026-07-23)
-VIGHNESH R VIGHNESH,vendor,entity,DL SG,6103,Marketing - Asset Creation,,1,approved,new,,
+VIGHNESH R VIGHNESH,employee,entity,DL SG,6000,Salaries & Wages,,1,decided,new,,
 Vigneshsuran So Dhevan,employee,entity,DL SG,6000,Salaries & Wages,Sala Vigneshsuran,120,decided,exists,,
 Vishal Raj,employee,entity,DL SG,6000,Salaries & Wages,,0,decided,new,,from live-rule identity walk (Gaurav 2026-07-23)
 Wash and Go,vendor,entity,DL SG,5022,Incidentals Payout - Cleaning,WASHNGO,4,decided,exists-resolved,5032,
@@ -550,7 +551,7 @@ WorkCover Queensland,government,entity,DL AU,,,Workcover,2,decided,new,,
 WOTSO HOLDINGS,vendor,entity,DL AU,6300,Office Rent,IPPY*WOTSO HOLDINGS | Payrix*WOTSO HOLDINGS,2,triaged,exists,,
 Xyron Bunquin Manongsong,employee,entity,DL SG,5063,Customer Support - Salary,,0,decided,live-only,,
 Yash Mimani,employee,entity,DL SG,6000,Salaries & Wages,,0,decided,live-only,,
-YS Auto works,vendor,entity,DL SG,5021,Incidentals Payout - Damage (Host),601344831001,2,approved,new,,
+YS Auto works,vendor,entity,DL SG,5032,Incidentals Payout - Workshop,601344831001,2,decided,new,,
 Zaim,employee,entity,DL SG,5061,On-Ground Team - Salary,,4,approved,new,,
 Zilla M. Cenido,vendor,entity,DL SG,5063,Customer Support - Salary,,3,triaged,new,,
 Zilla Marie,employee,entity,DL SG,6000,Salaries & Wages,,0,decided,live-only,,

@@ -1,0 +1,245 @@
+id,name,fate
+1,Test rule,DEACTIVATE-redundant
+2,Internal Transfer: OCBC 3001 → OCBC 1001,KEEP-transfer
+3,Internal Transfer: Stripe → OCBC 3001,KEEP-transfer
+4,Internal Transfer: OCBC 3001 → Wise SGD,KEEP-transfer
+5,Drive Lah Australia Pty Ltd - Quickbooks,DEACTIVATE-redundant
+6,Drive Lah Pte Ltd - Contractor Salary 10,DEACTIVATE-redundant
+7,Drive Lah Pte Ltd - Contractor Salary 2,DEACTIVATE-redundant
+8,Drive Lah Pte Ltd - Contractor Salary 3,DEACTIVATE-redundant
+9,Drive Lah Pte Ltd - Contractor Salary 4,DEACTIVATE-redundant
+10,Drive Lah Pte Ltd - Contractor Salary 5,DEACTIVATE-redundant
+11,Drive Lah Pte Ltd - Contractor Salary Aus,DEACTIVATE-redundant
+12,Drive Lah Pte Ltd - Wise Corporate Salary 2,DEACTIVATE-redundant
+13,Drive Lah Pte Ltd - Wise Corporate Salary 3,DEACTIVATE-redundant
+14,Drive Lah Pte Ltd - Wise Corporate Salary 4,DEACTIVATE-redundant
+15,Drive Lah Pte Ltd - Wise Corporate Salary 5,DEACTIVATE-redundant
+16,Drive Lah Pte Ltd - Wise Corporate Salary 7,KEEP-pure-text-splitfix
+17,Drive Lah Pte Ltd - Wise Corporate Salary 8,KEEP-pure-text-splitfix
+18,Drive Lah Pte Ltd - Wise Corporate Salary 9,KEEP-pure-text-splitfix
+19,Drive Lah Pte Ltd - Wise Transfer fee,KEEP-pure-text-splitfix
+20,Drive Lah Australia Pty Ltd - Chatgpt,DEACTIVATE-redundant
+21,Drive Lah Pte Ltd - Wise HR Salary Payments - Paramjeet,DEACTIVATE-redundant
+22,Drive Lah Australia Pty Ltd - (Suggested) Tax Payments Netbank Bpay as,KEEP-party-no-default
+23,Drive Lah Australia Pty Ltd - (Suggested) Drive Lah Ventures Holding P,KEEP-pure-text
+24,Drive Lah Pte Ltd - Vendor - OpenAI,DEACTIVATE-redundant
+25,Drive Lah Australia Pty Ltd - (Suggested) Transfer Benjamin Gotto Smit,DEACTIVATE-superseded-by-arbitrated-default
+26,Drive Lah Pte Ltd - 1001 Incoming from 3001 Transfer,KEEP-transfer
+27,Drive Lah Pte Ltd - 1001 Outgoing to 3001 Transfer,KEEP-transfer
+28,Drive Lah Pte Ltd - 1001 Outgoing to Wise Transfer,KEEP-transfer
+29,Drive Lah Pte Ltd - 3001 Incoming from 1001 Transfer,KEEP-transfer
+30,Drive Lah Pte Ltd - 3001 Incoming from Stripe Transfer,KEEP-transfer
+31,Drive Lah Pte Ltd - 3001 Outgoing to 1001 Transfer,KEEP-transfer
+32,Drive Lah Pte Ltd - 3001 Outgoing to Wise Transfer,KEEP-transfer
+33,Drive Lah Pte Ltd - Wise Incoming from 1001 Transfer,KEEP-transfer-splitfix
+34,Drive Lah Pte Ltd - Wise Incoming from 3001 Transfer,KEEP-transfer-splitfix
+35,Drive Lah Pte Ltd - Stripe Outgoing to 3001 Transfer,KEEP-transfer
+36,Drive Lah Australia Pty Ltd - (Suggested) Sydney as Operating Expenses,DEACTIVATE-redundant
+37,Drive Lah Australia Pty Ltd - (Suggested) Starbucks as Meals and enter,DEACTIVATE-redundant
+38,Drive Lah Australia Pty Ltd - apple.com,KEEP-exception-strip-identity
+39,Drive Lah Australia Pty Ltd - Adjust,DEACTIVATE-redundant
+40,Drive Lah Pte Ltd - ABWIN RMS,DEACTIVATE-redundant
+41,Drive Lah Pte Ltd - Adobe,DEACTIVATE-redundant
+42,Drive Lah Pte Ltd - Alpine RMS,KEEP-pure-text
+43,Drive Lah Pte Ltd - Arena detailing,DEACTIVATE-redundant
+44,Drive Lah Pte Ltd - Atlassian,DEACTIVATE-redundant
+45,Drive Lah Pte Ltd - AWS,DEACTIVATE-redundant
+46,Drive Lah Pte Ltd - Birthdaybot,DEACTIVATE-redundant
+47,Drive Lah Pte Ltd - Bitly,DEACTIVATE-redundant
+48,Drive Lah Australia Pty Ltd - Aussie Broadband,DEACTIVATE-superseded-by-arbitrated-default
+49,Drive Lah Australia Pty Ltd - ATO,KEEP-pure-text
+50,Drive Lah Pte Ltd - Wise HR Salary Payments - Paramjeet Paramjeet,DEACTIVATE-redundant
+51,Drive Lah Pte Ltd - Wise HR Salary Payments - Yash Mimani,DEACTIVATE-redundant
+52,Drive Lah Pte Ltd - Wise HR Salary Payments - Thummanapally Tilak,DEACTIVATE-redundant
+53,Drive Lah Pte Ltd - Wise HR Salary Payments - Vigneshsuran So Dhevan,DEACTIVATE-redundant
+54,Drive Lah Pte Ltd - Wise HR Salary Payments - Padsala Naitik Babubhai,KEEP-pure-text-splitfix
+55,Drive Lah Pte Ltd - Wise HR Salary Payments - Rahul Moitra,DEACTIVATE-redundant
+56,Drive Lah Pte Ltd - Wise HR Salary Payments - Bhalani Nimesh Himmatbha,DEACTIVATE-redundant
+57,Drive Lah Pte Ltd - Wise HR Salary Payments - Pankaj M Patidar,KEEP-pure-text-splitfix
+58,Drive Lah Pte Ltd - Wise HR Salary Payments - Aakash Aakash,DEACTIVATE-redundant
+59,Drive Lah Pte Ltd - Wise HR Salary Payments - SANJAY KUMAR,DEACTIVATE-redundant
+60,Drive Lah Pte Ltd - Wise HR Salary Payments - Joel Michael Wecker,KEEP-pure-text-splitfix
+61,Drive Lah Pte Ltd - Wise HR Salary Payments - Geraldine Austin,DEACTIVATE-redundant
+62,Drive Lah Pte Ltd - Wise HR Salary Payments - Muhammad Uzair Tanveer,DEACTIVATE-redundant
+63,Drive Lah Pte Ltd - Wise HR Salary Payments - Jacob Hyde,DEACTIVATE-redundant
+64,Drive Lah Pte Ltd - Wise HR Salary Payments - Farhan Chowdhury,DEACTIVATE-redundant
+65,Drive Lah Pte Ltd - Wise HR Salary Payments - Aman Yadav,DEACTIVATE-redundant
+66,Drive Lah Pte Ltd - Tech Vendor - Paddle,KEEP-pure-text
+67,Drive Lah Pte Ltd - Tech Vendor - SafetyCulture,DEACTIVATE-redundant
+68,Drive Lah Pte Ltd - Tech Vendor - OpenAI,DEACTIVATE-redundant
+69,Drive Lah Pte Ltd - Vendor - Paddle,KEEP-pure-text
+70,Drive Lah Ventures Holding Pte Ltd - DBS USD Outgoing to DBS SGD Trans,KEEP-transfer
+71,Drive Lah Ventures Holding Pte Ltd - DBS SGD Incoming from DBS USD Tra,KEEP-transfer
+72,Drive Lah Pte Ltd - Wise Marekting new customers Auto,DEACTIVATE-redundant
+73,Drive Lah Pte Ltd - Accounting expense,DEACTIVATE-redundant
+74,Drive Lah Pte Ltd - Aircall,DEACTIVATE-redundant
+75,Drive Lah Pte Ltd - Apex debt recovery,KEEP-pure-text
+76,Drive Lah Pte Ltd - Carousell,DEACTIVATE-redundant
+77,Drive Lah Pte Ltd - Cash rebate,KEEP-pure-text
+78,Drive Lah Pte Ltd - Cheng Auto Body works,DEACTIVATE-redundant
+79,Drive Lah Pte Ltd - City Auto,DEACTIVATE-superseded-by-arbitrated-default
+80,Drive Lah Pte Ltd - CPF,DEACTIVATE-superseded-by-arbitrated-default
+81,Drive Lah Pte Ltd - CYCLE & CARRIA RMS,DEACTIVATE-redundant
+82,Drive Lah Pte Ltd - Digital Matter,DEACTIVATE-redundant
+83,Drive Lah Pte Ltd - Elite car,DEACTIVATE-redundant
+84,Drive Lah Pte Ltd - Focussed claims,DEACTIVATE-redundant
+85,Drive Lah Pte Ltd - Google suite,KEEP-exception-strip-identity
+86,Drive Lah Pte Ltd - GPS Malaysia,DEACTIVATE-redundant
+87,Drive Lah Pte Ltd - Gupshup,DEACTIVATE-redundant
+88,Drive Lah Pte Ltd - Wise Legal Auto,DEACTIVATE-redundant
+89,Drive Lah Pte Ltd - Vendor - Retool,DEACTIVATE-redundant
+90,Drive Lah Pte Ltd - Other payouts by customers,KEEP-pure-text
+91,Drive Lah Pte Ltd - Ana salary,DEACTIVATE-redundant
+92,Drive Lah Pte Ltd - Annabella,DEACTIVATE-redundant
+93,Drive Lah Pte Ltd - Bank charges,DEACTIVATE-redundant
+94,Drive Lah Pte Ltd - Calendly,DEACTIVATE-redundant
+95,Drive Lah Pte Ltd - Canva,DEACTIVATE-redundant
+96,Drive Lah Pte Ltd - Caretaker,KEEP-pure-text
+97,Drive Lah Pte Ltd - Caretaker1,DEACTIVATE-redundant
+98,Drive Lah Pte Ltd - Caretaker2,KEEP-pure-text
+99,Drive Lah Pte Ltd - caretaker3,KEEP-pure-text
+100,Drive Lah Pte Ltd - CDG RMS,DEACTIVATE-redundant
+101,Drive Lah Pte Ltd - CHENG CHUAN,DEACTIVATE-redundant
+102,Drive Lah Pte Ltd - Circle CI,DEACTIVATE-redundant
+103,Drive Lah Pte Ltd - Contractor,DEACTIVATE-redundant
+104,Drive Lah Pte Ltd - AWS Auto-Rule,DEACTIVATE-redundant
+105,Drive Lah Pte Ltd - Docsend,DEACTIVATE-redundant
+106,Drive Lah Pte Ltd - Docusign,DEACTIVATE-redundant
+107,Drive Lah Pte Ltd - Dropbox,DEACTIVATE-redundant
+108,Drive Lah Pte Ltd - Eurokars RMS,DEACTIVATE-redundant
+109,Drive Lah Pte Ltd - Facebook as Operating Expenses-Marketing - Adverti,DEACTIVATE-redundant
+110,Drive Lah Pte Ltd - Finger Print,DEACTIVATE-redundant
+111,Drive Lah Pte Ltd - Fleet Dr,KEEP-pure-text
+112,Drive Lah Pte Ltd - Github,DEACTIVATE-redundant
+113,Drive Lah Pte Ltd - GoDaddy.com as Operating Expenses-Technology Syste,DEACTIVATE-redundant
+114,Drive Lah Pte Ltd - GOOGLE ADS,DEACTIVATE-superseded-by-arbitrated-default
+115,Drive Lah Pte Ltd - Google cloud,DEACTIVATE-redundant
+116,Drive Lah Pte Ltd - Google play as Tech operations,KEEP-exception-strip-identity
+117,Drive Lah Pte Ltd - Google Storage as Tech operations,KEEP-exception-strip-identity
+118,Drive Lah Pte Ltd - Hellosign,DEACTIVATE-redundant
+119,Drive Lah Pte Ltd - HEROKU,DEACTIVATE-redundant
+120,Drive Lah Pte Ltd - Hotjar,DEACTIVATE-redundant
+121,Drive Lah Pte Ltd - Hubspot,DEACTIVATE-redundant
+122,Drive Lah Pte Ltd - Human Resource,DEACTIVATE-redundant
+123,Drive Lah Pte Ltd - Human resource1,DEACTIVATE-redundant
+124,Drive Lah Pte Ltd - IBG GIRO,KEEP-pure-text
+125,Drive Lah Pte Ltd - Illion,KEEP-pure-text
+126,Drive Lah Pte Ltd - Income insurance,DEACTIVATE-redundant
+127,Drive Lah Pte Ltd - Intercom,DEACTIVATE-redundant
+128,Drive Lah Pte Ltd - Intuit as Operating Expenses-Corporate - Bookkeepi,DEACTIVATE-redundant
+129,Drive Lah Pte Ltd - Jared,DEACTIVATE-redundant
+130,Drive Lah Pte Ltd - Jay Balan,DEACTIVATE-redundant
+131,Drive Lah Pte Ltd - Jay Incentive,DEACTIVATE-redundant
+132,Drive Lah Pte Ltd - Jay Salary,DEACTIVATE-redundant
+133,Drive Lah Pte Ltd - Journey Horizon,DEACTIVATE-redundant
+134,Drive Lah Pte Ltd - Justco,DEACTIVATE-redundant
+135,Drive Lah Pte Ltd - Komoco RMS,DEACTIVATE-identity-only
+136,Drive Lah Pte Ltd - KORE wireless,DEACTIVATE-redundant
+137,Drive Lah Pte Ltd - Legal Fees,DEACTIVATE-redundant
+138,Drive Lah Pte Ltd - LIBERTY WIRELE,KEEP-pure-text
+139,Drive Lah Pte Ltd - Liberty wireless,DEACTIVATE-redundant
+140,Drive Lah Pte Ltd - Loom,DEACTIVATE-redundant
+141,Drive Lah Pte Ltd - Lucidchart,DEACTIVATE-redundant
+142,Drive Lah Pte Ltd - Metabase,KEEP-pure-text
+143,Drive Lah Pte Ltd - Microsoft,DEACTIVATE-redundant
+144,Drive Lah Pte Ltd - Midjourney,DEACTIVATE-redundant
+145,Drive Lah Pte Ltd - Miro,DEACTIVATE-redundant
+146,Drive Lah Pte Ltd - Moengage,DEACTIVATE-redundant
+147,Drive Lah Pte Ltd - Monday,DEACTIVATE-redundant
+148,Drive Lah Pte Ltd - Monday.com,DEACTIVATE-redundant
+149,Drive Lah Pte Ltd - MURF.AI,DEACTIVATE-redundant
+150,Drive Lah Pte Ltd - Notion,DEACTIVATE-redundant
+151,Drive Lah Pte Ltd - Notionforms,DEACTIVATE-redundant
+152,Drive Lah Pte Ltd - NTUC,DEACTIVATE-redundant
+153,Drive Lah Pte Ltd - Octopods,DEACTIVATE-redundant
+154,Drive Lah Pte Ltd - Contractor salary 1,DEACTIVATE-redundant
+155,Drive Lah Pte Ltd - Money received from Australia,KEEP-pure-text
+156,Drive Lah Pte Ltd - ONELINK,DEACTIVATE-redundant
+157,Drive Lah Pte Ltd - Onfido,DEACTIVATE-redundant
+158,Drive Lah Pte Ltd - OVERFLOW,DEACTIVATE-redundant
+159,Drive Lah Pte Ltd - Papertrail,DEACTIVATE-redundant
+160,Drive Lah Pte Ltd - Parking.sg,DEACTIVATE-redundant
+161,Drive Lah Pte Ltd - PH Healthcare,DEACTIVATE-superseded-by-arbitrated-default
+162,Drive Lah Pte Ltd - PHOTO,KEEP-pure-text
+163,Drive Lah Pte Ltd - Photograpger,DEACTIVATE-redundant
+164,Drive Lah Pte Ltd - Photographer,KEEP-pure-text-splitfix
+165,Drive Lah Pte Ltd - Photography,DEACTIVATE-redundant
+166,Drive Lah Pte Ltd - Photography1,DEACTIVATE-redundant
+167,Drive Lah Pte Ltd - Photography2,DEACTIVATE-redundant
+168,Drive Lah Pte Ltd - Photography3,DEACTIVATE-redundant
+169,Drive Lah Pte Ltd - Randolf,KEEP-pure-text
+170,Drive Lah Pte Ltd - Recruitee,DEACTIVATE-redundant
+171,Drive Lah Pte Ltd - RMS,KEEP-pure-text
+172,Drive Lah Pte Ltd - RMS1,DEACTIVATE-redundant
+173,Drive Lah Pte Ltd - RMS2,DEACTIVATE-redundant
+174,Drive Lah Pte Ltd - RMS3,DEACTIVATE-redundant
+175,Drive Lah Pte Ltd - RMS4,DEACTIVATE-redundant
+176,Drive Lah Pte Ltd - RMS LOK NGEE,KEEP-party-no-default
+177,Drive Lah Pte Ltd - Sandy,DEACTIVATE-redundant
+178,Drive Lah Pte Ltd - Sarala salary,DEACTIVATE-redundant
+179,Drive Lah Pte Ltd - Semrush,KEEP-pure-text
+180,Drive Lah Pte Ltd - Sentry,DEACTIVATE-redundant
+181,Drive Lah Pte Ltd - SEON,DEACTIVATE-redundant
+182,Drive Lah Pte Ltd - SEON 2,DEACTIVATE-redundant
+183,Drive Lah Pte Ltd - Sharetribe as Operating Expenses-Technology System,DEACTIVATE-redundant
+184,Drive Lah Pte Ltd - Sharim,DEACTIVATE-redundant
+185,Drive Lah Pte Ltd - Slack,DEACTIVATE-redundant
+186,Drive Lah Pte Ltd - (Suggested) Roobykon Software O√ú as Technology Sy,DEACTIVATE-redundant
+187,Drive Lah Pte Ltd - (Suggested) Sam Chan as Due from Fleet,DEACTIVATE-redundant
+188,Drive Lah Pte Ltd - (Suggested) Timothys as Due from Fleet,DEACTIVATE-redundant
+189,Drive Lah Pte Ltd - (Suggested) vighnesh r vighnesh as Operating Expen,DEACTIVATE-redundant
+190,Drive Lah Pte Ltd - Surveymonkey,DEACTIVATE-redundant
+191,Drive Lah Pte Ltd - TECHCRUNCH,KEEP-pure-text
+192,Drive Lah Pte Ltd - Timetastic,DEACTIVATE-redundant
+193,Drive Lah Pte Ltd - Tokio,DEACTIVATE-redundant
+194,Drive Lah Pte Ltd - Tokio 2,DEACTIVATE-redundant
+195,Drive Lah Pte Ltd - Towing,KEEP-pure-text
+196,Drive Lah Pte Ltd - Tow Lah,DEACTIVATE-redundant
+197,Drive Lah Pte Ltd - Trixie,DEACTIVATE-redundant
+198,Drive Lah Pte Ltd - Trust Pilot,DEACTIVATE-redundant
+199,Drive Lah Pte Ltd - Twilio,DEACTIVATE-redundant
+200,Drive Lah Pte Ltd - type form,DEACTIVATE-redundant
+201,Drive Lah Pte Ltd - Uptime,DEACTIVATE-redundant
+202,Drive Lah Pte Ltd - Ventures payments,KEEP-transfer-splitfix
+203,Drive Lah Pte Ltd - Voucherify,DEACTIVATE-redundant
+204,Drive Lah Pte Ltd - Washngo,DEACTIVATE-redundant
+205,Drive Lah Pte Ltd - Whale,KEEP-pure-text
+206,Drive Lah Pte Ltd - Wise transfer,KEEP-transfer
+207,Drive Lah Pte Ltd - Xero,DEACTIVATE-redundant
+208,Drive Lah Pte Ltd - YS Auto works,DEACTIVATE-redundant
+209,Drive Lah Pte Ltd - Zapier,DEACTIVATE-redundant
+210,Drive Lah Pte Ltd - Wise Corporate Salary,DEACTIVATE-redundant
+211,Drive Lah Pte Ltd - Zendesk,DEACTIVATE-redundant
+212,Drive Lah Pte Ltd - Zoom,DEACTIVATE-redundant
+213,Drive Lah Pte Ltd - Wise Marketing asset creation Auto,DEACTIVATE-redundant
+214,Drive Lah Pte Ltd - Fleet earnings,KEEP-transfer
+215,Drive Lah Pte Ltd - Vendor - Recruitee,DEACTIVATE-redundant
+216,Drive Lah Pte Ltd - Vendor - SafetyCulture,DEACTIVATE-redundant
+217,Drive Lah Pte Ltd - Wise Director salary Auto,DEACTIVATE-redundant
+218,Drive Lah Pte Ltd - Wise Human resource salray expense Auto,DEACTIVATE-redundant
+219,Drive Lah Pte Ltd - Wise Insurance Auto,DEACTIVATE-redundant
+220,Drive Lah Australia Pty Ltd - Digital Matter,DEACTIVATE-redundant
+221,Drive Lah Pte Ltd - Wise Operating expense - towing Auto,DEACTIVATE-redundant
+222,Drive Lah Pte Ltd - Wise Bookkeeping Auto,DEACTIVATE-redundant
+223,Drive Lah Australia Pty Ltd - (Suggested) 2Checkout as Operating Expen,DEACTIVATE-redundant
+224,Drive Lah Australia Pty Ltd - Wise Australia,KEEP-transfer
+225,Drive Lah Australia Pty Ltd - (Suggested) Facebook as Due from Singapo,DEACTIVATE-redundant
+226,Drive Lah Australia Pty Ltd - Insuret,DEACTIVATE-redundant
+227,Drive Lah Australia Pty Ltd - Linkt as Operating Expenses,DEACTIVATE-redundant
+228,Drive Lah Australia Pty Ltd - Bank fees international,KEEP-pure-text
+229,Drive Lah Australia Pty Ltd - Didi,DEACTIVATE-redundant
+230,Drive Lah Australia Pty Ltd - International transaction fee,KEEP-pure-text
+231,Drive Lah Australia Pty Ltd - Transport NSW,DEACTIVATE-redundant
+232,Drive Lah Australia Pty Ltd - Superblog,DEACTIVATE-redundant
+233,Drive Lah Australia Pty Ltd - Stonly,DEACTIVATE-redundant
+234,Drive Lah Australia Pty Ltd - Techcrunch,KEEP-pure-text
+235,Drive Lah Ventures Holding Pte Ltd - OCBC transfer,KEEP-pure-text
+236,Drive Lah Ventures Holding Pte Ltd - Australia transfer,KEEP-pure-text
+237,Drive Lah Pte Ltd - Wise Tech system cost Auto,DEACTIVATE-redundant
+238,Drive Lah Ventures Holding Pte Ltd - Transfer Agent Charges,KEEP-transfer-splitfix
+239,Drive Lah Ventures Holding Pte Ltd - OCBC Bank Charges,KEEP-pure-text-splitfix
+240,Drive Lah Ventures Holding Pte Ltd - Australia Bank Charges,KEEP-pure-text-splitfix
+241,Drive Lah Pte Ltd - Wise Operating expense - damage Auto,DEACTIVATE-redundant
+242,Drive Lah Australia Pty Ltd - Deposit transfer from stripe to bank,KEEP-transfer
+243,Drive Lah Pte Ltd - Wise Due from fleet Auto,DEACTIVATE-redundant
+244,Drive Lah Pte Ltd - Wise Contractor salary Auto,DEACTIVATE-redundant
