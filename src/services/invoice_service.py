@@ -58,8 +58,19 @@ _IC_PAYABLE_CODES: dict[tuple[str, str], str] = {
 
 
 def _entity_short(name: str) -> str:
-    """Extract the short entity identifier from a full name: 'DL SG' → 'SG'."""
-    return name.strip().rsplit(" ", 1)[-1]
+    """Resolve an entity name to its IC-map key: SG / AU / Ventures.
+
+    Handles both seed-style names ('DL SG') and the live DB's full legal names
+    ('Drive lah Ventures Holding Pte Ltd', 'Drive lah Australia Pty Ltd') —
+    a plain last-word split returns 'Ltd' for every live entity, so no IC
+    pair would ever match.
+    """
+    n = name.strip().lower()
+    if "ventures" in n:
+        return "Ventures"
+    if "australia" in n or n.endswith(" au"):
+        return "AU"
+    return "SG"
 
 
 def _invoice_dict(invoice: "FinanceInvoice", db: Optional[Session] = None) -> dict:

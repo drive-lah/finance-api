@@ -1982,19 +1982,27 @@ Rules:
 - For intercompany or payroll transactions that don't clearly fit any account, use confidence 0.50
 - Return ONLY the JSON array, no other text"""
 
-                message = client.messages.create(
-                    model="claude-haiku-4-5-20251001",
-                    max_tokens=4096,
-                    messages=[{"role": "user", "content": prompt}],
-                )
-                raw = cast("TextBlock", message.content[0]).text.strip()
-                if raw.startswith("```"):
-                    lines = raw.split("\n")
-                    raw = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
-
-                suggestions = json_lib.loads(raw)
-                if not isinstance(suggestions, list):
-                    raise ValueError("Expected JSON array from AI classification")
+                # One bad chunk must not kill the whole AI phase — parse each
+                # chunk independently and carry on.
+                try:
+                    message = client.messages.create(
+                        model="claude-haiku-4-5-20251001",
+                        max_tokens=4096,
+                        messages=[{"role": "user", "content": prompt}],
+                    )
+                    raw = cast("TextBlock", message.content[0]).text.strip()
+                    if raw.startswith("```"):
+                        lines = raw.split("\n")
+                        raw = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+                    suggestions = json_lib.loads(raw)
+                    if not isinstance(suggestions, list):
+                        raise ValueError("Expected JSON array from AI classification")
+                except Exception as chunk_err:
+                    logger.error(
+                        f"AI classification chunk {start}-{start + len(chunk)} failed: "
+                        f"{chunk_err}; raw head: {raw[:200] if 'raw' in locals() else '?'}",
+                        exc_info=True)
+                    continue
                 for s in suggestions:
                     if "id" in s:
                         suggestion_map[s["id"]] = s

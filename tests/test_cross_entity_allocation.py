@@ -121,12 +121,17 @@ def _make_allocation_rule(db, bank_account_sg, entity_au, expense_code="5100", p
 # ── Unit tests for IC code lookup ──────────────────────────────────────────
 
 class TestICCodeLookup:
-    def test_entity_short_extracts_last_word(self):
+    def test_entity_short_resolves_seed_and_legal_names(self):
         from src.services.invoice_service import _entity_short
+        # seed-style names
         assert _entity_short("DL SG") == "SG"
         assert _entity_short("DL AU") == "AU"
         assert _entity_short("DL Ventures") == "Ventures"
-        assert _entity_short("SingleWord") == "SingleWord"
+        # live DB legal names (last-word split used to return 'Ltd' for all of
+        # these, so no IC pair ever matched on live data)
+        assert _entity_short("Drive lah Singapore Pte Ltd.") == "SG"
+        assert _entity_short("Drive lah Australia Pty Ltd") == "AU"
+        assert _entity_short("Drive lah Ventures Holding Pte Ltd") == "Ventures"
 
     def test_ic_codes_defined_for_sg_au(self):
         from src.services.invoice_service import _IC_RECEIVABLE_CODES, _IC_PAYABLE_CODES
