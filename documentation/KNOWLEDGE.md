@@ -50,7 +50,7 @@ Feeds: (1) the RAG "company facts" input (IDEAL_STATE §3 — the AI never runs 
 - **CP-13** Roobykon is the Sharetribe development agency; its platform work is CAPITALIZED → 1710. Eventila Technologies likewise. *(Gaurav, 2026-07-23)*
 
 ### Vehicle & ops vendors
-- **CP-14** Digital Matter, Humax, SentriLock make the in-car GPS/telematics/lockbox devices; purchases are EXPENSED → 5030, not capitalized. The Fleet Dr Pty Ltd does device installations → 5064. *(Gaurav, 2026-07-23)*
+- **CP-14** Digital Matter, Humax, SentriLock make the in-car GPS/telematics/lockbox devices; their RECURRING billing → 5030 (see POL-4 for the purchase-vs-subscription split). The Fleet Dr Pty Ltd does device installations → 5064. *(Gaurav, 2026-07-23; refined 2026-07-24)*
 - **CP-15** Elite Car Ventures (= "Elite car") is a workshop → 5032. Cheng Chuan is the car-repair vendor Cheng Chuan Motor Services → 5032. *(Gaurav, 2026-07-23)*
 - **CP-16** ~~Detailing vendors (Car mobile detailing, Arena Detailing) are workshop-class → 5032~~ Car mobile detailing → 5032 Workshop; **Arena Detailing → 6103 Marketing - Asset Creation** (corrected — they did marketing/photography work); pure washes (Wash and Go) → 5022. *(Gaurav, 2026-07-23)*
 - **CP-17** Towlah ("Tow lah", "TOWLAH SG RECOVERY") is the SG towing vendor → 5033. RACQ is roadside assistance → 5033. AU has ~20 distinct towing companies from the claims workflow — all separate parties. *(2026-07-23)*
@@ -111,6 +111,8 @@ Feeds: (1) the RAG "company facts" input (IDEAL_STATE §3 — the AI never runs 
 - **POL-20** The AP/accrual leg exists only where invoice data exists (≈Jul-2025 onward); earlier periods book expense-on-payment — the accrual+settlement pair nets to the same P&L. *(Gaurav, 2026-07-24)*
 - **POL-21** QuickBooks' trial balance is a CROSS-CHECK REFERENCE, not the source of truth — QB carries known errors (mis-payees, generic buckets, wrong accounts) and our arbitrated treatments deliberately diverge (Fleet elimination, RMS, Arena, device expensing…). Diffs are adjudicated case-by-case; the finalised finance-api statements become the new truth once Gaurav signs off. *(Gaurav, 2026-07-24)*
 - **POL-15** A counterparty seed loads by UPSERT (normalized name + aliases); never blind-insert against a live directory. *(2026-07-23)*
+
+- **FLOW-10** Gaurav reports a **~2.7M device PURCHASE in September 2024** that must be capitalized (1510) and depreciated. NOT yet located in the mined bank lines — the only ≈2.7M line found is Ventures' Oct-2023 SGD 2,750,210 inflow (USD 2,000,000 from ComfortDelGro — the CDG loan, unrelated). Locate at replay (may be AP/journal-side, a different month, or inside the missing-statement window) and capitalize. *(Gaurav, 2026-07-24)*
 
 ## 5. Data quirks & traps (DQ)
 
