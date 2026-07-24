@@ -17,7 +17,9 @@
 
 | Step | ID | What | Owner |
 |------|----|------|-------|
-| 0 | A-0 | **Soft check**: sandbox run of the engine on real sample txns (local DB seeded from the live-table backups + a statement on hand) — observe route coverage, NO live writes | me — **NEXT** |
+| 0 | A-0 | ✅ **DONE 2026-07-25** — sandbox soft check (live tables copied read-only → sqlite; full-year 2023 DBS/Ventures statements; AI off). **140 txns imported clean · 11 auto-categorized (8%) · 0 counterparty-enriched · 129 Pending.** Success metric locked (Gaurav): **% auto-categorized per run**. Findings: **(1) OCBC PDF adapter parses 0 rows silently** (uppercase-month bug + stub descriptions) — every SG statement on hand is PDF, so this BLOCKS A-4; **(2) CBA adapter also 0 rows on real PDF**; (3) DBS adapter works (140/140, real text, correct signs); (4) **zero tests exist for any adapter**; (5) DBS statement text carries no payee names (refs only) → Ventures enrichment can't come from bank text (matches DQ; needs QB cross-ref at replay / AI+review). Tool: `.claude/skills/CorpusMining/Tools/SandboxRun.py` | closed |
+| 0b | A-0b | Re-run soft check with RAG-AI ON (grounded prompt, review-gated) → measure the true auto-categorization % incl. AI | me, cheap |
+| 0c | A-12 | **Adapter hardening (BLOCKS step 8/A-4):** fix OCBC PDF (month case + real descriptions + balance-delta signs) · fix CBA PDF · add adapter tests with real-statement fixtures for all three | me |
 | 1 | A-7 | Build P&L + Balance Sheet · consolidation (IC elimination + FX→USD) — the long pole | me |
 | 2 | A-9 | Hard period close/lock (Q3): closed period = no JE create/edit/void; corrections = adjusting JE | me |
 | 3 | A-10 | Bank-statement balance tie-out: ledger cash == statement closing balance, per account per month (Q8 layer 3) | me |
@@ -110,7 +112,7 @@ Raw data lives in `documentation/wip/qb_ledgers/` (QuickBooks GL) and `documenta
 | Drive lah Ventures Holding (SG) | 2019 → 2026 | all-time |
 | Drive lah Australia (AU) | 2022 → 2025 | all-time CSV; **+ Drive mate fleet folded in** |
 
-**Bank statements — partial; all four formats parse with existing adapters** (`ocbc`, `cba`, `dbs` — DBS PDF routes SGD+USD per-currency from one file):
+**Bank statements — partial. ⚠️ Adapter reality (verified A-0, 2026-07-25): only `dbs` parses the real PDFs; `ocbc` and `cba` PDF paths yield 0 rows silently (fix = A-12).** All statements on hand are PDFs:
 
 | Account | Entity | Have | ❌ Missing (user to supply) |
 |---------|--------|------|------------------------------|
