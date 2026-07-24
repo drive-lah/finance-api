@@ -155,6 +155,7 @@ Code,Name,Category,Sub-Category,Account Type,Normal Balance,Description
 6600,Bank Fees,Operating Expenses,Banking,Expense,Debit,"Bank account maintenance fees, transaction fees, wire transfer charges, and other banking service costs."
 6700,Technology - Infrastructure,Operating Expenses,Technology,Expense,Debit,"Cloud hosting costs (AWS, GCP, etc.), server infrastructure, CDN, database hosting, and DevOps tooling."
 6701,Technology - Software Subscriptions,Operating Expenses,Technology,Expense,Debit,"SaaS subscriptions for business tools (e.g. Slack, Jira, GitHub, analytics platforms, CRM). Monthly or annual licence fees."
+6702,Technology - Platform Testing,Operating Expenses,Technology,Expense,Debit,"Test charges on our own platforms (Drive lah / Drive mate test bookings on company cards). Own trading name is never a counterparty (ENT-3/ENT-5)."
 ,,,,,,
 ,DEPRECIATION & AMORTISATION,,,,,,
 ,,,,,,
