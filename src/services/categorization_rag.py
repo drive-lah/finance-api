@@ -22,7 +22,9 @@ from __future__ import annotations
 import csv
 import hashlib
 import math
+import os
 import re
+import threading
 from collections import Counter
 from dataclasses import dataclass
 from typing import Optional, Protocol, runtime_checkable
@@ -68,10 +70,11 @@ class HashingEmbedder:
 @dataclass(frozen=True)
 class CorpusEntry:
     description: str
-    account: str          # the category — the GL 'Split' / contra account
+    account: str          # the category — COA code (v2 corpus) or GL 'Split' label (v1)
     amount: float = 0.0
     txn_type: str = ""
     source: str = "quickbooks_gl"
+    account_name: str = ""
 
 
 # GL transaction types that represent real bank lines (vs aggregate journal entries)
@@ -116,6 +119,118 @@ def build_corpus_from_gl_csv(path: str) -> list[CorpusEntry]:
         seen.add(key)
         out.append(CorpusEntry(description=desc, account=split, amount=amt, txn_type=ttype))
     return out
+
+
+def build_corpus_from_v2_csv(path: str) -> list[CorpusEntry]:
+    """Load corpus v2 (documentation/wip/reconciliation/corpus_v2/corpus_v2.csv).
+
+    v2 is the cleaned, bridge-relabelled corpus: party/rule-covered lines removed,
+    labels are COA v2 CODES — the exact output vocabulary the classifier must use.
+    Columns: entity,date,description,qb_label,coa_code,coa_name,amount,source
+    """
+    out: list[CorpusEntry] = []
+    with open(path, encoding="utf-8") as fh:
+        for r in csv.DictReader(fh):
+            desc, code = (r.get("description") or "").strip(), (r.get("coa_code") or "").strip()
+            if not desc or not code:
+                continue
+            try:
+                amt = float(r.get("amount") or 0.0)
+            except ValueError:
+                amt = 0.0
+            out.append(CorpusEntry(
+                description=desc, account=code, amount=amt,
+                source=r.get("source") or "quickbooks_gl_v2",
+                account_name=(r.get("coa_name") or "").strip(),
+            ))
+    return out
+
+
+_FACT_LINE = re.compile(r"^- \*\*(?P<id>[A-Z]+-\d+)\*\*\s*(?P<text>.+)$")
+_PROVENANCE_TAIL = re.compile(r"\s*\*\([^)]*\)\*\s*$")
+
+
+def load_company_facts(
+    path: str,
+    sections: tuple[str, ...] = ("ENT", "FLOW", "POL", "DQ"),
+    max_chars: int = 6000,
+) -> list[str]:
+    """Extract numbered business facts from documentation/KNOWLEDGE.md.
+
+    Defaults to ENT/FLOW/POL/DQ — CP identity facts are the counterparty table's
+    job (POL-12), not the prompt's. Struck-through (superseded) facts are skipped;
+    the `*(source, date)*` provenance tail is stripped to save tokens.
+    """
+    facts: list[str] = []
+    used = 0
+    with open(path, encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if "~~" in line:
+                continue
+            m = _FACT_LINE.match(line)
+            if not m:
+                continue
+            fact_id = m.group("id")
+            if fact_id.split("-")[0] not in sections:
+                continue
+            text = _PROVENANCE_TAIL.sub("", m.group("text")).strip()
+            entry = f"{fact_id}: {text}"
+            if used + len(entry) > max_chars:
+                break
+            facts.append(entry)
+            used += len(entry)
+    return facts
+
+
+# ---------------------------------------------------------------------------
+# Default (lazy, module-cached) retriever + facts for the live engine.
+# Paths overridable via env; missing files degrade to None/[] so the AI
+# fallback simply runs without grounding (the pre-RAG behaviour).
+# ---------------------------------------------------------------------------
+
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+DEFAULT_CORPUS_PATH = os.path.join(
+    _REPO_ROOT, "documentation", "wip", "reconciliation", "corpus_v2", "corpus_v2.csv")
+DEFAULT_KNOWLEDGE_PATH = os.path.join(_REPO_ROOT, "documentation", "KNOWLEDGE.md")
+
+_rag_lock = threading.Lock()
+_default_retriever: Optional["CategorizationRetriever"] = None
+_default_retriever_loaded = False
+_company_facts: Optional[list[str]] = None
+
+
+def reset_rag_cache() -> None:
+    """Test helper: force the next getter call to re-read paths from disk/env."""
+    global _default_retriever, _default_retriever_loaded, _company_facts
+    with _rag_lock:
+        _default_retriever = None
+        _default_retriever_loaded = False
+        _company_facts = None
+
+
+def get_default_retriever() -> Optional["CategorizationRetriever"]:
+    global _default_retriever, _default_retriever_loaded
+    if not _default_retriever_loaded:
+        with _rag_lock:
+            if not _default_retriever_loaded:
+                path = os.environ.get("RAG_CORPUS_PATH", DEFAULT_CORPUS_PATH)
+                if os.path.exists(path):
+                    corpus = build_corpus_from_v2_csv(path)
+                    if corpus:
+                        _default_retriever = CategorizationRetriever(corpus)
+                _default_retriever_loaded = True
+    return _default_retriever
+
+
+def get_company_facts() -> list[str]:
+    global _company_facts
+    if _company_facts is None:
+        with _rag_lock:
+            if _company_facts is None:
+                path = os.environ.get("RAG_KNOWLEDGE_PATH", DEFAULT_KNOWLEDGE_PATH)
+                _company_facts = load_company_facts(path) if os.path.exists(path) else []
+    return list(_company_facts)
 
 
 def _cosine(a: list[float], b: list[float]) -> float:

@@ -5,7 +5,7 @@
 **Last updated:** 2026-07-24
 **Overall:** Multi-entity (SG + AU) double-entry accounting platform. The **Capture → Classify → Record** core is strong and green; the **last mile** — financial reports (P&L / Balance Sheet / Business-Line Margin), period close, consolidation — is the thin, mostly-unbuilt part. We're ~75% an ingestion engine, ~25% an accounting system. **Active workstream:** the **6-year historical reconciliation** — Stage-1 DECISION-COMPLETE for counterparties (S-2) and rules (S-3); execution blocked on the target-DB call (S-5); corpus persistence (S-4) and RAG wiring remain; then Stage-2 replay.
 
-**Verified ground truth (2026-07-23):** `pytest tests/ --ignore=tests/stripe_sync` = **587 pass / 0 fail**, `mypy src/` = **23 errors / 9 files** (pre-existing baseline), verified 2026-07-24 after the POL-12 engine change. **Committed locally through 535e295, 2026-07-24** (branch `feature/us-018-mypy`, ahead of origin, unpushed). Canonical docs: STATUS (state) · IDEAL_STATE (vision) · KNOWLEDGE (business facts).
+**Verified ground truth (2026-07-25):** `pytest tests/ --ignore=tests/stripe_sync` = **596 pass / 0 fail**, `mypy src/` = **23 errors / 9 files** (pre-existing baseline), verified 2026-07-25 after the A-3 RAG wiring. **Committed locally through 5bf0c11, 2026-07-25** (branch `feature/us-018-mypy`, ahead of origin, unpushed). Canonical docs: STATUS (state) · IDEAL_STATE (vision) · KNOWLEDGE (business facts).
 
 **Pointers:** ideal state + mental model → `IDEAL_STATE.md` (vision only; the *gap* + current state live here in STATUS) · deep architecture (archived) → `wip/SYSTEM_OVERVIEW.md` (§-refs below) · diagrams → `visuals/` (`ARCHITECTURE`, `CATEGORIZATION_ROUTES`, `JOURNAL_ENTRY_FLOWS`, `HR_PAYROLL_PROCESS_DIAGRAM`, `FINANCE_SYSTEM_STATE_VS_IDEAL`).
 
@@ -18,11 +18,11 @@
 | # | Step | Owner / blocker |
 |---|------|-----------------|
 | A-1 | Jan–Jun 2026 bank statements (all accounts) + ClickHouse access | **Gaurav** — the two hard blockers |
-| A-2 | Depreciation study: extract QB's depreciation/amortisation JEs, present pattern → decide mirror-vs-recompute (D1) | me, no blocker |
-| A-3 | Wire RAG into Phase 4D (engine ready for H1 categorization) | me, in flight |
+| A-2 | ✅ **DONE 2026-07-24** — depreciation study delivered; D1 closed = HYBRID (see §3) | closed |
+| A-3 | ✅ **DONE 2026-07-24** — RAG wired into Phase 4D: corpus-v2 retriever (lazy, cached, env-overridable) + top-3 similar-past examples per txn + KNOWLEDGE company facts (ENT/FLOW/POL/DQ, 35 facts) injected into the AI prompt; graceful degrade if corpus absent. 9 new tests (`test_categorization_rag_wiring.py`); suite 596/0 | closed |
 | A-4 | Import H1 bank statements (`IMPORTED`) → bulk-approve H1 invoices → run the ladder → review queues | needs A-1 |
 | A-5 | Stripe sync: E2E-verify vs ClickHouse + `code='2'` patch → run Jan–Jun-26 (revenue/COGS events) (D4) | needs ClickHouse |
-| A-6 | Depreciation for H1 per D1 outcome · GST return summary (build) | after A-2 |
+| A-6 | Depreciation for H1 per D1 (mirror Jan–Mar + compute Apr–Jun) · GST return summary (build) | unblocked (A-2 done) |
 | A-7 | Build P&L + Balance Sheet · consolidation (IC elimination + FX→USD) | me |
 | A-8 | **H1 cross-check vs QB** (the pilot test) — QB's TB is a REFERENCE, not the source of truth (POL-21): every diff is adjudicated (our deliberate improvements stand; genuine misses get fixed) → Gaurav signs off the finalised statements as the new truth | after A-4..A-7 |
 
@@ -201,7 +201,7 @@ Views-based adapter is restored + clean (`sync_month` → `_generate_all_je_spec
 | **No historical payroll runs** (2026-07-24) | Historical salary/CPF lines book as DIRECT EXPENSE via party defaults (6000/5061/5063/6003, CPF→6001). Real payroll runs start **H2-2026** (D2). |
 | **AP boundary = invoice availability** (2026-07-24) | Full AP leg (approve→accrual→knock-off) only for periods with invoices (~Jul-25→Jun-26); earlier history books expense-on-payment (same net P&L) (D3). |
 | **H1-26 revenue via Stripe sync** (2026-07-24) | E2E-verify the views adapter vs ClickHouse first, then run Jan–Jun-26; bank settlements stay transfers (D4). |
-| **Depreciation source** (2026-07-24) | STUDY FIRST (D1): analyse QB's depreciation/amortisation JEs, then decide mirror-vs-recompute. |
+| **Depreciation source = HYBRID** (2026-07-24, D1 CLOSED) | Study done (1,478 QB D&A legs; SG monthly-complete to Mar-26; Ventures lumpy annual; **QB entries STOP 31-Mar-2026**). Agreed: **mirror QB entries** for history + Jan–Mar-26 · **we compute Apr–Jun-26** (extend run-rate) · **module owns from Jul-26** with schedules seeded from QB carrying values (remaining book value ÷ remaining life). Devices per POL-4: subscriptions = expense, purchases = capitalize+depreciate; locate the ~2.7M Sep-24 purchase at replay (FLOW-10). |
 | **Only 3 real entities — "Fleet" entities are mock RMS buckets** (2026-06-01) | `Drive lah Fleet` (SG) and `Drive mate fleet` (AU) are **mock entities** created only to separate out **RMS (Rental Management Service) payments**. They are NOT independent legal entities. Fold their QuickBooks GL into the parent on import: **Drive lah Fleet → Drive lah Pte Ltd (SG)**; **Drive mate fleet → Drive lah Australia Pty Ltd (AU)**. Real entity set = **3**: Drive lah Pte Ltd (SG), Drive lah Ventures Holding (SG), Drive lah Australia Pty Ltd (AU). |
 | **RMS Fleet flows: eliminate at mapping, recognize revenue once** (2026-07-10) | On RMS trips we were the **registered host**: guest's payment = revenue, recognized **once, at Stripe** (old COA had no RMS line → blended). The "host share" flowing platform → **our own connected account → our bank** ("Due to Fleet") is **our own money moving** — map as **internal transfer, never P&L** (mapping 4001 GBV-RMS to these inflows would double-count revenue). Payouts to the real car owners ("Due from Fleet") → **5001 Host Payouts – P2P RMS** (COGS). This replicates, at the mapping level, the elimination the mock-Fleet consolidation used to do ($100 rev − $80 self-payout ⊕ $80 rev − $60 owner cost ⇒ $100 rev − $60 cost). RMS is a **business line** in the new COA (4001/4003 · 5001/5003 · 2120) — no clearing accounts, no mock entity. The historical **4000 vs 4001 revenue split requires booking-level RMS data** (agreed; bank lines can't provide it). Locked in `coa_bridge.csv` (approved) — do not revisit. |
 

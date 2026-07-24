@@ -1898,12 +1898,21 @@ Return only the JSON object, no explanation."""
                     for a in accounts
                 ]
 
+            # RAG grounding: retrieved past categorizations + company facts.
+            # Missing corpus/knowledge files degrade to the ungrounded prompt.
+            from src.services.categorization_rag import (
+                get_company_facts,
+                get_default_retriever,
+            )
+            retriever = get_default_retriever()
+            company_facts = get_company_facts()
+
             # Build transaction payloads
             txn_payloads = []
             for txn in transactions:
                 ba = bank_accounts.get(txn.bank_account_id)
                 entity_id = ba.entity_id if ba else None
-                txn_payloads.append({
+                payload = {
                     "id": txn.id,
                     "description": txn.description or "",
                     "amount": float(txn.amount),
@@ -1913,12 +1922,32 @@ Return only the JSON object, no explanation."""
                     "bank_account": ba.account_name if ba else "",
                     "entity_id": entity_id,
                     "coa": coa_by_entity.get(entity_id, []),
-                })
+                }
+                if retriever is not None:
+                    payload["similar_past"] = [
+                        {
+                            "description": e.description,
+                            "account_code": e.account,
+                            "account_name": e.account_name,
+                            "score": round(score, 3),
+                        }
+                        for e, score in retriever.retrieve(txn.description or "", k=3)
+                    ]
+                txn_payloads.append(payload)
+
+            facts_block = ""
+            if company_facts:
+                facts_block = (
+                    "Company facts (verified ground truth about our business — "
+                    "respect these when classifying):\n"
+                    + "\n".join(f"- {f}" for f in company_facts)
+                    + "\n\n"
+                )
 
             prompt = f"""You are a finance classification engine. Classify each bank transaction
 to the most appropriate account in the chart of accounts.
 
-Transactions to classify:
+{facts_block}Transactions to classify:
 {json_lib.dumps(txn_payloads, indent=2)}
 
 For each transaction, return a JSON array (one object per transaction) with:
@@ -1931,6 +1960,9 @@ For each transaction, return a JSON array (one object per transaction) with:
 
 Rules:
 - account_code MUST be from the coa list provided for that transaction's entity_id
+- similar_past (when present) shows how WE categorized similar past transactions in
+  our own audited history — weight this evidence strongly; only depart from it when
+  the description clearly differs or a company fact contradicts it
 - confidence >= 0.80 means you are confident; < 0.80 means uncertain
 - For intercompany or payroll transactions that don't clearly fit any account, use confidence 0.50
 - Return ONLY the JSON array, no other text"""
