@@ -109,6 +109,7 @@ Feeds: (1) the RAG "company facts" input (IDEAL_STATE §3 — the AI never runs 
 - **POL-18** Prefer a LEAN rule book: for small-count text patterns (travel cards, one-off refunds, A/R collection texts, ex-people), do NOT load convenience rules — replay review + the feedback loop handle them. Rules are for high-value deterministic streams only. *(Gaurav, 2026-07-24)*
 - **POL-19** Historical payroll is NEVER reconstructed as runs — historical salary/statutory lines book as direct expense via party defaults; real payroll runs begin H2-2026. *(Gaurav, 2026-07-24)*
 - **POL-20** The AP/accrual leg exists only where invoice data exists (≈Jul-2025 onward); earlier periods book expense-on-payment — the accrual+settlement pair nets to the same P&L. *(Gaurav, 2026-07-24)*
+- **POL-21** QuickBooks' trial balance is a CROSS-CHECK REFERENCE, not the source of truth — QB carries known errors (mis-payees, generic buckets, wrong accounts) and our arbitrated treatments deliberately diverge (Fleet elimination, RMS, Arena, device expensing…). Diffs are adjudicated case-by-case; the finalised finance-api statements become the new truth once Gaurav signs off. *(Gaurav, 2026-07-24)*
 - **POL-15** A counterparty seed loads by UPSERT (normalized name + aliases); never blind-insert against a live directory. *(2026-07-23)*
 
 ## 5. Data quirks & traps (DQ)

@@ -24,9 +24,9 @@
 | A-5 | Stripe sync: E2E-verify vs ClickHouse + `code='2'` patch → run Jan–Jun-26 (revenue/COGS events) (D4) | needs ClickHouse |
 | A-6 | Depreciation for H1 per D1 outcome · GST return summary (build) | after A-2 |
 | A-7 | Build P&L + Balance Sheet · consolidation (IC elimination + FX→USD) | me |
-| A-8 | **H1 tie-out vs QB** (the pilot test of the whole system) → finalise | after A-4..A-7 |
+| A-8 | **H1 cross-check vs QB** (the pilot test) — QB's TB is a REFERENCE, not the source of truth (POL-21): every diff is adjudicated (our deliberate improvements stand; genuine misses get fixed) → Gaurav signs off the finalised statements as the new truth | after A-4..A-7 |
 
-**Phase B — historical rebuild (2019 → 2025):** replay with the locked simplifications — payroll = direct expense (no historic runs, D2); AP legs only where invoices exist (≈Jul-25→Jun-26, D3); older = expense-on-payment; depreciation per D1; tie-out per year vs QB.
+**Phase B — historical rebuild (2019 → 2025):** replay with the locked simplifications — payroll = direct expense (no historic runs, D2); AP legs only where invoices exist (≈Jul-25→Jun-26, D3); older = expense-on-payment; depreciation per D1; cross-check per year vs QB (reference, not truth — POL-21).
 
 **Phase C — future-forward (from Jul-2026):** payroll runs live (D2) · live categorization with RAG · Stripe sync scheduled · TMS event feed when real (F-3). Reporting cadence per IDEAL_STATE.
 
