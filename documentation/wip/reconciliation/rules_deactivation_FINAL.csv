@@ -177,3 +177,10 @@ id,name,reason
 237,Drive Lah Pte Ltd - Wise Tech system cost Auto,DEACTIVATE-redundant
 241,Drive Lah Pte Ltd - Wise Operating expense - damage Auto,DEACTIVATE-redundant
 72,Drive Lah Pte Ltd - Wise Marekting new customers Auto,DEACTIVATE-redundant
+3,Internal Transfer: Stripe → OCBC 3001,patternless incoming catch-all on 3001 — claimed every deposit as Stripe transfer (Gaurav 2026-07-25)
+4,Internal Transfer: OCBC 3001 → Wise SGD,generic WISE pattern; corridor covered by scoped #28/#32 (transfer sort-out 2026-07-25)
+33,Drive Lah Pte Ltd - Wise Incoming from 1001 Transfer,Wise-side leg; pairs via Phase 0 from OCBC-side rules (one-side-per-corridor)
+34,Drive Lah Pte Ltd - Wise Incoming from 3001 Transfer,Wise-side leg; target ambiguous vs #33 (one-side-per-corridor)
+71,Drive Lah Ventures Holding Pte Ltd - DBS SGD Incoming,SGD-side leg of DBS FX corridor; #70 books it (FX pairing gap noted)
+206,Drive Lah Pte Ltd - Wise transfer,generic 'Wise' catch-all on all accounts
+238,Drive Lah Ventures Holding Pte Ltd - Transfer Agent Charges,bank FEES not a transfer (Gaurav 2026-07-25) — replaced by expense rule → 6600
