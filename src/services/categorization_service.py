@@ -920,13 +920,18 @@ class CategorizationService:
             for cp in counterparties
         )
 
-        # Build the transaction list for the prompt
-        txn_list = "\n".join(
-            f"  {txn.id}: desc=\"{txn.description}\" cp_field=\"{txn.counterparty_name or ''}\""
-            for txn in unmatched
-        )
+        try:
+            client = anthropic.Anthropic(api_key=api_key)
+            mapping: dict = {}
+            CHUNK = 50  # keeps each JSON response comfortably under the token cap
+            for start in range(0, len(unmatched), CHUNK):
+                chunk = unmatched[start:start + CHUNK]
+                txn_list = "\n".join(
+                    f"  {txn.id}: desc=\"{txn.description}\" cp_field=\"{txn.counterparty_name or ''}\""
+                    for txn in chunk
+                )
 
-        prompt = f"""You are a financial data enrichment engine. Match each bank transaction to the most likely counterparty from the known directory, based on the raw bank description and counterparty name field.
+                prompt = f"""You are a financial data enrichment engine. Match each bank transaction to the most likely counterparty from the known directory, based on the raw bank description and counterparty name field.
 
 KNOWN COUNTERPARTIES (id: name (type)):
 {cp_list}
@@ -945,21 +950,18 @@ Example output format:
 
 Return only the JSON object, no explanation."""
 
-        try:
-            client = anthropic.Anthropic(api_key=api_key)
-            message = client.messages.create(
-                model="claude-haiku-4-5-20251001",
-                max_tokens=512,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            raw_response = cast("TextBlock", message.content[0]).text.strip()
+                message = client.messages.create(
+                    model="claude-haiku-4-5-20251001",
+                    max_tokens=2048,
+                    messages=[{"role": "user", "content": prompt}],
+                )
+                raw_response = cast("TextBlock", message.content[0]).text.strip()
 
-            # Parse the JSON response
-            # Strip markdown code fences if present
-            if raw_response.startswith("```"):
-                raw_response = raw_response.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+                # Strip markdown code fences if present
+                if raw_response.startswith("```"):
+                    raw_response = raw_response.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
 
-            mapping: dict = json_lib.loads(raw_response)
+                mapping.update(json_lib.loads(raw_response))
 
             # Build a lookup for quick access
             cp_by_id = {cp.id: cp for cp in counterparties}
@@ -1907,7 +1909,9 @@ Return only the JSON object, no explanation."""
             retriever = get_default_retriever()
             company_facts = get_company_facts()
 
-            # Build transaction payloads
+            # Build transaction payloads. The COA is NOT repeated per transaction —
+            # it goes once per entity in the prompt header (155 accounts × N txns
+            # would blow the context at batch scale).
             txn_payloads = []
             for txn in transactions:
                 ba = bank_accounts.get(txn.bank_account_id)
@@ -1921,7 +1925,6 @@ Return only the JSON object, no explanation."""
                     "counterparty": txn.counterparty_name or "",
                     "bank_account": ba.account_name if ba else "",
                     "entity_id": entity_id,
-                    "coa": coa_by_entity.get(entity_id, []),
                 }
                 if retriever is not None:
                     payload["similar_past"] = [
@@ -1944,22 +1947,34 @@ Return only the JSON object, no explanation."""
                     + "\n\n"
                 )
 
-            prompt = f"""You are a finance classification engine. Classify each bank transaction
+            client = anthropic.Anthropic(api_key=api_key)
+            suggestion_map: dict[int, dict] = {}
+            CHUNK = 40  # bounded response size per call; ~50 output tokens/txn
+            for start in range(0, len(txn_payloads), CHUNK):
+                chunk = txn_payloads[start:start + CHUNK]
+                chunk_entities = {p["entity_id"] for p in chunk}
+                coa_block = json_lib.dumps(
+                    {str(eid): coa_by_entity.get(eid, []) for eid in chunk_entities})
+
+                prompt = f"""You are a finance classification engine. Classify each bank transaction
 to the most appropriate account in the chart of accounts.
 
-{facts_block}Transactions to classify:
-{json_lib.dumps(txn_payloads, indent=2)}
+{facts_block}Chart of accounts, keyed by entity_id (each transaction must use its own entity's list):
+{coa_block}
+
+Transactions to classify:
+{json_lib.dumps(chunk, indent=2)}
 
 For each transaction, return a JSON array (one object per transaction) with:
 {{
   "id": <transaction id>,
-  "account_code": "<code from the coa field for that transaction>",
+  "account_code": "<code from this transaction's entity COA list>",
   "confidence": <0.00–1.00 — your confidence in this classification>,
   "reasoning": "<1 sentence plain-English explanation>"
 }}
 
 Rules:
-- account_code MUST be from the coa list provided for that transaction's entity_id
+- account_code MUST come from the COA list for that transaction's entity_id
 - similar_past (when present) shows how WE categorized similar past transactions in
   our own audited history — weight this evidence strongly; only depart from it when
   the description clearly differs or a company fact contradicts it
@@ -1967,23 +1982,22 @@ Rules:
 - For intercompany or payroll transactions that don't clearly fit any account, use confidence 0.50
 - Return ONLY the JSON array, no other text"""
 
-            client = anthropic.Anthropic(api_key=api_key)
-            message = client.messages.create(
-                model="claude-haiku-4-5-20251001",
-                max_tokens=1024,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            raw = cast("TextBlock", message.content[0]).text.strip()
-            if raw.startswith("```"):
-                lines = raw.split("\n")
-                raw = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+                message = client.messages.create(
+                    model="claude-haiku-4-5-20251001",
+                    max_tokens=4096,
+                    messages=[{"role": "user", "content": prompt}],
+                )
+                raw = cast("TextBlock", message.content[0]).text.strip()
+                if raw.startswith("```"):
+                    lines = raw.split("\n")
+                    raw = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
 
-            suggestions = json_lib.loads(raw)
-            if not isinstance(suggestions, list):
-                raise ValueError("Expected JSON array from AI classification")
-
-            # Index suggestions by transaction id
-            suggestion_map: dict[int, dict] = {s["id"]: s for s in suggestions if "id" in s}
+                suggestions = json_lib.loads(raw)
+                if not isinstance(suggestions, list):
+                    raise ValueError("Expected JSON array from AI classification")
+                for s in suggestions:
+                    if "id" in s:
+                        suggestion_map[s["id"]] = s
 
         except Exception as e:
             logger.error(f"AI classification fallback error: {e}", exc_info=True)
