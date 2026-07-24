@@ -11,23 +11,23 @@
 
 ---
 
-## ▶ Closing Path — REORDERED (Gaurav, 2026-07-24): H1-26 first, then historical, then future-forward
+## ▶ Closing Path — LOCKED PLAN (Gaurav, 2026-07-25): H1-26 first, then historical, then future-forward
 
-**Phase A — H1-2026 financial finalisation** (the current goal; "finalised" = TB tie-out + P&L + Balance Sheet + GST summary + consolidated SG+AU in USD, per D5):
+**Phase A — H1-2026 financial finalisation** (the current goal; "finalised" = TB tie-out + P&L + Balance Sheet + GST summary + consolidated SG+AU in USD, per D5). Steps run in order; 0–6 need nothing from Gaurav. Done: **A-2** (depreciation study → D1 hybrid) · **A-3** (RAG wired into Phase 4D; suite 596/0).
 
-| # | Step | Owner / blocker |
-|---|------|-----------------|
-| A-1 | Jan–Jun 2026 bank statements (all accounts) + ClickHouse access | **Gaurav** — the two hard blockers |
-| A-2 | ✅ **DONE 2026-07-24** — depreciation study delivered; D1 closed = HYBRID (see §3) | closed |
-| A-3 | ✅ **DONE 2026-07-24** — RAG wired into Phase 4D: corpus-v2 retriever (lazy, cached, env-overridable) + top-3 similar-past examples per txn + KNOWLEDGE company facts (ENT/FLOW/POL/DQ, 35 facts) injected into the AI prompt; graceful degrade if corpus absent. 9 new tests (`test_categorization_rag_wiring.py`); suite 596/0 | closed |
-| A-4 | Import H1 bank statements (`IMPORTED`) → bulk-approve H1 invoices → run the ladder → review queues | needs A-1 |
-| A-5 | Stripe sync: E2E-verify vs ClickHouse + `code='2'` patch → run Jan–Jun-26 (revenue/COGS events) (D4) | needs ClickHouse |
-| A-6 | Depreciation for H1 per D1 (mirror Jan–Mar + compute Apr–Jun) · GST return summary (build) | unblocked (A-2 done) |
-| A-7 | Build P&L + Balance Sheet · consolidation (IC elimination + FX→USD) | me |
-| A-8 | **H1 cross-check vs QB** (the pilot test) — QB's TB is a REFERENCE, not the source of truth (POL-21): every diff is adjudicated (our deliberate improvements stand; genuine misses get fixed) → Gaurav signs off the finalised statements as the new truth | after A-4..A-7 |
-| A-9 | **Period close / hard lock** (Q3 decision): closed period = no JE create/edit/void; corrections via adjusting JE in the open period. Needed before A-8 sign-off is enforceable | me, no blocker |
-| A-10 | **Bank-statement balance tie-out**: ledger cash balance == statement closing balance, per account per month (the strongest completeness invariant; Q8 test layer 3) | me, no blocker |
-| A-11 | **Review-gate + feedback wiring** (Q4/Q5): route ALL AI categorizations (any confidence) to NEEDS_REVIEW; auto-append every human-approved categorization to the live corpus (separate from frozen corpus_v2); record which route categorized each txn so overrides of deterministic routes surface in a periodic exception report | me, no blocker |
+| Step | ID | What | Owner |
+|------|----|------|-------|
+| 0 | A-0 | **Soft check**: sandbox run of the engine on real sample txns (local DB seeded from the live-table backups + a statement on hand) — observe route coverage, NO live writes | me — **NEXT** |
+| 1 | A-7 | Build P&L + Balance Sheet · consolidation (IC elimination + FX→USD) — the long pole | me |
+| 2 | A-9 | Hard period close/lock (Q3): closed period = no JE create/edit/void; corrections = adjusting JE | me |
+| 3 | A-10 | Bank-statement balance tie-out: ledger cash == statement closing balance, per account per month (Q8 layer 3) | me |
+| 4 | A-11 | Review-gate + feedback wiring (Q4/Q5): ALL AI results → NEEDS_REVIEW · auto-append approvals to live corpus · record categorizing route per txn → deterministic-override exception report | me |
+| 5 | A-6 | Depreciation execution per D1 (mirror Jan–Mar-26, compute Apr–Jun-26, seed schedules from QB carrying values) · GST return summary | me |
+| 6 | A-5a | Stripe sync code: `code='2'` patch + rewrite stripe_sync tests (views path) | me |
+| 7 | A-1 | **Jan–Jun-26 bank statements (all 4 accounts) + ClickHouse access + last-12-mo invoices** | **Gaurav** — unblocks 8–10 |
+| 8 | A-4 | Import H1 (`IMPORTED`) → bulk-approve invoices → run ladder → review walks (in Claude Code, per Q5) | both |
+| 9 | A-5b | E2E-verify Stripe views vs ClickHouse → run Jan–Jun-26 economic JEs | me |
+| 10 | A-8 | **H1 cross-check vs QB** — diff adjudicated under POL-21 → Gaurav signs off = system passes its acceptance test (Q8 layer 4) | both |
 
 **Phase B — historical rebuild (2019 → 2025):** replay with the locked simplifications — payroll = direct expense (no historic runs, D2); AP legs only where invoices exist (≈Jul-25→Jun-26, D3); older = expense-on-payment; depreciation per D1; cross-check per year vs QB (reference, not truth — POL-21).
 
