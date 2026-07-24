@@ -107,6 +107,8 @@ Feeds: (1) the RAG "company facts" input (IDEAL_STATE §3 — the AI never runs 
 - **POL-16** Rules are NEVER deleted — only deactivated (`status=INACTIVE`); the engine evaluates ACTIVE rules only. History stays auditable. *(Gaurav, 2026-07-23)*
 - **POL-17** The rules model/engine must not support counterparty as an ACTION (assignment) — counterparty is a CONDITION only; code change queued: engine ignores + validation rejects assignment fields, columns dropped in a later migration. *(Gaurav, 2026-07-23)*
 - **POL-18** Prefer a LEAN rule book: for small-count text patterns (travel cards, one-off refunds, A/R collection texts, ex-people), do NOT load convenience rules — replay review + the feedback loop handle them. Rules are for high-value deterministic streams only. *(Gaurav, 2026-07-24)*
+- **POL-19** Historical payroll is NEVER reconstructed as runs — historical salary/statutory lines book as direct expense via party defaults; real payroll runs begin H2-2026. *(Gaurav, 2026-07-24)*
+- **POL-20** The AP/accrual leg exists only where invoice data exists (≈Jul-2025 onward); earlier periods book expense-on-payment — the accrual+settlement pair nets to the same P&L. *(Gaurav, 2026-07-24)*
 - **POL-15** A counterparty seed loads by UPSERT (normalized name + aliases); never blind-insert against a live directory. *(2026-07-23)*
 
 ## 5. Data quirks & traps (DQ)

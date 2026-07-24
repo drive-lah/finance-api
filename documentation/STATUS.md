@@ -11,20 +11,24 @@
 
 ---
 
-## ▶ Closing Path (section by section — reporting LAST)
+## ▶ Closing Path — REORDERED (Gaurav, 2026-07-24): H1-26 first, then historical, then future-forward
 
-Close each section to "done" before moving on. **Reporting is fixed at the very end** (Gaurav, 2026-05-22).
+**Phase A — H1-2026 financial finalisation** (the current goal; "finalised" = TB tie-out + P&L + Balance Sheet + GST summary + consolidated SG+AU in USD, per D5):
 
-1. **Categorization engine** — ✅ correctness fixes + phase-structure review + POL-12 identity separation done. **Remaining: the RAG pipeline** (persist corpus → wire Phase 4D). *(§2.2)*
-2. **Payroll** — resolve the salary-data source, onboard a pilot, run one real payroll JE end-to-end. *(§2.3)*
-3. **Stripe sync** — E2E-verify the views adapter vs ClickHouse + patch the `code='2'` gap. *(§2.4 — needs ClickHouse)*
-4. **Reconciliation + categorization vs real data** — bank-statement tie-out loop; verify the 244 live rules fire correctly. *(§2.5 — needs a data env)*
-5. **Period close + GST returns + consolidation** — period lock, GST summary, IC elimination + FX → USD. *(§2.5)*
-6. **Reporting last-mile** — P&L → Balance Sheet → Business-Line Margin. **LAST.** *(§2.1)*
+| # | Step | Owner / blocker |
+|---|------|-----------------|
+| A-1 | Jan–Jun 2026 bank statements (all accounts) + ClickHouse access | **Gaurav** — the two hard blockers |
+| A-2 | Depreciation study: extract QB's depreciation/amortisation JEs, present pattern → decide mirror-vs-recompute (D1) | me, no blocker |
+| A-3 | Wire RAG into Phase 4D (engine ready for H1 categorization) | me, in flight |
+| A-4 | Import H1 bank statements (`IMPORTED`) → bulk-approve H1 invoices → run the ladder → review queues | needs A-1 |
+| A-5 | Stripe sync: E2E-verify vs ClickHouse + `code='2'` patch → run Jan–Jun-26 (revenue/COGS events) (D4) | needs ClickHouse |
+| A-6 | Depreciation for H1 per D1 outcome · GST return summary (build) | after A-2 |
+| A-7 | Build P&L + Balance Sheet · consolidation (IC elimination + FX→USD) | me |
+| A-8 | **H1 tie-out vs QB** (the pilot test of the whole system) → finalise | after A-4..A-7 |
 
-> Steps 3 & 4 need a **ClickHouse / collections-db env** — flag when available.
+**Phase B — historical rebuild (2019 → 2025):** replay with the locked simplifications — payroll = direct expense (no historic runs, D2); AP legs only where invoices exist (≈Jul-25→Jun-26, D3); older = expense-on-payment; depreciation per D1; tie-out per year vs QB.
 
----
+**Phase C — future-forward (from Jul-2026):** payroll runs live (D2) · live categorization with RAG · Stripe sync scheduled · TMS event feed when real (F-3). Reporting cadence per IDEAL_STATE.
 
 ## 1. What's Done
 
@@ -193,6 +197,11 @@ Views-based adapter is restored + clean (`sync_month` → `_generate_all_je_spec
 | **Import decoupled from categorization** (2026-05-23) | Add an `IMPORTED` transaction status (= imported, engine never run). Import gains `auto_categorize` (default True = current behaviour; False = stage as `IMPORTED`, no run). `run()` processes `IMPORTED` + `PENDING`; an `IMPORTED` txn the engine *ran on* but didn't match → `PENDING` (so `IMPORTED` strictly = untouched). Status is a string column (`native_enum=False`) → **no DB migration**. |
 | **Historical reconciliation = replay both legs** (2026-05-23) | To rebuild 6 years of books: **stage bank txns (`IMPORTED`) → bulk-import + bulk-approve invoices (creates AP accruals) → run categorization on the bank txns** (AP knock-off settles them; rest categorized). Replaying invoice accrual + bank payment nets to `Dr Expense / Cr Bank`, AP → 0, no double-count. Retroactive AP + payroll knock-offs cover out-of-order arrivals. |
 | **No separate historical-invoice mode** (2026-05-23) | Invoice `DRAFT` is *already* the "imported, LLM-extracted, not posted" stage (the invoice analog of `IMPORTED`). Accrual JE fires only at `APPROVED`; settlement via `record_payment` (the knock-off). So historical invoices use the standard path — just need a **bulk-approve**. |
+| **Goal order: H1-26 finalisation → historical → future-forward** (2026-07-24) | H1-26 closed first as the pilot tie-out; "finalised" = TB + P&L + BS + GST summary + consolidated USD (D5). |
+| **No historical payroll runs** (2026-07-24) | Historical salary/CPF lines book as DIRECT EXPENSE via party defaults (6000/5061/5063/6003, CPF→6001). Real payroll runs start **H2-2026** (D2). |
+| **AP boundary = invoice availability** (2026-07-24) | Full AP leg (approve→accrual→knock-off) only for periods with invoices (~Jul-25→Jun-26); earlier history books expense-on-payment (same net P&L) (D3). |
+| **H1-26 revenue via Stripe sync** (2026-07-24) | E2E-verify the views adapter vs ClickHouse first, then run Jan–Jun-26; bank settlements stay transfers (D4). |
+| **Depreciation source** (2026-07-24) | STUDY FIRST (D1): analyse QB's depreciation/amortisation JEs, then decide mirror-vs-recompute. |
 | **Only 3 real entities — "Fleet" entities are mock RMS buckets** (2026-06-01) | `Drive lah Fleet` (SG) and `Drive mate fleet` (AU) are **mock entities** created only to separate out **RMS (Rental Management Service) payments**. They are NOT independent legal entities. Fold their QuickBooks GL into the parent on import: **Drive lah Fleet → Drive lah Pte Ltd (SG)**; **Drive mate fleet → Drive lah Australia Pty Ltd (AU)**. Real entity set = **3**: Drive lah Pte Ltd (SG), Drive lah Ventures Holding (SG), Drive lah Australia Pty Ltd (AU). |
 | **RMS Fleet flows: eliminate at mapping, recognize revenue once** (2026-07-10) | On RMS trips we were the **registered host**: guest's payment = revenue, recognized **once, at Stripe** (old COA had no RMS line → blended). The "host share" flowing platform → **our own connected account → our bank** ("Due to Fleet") is **our own money moving** — map as **internal transfer, never P&L** (mapping 4001 GBV-RMS to these inflows would double-count revenue). Payouts to the real car owners ("Due from Fleet") → **5001 Host Payouts – P2P RMS** (COGS). This replicates, at the mapping level, the elimination the mock-Fleet consolidation used to do ($100 rev − $80 self-payout ⊕ $80 rev − $60 owner cost ⇒ $100 rev − $60 cost). RMS is a **business line** in the new COA (4001/4003 · 5001/5003 · 2120) — no clearing accounts, no mock entity. The historical **4000 vs 4001 revenue split requires booking-level RMS data** (agreed; bank lines can't provide it). Locked in `coa_bridge.csv` (approved) — do not revisit. |
 
