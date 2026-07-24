@@ -765,12 +765,12 @@ class CategorizationService:
         if not transactions:
             return
 
-        # Load active counterparties once for the whole batch
-        counterparties = (
-            db.query(FinanceCounterparty)
-            .filter(FinanceCounterparty.status == "active")
-            .all()
-        )
+        # Load the full party directory once for the whole batch.
+        # INACTIVE parties are included deliberately: inactive means DORMANT
+        # (a vendor we no longer deal with), and historical transactions must
+        # still enrich against them. Records that are WRONG are deleted from
+        # the table, never kept inactive (Gaurav, 2026-07-25 — POL-22).
+        counterparties = db.query(FinanceCounterparty).all()
         if not counterparties:
             return
 

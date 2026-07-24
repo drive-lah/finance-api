@@ -981,6 +981,24 @@ class TestCounterpartyAliasEnrichment:
         db_session.refresh(txn)
         assert txn.counterparty_id == cp.id
 
+    def test_l1_matches_inactive_dormant_counterparty(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """POL-22: inactive = dormant-but-real — historical transactions must
+        still enrich against ex-vendors. (Wrong records are DELETED, not
+        deactivated, so including inactive parties is safe.)"""
+        cp = _make_counterparty(db_session, "Old Vendor Pte Ltd")
+        cp.status = "inactive"
+        db_session.commit()
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="PAYMENT TO Old Vendor Pte Ltd", amount=-75.0,
+            fingerprint="dormant-01"
+        )
+        categorization_service._enrich_counterparties(db_session, [txn])
+        db_session.refresh(txn)
+        assert txn.counterparty_id == cp.id
+
     def test_l1_matches_alias_in_description(
         self, db_session, test_accounts, test_bank_account
     ):
