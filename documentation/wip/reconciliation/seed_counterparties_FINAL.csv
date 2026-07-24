@@ -322,7 +322,7 @@ Craig Anthony Letters,employee,entity,DL AU,5061,On-Ground Team - Salary,,0,deci
 CreditLine NetBank BPAY,bank,entity,DL AU,,,,0,live,deactivate-live,,GAURAV: remove -> deactivate in live at apply
 CROWDER C S,customer,entity,DL AU,4025,Incidentals Revenue - Other,,0,live,deactivate-live,4025,GAURAV: remove -> deactivate in live at apply
 Das Diganta Kumar,vendor,entity,DL SG,5001,Host Payouts - P2P RMS,,0,decided,new,,from live-rule identity walk (Gaurav 2026-07-23)
-Debit Purchase,vendor,entity,DL SG,6701,Technology - Software Subscriptions,,52,approved,new,,
+Debit Purchase,vendor,entity,DL SG,6701,Technology - Software Subscriptions,,52,approved,deactivate-live,,ARTIFACT (2026-07-25): QB payee-bucket = bank-text prefix; hijacked all card purchases in A-0 soft check. Deactivated in live; never re-seed.
 Decemberlyn Muyuela Sumagaysay,employee,entity,DL SG,5063,Customer Support - Salary,,0,decided,live-only,,
 DEEP KOTHARI OR RITU KOTHARI,investor,entity,DL Ventures,3000,Share Capital,,2,decided,new,,
 Derkjan Adriaan Lutgert,investor,entity,DL Ventures,3000,Share Capital,Derkjan Adriaan,4,decided,new,,
