@@ -1,0 +1,762 @@
+id,entity,status,route,coa_code,amount,currency,counterparty,ai_confidence,ai_reasoning,description
+13,Drive lah Singapore Pte Ltd.,MATCHED,rule/transfer JE,4000,10.00,SGD,MUSTAFFA KAMAL BIN,,,PAYMENT/TRANSFER OTHR S$ MUSTAFFA KAMAL BIN PayNow: Mustaffakamal@gmail.com
+14,Drive lah Singapore Pte Ltd.,MATCHED,party-default,6600,-13.63,SGD,OCBC,,,FOR: 1 362.50 SGD CCY CONVERSION FEE
+15,Drive lah Singapore Pte Ltd.,MATCHED,party-default,6500,-1362.50,SGD,ACE,,,xx-3217 FACEBK *7URXTBHBY2     fb. DEBIT PURCHASE
+16,Drive lah Singapore Pte Ltd.,MATCHED,party-default,6701,-14.77,SGD,ANTHROPIC,,,xx-6839 ANTHROPIC              SAN DEBIT PURCHASE
+17,Drive lah Singapore Pte Ltd.,MATCHED,party-default,6701,-15.40,SGD,ANTHROPIC,,,xx-6839 ANTHROPIC              SAN DEBIT PURCHASE
+18,Drive lah Singapore Pte Ltd.,MATCHED,rule/transfer JE,4000,10.00,SGD,GRACIE POON KE YING,,,PAYMENT/TRANSFER OTHR S$ GRACIE POON KE YING PayNow: TS15168680
+19,Drive lah Singapore Pte Ltd.,MATCHED,party-default,6701,-36.26,SGD,OPENAI (ChatGPT Subscription),,,xx-8724 OPENAI                 SAN DEBIT PURCHASE
+20,Drive lah Singapore Pte Ltd.,MATCHED,party-default,6701,-14.58,SGD,ANTHROPIC,,,xx-6839 ANTHROPIC              SAN DEBIT PURCHASE
+21,Drive lah Singapore Pte Ltd.,MATCHED,party-default,6701,-14.49,SGD,ANTHROPIC,,,xx-6839 ANTHROPIC              SAN DEBIT PURCHASE
+22,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,10000.00,SGD,SMIT260102609891,,,TRANSFER Fund Transfer from DRIVE LAH PTE. LTD. SGD 10 000.00
+23,Drive lah Singapore Pte Ltd.,MATCHED,party-default,6701,-79.66,SGD,MARLEE,,,xx-4180 MARLEE (F4S AUSTRALIA) SYD DEBIT PURCHASE
+24,Drive lah Singapore Pte Ltd.,MATCHED,party-default,6701,-14.64,SGD,ANTHROPIC,,,xx-6839 ANTHROPIC              SAN DEBIT PURCHASE
+155,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.64,AUD,ANTHROPIC,,,Card transaction of 22.41 USD issued by Anthropic +14152360599
+156,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-56.63,AUD,Shara-Lee M Morgan,0.600,"Sent AUD 56.63 to Shara-Lee M Morgan via Wise; salary comparable at 0.463, travel at 0.507; small amount and Wise batch ",Sent money to Shara-Lee M Morgan
+157,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-568.77,AUD,Tania Rock,0.630,"Sent AUD 568.77 to Tania Rock via Wise; salary at 0.548, travel at 0.6; Wise batch and amount consistent with remote sta",Sent money to Tania Rock
+158,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-33.27,AUD,Jeffrey Halliday,0.630,Sent AUD 33.27 to Jeffrey Halliday via Wise; salary and travel comparables at 0.548–0.6; small amount via Wise suggests ,Sent money to Jeffrey Halliday
+159,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.97,AUD,ANTHROPIC,,,Card transaction of 22.53 USD issued by Anthropic ANTHROPIC.COM
+160,Drive lah Australia Pty Ltd.,MATCHED,party-default,6310,-77.07,AUD,Amazon.in,,,Card transaction of 77.07 AUD issued by Amazon Reta* Amazon Au +618662161072
+161,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.66,AUD,ANTHROPIC,,,Card transaction of 22.15 USD issued by Anthropic ANTHROPIC.COM
+162,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-32.22,AUD,ANTHROPIC,,,Card transaction of 22.53 USD issued by Anthropic ANTHROPIC.COM
+163,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,2500.00,AUD,,0.500,Topped up Wise AUD account (incoming AUD 2500); no counterparty; likely internal capital/funding; low confidence without,Topped up account
+164,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-4500.00,AUD,Dom Drive lah,0.700,Sent AUD 4500 to Drive Lah Pte. Ltd. (SG parent entity) via Wise; intercompany transfer per ENT-1/ENT-5; books as transf,Sent money to Drive Lah Pte. Ltd.
+165,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.62,AUD,ANTHROPIC,,,Card transaction of 22.15 USD issued by Anthropic ANTHROPIC.COM
+166,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-375.32,AUD,CURSOR (AI Powered IDE),,,Card transaction of 262.91 USD issued by Cursor Usage Mid  Feb CURSOR.COM
+167,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.71,AUD,ANTHROPIC,,,Card transaction of 22.21 USD issued by Anthropic ANTHROPIC.COM
+168,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,5000.00,AUD,,0.500,Topped up Wise AUD account (incoming AUD 5000); no counterparty named; likely internal transfer or capital funding; low ,Topped up account
+169,Drive lah Australia Pty Ltd.,MATCHED,party-default,6700,-45.54,AUD,Synthesia,,,Card transaction of 31.90 USD issued by Synthesia Limited LONDON
+170,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-32.18,AUD,ANTHROPIC,,,Card transaction of 22.54 USD issued by Anthropic ANTHROPIC.COM
+171,Drive lah Australia Pty Ltd.,MATCHED,party-default,5062,-7953.69,AUD,Matheus Johannes van der Kooi,,,Sent money to Matheus Johannes van der Kooi
+172,Drive lah Australia Pty Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-6.00,AUD,,,,Wise Card Acquisition
+173,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,4000.00,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Topped up account
+174,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-1.02,AUD,,0.650,Small card transaction from Drive Mate Melbourne with no clear merchant; similar past shows parking transactions at 5060,Card transaction of 1.02 AUD issued by Drive Mate MELBOURNE
+175,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-18.95,AUD,,0.600,"Small card transaction from Drive Mate Melbourne; similar past shows travel/entertainment at 6400, though parking (5060)",Card transaction of 18.95 AUD issued by Drive Mate MELBOURNE
+176,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.89,AUD,ANTHROPIC,,,Card transaction of 22.36 USD issued by Anthropic ANTHROPIC.COM
+177,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-5491.20,AUD,Experian Australia Operations Pty Ltd,,,Sent money to EXPERIAN AUSTRALIA OPERATIONS P/L
+178,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-5877.30,AUD,Experian Australia Operations Pty Ltd,,,Sent money to EXPERIAN AUSTRALIA OPERATIONS P/L
+179,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,15000.00,AUD,,0.550,"Account top-up ($15,000); similar past is unreliable; likely cash account reload or inter-account transfer.",Topped up account
+180,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.58,AUD,ANTHROPIC,,,Card transaction of 22.06 USD issued by Anthropic ANTHROPIC.COM
+181,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-342.85,AUD,CURSOR (AI Powered IDE),,,Card transaction of 241.09 USD issued by Cursor Usage Mid  Feb CURSOR.COM
+182,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,-44.35,AUD,Didi Mobility,,,Card transaction of 44.35 AUD issued by Didimobility Sydney
+183,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,-10.70,AUD,Didi Mobility,,,Card transaction of 10.70 AUD issued by Didimobility Sydney
+184,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,-10.70,AUD,Didi Mobility,,,Card transaction of 10.70 AUD issued by Didimobility Sydney
+185,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,-10.70,AUD,Didi Mobility,,,Card transaction of 10.70 AUD issued by Didimobility Sydney
+186,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.32,AUD,ANTHROPIC,,,Card transaction of 22.01 USD issued by Anthropic ANTHROPIC.COM
+187,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-2000.00,AUD,U R Drive,0.350,U R Drive appears to be a third-party entity; without clear service/expense context and with entity_id 3 having an empty,Sent money to U R Drive
+188,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.33,AUD,ANTHROPIC,,,Card transaction of 22.09 USD issued by Anthropic ANTHROPIC.COM
+189,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.61,AUD,ANTHROPIC,,,Card transaction of 22.22 USD issued by Anthropic ANTHROPIC.COM
+190,Drive lah Australia Pty Ltd.,MATCHED,party-default,5032,-968.00,AUD,MELBOURNE PRESTIGE CENTRE,,,Sent money to MELBOURNE PRESTIGE CENTRE
+191,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-2306.00,AUD,URA,0.400,"The Hollard Insurance Company is an insurance vendor; entity_id 3 COA is empty, preventing account assignment despite cl",Sent money to The Hollard Insurance Company
+192,Drive lah Australia Pty Ltd.,MATCHED,party-default,5032,-2090.00,AUD,Stephen Inner West Smash Repairs Pty Ltd,,,Sent money to Stephen Inner West Smash Repairs
+193,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-1034.00,AUD,NORMAN CHAN,0.700,"Payment to Norman Chan (AUD 1,034.00); similar past shows salaries (6000) at 0.548; amount and repetition across multipl",Sent money to NORMAN CHAN
+194,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.97,AUD,ANTHROPIC,,,Card transaction of 22.29 USD issued by Anthropic ANTHROPIC.COM
+195,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-3909.30,AUD,Rohde Smash Repair,0.400,"Rohde Smash Repair is a repair vendor (matches FLOW-8 incidentals ecosystem), but entity_id 3 COA is empty; would likely",Sent money to Rohde Smash Repairs
+196,Drive lah Australia Pty Ltd.,MATCHED,party-default,5032,-5000.00,AUD,Stephen Inner West Smash Repairs Pty Ltd,,,Sent money to Stephen Inner West Smash Repairs
+197,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-3650.00,AUD,URA,0.400,"The Hollard Insurance Company premium payment; entity_id 3 COA is empty, preventing classification despite clear insuran",Sent money to The Hollard Insurance Company
+198,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-296.00,AUD,URA,0.350,Arvind Khangura payment is small and unclear in purpose; entity_id 3 COA is empty and no prior pattern established.,Sent money to Arvind Khangura
+199,Drive lah Australia Pty Ltd.,MATCHED,party-default,5001,-16488.14,AUD,Bombora,,,Sent money to Bombora Group Pty Ltd
+200,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,37741.00,AUD,,0.500,Topped up Wise AUD account (incoming AUD 37741); no counterparty; likely internal capital/funding transfer; low confiden,Topped up account
+201,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.53,AUD,ANTHROPIC,,,Card transaction of 22.01 USD issued by Anthropic ANTHROPIC.COM
+202,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.55,AUD,ANTHROPIC,,,Card transaction of 22.13 USD issued by Anthropic ANTHROPIC.COM
+203,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-316.59,AUD,CURSOR (AI Powered IDE),,,Card transaction of 220.27 USD issued by Cursor Usage Mid  Feb CURSOR.COM
+204,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.48,AUD,ANTHROPIC,,,Card transaction of 22.11 USD issued by Anthropic ANTHROPIC.COM
+205,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,-19.59,AUD,Didi Mobility,,,Card transaction of 19.59 AUD issued by Didimobility Sydney
+206,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.79,AUD,ANTHROPIC,,,Card transaction of 22.44 USD issued by Anthropic ANTHROPIC.COM
+207,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.34,AUD,ANTHROPIC,,,Card transaction of 22.14 USD issued by Anthropic ANTHROPIC.COM
+208,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-801.89,AUD,URA,0.750,"Counterparty URA (tax authority), AUD 801.89 via Wise; government entity payment indicating statutory tax obligation or ",Sent money to Vigneshsuran So Dhevan
+209,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-33.31,AUD,ANTHROPIC,,,Card transaction of 23.57 USD issued by Anthropic ANTHROPIC.COM
+210,Drive lah Australia Pty Ltd.,MATCHED,party-default,6700,-24.63,AUD,Hetzner,,,Card transaction of 17.40 USD issued by Hetzner Online Gmbh GUNZENHAUSEN
+211,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.12,AUD,ANTHROPIC,,,Card transaction of 22.01 USD issued by Anthropic ANTHROPIC.COM
+212,Drive lah Australia Pty Ltd.,MATCHED,party-default,6700,-14.10,AUD,Synthetic Lab,,,"Card transaction of 10.00 USD issued by Synthetic Lab, Co. SYNTHETIC.NEW"
+213,Drive lah Australia Pty Ltd.,MATCHED,party-default,6700,-14.10,AUD,Synthetic Lab,,,"Card transaction of 10.00 USD issued by Synthetic Lab, Co. SYNTHETIC.NEW"
+214,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.49,AUD,ANTHROPIC,,,Card transaction of 22.33 USD issued by Anthropic ANTHROPIC.COM
+215,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-2.99,AUD,,0.600,Card transaction USD 2.12 (AUD 2.99) issued by Shenduqrwea; similar past software subscription at 0.6 score; small amoun,Card transaction of 2.12 USD issued by Shenduqrwea 18658850911
+216,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.04,AUD,ANTHROPIC,,,Card transaction of 22.01 USD issued by Anthropic ANTHROPIC.COM
+217,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-485.51,AUD,Singapore Network Information Centre,,,Card transaction of 436.00 SGD issued by Pg Singapore Network Info SINGAPORE
+218,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-38.75,AUD,ANTHROPIC,,,Card transaction of 27.50 USD issued by Anthropic ANTHROPIC.COM
+219,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.52,AUD,ANTHROPIC,,,Card transaction of 22.37 USD issued by Anthropic ANTHROPIC.COM
+220,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-32.44,AUD,ANTHROPIC,,,Card transaction of 23.02 USD issued by Anthropic ANTHROPIC.COM
+221,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-32.10,AUD,ANTHROPIC,,,Card transaction of 22.78 USD issued by Anthropic ANTHROPIC.COM
+222,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.03,AUD,ANTHROPIC,,,Card transaction of 22.00 USD issued by Anthropic ANTHROPIC.COM
+223,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-648.61,AUD,Sagar Mahesh Prasad,0.650,Payment to Sagar Mahesh Prasad (AUD 648.61); similar past split salaries/travel; amount and batch context suggest contra,Sent money to Sagar Mahesh Prasad
+224,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-708.61,AUD,Yash Mimani,0.700,Payment to Yash Mimani (AUD 708.61); similar past shows salaries (6000) at 0.548; batch amount and Wise context suggest ,Sent money to Yash Mimani
+225,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-2067.22,AUD,Naitik Padsala,,,Sent money to Padsala Naitik Babubhai
+226,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-3356.72,AUD,Resya Satya Pradhana Harahap,0.500,"Resya Harahap is likely a host/RMS owner payout per the similar pattern, but entity_id 3 COA is empty; would map to 5001",Sent money to Resya Harahap
+227,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-3875.06,AUD,Aakash Chavda,0.500,"Aakash Chavda appears to be an RMS host payout; entity_id 3 COA is empty, preventing assignment despite clear operationa",Sent money to Aakash Aakash
+228,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-858.63,AUD,Pyiee Thin Nwe,0.500,"Pyiee Thin Nwe is likely an RMS host/operational payout; entity_id 3 COA is empty, blocking classification.",Sent money to Pyiee Thin Nwe
+229,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-7048.70,AUD,Pyiee Thin Nwe,0.500,"Pyiee Thin Nwe second payment, larger amount suggests host payout; entity_id 3 COA is empty.",Sent money to Pyiee Thin Nwe
+230,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,20000.00,AUD,,0.500,Topped up Wise AUD account (incoming AUD 20000); no counterparty; likely internal capital transfer; low confidence witho,Topped up account
+231,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-211.50,AUD,Evelyn Chua Aquino,0.650,Payment to Evelyn Chua Aquino (AUD 211.50); similar past split salaries/travel; small amount via Wise suggests payroll d,Sent money to Evelyn Chua Aquino
+232,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-3495.98,AUD,Craig Anthony Letters,0.500,"Craig Anthony Letters appears to be a service provider or operational cost; entity_id 3 COA is empty, preventing classif",Sent money to Craig letters
+233,Drive lah Australia Pty Ltd.,MATCHED,party-default,5062,-5297.67,AUD,Matheus Johannes van der Kooi,,,Sent money to Matheus Johannes van der Kooi
+234,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-5624.12,AUD,Geraldine Austin,0.500,"Geraldine Austin is likely a host/RMS operator payout; entity_id 3 COA is empty, blocking assignment.",Sent money to Geraldine Austin
+235,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-8692.17,AUD,Jacob Hyde,0.500,"Jacob Hyde appears to be an RMS host payout; entity_id 3 COA is empty, preventing classification.",Sent money to Jacob Hyde
+236,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-846.00,AUD,Zilla Marie,0.620,"Sent AUD 846 to Zilla Marie via Wise; salary at 0.5, travel at 0.548; Wise batch and amount suggest remote staff payment",Sent money to Zilla Marie Cenido
+237,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-634.50,AUD,Rose Ann Ferrer Naredo,0.620,"Sent AUD 634.50 to Rose Ann Ferrer Naredo via Wise; salary at 0.463, travel at 0.507, fine at 0.535; Wise batch pattern ",Sent money to Rose Ann Ferrer Naredo
+238,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-634.50,AUD,Godielou Petipet Quero,0.500,"Godielou Petipet Quero is likely a host payout; entity_id 3 COA is empty, blocking assignment.",Sent money to Godielou Petipet Quero
+239,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-634.50,AUD,Julie Ann Macuha Cenedoza,0.500,Julie Ann Macuha Cenedoza appears to be a host payout; entity_id 3 COA is empty.,Sent money to Julie Ann Macuha Cenedoza
+240,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,5061,-634.50,AUD,Raymund Jay Juliano Recto,,,Sent money to Raymund Jay Juliano Recto
+241,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-634.50,AUD,Terrence Dimagan Genetiano,0.500,"Terrence Dimagan Genetiano is likely a host payout; entity_id 3 COA is empty, preventing classification.",Sent money to Terrence Dimagan Genetiano
+242,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-634.50,AUD,Emmanuel Jacobo,,,Sent money to Emmanuel Joseph Reyes Jacobo
+243,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-634.50,AUD,Patrick Leonard Mojica,0.500,"Patrick Leonard Mojica appears to be a host payout; entity_id 3 COA is empty, blocking assignment.",Sent money to Patrick Leonard Mojica
+244,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-634.50,AUD,Ernie Javines Biason,0.500,"Ernie Javines Biason is likely a host payout; entity_id 3 COA is empty, preventing classification.",Sent money to Ernie Javines Biason
+245,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-634.50,AUD,Mary Rose Bernal Yap,,,Sent money to Mary Rose Yap
+246,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-634.50,AUD,Jennilyn Palacol Labajos,0.500,Jennilyn Palacol Labajos appears to be a host payout; entity_id 3 COA is empty.,Sent money to Jennilyn Palacol Labajos
+247,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-634.50,AUD,Xyron Bunquin Manongsong,0.500,"Xyron Bunquin Manongsong is likely a host payout; entity_id 3 COA is empty, blocking assignment.",Sent money to Xyron Manongsong
+248,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-634.50,AUD,Rheazel Martinez Adolfo,0.500,"Rheazel Martinez Adolfo appears to be a host payout; entity_id 3 COA is empty, preventing classification.",Sent money to Rheazel Martinez Adolfo
+249,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-634.50,AUD,Melvin Verona Magro,0.500,"Melvin Verona Magro is likely a host payout; entity_id 3 COA is empty, blocking assignment.",Sent money to Melvin Verona Magro
+250,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-423.00,AUD,Evelyn Chua Aquino,0.500,"Evelyn Chua Aquino appears to be a host payout; entity_id 3 COA is empty, preventing classification.",Sent money to Evelyn Chua Aquino
+251,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-634.50,AUD,Jeremy Bautista,0.500,"Jeremy Bautista is likely a host payout; entity_id 3 COA is empty, blocking assignment.",Sent money to Jeremy Dequit Bautista
+252,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-775.50,AUD,Riezel Basilio Villanueva,0.500,"Riezel Basilio Villanueva appears to be a host payout; entity_id 3 COA is empty, preventing classification.",Sent money to Riezel Basilio Villanueva
+253,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-634.50,AUD,Decemberlyn Muyuela Sumagaysay,0.500,"Decemberlyn Muyuela Sumagaysay is likely a host payout; entity_id 3 COA is empty, blocking assignment.",Sent money to Decemberlyn Muyuela Sumagaysay
+254,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-846.00,AUD,Marijoy Manalo Riomalos,0.500,"Marijoy Manalo Riomalos appears to be a host payout; entity_id 3 COA is empty, preventing classification.",Sent money to Marijoy Manalo Riomalos
+255,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-697.95,AUD,Annabelle Gayda Luching,0.500,"Annabelle Gayda Luching is likely a host payout; entity_id 3 COA is empty, blocking assignment.",Sent money to Annabelle Gayda Luching
+256,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-634.50,AUD,Rosemarie Timbol Basilio,0.500,"Rosemarie Timbol Basilio appears to be a host payout; entity_id 3 COA is empty, preventing classification.",Sent money to Rosemarie  Timbol Basilio
+257,Drive lah Australia Pty Ltd.,MATCHED,party-default,5062,-1184.40,AUD,Alexcess Libiran Car,,,Sent money to Alexcess Car
+258,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-634.50,AUD,Myrna Lynne Alcala,,,Sent money to Myrna Lynne Alcala
+259,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-634.50,AUD,Izzah Lorraine Carandang Dela Cruz,,,Sent money to Izzah Lorraine Carandang Dela Cruz
+260,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-634.50,AUD,Gabriel John Limjoco,0.600,Gabriel John Limjoco shows strong historical match to salary account (0.756 confidence); likely employee payroll but ent,Sent money to Gabriel John Ebreo Limjoco
+261,Drive lah Australia Pty Ltd.,MATCHED,party-default,5062,-634.50,AUD,Edelyn Reyes,,,Sent money to Edelyn Reyes
+262,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,5063,-1057.50,AUD,Randolf Mercado,,,Sent money to Randolf Mercado
+263,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-634.50,AUD,Gem C. Rey-Hipolito,,,Sent money to Gem C. Rey-Hipolito
+264,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-521.70,AUD,Trixie trixie,,,Sent money to Trixie Mauricio Coronel
+265,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-634.50,AUD,Ralph Efrenson Eronga,0.500,"Ralph Efrenson Eronga is unclear in role; entity_id 3 COA is empty, preventing classification.",Sent money to Ralph Efrenson S Eronga
+266,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-846.00,AUD,DOMINADOR GAMIT,,,Sent money to DOMINADOR GAMIT
+267,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-634.50,AUD,URA,0.500,"Edgardo Buenaventura is unclear in role; entity_id 3 COA is empty, blocking assignment.",Sent money to Edgardo Buenaventura
+268,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-616.87,AUD,Jennilyn Reyes,,,Sent money to Jennilyn Reyes
+269,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-634.50,AUD,Maria Fonseca Dimaandal,,,Sent money to Maria Fonseca Dimaandal
+270,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-1762.50,AUD,Lai Mei T,0.500,"Lai Mei T is unclear in role; entity_id 3 COA is empty, preventing classification.",Sent money to Lai Mei Regina Teh
+271,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,50000.00,AUD,,0.500,Topped up Wise AUD account (incoming AUD 50000); no counterparty; likely internal capital transfer; low confidence witho,Topped up account
+272,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-33.04,AUD,ANTHROPIC,,,Card transaction of 23.43 USD issued by Anthropic ANTHROPIC.COM
+273,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),5060,-1.02,AUD,,0.850,Card AUD 1.02 issued by Drive Mate MELBOURNE (own trading name); parking comparable at 0.636; small transaction on compa,Card transaction of 1.02 AUD issued by Drive Mate MELBOURNE
+274,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),6400,-18.95,AUD,,0.800,"Card AUD 18.95 issued by Drive Mate MELBOURNE; travel/restaurant comparable at 0.585; small transaction on company card,",Card transaction of 18.95 AUD issued by Drive Mate MELBOURNE
+275,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.79,AUD,ANTHROPIC,,,Card transaction of 22.56 USD issued by Anthropic ANTHROPIC.COM
+276,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.43,AUD,ANTHROPIC,,,Card transaction of 22.31 USD issued by Anthropic ANTHROPIC.COM
+277,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),6400,-4.61,AUD,,0.800,"Card AUD 4.61 issued by Drive Mate MELBOURNE; travel comparable at 0.609, parking at 0.545; likely travel or small incid",Card transaction of 4.61 AUD issued by Drive Mate MELBOURNE
+278,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),6400,-18.95,AUD,,0.800,Card AUD 18.95 issued by Drive Mate MELBOURNE; travel/restaurant comparable at 0.585; small transaction on company card ,Card transaction of 18.95 AUD issued by Drive Mate MELBOURNE
+279,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),6400,-56.30,AUD,,0.900,Card USD 40 (AUD 56.30) issued by Unprompted 501(c)(3); identical past transaction at 0.874 score booked to travel; conf,Card transaction of 40.00 USD issued by Unprompted 501(c)(3) UNPROMPTEDCON
+280,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.73,AUD,ANTHROPIC,,,Card transaction of 22.57 USD issued by Anthropic ANTHROPIC.COM
+281,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),6400,-18.95,AUD,,0.800,Card AUD 18.95 issued by Drive Mate MELBOURNE; travel/restaurant comparable at 0.585; small transaction on company card ,Card transaction of 18.95 AUD issued by Drive Mate MELBOURNE
+282,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),6400,18.95,AUD,,0.800,Card reversal/refund AUD 18.95 from Drive Mate; incoming transaction reversing prior expense; books to same expense acco,Card transaction of 18.95 AUD issued by Drive Mate +61341602205
+283,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,17.10,AUD,,0.750,Card reversal/refund AUD 17.10 from Drive Mate; incoming transaction likely reversing parking expense; books back to 506,Card transaction of 17.10 AUD issued by Drive Mate +61341602205
+284,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-32.78,AUD,ANTHROPIC,,,Card transaction of 23.29 USD issued by Anthropic ANTHROPIC.COM
+285,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-32.88,AUD,ANTHROPIC,,,Card transaction of 23.38 USD issued by Anthropic ANTHROPIC.COM
+286,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-32.80,AUD,ANTHROPIC,,,Card transaction of 23.32 USD issued by Anthropic ANTHROPIC.COM
+287,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-28.92,AUD,ANTHROPIC,,,Card transaction of 22.20 USD issued by Anthropic ANTHROPIC.COM
+288,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,53.08,AUD,,0.750,"Card reversal/refund AUD 53.08 from Drive Mate; incoming, likely reversing travel or fuel expense; books to travel accou",Card transaction of 53.08 AUD issued by Drive Mate +61341602205
+289,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-33.13,AUD,Helena Oosterweghel,0.630,Sent AUD 33.13 to Helena Oosterweghel via Wise; salary and travel comparables at 0.548–0.6; Wise batch suggests remote s,Sent money to Helena Oosterweghel
+290,Drive lah Australia Pty Ltd.,MATCHED,party-default,6500,-907.50,AUD,ACE,,,Sent money to ACE Administration Services Pty Ltd
+291,Drive lah Australia Pty Ltd.,MATCHED,party-default,6500,-1100.00,AUD,ACE,,,Sent money to ACE Administration Services Pty Ltd
+292,Drive lah Australia Pty Ltd.,MATCHED,party-default,6500,-770.00,AUD,ACE,,,Sent money to ACE Administration Services Pty Ltd
+293,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),6400,1.00,AUD,,0.800,"Card reversal/refund AUD 1.00 from Drive Mate; incoming small refund, likely reversing prior travel or meal expense.",Card transaction of 1.00 AUD issued by Drive Mate +61341602205
+294,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),6400,1.00,AUD,,0.800,"Card reversal/refund AUD 1.00 from Drive Mate; incoming small refund, likely reversing prior travel expense.",Card transaction of 1.00 AUD issued by Drive Mate +61341602205
+295,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),5060,12.80,AUD,,0.850,"Card reversal/refund AUD 12.80 from Drive Mate MELBOURNE; incoming, reversal of parking charge; identical past parking t",Card transaction of -12.80 AUD issued by Drive Mate MELBOURNE
+296,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),6400,1.00,AUD,,0.800,"Card reversal/refund AUD 1.00 from Drive Mate; incoming small refund, likely reversing prior travel expense.",Card transaction of 1.00 AUD issued by Drive Mate +61341602205
+297,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-15000.00,AUD,,0.550,Currency conversion AUD 15000 to USD 10508.23 via Wise; movement between company Wise accounts; books as transfer/cash e,"Converted 15,000.00 AUD to 10,508.23 USD"
+298,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-15000.00,AUD,Dom Drive lah,0.500,Intercompany transfer to Drive lah Pte Ltd (SG entity); entity_id 3 COA is empty and intercompany transfers are not P&L ,Sent money to Drive Lah Pte. Ltd.
+299,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-39.12,AUD,ANTHROPIC,,,Card transaction of 27.50 USD issued by Anthropic ANTHROPIC.COM
+300,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-40.56,AUD,ANTHROPIC,,,Card transaction of 28.52 USD issued by Anthropic ANTHROPIC.COM
+301,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,30000.00,AUD,,0.500,Topped up Wise AUD account (incoming AUD 30000); no counterparty; likely internal capital/funding transfer; low confiden,Topped up account
+302,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),6400,4.61,AUD,,0.800,"Card reversal/refund AUD 4.61 from Drive Mate; incoming small refund, likely reversing prior travel expense.",Card transaction of 4.61 AUD issued by Drive Mate +61341602205
+303,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),6400,4.61,AUD,,0.800,"Card reversal/refund AUD 4.61 from Drive Mate; incoming small refund, likely reversing prior travel expense.",Card transaction of 4.61 AUD issued by Drive Mate +61341602205
+304,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),5060,-3.06,AUD,,0.820,"Card AUD 3.06 issued by Drive Mate MELBOURNE; parking comparable at 0.636, travel at 0.545; small transaction on company",Card transaction of 3.06 AUD issued by Drive Mate MELBOURNE
+305,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),5060,-12.80,AUD,,0.850,Card transaction issued by Drive Mate (our own trading name); similar parking transactions historically classified to 50,Card transaction of 12.80 AUD issued by Drive Mate MELBOURNE
+306,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-39.14,AUD,ANTHROPIC,,,Card transaction of 27.50 USD issued by Anthropic ANTHROPIC.COM
+307,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-39.08,AUD,ANTHROPIC,,,Card transaction of 27.50 USD issued by Anthropic ANTHROPIC.COM
+308,Drive lah Australia Pty Ltd.,MATCHED,party-default,5001,-170.44,AUD,Bombora,,,Sent money to Bombora Group Pty Ltd
+309,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,-40.18,AUD,Didi Mobility,,,Card transaction of 40.18 AUD issued by Didimobility Sydney
+310,Drive lah Australia Pty Ltd.,MATCHED,party-default,5001,-650.00,AUD,Bombora,,,Sent money to Bombora Group Pty Ltd
+311,Drive lah Australia Pty Ltd.,MATCHED,party-default,5001,-17874.20,AUD,Bombora,,,Sent money to Bombora Group Pty Ltd
+312,Drive lah Australia Pty Ltd.,MATCHED,party-default,5062,-60.53,AUD,SHELL,,,Card transaction of 60.53 AUD issued by Bp Connect 0811 ASHFIELD
+313,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),6400,-59.89,AUD,,0.950,Perfect match: identical merchant and amount in similar_past scored 1.0 to 6400 (Travel - Tickets); Trendsetter Syd Pty ,Card transaction of 59.89 AUD issued by Trendsetter Syd Pty Lt SUMMER HILL
+314,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,22000.00,AUD,,0.450,Large incoming 'Topped up account' with no merchant detail; likely a capital/operational funding deposit; insufficient c,Topped up account
+315,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),5060,-12.80,AUD,,0.850,Card transaction issued by Drive Mate (our trading name); similar parking transactions classified to 5060; consistent wi,Card transaction of 12.80 AUD issued by Drive Mate MELBOURNE
+316,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,12.80,AUD,,0.400,Incoming card refund from Drive Mate (our own entity); likely a reversal or operational cash return; insufficient mercha,Card transaction of 12.80 AUD issued by Drive Mate +61341602205
+317,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,1.00,AUD,,0.400,Incoming $1.00 AUD from Drive Mate phone number; appears to be a test or minimal reversal; insufficient detail; asset de,Card transaction of 1.00 AUD issued by Drive Mate +61341602205
+318,Drive lah Australia Pty Ltd.,MATCHED,party-default,5060,-12.80,AUD,Wilson Parking,,,Card transaction of 12.80 AUD issued by Cityofsydney Parking SYDNEY
+319,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-2.30,AUD,,0.720,Card transaction from Drive Mate MELBOURNE; similar_past shows Translink (transport) at 6400 (0.636 score); small amount,Card transaction of 2.30 AUD issued by Drive Mate MELBOURNE
+320,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-12.80,AUD,,0.730,Card transaction issued by Drive Mate Melbourne; small amount (~$12.80) and similar past transactions consistently map t,Card transaction of 12.80 AUD issued by Drive Mate MELBOURNE
+321,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-634.50,AUD,Rose Ann Ferrer Naredo,0.600,Payment to Rose Ann Ferrer Naredo (AUD 634.50); similar past shows salaries (6000) at 0.463; amount and Wise context sug,Sent money to Rose Ann Ferrer Naredo
+322,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-69.63,AUD,Sentry,,,Card transaction of 49.07 USD issued by Sentry SENTRY.IO
+323,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-294.85,AUD,CURSOR (AI Powered IDE),,,Card transaction of 207.79 USD issued by Cursor Usage  Jan CURSOR.COM
+324,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-398.64,AUD,CURSOR (AI Powered IDE),,,"Card transaction of 280.00 USD issued by Cursor, Ai Powered Ide CURSOR.COM"
+325,Drive lah Australia Pty Ltd.,MATCHED,party-default,5034,-220.00,AUD,Focussed Assessing Pty Ltd,,,Sent money to Focussed Assessing Pty Ltd
+326,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-2841.03,AUD,CAR-TREK AUSTRALIA PTY LTD,0.550,"Payment to CAR-TREK AUSTRALIA PTY LTD; similar_past suggests cleaning/incidentals (5022), but CAR-TREK is likely a vehic",Sent money to CAR-TREK AUSTRALIA PTY LTD
+327,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-7573.90,AUD,CAR-TREK AUSTRALIA PTY LTD,0.550,Larger payment to CAR-TREK AUSTRALIA PTY LTD; similar rationale to 326; likely RMS owner payout or fleet service; insuff,Sent money to CAR-TREK AUSTRALIA PTY LTD
+328,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,11000.00,AUD,,0.450,Topped up account with no counterparty or memo detail; likely intercompany or capital transfer to Wise working capital (,Topped up account
+329,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),6400,-22.30,AUD,,0.980,Perfect match: identical merchant (Translink Ticketing QLD) and amount in similar_past scored 1.0 to 6400 (Travel - Tick,Card transaction of 22.30 AUD issued by Translink Ticketing QLD
+330,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,0.01,AUD,UBER *TRIP,,,Card transaction of 31.95 AUD issued by Uber *Trip Help.uber.com Sydney
+331,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-11.18,AUD,URA,0.600,"Restaurant meal matches Travel - Tickets category with perfect score (1.0) in similar past; entity_id 3 COA is empty, pr",Card transaction of 11.18 AUD issued by Black Fire Restauran BRISBANE CITY
+332,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),6400,-30.00,AUD,,0.980,Perfect match: identical merchant and amount in similar_past scored 1.0 to 6400; The Great Southern Brisbane is a travel,Card transaction of 30.00 AUD issued by The Great Southern Brisba Brisbane
+333,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),6400,-25.00,AUD,,0.980,Perfect match: identical merchant and amount in similar_past scored 1.0 to 6400; Port Office Hotel Brisbane is a travel/,Card transaction of 25.00 AUD issued by Port Office Hotel Brisbane
+334,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),6400,-93.82,AUD,,0.980,Perfect match: identical merchant and amount in similar_past scored 1.0 to 6400; Port Office Hotel Brisbane travel/hospi,Card transaction of 93.82 AUD issued by Port Office Hotel Brisbane
+335,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,-39.94,AUD,Didi Mobility,,,Card transaction of 39.94 AUD issued by Didimobility Sydney
+336,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-7000.00,AUD,Dom Drive lah,0.500,Payment to 'Drive Lah Pte. Ltd.' (SG parent); intercompany transfer; described as 'Dom Drive lah'; likely operational fu,Sent money to Drive Lah Pte. Ltd.
+337,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,7000.00,AUD,,0.450,"Incoming 'Topped up account' AUD 7,000; no merchant detail; likely operational funding or intercompany capital; insuffic",Topped up account
+338,Drive lah Australia Pty Ltd.,MATCHED,party-default,5060,-44.44,AUD,Wilson Parking,,,Card transaction of 44.44 AUD issued by Secure Parking 800142 FORTITUDE VAL
+339,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),6400,-18.52,AUD,,0.980,Perfect match: identical merchant and amount in similar_past scored 1.0 to 6400; Wickham Hotel (Fortitude Valley) is a t,Card transaction of 18.52 AUD issued by Wickham Hotel App Fortitude Val
+340,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,-41.44,AUD,Didi Mobility,,,Card transaction of 41.44 AUD issued by Didimobility Sydney
+341,Drive lah Australia Pty Ltd.,MATCHED,party-default,5060,-15.00,AUD,Wilson Parking,,,Card transaction of 15.00 AUD issued by Bac Parking ASCOT
+342,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,-22.79,AUD,Didi Mobility,,,Card transaction of 22.79 AUD issued by Didimobility Sydney
+343,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-283.83,AUD,CURSOR (AI Powered IDE),,,Card transaction of 200.01 USD issued by Cursor Usage Mid  Jan CURSOR.COM
+344,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-18.67,AUD,Lucy Robertson-Bell,0.550,Payment to Lucy Robertson-Bell (individual); similar_past shows Nathalia Kurniawan (travel 0.548) and RUPALBEN (salary 0,Sent money to Lucy Robertson-Bell
+345,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-612.60,AUD,Netrust Pte Ltd,,,Sent money to Netrust Pte Ltd
+346,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-989.22,AUD,Onfido,,,Sent money to Onfido PTE Ltd
+347,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-8156.77,AUD,Onfido,,,Sent money to Onfido PTE Ltd
+348,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,10000.00,AUD,,0.450,"Incoming 'Topped up account' AUD 10,000; no merchant detail; likely operational funding; insufficient context; asset def",Topped up account
+349,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.15,AUD,OPENAI (ChatGPT Subscription),,,Card transaction of 22.00 USD issued by Openai OPENAI.COM
+350,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-6600.00,AUD,MPDG Services Pty Ltd,0.630,MPDG Services Pty Ltd; similar past transaction (All Aces Clean) booked to incidentals payout cleaning (5022); likely a ,Sent money to MPDG Services Pty Ltd
+351,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,7000.00,AUD,,0.450,Topped up account; no counterparty or memo; likely intercompany capital or working capital transfer; insufficient detail,Topped up account
+352,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-52.20,AUD,Jiranan Kanyathong,0.600,Payment to individual Jiranan Kanyathong; small amount (~$52) and similar patterns suggest travel/ticket reimbursement.,Sent money to Jiranan Kanyathong
+353,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-12000.00,AUD,Dom Drive lah,0.500,Intercompany transfer to Drive lah Pte Ltd (SG entity); entity_id 3 COA is empty and intercompany transfers are not P&L ,Sent money to Drive Lah Pte. Ltd.
+354,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,10000.00,AUD,,0.450,"Incoming 'Topped up account' AUD 10,000; no merchant detail; likely operational funding; asset default.",Topped up account
+355,Drive lah Australia Pty Ltd.,MATCHED,party-default,5060,-90.00,AUD,Wilson Parking,,,Card transaction of 90.00 AUD issued by Wilson Parking Mel126 MELBOURNE
+356,Drive lah Australia Pty Ltd.,MATCHED,party-default,1710,-2881.34,AUD,Roobykon,,,Sent money to Roobykon Software OÜ
+357,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,5000.00,AUD,,0.450,"Incoming 'Topped up account' AUD 5,000; no merchant detail; likely operational funding; asset default.",Topped up account
+358,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-18.68,AUD,URA,0.350,Vigneshsuran So Dhevan payment is very small (18.68 AUD) and purpose unclear; entity_id 3 COA is empty.,Sent money to Vigneshsuran So Dhevan
+359,Drive lah Australia Pty Ltd.,MATCHED,party-default,6300,-2.00,AUD,IWG AUSTRALIA,,,Card transaction of 2.00 AUD issued by Regus Australia SYDNEY
+360,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-397.28,AUD,URA,0.350,Vigneshsuran So Dhevan second payment is still small (397.28 AUD) with unclear purpose; entity_id 3 COA is empty.,Sent money to Vigneshsuran So Dhevan
+361,Drive lah Australia Pty Ltd.,MATCHED,party-default,6300,-2.00,AUD,IWG AUSTRALIA,,,Card transaction of 2.00 AUD issued by Regus Australia SYDNEY
+362,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-247.00,AUD,Craig Anthony Letters,0.500,"Craig Anthony Letters service vendor payment; entity_id 3 COA is empty, preventing classification.",Sent money to Craig letters
+363,Drive lah Australia Pty Ltd.,MATCHED,party-default,5062,-7773.87,AUD,Matheus Johannes van der Kooi,,,Sent money to Matheus Johannes van der Kooi
+364,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),6400,-244.98,AUD,,1.000,Exact duplicate of past transaction 'Card transaction of 244.98 AUD issued by The Meat And Wine Co'; prior classificatio,Card transaction of 244.98 AUD issued by The Meat And Wine Co Hawt Hawthorne Eas
+365,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,10000.00,AUD,,0.450,"Incoming 'Topped up account' AUD 10,000; no merchant detail; likely operational funding; asset default.",Topped up account
+366,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-1933.53,AUD,Harley Curran,0.500,"Payment to Harley Curran (individual); similar_past shows travel (0.6), salary (0.548), parking (0.548); insufficient co",Sent money to Harley Curran
+367,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-5469.75,AUD,Experian Australia Operations Pty Ltd,,,Sent money to EXPERIAN AUSTRALIA OPERATIONS P/L
+368,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-1268.87,AUD,Craig Anthony Letters,0.500,"Craig Anthony Letters vendor payment; entity_id 3 COA is empty, blocking assignment.",Sent money to Craig letters
+369,Drive lah Australia Pty Ltd.,MATCHED,party-default,5060,-17.00,AUD,Wilson Parking,,,Card transaction of 17.00 AUD issued by Wilson Parking M139 NEDLANDS
+370,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-19.14,AUD,Mingun Kim,0.500,"Payment to Mingun Kim (individual); similar_past shows travel (0.6), salary (0.548), parking (0.548); small amount; insu",Sent money to Mingun Kim
+371,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,5061,-170.63,AUD,Jay Balan,,,Sent money to Jay Balan
+372,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-168.17,AUD,ZHEN YE TAI,0.500,"Payment to ZHEN YE TAI (individual); similar_past shows travel (0.548), salary (0.5), parking (0.5); insufficient contex",Sent money to ZHEN YE TAI
+373,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-163.34,AUD,Yennie Lam,0.500,"Payment to Yennie Lam (individual); similar_past shows travel (0.6), salary (0.548), parking (0.548); insufficient conte",Sent money to Yennie Lam
+374,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-41.80,AUD,Jeremy Colgan,0.500,"Payment to Jeremy Colgan (individual); similar_past shows travel (0.6), salary (0.548), parking (0.548); small amount; i",Sent money to Jeremy Colgan
+375,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-411.44,AUD,Australian Financial Complaints,0.700,Payment to Australian Financial Complaints Authority (government dispute-resolution body); regulatory/compliance fee; cl,Sent money to Australian Financial Complaints
+376,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-3847.61,AUD,Australian Financial Complaints,0.700,Payment to Australian Financial Complaints Authority; larger regulatory/compliance fee; classified to Professional Servi,Sent money to Australian Financial Complaints
+377,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-203.95,AUD,,0.620,Card transaction Vistaprint Australia (printing/marketing); similar past transactions with Trendsetter categorized as 64,Card transaction of 203.95 AUD issued by Vistaprint Australia Pty Derrimut
+378,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-411.44,AUD,Australian Financial Complaints,0.700,Payment to Australian Financial Complaints Authority (government/regulatory body); likely a regulatory or compliance fee,Sent money to Australian Financial Complaints
+379,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-109.52,AUD,Australian Financial Complaints,0.700,Payment to Australian Financial Complaints Authority; regulatory compliance fee; classified to Professional Services/Leg,Sent money to Australian Financial Complaints
+380,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-2511.26,AUD,Australian Financial Complaints,0.700,Payment to Australian Financial Complaints Authority; regulatory compliance fee; classified to Professional Services/Leg,Sent money to Australian Financial Complaints
+381,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-402.29,AUD,Australian Financial Complaints,0.700,Payment to Australian Financial Complaints Authority; regulatory compliance fee; classified to Professional Services/Leg,Sent money to Australian Financial Complaints
+382,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-1255.63,AUD,Australian Financial Complaints,0.700,Payment to Australian Financial Complaints Authority; regulatory compliance fee; classified to Professional Services/Leg,Sent money to Australian Financial Complaints
+383,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-388.69,AUD,Australian Financial Complaints,0.700,Payment to Australian Financial Complaints Authority; regulatory compliance fee; classified to Professional Services/Leg,Sent money to Australian Financial Complaints
+384,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-260.25,AUD,CURSOR (AI Powered IDE),,,Card transaction of 180.01 USD issued by Cursor Usage Mid  Jan CURSOR.COM
+385,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-5316.03,AUD,Illion,,,Sent money to illion Australia Pty Ltd
+386,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-2000.00,AUD,U R Drive,0.500,"Payment to U R Drive (AUD 2,000.00); counterparty is a vendor (U R Drive), not an employee; account unclear without invo",Sent money to U R Drive
+387,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-5000.00,AUD,URA,0.400,"The Hollard Insurance Company insurance premium; entity_id 3 COA is empty, preventing classification despite clear insur",Sent money to The Hollard Insurance Company
+388,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-1252.35,AUD,Autorola,0.500,"Payment to Autorola (AUD 1,252.35); vendor name suggests fleet management/vehicle services; no clear match in similar pa",Sent money to Autorola
+389,Drive lah Australia Pty Ltd.,MATCHED,party-default,5032,-3092.20,AUD,Stephen Inner West Smash Repairs Pty Ltd,,,Sent money to Stephen Inner West Smash Repairs
+390,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,32000.00,AUD,,0.450,"Incoming 'Topped up account' AUD 32,000; no merchant detail; large operational/capital funding; asset default.",Topped up account
+391,Drive lah Australia Pty Ltd.,MATCHED,party-default,6310,-43.00,AUD,Officeworks,,,Card transaction of 43.00 AUD issued by Officeworks 0313 FERNTREE GLY
+392,Drive lah Australia Pty Ltd.,MATCHED,party-default,5030,-1414.01,AUD,SentriLock,,,Sent money to Sentrilock LLC
+393,Drive lah Australia Pty Ltd.,MATCHED,party-default,5030,-1379.14,AUD,SentriLock,,,Sent money to Sentrilock LLC
+394,Drive lah Australia Pty Ltd.,MATCHED,party-default,5030,-1190.15,AUD,SentriLock,,,Sent money to Sentrilock LLC
+395,Drive lah Australia Pty Ltd.,MATCHED,party-default,5030,1191.08,AUD,SentriLock,,,Sent money to Sentrilock LLC
+396,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-5942.44,AUD,Resya Satya Pradhana Harahap,0.500,"Payment to Resya Satya Pradhana Harahap; large amount (~$5942) suggests possible RMS owner payout per FLOW-4, but insuff",Sent money to Resya Harahap
+397,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,8000.00,AUD,,0.450,Topped up account; no counterparty; likely intercompany capital transfer; low confidence without detail.,Topped up account
+398,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,-534.00,AUD,Trip.com,,,Card transaction of 534.00 AUD issued by Hotel At Booking.com Sydney
+399,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,-18.72,AUD,Didi Mobility,,,Card transaction of 16.58 SGD issued by Grab* A-8tq7c9owxa44av Singapore
+400,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-5.65,AUD,,0.650,Card transaction Bus/MRT Singapore; public transport fare; similar_past shows infrastructure (0.552) and travel (implici,Card transaction of 5.01 SGD issued by Bus/mrt 788905625 SINGAPORE
+401,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-123.50,AUD,Craig Anthony Letters,0.650,"Sent money to Craig Anthony Letters via Wise; similar past shows salary payments at 0.548 score, travel at 0.6, but low ",Sent money to Craig letters
+402,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-203.95,AUD,,0.600,Card transaction Vistaprint Australia (print/marketing vendor); similar_past does not show marketing but print services ,Card transaction of 203.95 AUD issued by Vistaprint Australia Pty Derrimut
+403,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-9.44,AUD,,0.650,Card transaction Kopitiam (Singapore café); small food/beverage purchase; similar_past shows transport (0.553 infrastruc,Card transaction of 8.30 SGD issued by Kopitiam@mbc Singapore
+404,Drive lah Australia Pty Ltd.,MATCHED,party-default,5030,-13496.98,AUD,Thinxtra,,,Sent money to Thinxtra Solutions Pty Ltd
+405,Drive lah Australia Pty Ltd.,MATCHED,party-default,5030,-12184.74,AUD,Thinxtra,,,Sent money to Thinxtra Solutions Pty Ltd
+406,Drive lah Australia Pty Ltd.,MATCHED,party-default,5062,-5297.67,AUD,Matheus Johannes van der Kooi,,,Sent money to Matheus Johannes van der Kooi
+407,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,20233.00,AUD,,0.450,"Incoming 'Topped up account' AUD 20,233; no merchant detail; operational funding; asset default.",Topped up account
+408,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-8692.17,AUD,Jacob Hyde,0.700,"Large payout to Jacob Hyde (AUD 8692) via Wise; salary comparable transactions score 0.548, amount and Wise batch paymen",Sent money to Jacob Hyde
+409,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-875.16,AUD,Pyiee Thin Nwe,0.500,Payment to Pyiee Thin Nwe; amount (~$875) consistent with RMS owner payout pattern; insufficient detail to confirm.,Sent money to Pyiee Thin Nwe
+410,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-657.48,AUD,Sagar Mahesh Prasad,0.650,Payment to Sagar Mahesh Prasad (AUD 657.48); similar past split salaries/travel; repeated payee and amount suggest contr,Sent money to Sagar Mahesh Prasad
+411,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-7188.43,AUD,Pyiee Thin Nwe,0.500,Payment to Pyiee Thin Nwe; large amount (~$7188) suggests RMS host payout; low confidence without invoice.,Sent money to Pyiee Thin Nwe
+412,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-471.40,AUD,URA,0.750,"Counterparty URA (tax authority) payment of AUD 471.40; URA is a government entity, indicating tax or statutory obligati",Sent money to Vigneshsuran So Dhevan
+413,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-5751.80,AUD,Geraldine Austin,0.700,"Payment to Geraldine Austin (AUD 5,751.80); similar past shows salaries (6000) at 0.548; larger amount via Wise suggests",Sent money to Geraldine Austin
+414,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-2093.86,AUD,Naitik Padsala,0.500,Payment to Naitik Padsala; amount (~$2094) aligns with RMS owner payout; insufficient detail for higher confidence.,Sent money to Padsala Naitik Babubhai
+415,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-2311.71,AUD,Farjad Ali Khan,0.680,"Sent AUD 2311.71 to Farjad Ali Khan via Wise; salary comparable at 0.316 score, travel at 0.346; Wise batch pattern cons",Sent money to Farjad Ali Khan Farjad Ali Khan
+416,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-3927.79,AUD,Aakash Chavda,0.700,"Sent AUD 3927.79 to Aakash Chavda via Wise; salary comparison scores 0.463, travel 0.507; Wise batch payment typical for",Sent money to Aakash Aakash
+417,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-2304.99,AUD,Bhalani Nimesh Himmatbhai,0.650,"Payment to Bhalani Nimesh Himmatbhai (AUD 2,304.99); similar past split salaries/travel; amount and batch context sugges",Sent money to Bhalani Nimesh Himmatbhai
+418,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,6000,-2199.58,AUD,Rahul Moitra,,,Sent money to Rahul Moitra
+419,Drive lah Australia Pty Ltd.,MATCHED,party-default,6000,-2770.87,AUD,Ankish Mody,,,Sent money to Ankish Mody
+420,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,5061,-5179.53,AUD,Sanjay Kumar,,,Sent money to SANJAY KUMAR
+421,Drive lah Australia Pty Ltd.,MATCHED,party-default,6000,-8750.35,AUD,Aman Yadav,,,Sent money to Aman Yadav
+422,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,50000.00,AUD,,0.450,"Incoming 'Topped up account' AUD 50,000; no merchant detail; large operational/capital funding; asset default.",Topped up account
+423,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-231.00,AUD,CURSOR (AI Powered IDE),,,Card transaction of 160.04 USD issued by Cursor Usage Mid  Jan CURSOR.COM
+424,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-842.98,AUD,Thummanapally Tilak,0.650,Sent AUD 842.98 to Thummanapally Tilak via Wise; salary and travel comparables at 0.548–0.6; Wise batch pattern suggests,Sent money to Thummanapally Tilak
+425,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-723.03,AUD,Yash Mimani,0.650,Sent AUD 723.03 to Yash Mimani via Wise; salary and travel comparables at 0.548–0.6; Wise batch pattern suggests remote ,Sent money to Yash Mimani
+426,Drive lah Australia Pty Ltd.,MATCHED,party-default,6000,-633.01,AUD,Paramjeet Paramjeet,,,Sent money to Paramjeet Paramjeet
+427,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-2286.35,AUD,URA,0.650,Payment to person (Vigneshsuran So Dhevan) with counterparty URA; likely salary/payroll related.,Sent money to Vigneshsuran So Dhevan
+428,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,5061,-2835.59,AUD,Jay Balan,,,Sent money to Jay Balan
+429,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-864.00,AUD,Zilla Marie,0.680,Payment to Zilla Marie Cenido (counterparty: Zilla Marie); likely employee salary or contractor payment.,Sent money to Zilla Marie Cenido
+430,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-648.00,AUD,Rose Ann Ferrer Naredo,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Sent money to Rose Ann Ferrer Naredo
+431,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-648.00,AUD,Godielou Petipet Quero,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Sent money to Godielou Petipet Quero
+432,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-648.00,AUD,Julie Ann Macuha Cenedoza,0.500,Payment to individual Julie Ann Macuha Cenedoza; similar past suggests salary (6000) but could also be contractor/reimbu,Sent money to Julie Ann Macuha Cenedoza
+433,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,5061,-648.00,AUD,Raymund Jay Juliano Recto,,,Sent money to Raymund Jay Juliano Recto
+434,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-648.00,AUD,Terrence Dimagan Genetiano,0.500,Payment to Terrence Dimagan Genetiano; amount (~$648) suggests host payout per FLOW-4; low confidence without invoice ma,Sent money to Terrence Dimagan Genetiano
+435,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-648.00,AUD,Emmanuel Jacobo,,,Sent money to Emmanuel Joseph Reyes Jacobo
+436,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-648.00,AUD,Patrick Leonard Mojica,0.550,Payment to Patrick Leonard Mojica ($648); similar past shows salary (6000) at score 0.5 and travel (6400) at 0.548; like,Sent money to Patrick Leonard Mojica
+437,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-648.00,AUD,Ernie Javines Biason,0.550,Payment to Ernie Javines Biason ($648); similar past shows salary (6000) at score 0.5; likely payroll or contractor paym,Sent money to Ernie Javines Biason
+438,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-648.00,AUD,Mary Rose Bernal Yap,,,Sent money to Mary Rose Yap
+439,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-648.00,AUD,Jennilyn Palacol Labajos,0.550,Payment to Jennilyn Palacol Labajos ($648); similar past shows salary (6000) at score 0.5; likely payroll or contractor ,Sent money to Jennilyn Palacol Labajos
+440,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-648.00,AUD,Xyron Bunquin Manongsong,0.500,Payment to Xyron Bunquin Manongsong; amount (~$648) consistent with RMS host payout; insufficient context.,Sent money to Xyron Manongsong
+441,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-648.00,AUD,Rheazel Martinez Adolfo,0.550,Payment to Rheazel Martinez Adolfo ($648); similar past shows salary (6000) at score 0.5; likely payroll or contractor p,Sent money to Rheazel Martinez Adolfo
+442,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-648.00,AUD,Melvin Verona Magro,0.550,Payment to Melvin Verona Magro ($648); similar past shows salary (6000) at score 0.5; likely payroll or contractor payme,Sent money to Melvin Verona Magro
+443,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-432.00,AUD,Evelyn Chua Aquino,0.550,Payment to Evelyn Chua Aquino ($432); similar past shows salary (6000) at score 0.5; likely payroll or contractor paymen,Sent money to Evelyn Chua Aquino
+444,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-648.00,AUD,Jeremy Bautista,0.500,Payment to Jeremy Bautista; amount (~$648) suggests RMS host payout; low confidence without invoice confirmation.,Sent money to Jeremy Dequit Bautista
+445,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-792.00,AUD,Riezel Basilio Villanueva,0.550,Payment to Riezel Basilio Villanueva ($792); similar past shows salary (6000) at score 0.5; likely payroll or contractor,Sent money to Riezel Basilio Villanueva
+446,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-648.00,AUD,Decemberlyn Muyuela Sumagaysay,0.500,Payment to Decemberlyn Muyuela Sumagaysay; amount (~$648) aligns with host payout pattern; insufficient detail.,Sent money to Decemberlyn Muyuela Sumagaysay
+447,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-864.00,AUD,Marijoy Manalo Riomalos,0.550,Payment to Marijoy Manalo Riomalos ($864); similar past shows salary (6000) at score 0.5; likely payroll or contractor p,Sent money to Marijoy Manalo Riomalos
+448,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-712.80,AUD,Annabelle Gayda Luching,0.550,Payment to Annabelle Gayda Luching ($712.80); similar past shows salary (6000) at score 0.5; likely payroll or contracto,Sent money to Annabelle Gayda Luching
+449,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-648.00,AUD,Rosemarie Timbol Basilio,0.550,Payment to Rosemarie Timbol Basilio ($648); similar past shows salary (6000) at score 0.5; likely payroll or contractor ,Sent money to Rosemarie  Timbol Basilio
+450,Drive lah Australia Pty Ltd.,MATCHED,party-default,5062,-1209.60,AUD,Alexcess Libiran Car,,,Sent money to Alexcess Car
+451,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-648.00,AUD,Myrna Lynne Alcala,,,Sent money to Myrna Lynne Alcala
+452,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-648.00,AUD,Izzah Lorraine Carandang Dela Cruz,,,Sent money to Izzah Lorraine Carandang Dela Cruz
+453,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),5063,-648.00,AUD,Gabriel John Limjoco,0.850,Payment to Gabriel John Limjoco ($648); similar past shows customer support salary (5063) at score 0.756 with exact name,Sent money to Gabriel John Ebreo Limjoco
+454,Drive lah Australia Pty Ltd.,MATCHED,party-default,5062,-648.00,AUD,Edelyn Reyes,,,Sent money to Edelyn Reyes
+455,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,5063,-1080.00,AUD,Randolf Mercado,,,Sent money to Randolf Mercado
+456,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-648.00,AUD,Gem C. Rey-Hipolito,,,Sent money to Gem C. Rey-Hipolito
+457,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-532.80,AUD,Trixie trixie,,,Sent money to Trixie Mauricio Coronel
+458,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-648.00,AUD,Ralph Efrenson Eronga,0.550,Payment to Ralph Efrenson Eronga ($648); similar past shows salary (6000) at score 0.463; likely payroll or contractor p,Sent money to Ralph Efrenson S Eronga
+459,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-864.00,AUD,DOMINADOR GAMIT,,,Sent money to DOMINADOR GAMIT
+460,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-648.00,AUD,URA,,,Sent money to Edgardo Buenaventura
+461,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-630.00,AUD,Jennilyn Reyes,,,Sent money to Jennilyn Reyes
+462,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-648.00,AUD,Maria Fonseca Dimaandal,,,Sent money to Maria Fonseca Dimaandal
+463,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-1800.00,AUD,Lai Mei T,,,Sent money to Lai Mei Regina Teh
+464,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,50000.00,AUD,,0.450,Topped up account; large amount ($50k); likely intercompany capital transfer; low confidence without counterparty.,Topped up account
+465,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,1.45,AUD,,0.650,Incoming card refund USD 1.00 from Brave (browser rewards); small revenue reversal or rebate; POL-6 classifies refunds/r,Card transaction of 1.00 USD issued by Www.brave.com +16502003351
+466,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-11.03,AUD,,0.650,Bus/MRT fare in Singapore; travel-related but small amount suggests personal travel rather than fleet operations.,Card transaction of 9.67 SGD issued by Bus/mrt 787627905 SINGAPORE
+467,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-76.75,AUD,,0.550,Restaurant transaction (Sahebs Curries); could be meal/travel expense but lacks clear business context.,Card transaction of 67.14 SGD issued by Sahebs - Curries And More SINGAPORE
+468,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-2.86,AUD,,0.600,McDonald's meal; small personal food expense with unclear business purpose.,Card transaction of 2.50 SGD issued by Mcdonald's (hfc) SINGAPORE
+469,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-182.30,AUD,,0.580,"Bar/restaurant transaction (The Bar Station); could be entertainment or meal, similar pattern to past travel-tickets cla",Card transaction of 159.50 SGD issued by The Bar Station   Tk SINGAPORE
+470,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-1000.00,AUD,Dom Drive lah,,,Sent money to Drive Lah Pte. Ltd.
+471,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-3.61,AUD,,0.680,Bus/MRT fare in Singapore; consistent with travel-tickets category from similar past transactions.,Card transaction of 3.16 SGD issued by Bus/mrt 786160247 SINGAPORE
+472,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-4.68,AUD,,0.540,"Bus/MRT card transaction in Singapore; similar past pattern (436 SGD transaction) booked to 6700 (Infrastructure), but t",Card transaction of 4.10 SGD issued by Bus/mrt 785664366 SINGAPORE
+473,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-758.08,AUD,,0.550,"Card transaction Didit (identity/digital service platform); similar past patterns lean toward 5060/6400, but Didit is a ",Card transaction of 758.08 AUD issued by Didit DIDIT.ME
+474,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,5000.00,AUD,,0.500,Topped-up account with no clear counterparty or context; classified as asset account pending further clarification on so,Topped up account
+475,Drive lah Australia Pty Ltd.,MATCHED,party-default,5030,-2213.29,AUD,Thinxtra,,,Sent money to Thinxtra Solutions Pty Ltd
+476,Drive lah Australia Pty Ltd.,MATCHED,party-default,5030,-22180.10,AUD,Thinxtra,,,Sent money to Thinxtra Solutions Pty Ltd
+477,Drive lah Australia Pty Ltd.,MATCHED,party-default,5030,-12436.32,AUD,Thinxtra,,,Sent money to Thinxtra Solutions Pty Ltd
+478,Drive lah Australia Pty Ltd.,MATCHED,party-default,6501,-385.00,AUD,SMD Lawyers Pty Ltd,,,Sent money to SMD Lawyers
+479,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,37000.00,AUD,,0.500,"Topped-up account (AUD 37,000) with no clear counterparty; likely capital/fund injection but requires clarification.",Topped up account
+480,Drive lah Australia Pty Ltd.,MATCHED,party-default,6700,-7.32,AUD,Fireflies.ai,,,Card transaction of 5.00 USD issued by Fireflies.ai FIREFLIES.AI
+481,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-34.39,AUD,,0.720,Singtel prepaid (mobile/telecom connectivity); consistent with infrastructure/connectivity costs in similar past transac,Card transaction of 30.00 SGD issued by Singtel Prepaid Hi!acc SINGAPORE
+482,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-206.59,AUD,CURSOR (AI Powered IDE),,,Card transaction of 140.22 USD issued by Cursor Usage Mid  Jan CURSOR.COM
+483,Drive lah Australia Pty Ltd.,MATCHED,party-default,6012,-36.91,AUD,Comfort City Cab,,,Card transaction of 32.16 SGD issued by Comfort/citycab Taxi Singapore
+484,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-22.11,AUD,,0.650,Panasonic Avionics (in-flight/connectivity service); likely subscription-based infrastructure or software service.,Card transaction of 15.00 USD issued by Panasonic Avionics Corpor Irvine
+485,Drive lah Australia Pty Ltd.,MATCHED,party-default,6501,-1760.00,AUD,SMD Lawyers Pty Ltd,,,Sent money to SMD Lawyers
+486,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-44.21,AUD,,0.650,Panasonic Avionics USD transaction; consistent with software/service subscriptions (6701) from similar pattern.,Card transaction of 30.00 USD issued by Panasonic Avionics Corpor Irvine
+487,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-2558.60,AUD,PORT MOTOR TRADERS PTY LIMITED,0.580,Payment to PORT MOTOR TRADERS (vehicle/fleet vendor); likely RMS owner payout or fleet-related cost.,Sent money to PORT MOTOR TRADERS PTY LIMITED
+488,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-3612.30,AUD,PORT MOTOR TRADERS PTY LIMITED,0.580,Payment to PORT MOTOR TRADERS; consistent with RMS owner payout or fleet operational cost.,Sent money to PORT MOTOR TRADERS PTY LIMITED
+489,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-110.83,AUD,,0.700,Lotte Travel Retail at Melbourne Airport; travel-related retail expense.,Card transaction of 110.83 AUD issued by Lotte Travel Retail MELBOURNE AIR
+490,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-143.14,AUD,,0.720,JB Melbourne International (airport retail); similar to airport/parking expenses; high confidence from past pattern.,Card transaction of 143.14 AUD issued by Jb Melbourne Interna MELBOURNE AIR
+491,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-5908.28,AUD,MoEngage,,,Sent money to MoEngage Inc
+492,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,-151.00,AUD,SCOOT,,,Card transaction of 151.00 AUD issued by Flyscoot.compcivjt Singapore
+493,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,-21.00,AUD,SCOOT,,,Card transaction of 21.00 AUD issued by Flyscoot.compcivjt Singapore
+494,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,7000.00,AUD,,0.500,"Topped-up account (AUD 7,000); account top-up with no clear source or counterparty.",Topped up account
+495,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-69.13,AUD,,0.600,CAS Little Surprise Box (MUMBAI); unclear business purpose; classified as travel/miscellaneous expense.,Card transaction of 69.13 AUD issued by Cas*Little Surprise Box MUMBAI
+496,Drive lah Australia Pty Ltd.,MATCHED,party-default,5032,-1452.00,AUD,SEMITS SMASH REPAIRS PTY LTD,,,Sent money to A1 Smash Pty Ltd
+497,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-14896.54,AUD,Altimobility Corp,0.620,Payment to Altimobility Corp (mobility/tech company); likely infrastructure or service provider cost.,Sent money to Altimobility Corp
+498,Drive lah Australia Pty Ltd.,MATCHED,party-default,5032,-1898.60,AUD,Stuttgart Autos,,,Sent money to Stuttgart Autos
+499,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-1144.00,AUD,NORMAN CHAN,0.700,"Payment to Norman Chan (AUD 1,144.00); repeated payee; similar past shows salaries (6000) at 0.548; consistent with cont",Sent money to NORMAN CHAN
+500,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-814.00,AUD,NORMAN CHAN,0.700,Payment to Norman Chan (AUD 814.00); repeated payee; similar past shows salaries (6000) at 0.548; consistent pattern of ,Sent money to NORMAN CHAN
+501,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-924.00,AUD,NORMAN CHAN,0.700,Payment to Norman Chan (AUD 924.00); third payment to same payee; similar past shows salaries (6000); clear pattern of c,Sent money to NORMAN CHAN
+502,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-1292.51,AUD,Yarra Journey Makers Pty Ltd,0.750,"Payment to Yarra Journey Makers Pty Ltd; vendor name suggests operational/incidentals cost, consistent with cleaning/ser",Sent money to Yarra Journey Makers Pty Ltd
+503,Drive lah Australia Pty Ltd.,MATCHED,party-default,5032,-2200.00,AUD,Klean Air Aus Decontamination,,,Sent money to Klean Air Aus Decontamination
+504,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,33000.00,AUD,,0.500,"Topped-up account (AUD 33,000); large account top-up with no counterparty; likely capital injection.",Topped up account
+505,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-27.15,AUD,,0.780,"Card transaction with Drive Mate PYMBLE; internal/own entity card purchase, likely parking or fleet-related.",Card transaction of 27.15 AUD issued by Drive Mate PYMBLE
+506,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),5060,-101.00,AUD,,0.820,Melbourne Airport parking; high confidence from similar past parking transactions (score 0.727).,Card transaction of 101.00 AUD issued by Melbourne Airport TULLAMARINE
+507,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-14.96,AUD,Sentry,,,Card transaction of 49.12 USD issued by Sentry SENTRY.IO
+508,Drive lah Australia Pty Ltd.,MATCHED,party-default,5060,-25072.00,AUD,CDC Fleet,,,Sent money to CDC Fleet Pty Ltd
+509,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-30000.00,AUD,Dom Drive lah,0.500,Payment to Drive Lah Pte. Ltd. (SG parent entity); $30k intercompany transfer; maps to due from/receivable or transfer p,Sent money to Drive Lah Pte. Ltd.
+510,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,25000.00,AUD,,0.450,Topped up account; large transfer ($25k); likely intercompany working capital; low confidence without detail.,Topped up account
+511,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,30000.00,AUD,,0.500,"Topped-up account (AUD 30,000); account top-up with no clear source.",Topped up account
+512,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,0.780,"Drive Mate PYMBLE card transaction; own entity card, likely parking or fleet operational cost.",Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+513,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,0.780,Drive Mate PYMBLE card transaction; consistent with parking/fleet costs from own entity card.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+514,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,0.780,"Drive Mate PYMBLE card transaction; own entity card, parking/fleet operational cost.",Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+515,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,0.780,Drive Mate PYMBLE card transaction; consistent parking/fleet cost pattern from own card.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+516,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,0.780,"Drive Mate PYMBLE card transaction; own entity card, parking/fleet operational cost.",Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+517,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-41.60,AUD,,0.750,Drive Mate PYMBLE card transaction (AUD 41.60); consistent with parking/fleet costs from own entity.,Card transaction of 41.60 AUD issued by Drive Mate PYMBLE
+518,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,0.780,"Drive Mate PYMBLE card transaction; own entity card, parking/fleet cost.",Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+519,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,0.780,Drive Mate PYMBLE card transaction; consistent parking/fleet operational cost.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+520,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,0.780,"Drive Mate PYMBLE card transaction; own entity card, parking/fleet cost.",Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+521,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-43.54,AUD,,0.750,Drive Mate PYMBLE card transaction (AUD 43.54); parking/fleet cost from own entity card.,Card transaction of 43.54 AUD issued by Drive Mate PYMBLE
+522,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,0.780,"Drive Mate PYMBLE card transaction; own entity card, parking/fleet operational cost.",Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+523,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-37.40,AUD,,0.750,Drive Mate PYMBLE card transaction (AUD 37.40); parking/fleet cost from own entity card.,Card transaction of 37.40 AUD issued by Drive Mate PYMBLE
+524,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-37.40,AUD,,0.750,Drive Mate PYMBLE card transaction (AUD 37.40); consistent parking/fleet cost pattern.,Card transaction of 37.40 AUD issued by Drive Mate PYMBLE
+525,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-37.40,AUD,,0.750,Drive Mate PYMBLE card transaction (AUD 37.40); parking/fleet cost from own entity card.,Card transaction of 37.40 AUD issued by Drive Mate PYMBLE
+526,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-37.40,AUD,,0.750,Drive Mate PYMBLE card transaction (AUD 37.40); parking/fleet operational cost.,Card transaction of 37.40 AUD issued by Drive Mate PYMBLE
+527,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-37.40,AUD,,0.750,Drive Mate PYMBLE card transaction (AUD 37.40); consistent parking/fleet cost from own entity card.,Card transaction of 37.40 AUD issued by Drive Mate PYMBLE
+528,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-37.40,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 37.40 AUD issued by Drive Mate PYMBLE
+529,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-675.00,AUD,Rose Ann Ferrer Naredo,0.600,Payment to Rose Ann Ferrer Naredo (AUD 675.00); similar past shows salaries (6000) at 0.463; repeated payee suggests ong,Sent money to Rose Ann Ferrer Naredo
+530,Drive lah Australia Pty Ltd.,MATCHED,party-default,5066,-660.00,AUD,Pack & Send,,,Sent money to Pack Send Marrickville
+531,Drive lah Australia Pty Ltd.,MATCHED,party-default,5066,-320.83,AUD,Pack & Send,,,Sent money to Pack Send Marrickville
+532,Drive lah Australia Pty Ltd.,MATCHED,party-default,5066,-214.52,AUD,Pack & Send,,,Sent money to Pack Send Marrickville
+533,Drive lah Australia Pty Ltd.,MATCHED,party-default,5066,-2079.00,AUD,Pack & Send,,,Sent money to Pack Send Marrickville
+534,Drive lah Australia Pty Ltd.,MATCHED,party-default,5066,-426.14,AUD,Pack & Send,,,Sent money to Pack Send Marrickville
+535,Drive lah Australia Pty Ltd.,MATCHED,party-default,5066,-465.54,AUD,Pack & Send,,,Sent money to Pack Send Marrickville
+536,Drive lah Australia Pty Ltd.,MATCHED,party-default,5066,-1270.57,AUD,Pack & Send,,,Sent money to Pack Send Marrickville
+537,Drive lah Australia Pty Ltd.,MATCHED,party-default,5066,-1005.07,AUD,Pack & Send,,,Sent money to Pack Send Marrickville
+538,Drive lah Australia Pty Ltd.,MATCHED,party-default,5066,-7507.50,AUD,Pack & Send,,,Sent money to Pack Send Marrickville
+539,Drive lah Australia Pty Ltd.,MATCHED,party-default,5066,-1194.68,AUD,Pack & Send,,,Sent money to Pack Send Marrickville
+540,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-26000.00,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,"Converted 26,000.00 AUD to 17,299.65 USD"
+541,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,40000.00,AUD,,0.450,Topped up account; large amount ($40k); likely intercompany capital; low confidence without counterparty detail.,Topped up account
+542,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-27.15,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 27.15 AUD issued by Drive Mate PYMBLE
+543,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-27.15,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 27.15 AUD issued by Drive Mate PYMBLE
+544,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+545,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-27.15,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 27.15 AUD issued by Drive Mate PYMBLE
+546,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-27.15,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 27.15 AUD issued by Drive Mate PYMBLE
+547,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+548,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-27.15,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 27.15 AUD issued by Drive Mate PYMBLE
+549,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-27.15,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 27.15 AUD issued by Drive Mate PYMBLE
+550,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+551,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-27.15,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 27.15 AUD issued by Drive Mate PYMBLE
+552,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+553,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+554,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-41.60,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 41.60 AUD issued by Drive Mate PYMBLE
+555,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+556,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-41.60,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 41.60 AUD issued by Drive Mate PYMBLE
+557,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-41.60,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 41.60 AUD issued by Drive Mate PYMBLE
+558,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+559,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+560,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+561,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+562,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+563,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+564,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+565,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+566,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+567,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+568,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+569,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+570,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+571,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+572,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-56.88,AUD,CURSOR (AI Powered IDE),,,"Card transaction of 37.94 USD issued by Cursor, Ai Powered Ide CURSOR.COM"
+573,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-1.43,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 1.43 AUD issued by Drive Mate PYMBLE
+574,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-18.95,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 18.95 AUD issued by Drive Mate PYMBLE
+575,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-1.43,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 1.43 AUD issued by Drive Mate PYMBLE
+576,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-18.95,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 18.95 AUD issued by Drive Mate PYMBLE
+577,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-1.43,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 1.43 AUD issued by Drive Mate PYMBLE
+578,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-18.95,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 18.95 AUD issued by Drive Mate PYMBLE
+579,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-1.43,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 1.43 AUD issued by Drive Mate PYMBLE
+580,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-18.95,AUD,,,Entity 3 (Drive lah Australia Pty Ltd) has no chart of accounts provided; cannot classify.,Card transaction of 18.95 AUD issued by Drive Mate PYMBLE
+581,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-1.43,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 1.43 AUD issued by Drive Mate PYMBLE
+582,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+583,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-1.43,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 1.43 AUD issued by Drive Mate PYMBLE
+584,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+585,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-1.43,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 1.43 AUD issued by Drive Mate PYMBLE
+586,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+587,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-2.51,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 2.51 AUD issued by Drive Mate PYMBLE
+588,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+589,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-1.43,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 1.43 AUD issued by Drive Mate PYMBLE
+590,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+591,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-1.43,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 1.43 AUD issued by Drive Mate PYMBLE
+592,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+593,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-34.44,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 23.00 USD issued by Exportcomments.com BUCHAREST
+594,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-359.54,AUD,CURSOR (AI Powered IDE),,,"Card transaction of 240.00 USD issued by Cursor, Ai Powered Ide CURSOR.COM"
+595,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-3.22,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 3.22 AUD issued by Drive Mate PYMBLE
+596,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+597,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-3.22,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 3.22 AUD issued by Drive Mate PYMBLE
+598,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-31.25,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 31.25 AUD issued by Drive Mate PYMBLE
+599,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-74.90,AUD,Jason O Connor,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Sent money to Jason O Connor
+600,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-6762.11,AUD,Vehicle Heroes Pty Ltd,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Sent money to Vehicle Heroes Pty Ltd
+601,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-514.05,AUD,SHARPS,,,Sent money to SHARPS AUSTRALIA PTY LTD
+602,Drive lah Australia Pty Ltd.,MATCHED,party-default,5035,-3000.00,AUD,GT insurance,,,Sent money to GT Insurance-Trust
+603,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,5033,-1210.00,AUD,Clayton Towing,,,Sent money to Clayton's Towing Service Pty Ltd
+604,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-2156.69,AUD,Rohde Smash Repair,,,Sent money to Rohde Smash Repairs
+605,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-2000.00,AUD,U R Drive,0.500,"Payment to U R Drive (AUD 2,000.00); vendor name unclear; second payment to same counterparty; lacks invoice context for",Sent money to U R Drive
+606,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,20000.00,AUD,,0.450,Topped up account; amount ($20k); likely intercompany working capital transfer; low confidence.,Topped up account
+607,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-6.30,AUD,CURSOR (AI Powered IDE),,,Card transaction of 4.20 USD issued by Cursor Usage  Dec CURSOR.COM
+608,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-33.02,AUD,OPENAI (ChatGPT Subscription),,,Card transaction of 22.00 USD issued by Openai OPENAI.COM
+609,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-30.02,AUD,CURSOR (AI Powered IDE),,,"Card transaction of 20.00 USD issued by Cursor, Ai Powered Ide CURSOR.COM"
+610,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-150.45,AUD,CURSOR (AI Powered IDE),,,Card transaction of 100.38 USD issued by Cursor Usage Mid  Dec CURSOR.COM
+611,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-3.58,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 3.58 AUD issued by Drive Mate PYMBLE
+612,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-29.70,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 29.70 AUD issued by Drive Mate PYMBLE
+613,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-3.58,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 3.58 AUD issued by Drive Mate PYMBLE
+614,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-54.30,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 54.30 AUD issued by Drive Mate PYMBLE
+615,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-3.58,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 3.58 AUD issued by Drive Mate PYMBLE
+616,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-48.15,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 48.15 AUD issued by Drive Mate PYMBLE
+617,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-3.58,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 3.58 AUD issued by Drive Mate PYMBLE
+618,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-37.90,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 37.90 AUD issued by Drive Mate PYMBLE
+619,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-3.94,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 3.94 AUD issued by Drive Mate PYMBLE
+620,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-58.40,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 58.40 AUD issued by Drive Mate PYMBLE
+621,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-7.17,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 7.17 AUD issued by Drive Mate PYMBLE
+622,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-37.90,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 37.90 AUD issued by Drive Mate PYMBLE
+623,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,1.00,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Card transaction of 1.00 AUD issued by Drive Mate +61341602205
+624,Drive lah Australia Pty Ltd.,MATCHED,party-default,5001,-2530.00,AUD,Bombora,,,Sent money to Bombora Group Pty Ltd
+625,Drive lah Australia Pty Ltd.,MATCHED,party-default,5001,-700.00,AUD,Bombora,,,Sent money to Bombora Group Pty Ltd
+626,Drive lah Australia Pty Ltd.,MATCHED,party-default,5001,-830.00,AUD,Bombora,,,Sent money to Bombora Group Pty Ltd
+627,Drive lah Australia Pty Ltd.,MATCHED,party-default,5001,-525.00,AUD,Bombora,,,Sent money to Bombora Group Pty Ltd
+628,Drive lah Australia Pty Ltd.,MATCHED,party-default,5001,-429.56,AUD,Bombora,,,Sent money to Bombora Group Pty Ltd
+629,Drive lah Australia Pty Ltd.,MATCHED,party-default,5001,-8936.89,AUD,Bombora,,,Sent money to Bombora Group Pty Ltd
+630,Drive lah Australia Pty Ltd.,MATCHED,party-default,5001,-8060.64,AUD,Bombora,,,Sent money to Bombora Group Pty Ltd
+631,Drive lah Australia Pty Ltd.,MATCHED,party-default,5001,-8510.40,AUD,Bombora,,,Sent money to Bombora Group Pty Ltd
+632,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,30000.00,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Topped up account
+633,Drive lah Australia Pty Ltd.,MATCHED,party-default,6300,-311.85,AUD,IWG AUSTRALIA,,,Card transaction of 311.85 AUD issued by Iwg Australia Business Ce SYDNEY
+634,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-149.32,AUD,CURSOR (AI Powered IDE),,,Card transaction of 100.16 USD issued by Cursor Usage Mid  Dec CURSOR.COM
+635,Drive lah Australia Pty Ltd.,MATCHED,party-default,6500,-880.00,AUD,ACE,,,Sent money to ACE Administration Services Pty Ltd
+636,Drive lah Australia Pty Ltd.,MATCHED,party-default,6500,-1430.00,AUD,ACE,,,Sent money to ACE Administration Services Pty Ltd
+637,Drive lah Australia Pty Ltd.,MATCHED,party-default,6500,-907.50,AUD,ACE,,,Sent money to ACE Administration Services Pty Ltd
+638,Drive lah Australia Pty Ltd.,MATCHED,party-default,6500,-1155.00,AUD,ACE,,,Sent money to ACE Administration Services Pty Ltd
+639,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,5000.00,AUD,,0.450,Topped up account; amount ($5k); likely intercompany transfer; low confidence without detail.,Topped up account
+640,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-152.87,AUD,CURSOR (AI Powered IDE),,,Card transaction of 101.99 USD issued by Cursor Usage Mid  Dec CURSOR.COM
+641,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-1084.98,AUD,Resya Satya Pradhana Harahap,,,Sent money to Resya Harahap
+642,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,2000.00,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Topped up account
+643,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-5000.00,AUD,Resya Satya Pradhana Harahap,,,Sent money to Resya Harahap
+644,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-144.87,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,"Card transaction of 30,000.00 LKR issued by Sinha Villa   Rm GALLE"
+645,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-30.20,AUD,Jirah Jean Bautista Vito,,,Sent money to Jirah Jean Vito
+646,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-104.10,AUD,Maricon Viza,,,Sent money to Maricon R. Eviza
+647,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-82.15,AUD,Rosemarie Timbol Basilio,0.550,"Payment to Rosemarie Timbol Basilio; small amount (~$82) aligns with travel/reimbursement pattern, though insufficient d",Sent money to Rosemarie  Timbol Basilio
+648,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-13.65,AUD,Godielou Petipet Quero,0.650,Payment to Godielou Petipet Quero (AUD 13.65); similar past split salaries/travel; small amount via Wise suggests payrol,Sent money to Godielou Petipet Quero
+649,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-130.85,AUD,Emmanuel Jacobo,,,Sent money to Emmanuel Joseph Reyes Jacobo
+650,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,5061,-13.65,AUD,Raymund Jay Juliano Recto,,,Sent money to Raymund Jay Juliano Recto
+651,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-41.67,AUD,Mary Rose Bernal Yap,,,Sent money to Mary Rose Yap
+652,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-17.46,AUD,Xyron Bunquin Manongsong,0.650,Small outgoing payment to individual via Wise; similar past transactions to named individuals split between travel (6400,Sent money to Xyron Manongsong
+653,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-348.74,AUD,Melvin Verona Magro,0.650,Payment to Melvin Verona Magro (AUD 348.74); similar past split salaries/travel; amount and Wise context suggest contrac,Sent money to Melvin Verona Magro
+654,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-36.57,AUD,Rheazel Martinez Adolfo,0.650,Payment to Rheazel Martinez Adolfo (AUD 36.57); similar past split salaries/travel; small amount via Wise suggests payro,Sent money to Rheazel Martinez Adolfo
+655,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-236.23,AUD,Evelyn Chua Aquino,0.650,Payment to Evelyn Chua Aquino (AUD 236.23); repeated payee; similar past split salaries/travel; consistent with payroll ,Sent money to Evelyn Chua Aquino
+656,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-176.72,AUD,Jeremy Bautista,,,Sent money to Jeremy Dequit Bautista
+657,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-70.97,AUD,Decemberlyn Muyuela Sumagaysay,,,Sent money to Decemberlyn Muyuela Sumagaysay
+658,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-7.26,AUD,Myrna Lynne Alcala,,,Sent money to Myrna Lynne Alcala
+659,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-4.71,AUD,Gabriel John Limjoco,,,Sent money to Gabriel John Ebreo Limjoco
+660,Drive lah Australia Pty Ltd.,MATCHED,party-default,5062,-96.46,AUD,Edelyn Reyes,,,Sent money to Edelyn Reyes
+661,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-36.57,AUD,Gem C. Rey-Hipolito,,,Sent money to Gem C. Rey-Hipolito
+662,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-21.28,AUD,Trixie trixie,,,Sent money to Trixie Mauricio Coronel
+663,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-27.64,AUD,Ralph Efrenson Eronga,0.600,"Outgoing payment to individual via Wise; similar past transactions show mixed classification (travel, salaries, parking)",Sent money to Ralph Efrenson S Eronga
+664,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-4.71,AUD,URA,,,Sent money to Edgardo Buenaventura
+665,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-37.84,AUD,Maria Fonseca Dimaandal,,,Sent money to Maria Fonseca Dimaandal
+666,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-149.84,AUD,CURSOR (AI Powered IDE),,,Card transaction of 100.38 USD issued by Cursor Usage Mid  Dec CURSOR.COM
+667,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-968.50,AUD,Zilla Marie,,,Sent money to Zilla Marie Cenido
+668,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-243.73,AUD,Sarthak Gupta,,,Sent money to Sarthak Gupta
+669,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-911.19,AUD,Pyiee Thin Nwe,,,Sent money to Pyiee Thin Nwe
+670,Drive lah Australia Pty Ltd.,MATCHED,party-default,5062,-5372.17,AUD,Matheus Johannes van der Kooi,,,Sent money to Matheus Johannes van der Kooi
+671,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-771.60,AUD,Sagar Mahesh Prasad,0.650,Payment to Sagar Mahesh Prasad (AUD 771.60); repeated payee; similar past split salaries/travel; consistent with contrac,Sent money to Sagar Mahesh Prasad
+672,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-7554.22,AUD,Pyiee Thin Nwe,,,Sent money to Pyiee Thin Nwe
+673,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-544.11,AUD,URA,0.500,Payment to Vigneshsuran So Dhevan (AUD 544.11) with counterparty labeled 'URA'; URA suggests Unregistered Road Authority,Sent money to Vigneshsuran So Dhevan
+674,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-5876.62,AUD,Geraldine Austin,,,Sent money to Geraldine Austin
+675,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-962.23,AUD,Thummanapally Tilak,,,Sent money to Thummanapally Tilak
+676,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-835.96,AUD,Yash Mimani,,,Sent money to Yash Mimani
+677,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-2295.56,AUD,Naitik Padsala,0.650,"Larger outgoing payment (AUD 2,295.56) to individual; similar past suggests salaries (6000) or travel (6400); amount and",Sent money to Padsala Naitik Babubhai
+678,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-2478.54,AUD,Farjad Ali Khan,0.650,"Large outgoing payment (AUD 2,478.54) to individual; similar past shows mixed classification; amount suggests contractor",Sent money to Farjad Ali Khan Farjad Ali Khan
+679,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-4238.00,AUD,Aakash Chavda,0.650,"Substantial payment (AUD 4,238.00) to individual via Wise; similar past split between travel and salaries; amount and pa",Sent money to Aakash Aakash
+680,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-8766.67,AUD,Jacob Hyde,0.700,"Large payment (AUD 8,766.67) to Jacob Hyde via Wise; similar past shows salaries (6000) at 0.548 confidence; magnitude a",Sent money to Jacob Hyde
+681,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-2400.18,AUD,URA,,,Sent money to Vigneshsuran So Dhevan
+682,Drive lah Australia Pty Ltd.,MATCHED,party-default,6000,-741.63,AUD,Paramjeet Paramjeet,,,Sent money to Paramjeet Paramjeet
+683,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-2518.11,AUD,Bhalani Nimesh Himmatbhai,,,Sent money to Bhalani Nimesh Himmatbhai
+684,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,6000,-2647.39,AUD,Rahul Moitra,,,Sent money to Rahul Moitra
+685,Drive lah Australia Pty Ltd.,MATCHED,party-default,6000,-3014.11,AUD,Ankish Mody,,,Sent money to Ankish Mody
+686,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,5061,-5569.95,AUD,Sanjay Kumar,,,Sent money to SANJAY KUMAR
+687,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,5061,-2957.94,AUD,Jay Balan,,,Sent money to Jay Balan
+688,Drive lah Australia Pty Ltd.,MATCHED,party-default,6000,-9023.66,AUD,Aman Yadav,,,Sent money to Aman Yadav
+689,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-745.00,AUD,Rose Ann Ferrer Naredo,,,Sent money to Rose Ann Ferrer Naredo
+690,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-745.00,AUD,Godielou Petipet Quero,,,Sent money to Godielou Petipet Quero
+691,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-745.00,AUD,Julie Ann Macuha Cenedoza,,,Sent money to Julie Ann Macuha Cenedoza
+692,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,5061,-745.00,AUD,Raymund Jay Juliano Recto,,,Sent money to Raymund Jay Juliano Recto
+693,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-745.00,AUD,Terrence Dimagan Genetiano,0.650,Moderate payment (AUD 745.00) to individual; similar past split salaries/travel; rounded amount and batch context sugges,Sent money to Terrence Dimagan Genetiano
+694,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-745.00,AUD,Emmanuel Jacobo,,,Sent money to Emmanuel Joseph Reyes Jacobo
+695,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-745.00,AUD,Patrick Leonard Mojica,,,Sent money to Patrick Leonard Mojica
+696,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-745.00,AUD,Ernie Javines Biason,,,Sent money to Ernie Javines Biason
+697,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-745.00,AUD,Mary Rose Bernal Yap,,,Sent money to Mary Rose Yap
+698,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-745.00,AUD,Jennilyn Palacol Labajos,,,Sent money to Jennilyn Palacol Labajos
+699,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-745.00,AUD,Xyron Bunquin Manongsong,0.650,Payment to Xyron Manongsong (AUD 745.00); similar past shows salaries (6000) at 0.548; consistent with batch payroll pat,Sent money to Xyron Manongsong
+700,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-745.00,AUD,Rheazel Martinez Adolfo,,,Sent money to Rheazel Martinez Adolfo
+701,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-745.00,AUD,Melvin Verona Magro,,,Sent money to Melvin Verona Magro
+702,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-521.50,AUD,Evelyn Chua Aquino,,,Sent money to Evelyn Chua Aquino
+703,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-745.00,AUD,Jeremy Bautista,0.550,"Payment to Jeremy Bautista (AUD 745.00); similar past shows 6700 (Infrastructure) at 0.544, competing with salaries; ins",Sent money to Jeremy Dequit Bautista
+704,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-894.00,AUD,Riezel Basilio Villanueva,,,Sent money to Riezel Basilio Villanueva
+705,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-745.00,AUD,Decemberlyn Muyuela Sumagaysay,0.650,Payment to Decemberlyn Muyuela Sumagaysay (AUD 745.00); similar past split salaries/travel; batch context and amount sug,Sent money to Decemberlyn Muyuela Sumagaysay
+706,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-968.50,AUD,Marijoy Manalo Riomalos,,,Sent money to Marijoy Manalo Riomalos
+707,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-812.05,AUD,Annabelle Gayda Luching,,,Sent money to Annabelle Gayda Luching
+708,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-745.00,AUD,Rosemarie Timbol Basilio,0.650,Payment to Rosemarie Timbol Basilio (AUD 745.00); similar past shows salaries/travel split; rounded amount and batch pat,Sent money to Rosemarie  Timbol Basilio
+709,Drive lah Australia Pty Ltd.,MATCHED,party-default,5062,-1326.10,AUD,Alexcess Libiran Car,,,Sent money to Alexcess Car
+710,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-745.00,AUD,Myrna Lynne Alcala,,,Sent money to Myrna Lynne Alcala
+711,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-745.00,AUD,Izzah Lorraine Carandang Dela Cruz,,,Sent money to Izzah Lorraine Carandang Dela Cruz
+712,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-745.00,AUD,Gabriel John Limjoco,0.760,Payment to Gabriel John Limjoco (AUD 745.00); similar past shows strong match (0.756) to 5063 (Customer Support - Salary,Sent money to Gabriel John Ebreo Limjoco
+713,Drive lah Australia Pty Ltd.,MATCHED,party-default,5062,-745.00,AUD,Edelyn Reyes,,,Sent money to Edelyn Reyes
+714,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,5063,-1192.00,AUD,Randolf Mercado,,,Sent money to Randolf Mercado
+715,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-745.00,AUD,Gem C. Rey-Hipolito,,,Sent money to Gem C. Rey-Hipolito
+716,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-625.80,AUD,Trixie trixie,,,Sent money to Trixie Mauricio Coronel
+717,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-745.00,AUD,Ralph Efrenson Eronga,,,Sent money to Ralph Efrenson S Eronga
+718,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-968.50,AUD,DOMINADOR GAMIT,,,Sent money to DOMINADOR GAMIT
+719,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-745.00,AUD,URA,,,Sent money to Edgardo Buenaventura
+720,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-726.37,AUD,Jennilyn Reyes,,,Sent money to Jennilyn Reyes
+721,Drive lah Australia Pty Ltd.,MATCHED,party-default,5063,-745.00,AUD,Maria Fonseca Dimaandal,,,Sent money to Maria Fonseca Dimaandal
+722,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-1937.00,AUD,Lai Mei T,0.600,"Payment to Lai Mei T (AUD 1,937.00); similar past shows mixed classification; moderate amount and Wise context suggest s",Sent money to Lai Mei Regina Teh
+723,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,50000.00,AUD,,0.500,"Incoming topup (AUD 50,000) with no counterparty; lacks clear economic substance — likely internal account management or",Topped up account
+724,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,50000.00,AUD,,0.500,"Incoming topup (AUD 50,000) with no counterparty; identical to tx 723; internal transfer or capital movement requiring m",Topped up account
+725,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-149.70,AUD,,0.520,Card transaction at Sbk Uwt Unawatuna (LKR converted to AUD 149.70); similar past shows parking (5060) at 0.522; merchan,"Card transaction of 31,000.00 LKR issued by Sbk Uwt UNAWATUNA"
+726,Drive lah Australia Pty Ltd.,MATCHED,party-default,6000,-14.45,AUD,JULIA,,,Sent money to Julia Hutton
+727,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-4865.00,AUD,Muhammad Uzair Tanveer,,,Sent money to Muhammad Uzair Tanveer
+728,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-6932.67,AUD,Onfido,,,Sent money to Onfido PTE Ltd
+729,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-28602.26,AUD,Intercom,,,Sent money to Intercom Inc.
+730,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,40000.00,AUD,,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Topped up account
+731,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-3000.00,AUD,Rohde Smash Repair,,,Sent money to Rohde Smash Repairs
+732,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-41.71,AUD,Darshiya Akilakumar,,Entity 3 has an empty chart of accounts; cannot classify without valid COA.,Sent money to Darshiya Akilakumar
+733,Drive lah Australia Pty Ltd.,PENDING,uncategorized (Pending),,-1602.15,AUD,Rohde Smash Repair,,,Sent money to Rohde Smash Repairs
+734,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),5020,-1430.00,AUD,Rohde Smash Repair,0.850,Rohde Smash Repairs is a vendor in the claims/incidentals ecosystem (FLOW-8); payment for smash repair services maps to ,Sent money to Rohde Smash Repairs
+735,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),5020,-1859.00,AUD,Rohde Smash Repair,0.850,Rohde Smash Repairs is a repair vendor; this is another smash repair payout matching the incidentals vendor ecosystem.,Sent money to Rohde Smash Repairs
+736,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-154.52,AUD,CURSOR (AI Powered IDE),,,Card transaction of 102.65 USD issued by Cursor Usage Mid  Dec CURSOR.COM
+737,Drive lah Australia Pty Ltd.,MATCHED,party-default,5032,-880.00,AUD,Stephen Inner West Smash Repairs Pty Ltd,,,Sent money to Stephen Inner West Smash Repairs
+738,Drive lah Australia Pty Ltd.,MATCHED,party-default,5032,-2090.00,AUD,Stephen Inner West Smash Repairs Pty Ltd,,,Sent money to Stephen Inner West Smash Repairs
+739,Drive lah Australia Pty Ltd.,MATCHED,party-default,5032,-5000.00,AUD,Stephen Inner West Smash Repairs Pty Ltd,,,Sent money to Stephen Inner West Smash Repairs
+740,Drive lah Australia Pty Ltd.,MATCHED,party-default,5032,-1595.00,AUD,Stephen Inner West Smash Repairs Pty Ltd,,,Sent money to Stephen Inner West Smash Repairs
+741,Drive lah Australia Pty Ltd.,MATCHED,party-default,5032,-1727.66,AUD,Stephen Inner West Smash Repairs Pty Ltd,,,Sent money to Stephen Inner West Smash Repairs
+742,Drive lah Australia Pty Ltd.,MATCHED,party-default,5032,-3432.00,AUD,Stephen Inner West Smash Repairs Pty Ltd,,,Sent money to Stephen Inner West Smash Repairs
+743,Drive lah Australia Pty Ltd.,MATCHED,party-default,5032,-1340.00,AUD,Stephen Inner West Smash Repairs Pty Ltd,,,Sent money to Stephen Inner West Smash Repairs
+744,Drive lah Australia Pty Ltd.,MATCHED,party-default,5032,-3900.00,AUD,Stephen Inner West Smash Repairs Pty Ltd,,,Sent money to Stephen Inner West Smash Repairs
+745,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),5020,-3000.00,AUD,Rohde Smash Repair,0.850,Rohde Smash Repairs repair service payment; consistent with incidentals payout pattern.,Sent money to Rohde Smash Repairs
+746,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),5020,-3952.50,AUD,Rohde Smash Repair,0.850,Rohde Smash Repairs vendor payment; consistent smash repair incidentals payout.,Sent money to Rohde Smash Repairs
+747,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),5020,-1842.50,AUD,Rohde Smash Repair,0.850,Rohde Smash Repairs repair service payment; matches incidentals vendor pattern.,Sent money to Rohde Smash Repairs
+748,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),5020,-2789.60,AUD,Rohde Smash Repair,0.850,Rohde Smash Repairs vendor payment for repair services; incidentals payout.,Sent money to Rohde Smash Repairs
+749,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),5020,-1322.20,AUD,Rohde Smash Repair,0.850,Rohde Smash Repairs repair payment; consistent with incidentals expense pattern.,Sent money to Rohde Smash Repairs
+750,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),5020,-1796.28,AUD,Rohde Smash Repair,0.850,Rohde Smash Repairs vendor payment for smash repair services; incidentals payout.,Sent money to Rohde Smash Repairs
+751,Drive lah Australia Pty Ltd.,MATCHED,AI (>=0.80),5020,-3000.00,AUD,Rohde Smash Repair,0.850,Rohde Smash Repairs repair service payment; consistent incidentals vendor payout.,Sent money to Rohde Smash Repairs
+752,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,50000.00,AUD,,0.500,"Incoming topup (AUD 50,000) with no counterparty; third identical topup; internal transfer requiring clarification.",Topped up account
+753,Drive lah Australia Pty Ltd.,MATCHED,party-default,6700,-7.53,AUD,Fireflies.ai,,,Card transaction of 5.00 USD issued by Fireflies.ai FIREFLIES.AI
+754,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-125.00,AUD,HABEN AREFAINE,0.650,Payment to Haben Arefaine (AUD 125.00); similar past shows salaries (6000) at 0.548; small amount and Wise batch context,Sent money to HABEN AREFAINE
+755,Drive lah Australia Pty Ltd.,MATCHED,party-default,5032,-495.00,AUD,Stephen Inner West Smash Repairs Pty Ltd,,,Sent money to Stephen Inner West Smash Repairs
+756,Drive lah Australia Pty Ltd.,MATCHED,party-default,5032,-450.00,AUD,Stephen Inner West Smash Repairs Pty Ltd,,,Sent money to Stephen Inner West Smash Repairs
+757,Drive lah Australia Pty Ltd.,MATCHED,party-default,5032,-330.00,AUD,Stephen Inner West Smash Repairs Pty Ltd,,,Sent money to Stephen Inner West Smash Repairs
+758,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-158.05,AUD,CURSOR (AI Powered IDE),,,"Card transaction of 9,363.77 INR issued by Cursor Usage Mid  Dec CURSOR.COM"
+759,Drive lah Australia Pty Ltd.,MATCHED,party-default,5032,-462.00,AUD,Stephen Inner West Smash Repairs Pty Ltd,,,Sent money to Stephen Inner West Smash Repairs
+760,Drive lah Australia Pty Ltd.,MATCHED,party-default,5032,-175.00,AUD,Stephen Inner West Smash Repairs Pty Ltd,,,Sent money to Stephen Inner West Smash Repairs
+761,Drive lah Australia Pty Ltd.,MATCHED,party-default,5032,-210.00,AUD,Stephen Inner West Smash Repairs Pty Ltd,,,Sent money to Stephen Inner West Smash Repairs
+762,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-138.83,AUD,Geraldine Austin,0.600,Payment to individual Geraldine Austin; similar past patterns suggest travel/tickets (6400) but small amount (~$139) cou,Sent money to Geraldine Austin
+763,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-138.55,AUD,Geraldine Austin,0.600,Payment to Geraldine Austin; similar pattern to past travel-related reimbursements.,Sent money to Geraldine Austin
+764,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-130.00,AUD,Jacob Hyde,0.600,Payment to individual Jacob Hyde; small amount (~$130) aligns with travel/ticket reimbursement pattern.,Sent money to Jacob Hyde
+765,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-15171.55,AUD,Altimobility Corp,0.500,"Large payment to Altimobility Corp with no invoice detail; similar past is mixed (6400, 6000, 5060); without vendor mast",Sent money to Altimobility Corp
+766,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,16000.00,AUD,,0.550,"Account top-up/reload with no counterparty detail; similar past (salaries, rebate) is unreliable; likely a cash account ",Topped up account
+767,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-3.50,AUD,,0.650,Card transaction from Whitehorse City Council (local government entity); similar past shows parking fees at 5060; likely,Card transaction of 3.50 AUD issued by Whitehorse City Counci NUNAWADING
+768,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-390.00,AUD,Danyal Trucking,0.500,Payment to Danyal Trucking for $390; name suggests transport/logistics service but no invoice; could be RMS host payout ,Sent money to Danyal Trucking
+769,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-790.00,AUD,Danyal Trucking,0.500,"Payment to Danyal Trucking for $790; same counterparty as 768, pattern suggests possible RMS fleet transport cost or hos",Sent money to Danyal Trucking
+770,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-49.59,AUD,Angela Gregore,0.500,Small payment to Angela Gregore ($49.59); could be RMS host/driver payout (5001) or reimbursement — insufficient detail ,Sent money to Angela Gregore
+771,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-12.34,AUD,Blanchard Mwanza,0.550,Small payment to Blanchard Mwanza ($12.34); similar past shows travel (6400) with score 0.8 but also salary (6000) — lik,Sent money to Blanchard Mwanza
+772,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-330.00,AUD,VICTORIAN AUTO SERVICES PTY LTD,0.750,Payment to VICTORIAN AUTO SERVICES PTY LTD ($330); similar past strongly suggests incidentals payout (5022) at score 0.5,Sent money to VICTORIAN AUTO SERVICES PTY LTD
+773,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-350.00,AUD,VICTORIAN AUTO SERVICES PTY LTD,0.750,"Payment to VICTORIAN AUTO SERVICES PTY LTD ($350); same vendor and similar pattern as 772, consistent with incidentals/r",Sent money to VICTORIAN AUTO SERVICES PTY LTD
+774,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-295.00,AUD,VICTORIAN AUTO SERVICES PTY LTD,0.750,"Payment to VICTORIAN AUTO SERVICES PTY LTD ($295); third payment to same auto service vendor, consistent with incidental",Sent money to VICTORIAN AUTO SERVICES PTY LTD
+775,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-240.00,AUD,VICTORIAN AUTO SERVICES PTY LTD,0.750,"Payment to VICTORIAN AUTO SERVICES PTY LTD ($240); fourth payment to same vendor, pattern reinforces incidentals/repair ",Sent money to VICTORIAN AUTO SERVICES PTY LTD
+776,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-220.00,AUD,VICTORIAN AUTO SERVICES PTY LTD,0.750,"Payment to VICTORIAN AUTO SERVICES PTY LTD ($220); fifth payment to same auto service vendor, consistent incidentals pay",Sent money to VICTORIAN AUTO SERVICES PTY LTD
+777,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-450.00,AUD,VICTORIAN AUTO SERVICES PTY LTD,0.750,"Payment to VICTORIAN AUTO SERVICES PTY LTD ($450); sixth payment to same vendor, strong pattern match to incidentals pay",Sent money to VICTORIAN AUTO SERVICES PTY LTD
+778,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-5000.00,AUD,North East Crash Repairs PTY LTD,0.700,"Large payment ($5,000) to North East Crash Repairs PTY LTD; similar past shows incidentals at 5022 (score 0.556); crash ",Sent money to North East Crash Repairs PTY LTD
+779,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,10000.00,AUD,,0.550,"Account top-up ($10,000); similar past is unreliable; likely cash account reload or inter-account transfer.",Topped up account
+780,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-906.00,AUD,Zilla Marie,0.550,"Payment to Zilla Marie (individual); larger amount (~$906) may indicate RMS owner payout per FLOW-4, though individual n",Sent money to Zilla Marie Cenido
+781,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-23.64,AUD,Siniva Crealy,0.600,Small payment to Siniva Crealy ($23.64); similar past shows travel (6400) with score 0.6; could be remote staff reimburs,Sent money to Siniva Crealy
+782,Drive lah Australia Pty Ltd.,MATCHED,party-default,6700,-27.19,AUD,Fireflies.ai,,,Card transaction of 18.00 USD issued by Fireflies.ai FIREFLIES.AI
+783,Drive lah Australia Pty Ltd.,MATCHED,party-default,5034,-165.00,AUD,Focussed Assessing Pty Ltd,,,Sent money to FOCUSSED CLAIMS MANAGEMENT PTY LTD
+784,Drive lah Australia Pty Ltd.,MATCHED,party-default,5034,-181.50,AUD,Focussed Assessing Pty Ltd,,,Sent money to FOCUSSED CLAIMS MANAGEMENT PTY LTD
+785,Drive lah Australia Pty Ltd.,MATCHED,party-default,5034,-385.00,AUD,Focussed Assessing Pty Ltd,,,Sent money to FOCUSSED CLAIMS MANAGEMENT PTY LTD
+786,Drive lah Australia Pty Ltd.,MATCHED,party-default,5034,-385.00,AUD,Focussed Assessing Pty Ltd,,,Sent money to FOCUSSED CLAIMS MANAGEMENT PTY LTD
+787,Drive lah Australia Pty Ltd.,MATCHED,party-default,5034,-385.00,AUD,Focussed Assessing Pty Ltd,,,Sent money to FOCUSSED CLAIMS MANAGEMENT PTY LTD
+788,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-75.10,AUD,Sentry,,,Card transaction of 49.73 USD issued by Sentry SENTRY.IO
+789,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-575.00,AUD,Paolo Villaflores,0.550,"Payment to Paolo Villaflores ($575); similar past shows salary (6000) at score 0.548; could be payroll, contractor fee, ",Sent money to Paolo Villaflores
+790,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,5000.00,AUD,,0.550,"Account top-up ($5,000); similar past is weak; likely cash account reload or inter-account transfer.",Topped up account
+791,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-34.50,AUD,Siniva Crealy,0.600,"Payment to Siniva Crealy ($34.50); same counterparty as 781, similar past shows travel (6400); likely remote staff reimb",Sent money to Siniva Crealy
+792,Drive lah Australia Pty Ltd.,MATCHED,party-default,5034,-330.00,AUD,Focussed Assessing Pty Ltd,,,Sent money to Focussed Assessing Pty Ltd
+793,Drive lah Australia Pty Ltd.,MATCHED,party-default,5034,-165.00,AUD,Focussed Assessing Pty Ltd,,,Sent money to Focussed Assessing Pty Ltd
+794,Drive lah Australia Pty Ltd.,MATCHED,party-default,5034,-220.00,AUD,Focussed Assessing Pty Ltd,,,Sent money to Focussed Assessing Pty Ltd
+795,Drive lah Australia Pty Ltd.,MATCHED,party-default,5034,-220.00,AUD,Focussed Assessing Pty Ltd,,,Sent money to Focussed Assessing Pty Ltd
+796,Drive lah Australia Pty Ltd.,MATCHED,party-default,5034,-220.00,AUD,Focussed Assessing Pty Ltd,,,Sent money to Focussed Assessing Pty Ltd
+797,Drive lah Australia Pty Ltd.,MATCHED,party-default,5034,-110.00,AUD,Focussed Assessing Pty Ltd,,,Sent money to Focussed Assessing Pty Ltd
+798,Drive lah Australia Pty Ltd.,MATCHED,party-default,5034,-165.00,AUD,Focussed Assessing Pty Ltd,,,Sent money to Focussed Assessing Pty Ltd
+799,Drive lah Australia Pty Ltd.,MATCHED,party-default,5034,-165.00,AUD,Focussed Assessing Pty Ltd,,,Sent money to Focussed Assessing Pty Ltd
+800,Drive lah Australia Pty Ltd.,MATCHED,party-default,5034,-220.00,AUD,Focussed Assessing Pty Ltd,,,Sent money to Focussed Assessing Pty Ltd
+801,Drive lah Australia Pty Ltd.,MATCHED,party-default,5034,-220.00,AUD,Focussed Assessing Pty Ltd,,,Sent money to Focussed Assessing Pty Ltd
+802,Drive lah Australia Pty Ltd.,MATCHED,party-default,5034,-330.00,AUD,Focussed Assessing Pty Ltd,,,Sent money to Focussed Assessing Pty Ltd
+803,Drive lah Australia Pty Ltd.,MATCHED,party-default,5034,-165.00,AUD,Focussed Assessing Pty Ltd,,,Sent money to Focussed Assessing Pty Ltd
+804,Drive lah Australia Pty Ltd.,MATCHED,party-default,5034,-330.00,AUD,Focussed Assessing Pty Ltd,,,Sent money to Focussed Assessing Pty Ltd
+805,Drive lah Australia Pty Ltd.,MATCHED,party-default,5034,-165.00,AUD,Focussed Assessing Pty Ltd,,,Sent money to Focussed Assessing Pty Ltd
+806,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,-87.17,AUD,UBER *TRIP,,,Card transaction of 87.17 AUD issued by Uber *Eats Help.uber.com Sydney
+807,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,83.91,AUD,UBER *TRIP,,,Card transaction of 83.91 AUD issued by Uber * Eats Pending Sydney
+808,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-2000.00,AUD,U R Drive,0.550,Payment to U R Drive (possibly a ride-share or vendor); large amount (~$2000) and similar past patterns suggest miscella,Sent money to U R Drive
+809,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-33.27,AUD,OPENAI (ChatGPT Subscription),,,Card transaction of 22.00 USD issued by Openai OPENAI.COM
+810,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,5000.00,AUD,,0.550,"Account top-up ($5,000); similar past is weak; likely cash account reload or inter-account transfer.",Topped up account
+811,Drive lah Ventures Holding Pte Ltd,NEEDS_REVIEW,AI low-conf -> review,,-30.00,SGD,,0.700,Bank interest charge ($30 SGD); standard bank fee; maps to finance/bank charges (6500 or similar operating expense).,INTEREST
+812,Drive lah Ventures Holding Pte Ltd,NEEDS_REVIEW,AI low-conf -> review,,-40.00,SGD,,0.700,Bank service charge ($40 SGD); standard bank fee for account maintenance; maps to bank/finance charges (6500).,SERVICE CHARGE
+813,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,25000.00,SGD,STRIPE PAYMENTS SIN,,,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P bg8l
+814,Drive lah Singapore Pte Ltd.,MATCHED,rule/transfer JE,,-10000.00,SGD,SMIT260102609891,,,FUND TRANSFER Fund Transfer to account 713147601001 SGD 10 000.00@1
+815,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-10000.00,SGD,SMIT260107615830,,,FUND TRANSFER Fund Transfer to account 713147601001 SGD 10 000.00@1
+816,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-12000.00,SGD,SM3P260107777531,,,FAST PAYMENT OTHR WISE SM3P260107777531 SM3P260107777531
+817,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,45.10,SGD,STRIPE PAYMENTS SIN,,,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P 7mQK
+818,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,15000.00,SGD,STRIPE PAYMENTS SIN,,,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P u1UN
+819,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-18000.00,SGD,SMIT260112622173,,,FUND TRANSFER Fund Transfer to account 713147601001 SGD 18 000.00@1
+820,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,17000.00,SGD,STRIPE PAYMENTS SIN,,,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P 2oIQ
+821,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-14000.00,SGD,SM3P260115945109,,,FAST PAYMENT OTHR WISE SM3P260115945109 SM3P260115945109
+822,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-3000.00,SGD,SMIT260115626730,,,FUND TRANSFER Fund Transfer to account 713147601001 SGD 3 000.00@1
+823,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,16000.00,SGD,STRIPE PAYMENTS SIN,,,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P Pyaa
+824,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,22000.00,SGD,STRIPE PAYMENTS SIN,,,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P szrK
+825,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-38000.00,SGD,SMIT260125635246,,,FUND TRANSFER Fund Transfer to account 713147601001 SGD 38 000.00@1
+826,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,15000.00,SGD,STRIPE PAYMENTS SIN,,,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P PYHB
+1124,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,-483.65,AUD,Trip.com,,,Trip.com
+1125,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,-13.19,AUD,,0.700,CommBank transfer to Aus Post ($13.19); similar past shows travel/postal at 6400 (score 0.676); likely postage or small ,Transfer to xx6947 CommBank app Aus post
+1126,Drive lah Australia Pty Ltd.,NEEDS_REVIEW,AI low-conf -> review,,1057.41,AUD,,0.600,"Transfer in ($1,057.41) via CommBank; similar past shows entertainment/rebate; likely settlement transfer or refund inco",Transfer In Admin CF-15245631C
+1127,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,725.65,AUD,gotogate,,,Refund Purchase gotogate1121872211
+1128,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,6600,-3.02,AUD,,,,International Transaction Fee Value Date: 15/03/2026
+1129,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-86.23,AUD,SUPABASE,,,SUPABASE SINGAPORE SG Card xx1999 USD 60.16 Value Date: 15/03/2026
+1130,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,6600,-1.00,AUD,,,,International Transaction Fee Value Date: 16/03/2026
+1131,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-28.67,AUD,OPENAI (ChatGPT Subscription),,,OPENAI *CHATGPT SUBSCR OPENAI.COM CA US Card xx1999 USD 20.00 Value Date: 16/03/2026
+1132,Drive lah Australia Pty Ltd.,MATCHED,party-default,6402,-13.09,AUD,INCANTO COFFEE,,,INCANTO COFFEE SYDNEY AU Card xx1999 Value Date: 16/03/2026
+1133,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,-725.65,AUD,gotogate,,,gotogate1121872211
+1134,Drive lah Australia Pty Ltd.,MATCHED,party-default,4025,102.00,AUD,SPICA DELORINO,,,Fast Transfer From SPICA DELORINO 01F2AEE6-0019
+1135,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,6600,-8.17,AUD,,,,International Transaction Fee Value Date: 13/03/2026
+1136,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-233.35,AUD,OPENAI (ChatGPT Subscription),,,OPENAI *CHATGPT SUBSCR OPENAI.COM CA US Card xx1999 USD 165.00 Value Date: 13/03/2026
+1137,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,6600,-1.93,AUD,,,,International Transaction Fee Value Date: 13/03/2026
+1138,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-55.15,AUD,RIGHTWORKS,,,RIGHTWORKS WWW.RIGHTWORK NH US Card xx1999 USD 39.00 Value Date: 13/03/2026
+1139,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,-18.86,AUD,TRANSPORTFORNSW TAP SYDNEY AU,,,TRANSPORTFORNSW TAP SYDNEY AU Card xx1999 Value Date: 12/03/2026
+1140,Drive lah Australia Pty Ltd.,MATCHED,party-default,5065,-9.37,AUD,POST GORDON,,,POST GORDON PS GORDON AU Card xx1999 Value Date: 12/03/2026
+1141,Drive lah Australia Pty Ltd.,MATCHED,party-default,6402,-19.90,AUD,SQ *STOCK MARKET KITCHEN,,,SQ *STOCK MARKET KITCHEN Sydney AU Card xx1999 Value Date: 13/03/2026
+1142,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,6600,-0.99,AUD,,,,International Transaction Fee Value Date: 13/03/2026
+1143,Drive lah Australia Pty Ltd.,MATCHED,party-default,6700,-28.28,AUD,VERCEL INC,,,VERCEL INC. VERCEL.COM CA US Card xx1999 USD 20.00 Value Date: 14/03/2026
+1144,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,-9.14,AUD,TRANSPORTFORNSW TAP SYDNEY AU,,,TRANSPORTFORNSW TAP SYDNEY AU Card xx1999 Value Date: 13/03/2026
+1145,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,-11.99,AUD,EDREAMS,,,EDREAMS PRIME M SYDNEY AU Card xx1999 Value Date: 14/03/2026
+1146,Drive lah Australia Pty Ltd.,MATCHED,party-default,6700,-399.00,AUD,ANGEL INVESTMENT TWICKENHAM,,,ANGEL INVESTMENT TWICKENHAM GB Card xx1999 AUD 399.00 Value Date: 15/03/2026
+1147,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,6600,-1.10,AUD,,,,International Transaction Fee Value Date: 14/03/2026
+1148,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-31.53,AUD,ANTHROPIC,,,CLAUDE.AI SUBSCRIPTION ANTHROPIC.COM CA US Card xx1999 USD 22.00 Value Date: 14/03/2026
+1149,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,-7.52,AUD,TRANSPORTFORNSW TAP SYDNEY AU,,,TRANSPORTFORNSW TAP SYDNEY AU Card xx1999 Value Date: 14/03/2026
+1150,Drive lah Australia Pty Ltd.,MATCHED,party-default,5020,-4568.49,AUD,Linkt Melbourne,,,Direct Debit 066429 Linkt Melbourne 228714538-75837720
+1151,Drive lah Australia Pty Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-12000.00,AUD,,,,Transfer To Wise Australia Pty Ltd PayID Email from CommBank App Wise
+1152,Drive lah Australia Pty Ltd.,MATCHED,party-default,5035,2969.76,AUD,Insuret,,,Direct Credit 509196 INSURET CLAIM 1225x1797
+1153,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,6600,-1.24,AUD,,,,International Transaction Fee Value Date: 11/03/2026
+1154,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-35.46,AUD,LOVABLE,,,LOVABLE LOVABLE.DEV DE US Card xx1999 USD 25.00 Value Date: 12/03/2026
+1155,Drive lah Australia Pty Ltd.,MATCHED,rule/transfer JE,6600,-47.84,AUD,,,,International Transaction Fee Value Date: 11/03/2026
+1156,Drive lah Australia Pty Ltd.,MATCHED,party-default,6700,-1366.77,AUD,Twilio,,,Twilio HCRRGNX7DJJFDKB9 844-8144627 CA US Card xx1999 USD 950.45 Value Date: 10/03/2026
+1157,Drive lah Australia Pty Ltd.,MATCHED,party-default,6400,-9.14,AUD,TRANSPORTFORNSW TAP SYDNEY AU,,,TRANSPORTFORNSW TAP SYDNEY AU Card xx1999 Value Date: 11/03/2026
+1158,Drive lah Australia Pty Ltd.,MATCHED,party-default,6300,-1300.00,AUD,IPPY*WOTSO HOLDINGS,,,Payrix*WOTSO HOLDINGS WOTSO HOLDINGS--22
+1159,Drive lah Australia Pty Ltd.,MATCHED,party-default,6701,-84.00,AUD,Intuit Quickbooks Sydney AU,,,Intuit Quickbooks Sydney AU Card xx1999 Value Date: 10/03/2026
+1160,Drive lah Australia Pty Ltd.,MATCHED,party-default,6402,-12.90,AUD,Caffeine Cartel,,,Caffeine Cartel Sydney AU Card xx1999 Value Date: 11/03/2026
+1161,Drive lah Australia Pty Ltd.,MATCHED,party-default,4025,30.00,AUD,CASSIE CROWDER,,,Fast Transfer From CROWDER C S reference:cassie crowder
+1162,Drive lah Australia Pty Ltd.,MATCHED,party-default,4025,50.00,AUD,MEEGAN KING,,,Fast Transfer From MEEGAN KING Arrears
+1163,Drive lah Australia Pty Ltd.,MATCHED,party-default,5065,-35.80,AUD,POST GORDON,,,POST GORDON PS GORDON AU Card xx1999 Value Date: 09/03/2026
+1388,Drive lah Singapore Pte Ltd.,PENDING,uncategorized (Pending),,-318458.27,SGD,,,,"JE #23: Host transfer payouts - Dec 2025 ($-318,458.27)"
+1389,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-161000.00,SGD,,,,"JE #24: Stripe payouts - Dec 2025 ($161,000.00)"
+1390,Drive lah Singapore Pte Ltd.,MATCHED,AI (>=0.80),5001,-311602.97,AUD,,0.950,"JE #23 Host transfer payouts Dec 2025; per FLOW-4, RMS host payouts to real car owners book to 5001 (not revenue double-","JE #23: Host transfer payouts - Dec 2025 ($-311,602.97)"
+1391,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-18000.00,AUD,,,,"JE #24: Stripe payouts - Dec 2025 ($-18,000.00)"
+1414,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-86500.00,SGD,,,,"JE #24: Stripe payouts - Jan 2025 ($86,500.00)"
+1415,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-4000.00,SGD,,,,"JE #24: Stripe payouts - Jan 2020 ($4,000.00)"
+1516,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-12000.00,SGD,SM3P260204727213,,,FAST PAYMENT OTHR WISE SM3P260204727213 SM3P260204727213
+1517,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-3000.00,SGD,SMIT260211657738,,,FUND TRANSFER Fund Transfer to account 713147601001 SGD 3 000.00@1
+1518,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,35000.00,SGD,STRIPE PAYMENTS SIN,,,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P Uc8K
+1519,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-10000.00,SGD,SM3P260212911698,,,FAST PAYMENT OTHR WISE SM3P260212911698 SM3P260212911698
+1520,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-22000.00,SGD,SM3P260216984938,,,FAST PAYMENT OTHR WISE SM3P260216984938 SM3P260216984938
+1521,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-3000.00,SGD,SMIT260216663357,,,FUND TRANSFER Fund Transfer to account 713147601001 SGD 3 000.00@1
+1522,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,25000.00,SGD,STRIPE PAYMENTS SIN,,,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P IxiG
+1523,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-20000.00,SGD,SM3P260218703834,,,FAST PAYMENT OTHR WISE SM3P260218703834 SM3P260218703834
+1524,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-5000.00,SGD,SMIT260218664014,,,FUND TRANSFER Fund Transfer to account 713147601001 SGD 5 000.00@1
+1525,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,15000.00,SGD,STRIPE PAYMENTS SIN,,,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P dr94
+1526,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,24000.00,SGD,STRIPE PAYMENTS SIN,,,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P JZdU
+1527,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-24000.00,SGD,SM3P260227826421,,,FAST PAYMENT OTHR WISE SM3P260227826421 SM3P260227826421
+1528,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-15000.00,SGD,SMIT260227670642,,,FUND TRANSFER Fund Transfer to account 713147601001 SGD 15 000.00@1
+1529,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,10000.00,SGD,STRIPE PAYMENTS SIN,,,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P glVw
+1530,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-10000.00,SGD,SMIT260303675985,,,FUND TRANSFER Fund Transfer to account 713147601001 SGD 10 000.00@1
+1531,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,9000.00,SGD,STRIPE PAYMENTS SIN,,,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P Sato
+1532,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,17000.00,SGD,STRIPE PAYMENTS SIN,,,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P MiXo
+1533,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,4000.00,SGD,STRIPE PAYMENTS SIN,,,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P CqI7
+1534,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-10000.00,SGD,SMIT260312687181,,,FUND TRANSFER Fund Transfer to account 713147601001 SGD 10 000.00@1
+1535,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-20000.00,SGD,SM3P260312806109,,,FAST PAYMENT OTHR WISE SM3P260312806109 SM3P260312806109
+1536,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,11000.00,SGD,STRIPE PAYMENTS SIN,,,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P AvS8
+1537,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-11000.00,SGD,SM3P260316873305,,,FAST PAYMENT OTHR WISE SM3P260316873305 SM3P260316873305
+1538,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,8000.00,SGD,STRIPE PAYMENTS SIN,,,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P zlno
+1539,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,11000.00,SGD,STRIPE PAYMENTS SIN,,,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P r4ib
+1540,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-10000.00,SGD,SM3P260317901144,,,FAST PAYMENT OTHR WISE SM3P260317901144 SM3P260317901144
+1541,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,10000.00,SGD,STRIPE PAYMENTS SIN,,,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P DIiJ
+1542,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,15000.00,SGD,STRIPE PAYMENTS SIN,,,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P wTeL
+1543,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-5000.00,SGD,SMIT260326700031,,,FUND TRANSFER Fund Transfer to account 713147601001 SGD 5 000.00@1
+1544,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,13000.00,SGD,STRIPE PAYMENTS SIN,,,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P B8ag
+1545,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,-42000.00,SGD,SM3P260327770642,,,FAST PAYMENT OTHR WISE SM3P260327770642 SM3P260327770642
+1546,Drive lah Singapore Pte Ltd.,AWAITING_MATCH,transfer (awaiting counterpart),,20000.00,SGD,STRIPE PAYMENTS SIN,,,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN Drive lah P Isxe
