@@ -22,6 +22,16 @@ try:
 except ImportError:
     PDFPLUMBER_AVAILABLE = False
 
+_MONTHS = {
+    'JAN': 1, 'FEB': 2, 'MAR': 3, 'APR': 4, 'MAY': 5, 'JUN': 6,
+    'JUL': 7, 'AUG': 8, 'SEP': 9, 'OCT': 10, 'NOV': 11, 'DEC': 12,
+}
+# A transaction line: "DD MMM DD MMM <description…> <amount> <balance>"
+_TXN_START = re.compile(r'^(\d{1,2})\s+([A-Z]{3})\s+(\d{1,2})\s+([A-Z]{3})\s+(.+)$')
+# Opening/closing balance markers: "01 NOV BALANCE B/F 16,079.18"
+_BAL_MARK = re.compile(r'^(?:\d{1,2}\s+[A-Z]{3}\s+)?BALANCE\s+(B/F|C/F)\s+([\d,]+\.\d{2})')
+_AMT_TOKEN = re.compile(r'^-?[\d,]+\.\d{2}$')
+
 
 def _parse_decimal(value: str) -> Optional[Decimal]:
     """Parse a decimal string, returning None if blank or unparseable."""
@@ -115,16 +125,11 @@ class OCBCPdfAdapter(BankCSVAdapter):
                 start_day, start_month_str, start_year_str = match.group(1), match.group(2), match.group(3)
                 end_day, end_month_str, end_year_str = match.group(4), match.group(5), match.group(6)
 
-                # Month name → number
-                month_map = {
-                    'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
-                    'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
-                }
-
+                # Month name → number (real statements print months UPPERCASE)
                 return {
-                    'start_month': month_map.get(start_month_str, 1),
+                    'start_month': _MONTHS.get(start_month_str.upper(), 1),
                     'start_year': int(start_year_str),
-                    'end_month': month_map.get(end_month_str, 12),
+                    'end_month': _MONTHS.get(end_month_str.upper(), 12),
                     'end_year': int(end_year_str),
                 }
         except Exception as e:
@@ -154,32 +159,108 @@ class OCBCPdfAdapter(BankCSVAdapter):
             return end_year
 
     def _extract_transactions_from_pdf(self, pdf_path: str, period: dict[str, int]) -> list[NormalizedRow]:
-        """Extract transactions from PDF pages."""
+        """Extract transactions by walking all lines sequentially.
+
+        A transaction opens with "DD MMM DD MMM <desc…> <amount> <balance>" and its
+        description continues on the following lines (FX amount, card ref, merchant)
+        until the next transaction / balance marker. The withdrawal-vs-deposit sign
+        is derived from the running-balance delta — the single reliable signal in
+        the text layer (the PDF's withdrawal/deposit columns collapse in extraction).
+        """
         import pdfplumber
-        rows = []
+
+        rows: list[NormalizedRow] = []
+        prev_balance: Optional[Decimal] = None
+        cur: Optional[dict] = None
+
+        def finalize() -> None:
+            nonlocal cur
+            if cur is None:
+                return
+            desc = ' '.join(p for p in cur['desc_parts'] if p).strip() or 'OCBC Transaction'
+            rows.append(NormalizedRow(
+                transaction_date=cur['txn_date'],
+                value_date=cur['value_date'],
+                description=desc,
+                amount=cur['amount'],
+                currency="SGD",
+                running_balance=cur['balance'],
+            ))
+            cur = None
 
         with pdfplumber.open(pdf_path) as pdf:
             for page in pdf.pages:
                 text = page.extract_text()
                 if not text:
                     continue
-
-                lines = text.split('\n')
-                i = 0
-                while i < len(lines):
-                    line = lines[i].strip()
-                    i += 1
-
-                    # Skip header/footer rows and empty lines
-                    if self._should_skip_line(line):
+                for raw_line in text.split('\n'):
+                    line = raw_line.strip()
+                    if not line or self._should_skip_line(line):
                         continue
 
-                    # Try to parse transaction line
-                    row = self._parse_transaction_line(line, lines, i, period)
-                    if row:
-                        rows.append(row[0])
-                        i = row[1]
+                    bal = _BAL_MARK.match(line)
+                    if bal:
+                        finalize()
+                        prev_balance = _parse_decimal(bal.group(2))
+                        continue
 
+                    m = _TXN_START.match(line)
+                    if m and m.group(2).upper() in _MONTHS and m.group(4).upper() in _MONTHS:
+                        finalize()
+                        tokens = m.group(5).split()
+                        amounts: list[str] = []
+                        while tokens and len(amounts) < 2 and _AMT_TOKEN.match(tokens[-1]):
+                            amounts.insert(0, tokens.pop())
+                        if not amounts:
+                            # date-like line without amounts — description text
+                            if cur is not None:
+                                cur['desc_parts'].append(line)
+                            continue
+                        balance = _parse_decimal(amounts[-1]) if len(amounts) >= 2 else None
+                        magnitude = _parse_decimal(amounts[0])
+                        if magnitude is None:
+                            continue
+
+                        # Sign from the running-balance delta (exact); fall back to
+                        # withdrawal (the dominant case) when no balance chain exists.
+                        if balance is not None and prev_balance is not None:
+                            delta = balance - prev_balance
+                            if abs(abs(delta) - magnitude) > Decimal("0.01"):
+                                self.errors.append(
+                                    f"balance delta {delta} != amount {magnitude} "
+                                    f"near '{line[:60]}' — using delta sign")
+                            amount = magnitude if delta > 0 else -magnitude
+                        else:
+                            amount = -magnitude
+                            self.errors.append(
+                                f"no balance chain for '{line[:60]}' — assumed withdrawal")
+                        if balance is not None:
+                            prev_balance = balance
+
+                        txn_month = _MONTHS[m.group(2).upper()]
+                        val_month = _MONTHS[m.group(4).upper()]
+                        try:
+                            txn_date = date(self._get_transaction_year(txn_month, period),
+                                            txn_month, int(m.group(1)))
+                            value_date = date(self._get_transaction_year(val_month, period),
+                                              val_month, int(m.group(3)))
+                        except ValueError:
+                            self.errors.append(f"bad date on '{line[:60]}'")
+                            continue
+
+                        cur = {
+                            'txn_date': txn_date,
+                            'value_date': value_date,
+                            'desc_parts': [' '.join(tokens)],
+                            'amount': amount,
+                            'balance': balance,
+                        }
+                        continue
+
+                    # Continuation line of the open transaction's description
+                    if cur is not None:
+                        cur['desc_parts'].append(line)
+        finalize()
         return rows
 
     def _should_skip_line(self, line: str) -> bool:
@@ -190,113 +271,16 @@ class OCBCPdfAdapter(BankCSVAdapter):
             'Transaction', 'Total', 'Interest', 'Average', 'CHECK YOUR', 'Page',
             'For enquiries', 'Please turn', 'UPDATING YOUR', 'OCBC PROMOTION',
             '—', 'Account', 'Currency',
+            # page furniture (repeats every page; must not leak into descriptions
+            # of transactions that span a page break)
+            'OCBC Bank', '65 Chulia Street', 'Singapore 049513', 'W230002391',
+            'detimiL', 'noitaroproC', 'gniknaB', 'esenihC-aesrevO',
+            ':.oN', '.geR', '.oC', 'DRIVE LAH', 'STATEMENT OF ACCOUNT',
+            'BUSINESS GROWTH ACCOUNT', 'OCBC North Branch', 'Co. Reg',
+            'Deposit Insurance Scheme', 'Insured up to', 'Monies and deposits',
         ]
         return any(line.lower().startswith(p.lower()) for p in skip_patterns) or not line
 
-    def _parse_transaction_line(
-        self, line: str, all_lines: list, start_idx: int, period: dict[str, int]
-    ) -> Optional[tuple]:
-        """
-        Parse a transaction line from OCBC PDF.
-
-        Format: "DD MMM  DD MMM  Description...  withdrawal_amount  deposit_amount  balance"
-
-        Returns (NormalizedRow, next_index) or None if not a valid transaction.
-        """
-        # Transaction lines start with "DD MMM" date pattern
-        date_match = re.match(r'^(\d{1,2})\s+([A-Za-z]{3})', line)
-        if not date_match:
-            return None
-
-        day = int(date_match.group(1))
-        month_str = date_match.group(2)
-
-        # Determine month and year
-        month_map = {
-            'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
-            'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
-        }
-        month = month_map.get(month_str)
-        if not month:
-            return None
-
-        txn_year = self._get_transaction_year(month, period)
-
-        try:
-            txn_date = datetime.strptime(f"{day} {month_str} {txn_year}", "%d %b %Y").date()
-        except ValueError:
-            return None
-
-        # Parse the rest of the line
-        # After date, line contains: value_date description ... amounts ... balance
-        # Find all decimal numbers in the line
-        amounts = re.findall(r'-?[\d,]+\.?\d*', line)
-        if not amounts:
-            return None
-
-        # Last amount is balance; second-to-last and third-to-last are withdrawal/deposit
-        balance = None
-        withdrawal = None
-        deposit = None
-
-        if len(amounts) >= 3:
-            balance_str = amounts[-1]
-            balance = _parse_decimal(balance_str)
-            amounts = amounts[:-1]  # Remove balance
-
-        # Now last two amounts should be withdrawal and deposit
-        # OCBC format: Withdrawal column comes before Deposit column
-        if len(amounts) >= 2:
-            withdrawal_str = amounts[-2]
-            deposit_str = amounts[-1]
-            withdrawal = _parse_decimal(withdrawal_str)
-            deposit = _parse_decimal(deposit_str)
-        elif len(amounts) == 1:
-            # Only one amount: could be withdrawal or deposit
-            val = _parse_decimal(amounts[0])
-            if val:
-                # Assume positive = deposit, negative = withdrawal
-                # (Though OCBC typically shows separately)
-                if val > 0:
-                    deposit = val
-                else:
-                    withdrawal = val
-
-        # Calculate net amount: deposit - withdrawal
-        amount = Decimal(0)
-        if deposit:
-            amount += deposit
-        if withdrawal:
-            amount -= withdrawal
-
-        # Extract description (between date and amounts)
-        # This is a simplified extraction; in practice may need table parsing
-        # For now, skip detailed description extraction
-        description = "OCBC Transaction"
-
-        # Check for special balance markers
-        if "BALANCE B/F" in line or "BALANCE" in line:
-            description = "BALANCE B/F" if "B/F" in line else "BALANCE C/F"
-        else:
-            # Try to extract transaction type from line
-            if "FUND TRANSFER" in line:
-                description = "FUND TRANSFER"
-            elif "PAYMENT" in line:
-                description = "PAYMENT/TRANSFER"
-            elif "CHEQUE" in line:
-                description = "CHEQUE"
-            elif "INTEREST" in line:
-                description = "INTEREST"
-
-        normalized = NormalizedRow(
-            transaction_date=txn_date,
-            description=description,
-            amount=amount,
-            currency="SGD",
-            running_balance=balance,
-        )
-
-        return (normalized, start_idx)
 
     def fingerprint_fields(self, row: NormalizedRow) -> Sequence[str]:
         """

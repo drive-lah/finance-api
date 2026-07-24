@@ -71,34 +71,44 @@ def main() -> None:
     live.close()
 
     # ---- import the statement(s), staged (no auto-categorize) ----
-    # DBS PDFs are multi-currency; route each currency section to the matching
-    # live DBS account (USD/SGD/EUR), exactly as entity-level routing intends.
     from src.services.csv_adapters.dbs_pdf import DBSPDFAdapter
+    from src.services.csv_adapters.ocbc_pdf import OCBCPdfAdapter
 
+    all_accounts = sandbox.query(FinanceBankAccount).all()
     dbs_accounts = {
         (ba.currency or "").upper(): ba
-        for ba in sandbox.query(FinanceBankAccount).all()
-        if "669493" in (ba.account_number or "")
+        for ba in all_accounts if "669493" in (ba.account_number or "")
     }
 
+    def stage(ba, rows, adapter, path, tag=""):
+        res = transaction_service.import_from_rows(
+            db=sandbox, bank_account=ba, normalized_rows=rows,
+            fingerprint_fn=adapter.fingerprint_fields,
+            import_batch_id=f"sandbox-{os.path.basename(path)}",
+            source="file_import", extra_errors=list(adapter.errors),
+            auto_categorize=False)
+        print(f"  {os.path.basename(path)}{tag} -> {ba.account_name}: "
+              f"{res.get('transactions_created')} txns, "
+              f"{res.get('duplicates_skipped')} dupes, "
+              f"errors={len(res.get('errors') or [])}")
+
     for path in files:
-        adapter = DBSPDFAdapter()
-        by_currency = adapter.parse_pdf(open(path, "rb").read())
-        for currency, rows in by_currency.items():
-            ba = dbs_accounts.get(currency.upper())
-            if ba is None:
-                print(f"  ! no account for {currency} ({len(rows)} rows skipped)")
-                continue
-            res = transaction_service.import_from_rows(
-                db=sandbox, bank_account=ba, normalized_rows=rows,
-                fingerprint_fn=adapter.fingerprint_fields,
-                import_batch_id=f"sandbox-{os.path.basename(path)}",
-                source="file_import", extra_errors=list(adapter.errors),
-                auto_categorize=False)
-            print(f"  {os.path.basename(path)} [{currency}] -> {ba.account_name}: "
-                  f"{res.get('transactions_created')} txns, "
-                  f"{res.get('duplicates_skipped')} dupes, "
-                  f"errors={len(res.get('errors') or [])}")
+        name = os.path.basename(path).lower()
+        if "1001" in name or "3001" in name:           # OCBC (SG)
+            suffix = "601001" if "1001" in name else "393001"
+            ba = next(b for b in all_accounts
+                      if (b.account_number or "").replace("-", "").endswith(suffix))
+            adapter = OCBCPdfAdapter()
+            rows = adapter.parse(open(path, "rb").read())
+            stage(ba, rows, adapter, path)
+        else:                                           # DBS (Ventures, multi-ccy)
+            adapter = DBSPDFAdapter()
+            for currency, rows in adapter.parse_pdf(open(path, "rb").read()).items():
+                ba = dbs_accounts.get(currency.upper())
+                if ba is None:
+                    print(f"  ! no account for {currency} ({len(rows)} rows skipped)")
+                    continue
+                stage(ba, rows, adapter, path, tag=f" [{currency}]")
 
     total = sandbox.query(FinanceTransaction).count()
 
