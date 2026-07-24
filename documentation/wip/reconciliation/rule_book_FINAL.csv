@@ -82,3 +82,4 @@ live#205,Drive Lah Pte Ltd - Whale,168,OUTGOING,,,CONTAINS,Whale,,,,,,EXPENSE,67
 mined-new,Stripe settlement variant - internal transfer (Fleet decision),1,INCOMING,,,CONTAINS,payment transferpayment transfer csdb stripe,,,,,,INTERNAL_TRANSFER,,,,,n/a,NEW-mined
 live#283,Own-platform test charges (Drive Mate) - outgoing,5,outgoing,,,CONTAINS,issued by Drive Mate | DRIVE MATE MEL,,,,,,expense,6702,,,,,kept-new
 live#284,Own-platform test charges (Drive Mate) - incoming,5,incoming,,,CONTAINS,issued by Drive Mate | DRIVE MATE MEL,,,,,,expense,6702,,,,,kept-new
+live#285,Wise top-up (own money in),1,incoming,,"[11, 12]",IS_EXACTLY,Topped up account,,,,,,internal_transfer,,17,,,,kept-new
