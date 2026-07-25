@@ -245,11 +245,13 @@ class EconomicEventService:
                             FinanceTransaction.source == "stripe_payout_import").scalar())
             if last:
                 since = last - timedelta(days=3)   # overlap; dedup eats repeats
-                window = f"WHERE {spec.date_col} >= '{since}'"
-                window_label = f"since {since}"
             else:
-                window = ""                        # first sync: full history
-                window_label = "full history"
+                # standard sync rule (Gaurav 2026-07-25): never-synced = max 90
+                # days back. Historical one-go backfills are run operationally
+                # with an explicit period, never by the button.
+                since = date.today() - timedelta(days=90)
+            window = f"WHERE {spec.date_col} >= '{since}'"
+            window_label = f"since {since}"
         rows = self.ch.execute_many(
             f"SELECT * FROM {spec.view} {window} ORDER BY {spec.date_col}"
         )
