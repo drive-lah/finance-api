@@ -50,6 +50,14 @@ def _sweep_test_residue():
             s.execute(text("""DELETE FROM finance_transactions WHERE bank_account_id IN
                 (SELECT id FROM finance_bank_accounts WHERE bank_name LIKE '[TEST]%')"""))
             s.execute(text("DELETE FROM finance_bank_accounts WHERE bank_name LIKE '[TEST]%'"))
+            s.execute(text("""DELETE FROM finance_journal_lines WHERE entry_id IN
+                (SELECT id FROM finance_journal_entries WHERE entity_id IN
+                 (SELECT id FROM finance_entities WHERE name LIKE '[TEST]%'))"""))
+            s.execute(text("""DELETE FROM finance_journal_entries WHERE entity_id IN
+                (SELECT id FROM finance_entities WHERE name LIKE '[TEST]%')"""))
+            s.execute(text("DELETE FROM finance_categorization_rules WHERE name LIKE '[TEST]%'"))
+            s.execute(text("DELETE FROM finance_counterparties WHERE name LIKE '[TEST]%'"))
+            s.execute(text("DELETE FROM finance_entities WHERE name LIKE '[TEST]%'"))
             s.commit()
     _purge()
     yield
