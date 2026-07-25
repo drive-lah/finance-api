@@ -203,7 +203,7 @@ class TransactionService:
         bank_account_id: int,
         file_bytes: bytes,
         import_batch_id: Optional[str] = None,
-        auto_categorize: bool = True,
+        auto_categorize: bool = False,  # Gaurav 2026-07-25: imports ALWAYS stage as IMPORTED; categorization is an explicit act
     ) -> Dict[str, Any]:
         """
         Import transactions from a file (CSV or PDF) using a bank-specific adapter.
@@ -260,7 +260,7 @@ class TransactionService:
         import_batch_id: Optional[str] = None,
         source: str = "api_sync",
         extra_errors: Optional[list] = None,
-        auto_categorize: bool = True,
+        auto_categorize: bool = False,  # Gaurav 2026-07-25: imports ALWAYS stage as IMPORTED; categorization is an explicit act
     ) -> Dict[str, Any]:
         """
         Shared import loop used by both CSV and API sync paths.

@@ -61,13 +61,15 @@ def test_import_staged_sets_imported_and_no_categorization(db_session, setup):
     assert txn.reconciled_journal_entry_id is None           # no JE created
 
 
-def test_import_default_is_pending(db_session, setup):
+def test_import_default_is_imported(db_session, setup):
+    """Gaurav 2026-07-25: imports ALWAYS stage as IMPORTED by default —
+    categorization is an explicit act, never a side effect of arrival."""
     transaction_service.import_from_rows(
         db_session, bank_account=setup["bank"], normalized_rows=[_row("NORMAL LINE", -20)],
-        fingerprint_fn=lambda r: [r.description],  # auto_categorize defaults True
+        fingerprint_fn=lambda r: [r.description],
     )
     txn = db_session.query(FinanceTransaction).filter(FinanceTransaction.description == "NORMAL LINE").first()
-    assert txn.status == TransactionStatus.PENDING           # unchanged default behaviour
+    assert txn.status == TransactionStatus.IMPORTED
 
 
 def test_run_picks_up_imported_and_flips_to_pending(db_session, setup):

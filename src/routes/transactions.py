@@ -154,7 +154,7 @@ def import_transactions():
     import_batch_id = request.form.get('import_batch_id')
     # auto_categorize=false → stage transactions as IMPORTED and skip categorization
     # (for bulk historical loads; categorize deliberately later).
-    auto_categorize = request.form.get('auto_categorize', 'true').strip().lower() != 'false'
+    auto_categorize = request.form.get('auto_categorize', 'false').strip().lower() == 'true'
 
     # Process import
     with db_session() as db:
