@@ -82,9 +82,12 @@ class RuleService:
 
         # Action requirements
         if category == TransactionCategory.INTERNAL_TRANSFER:
-            if not target_bank_account_id:
-                raise ValueError("category='internal_transfer' requires target_bank_account_id")
-            self._validate_bank_account(db, target_bank_account_id)
+            # target is OPTIONAL (two-rules-per-corridor law, Gaurav 2026-07-25):
+            # the side that cannot know its counterpart creates a CLAIM-ONLY rule
+            # with no target — it claims the transfer and waits to be attached to
+            # the knowing side's JE.
+            if target_bank_account_id:
+                self._validate_bank_account(db, target_bank_account_id)
         elif category == TransactionCategory.CROSS_ENTITY_ALLOCATION:
             if not allocation_entity_id:
                 raise ValueError("category='cross_entity_allocation' requires allocation_entity_id")

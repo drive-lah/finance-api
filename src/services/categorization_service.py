@@ -167,6 +167,11 @@ class CategorizationService:
             if rule_id is not None:
                 transfer_rules = [r for r in transfer_rules if r.id == rule_id]
             for transaction in list(transactions):
+                if transaction.status != TransactionStatus.PENDING:
+                    # already handled this run (e.g. paired as the counter-leg
+                    # of a transfer booked earlier in this same loop) — never
+                    # re-book it (the double-JE bulk-import edge)
+                    continue
                 matched_rule = self._match_transaction(transaction, transfer_rules, {})
                 if not matched_rule:
                     continue
@@ -345,6 +350,10 @@ class CategorizationService:
 
         for waiting_txn in awaiting:
             target_ba_id = waiting_txn.expected_counterpart_ba_id
+            if target_ba_id is None:
+                # claim-only waiter (target-less rule): it gets attached by the
+                # KNOWING side's counter-search, never by Phase 0 itself
+                continue
             candidates = pending_by_ba.get(target_ba_id, [])
             if not candidates:
                 continue
@@ -416,12 +425,18 @@ class CategorizationService:
         target_ba_id: int,
     ) -> Optional[FinanceTransaction]:
         """
-        Look for a PENDING counter-transaction on target_ba_id that mirrors txn.
+        Look for a counter-transaction on target_ba_id that mirrors txn.
+
+        Candidates are PENDING lines — or CLAIM-ONLY waiters: transactions a
+        target-less transfer rule claimed as AWAITING_MATCH without a JE (the
+        two-rules-per-corridor law: the side that doesn't know its counterpart
+        claims the transfer and waits to be attached to the knowing side's JE).
 
         Criteria: opposite sign, amount within ±2%, date within ±5 days.
         Returns the best match or None.
         """
         from datetime import timedelta
+        from sqlalchemy import and_, or_
 
         abs_amount = abs(float(txn.amount))
         if abs_amount == 0:
@@ -432,7 +447,13 @@ class CategorizationService:
 
         candidates = db.query(FinanceTransaction).filter(
             FinanceTransaction.bank_account_id == target_ba_id,
-            FinanceTransaction.status == TransactionStatus.PENDING,
+            or_(
+                FinanceTransaction.status == TransactionStatus.PENDING,
+                and_(
+                    FinanceTransaction.status == TransactionStatus.AWAITING_MATCH,
+                    FinanceTransaction.reconciled_journal_entry_id.is_(None),
+                ),
+            ),
             FinanceTransaction.transaction_date.between(date_low, date_high),
         ).all()
 
@@ -1310,6 +1331,31 @@ Return only the JSON object, no explanation."""
             contra_account_code = rule.contra_account_code
             if not contra_account_code:
                 raise ValueError(f"Rule {rule.id} produced no contra_account_code")
+
+        if (rule.category == TransactionCategory.INTERNAL_TRANSFER
+                and rule.target_bank_account_id is None):
+            # CLAIM-ONLY transfer rule (two-rules-per-corridor law, Gaurav
+            # 2026-07-25): this side of the corridor cannot know its counterpart
+            # (e.g. a Wise top-up can't tell WHICH bank funded it), so it books
+            # NO JE — it just claims the transaction as a transfer so enrichment
+            # and AI never touch it, and waits for the knowing side's counter-
+            # search to attach it to that side's JE.
+            transaction.categorization_type = CategorizationType.INTERNAL_TRANSFER
+            transaction.status = TransactionStatus.AWAITING_MATCH
+            transaction.expected_counterpart_ba_id = None
+            self._apply_tags(db, transaction.id, rule.tag_ids)
+            db.commit()
+            logger.info(
+                f"Transfer claim-only: txn {transaction.id} claimed by rule {rule.id} "
+                f"(no target) — awaiting the knowing side's JE"
+            )
+            return {
+                "transaction_id": transaction.id,
+                "status": "awaiting_match",
+                "rule_name": rule.name,
+                "journal_entry_id": None,
+                "error": None,
+            }
 
         if rule.category == TransactionCategory.INTERNAL_TRANSFER:
             journal_entry = self._create_internal_transfer_entries(

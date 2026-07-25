@@ -12,7 +12,7 @@ from src.database import Base
 from src.models.entity import FinanceEntity, EntityStatus
 from src.models.account import FinanceAccount, AccountType, NormalBalance, AccountStatus
 from src.models.bank_account import FinanceBankAccount, BankAccountStatus
-from src.models.transaction import FinanceTransaction, TransactionStatus
+from src.models.transaction import CategorizationType, FinanceTransaction, TransactionStatus
 from src.models.journal_entry import FinanceJournalEntry, JournalEntryStatus
 from src.models.journal_line import FinanceJournalLine
 from src.models.tag import FinanceTag, FinanceTransactionTag
@@ -349,13 +349,17 @@ class TestRuleService:
                 name="Bad Account", contra_account_code="9999",
             ))
 
-    def test_internal_transfer_missing_target_bank_account(self, db_session, test_accounts):
-        with pytest.raises(ValueError, match="requires target_bank_account_id"):
-            rule_service.create(db_session, RuleCreate(
-                name="Transfer",
-                direction=TransactionDirection.OUTGOING,
-                category=TransactionCategory.INTERNAL_TRANSFER,
-            ))
+    def test_internal_transfer_without_target_is_claim_only(self, db_session, test_accounts):
+        """Two-rules-per-corridor law: a transfer rule WITHOUT a target is valid —
+        it's the claim-only side of a corridor (e.g. Wise can't know which bank
+        topped it up)."""
+        rule = rule_service.create(db_session, RuleCreate(
+            name="Transfer claim-only",
+            direction=TransactionDirection.INCOMING,
+            category=TransactionCategory.INTERNAL_TRANSFER,
+            description_operator=MatchOperator.CONTAINS, description_value="MONEY ADDED",
+        ))
+        assert rule.target_bank_account_id is None
 
     def test_internal_transfer_invalid_target_bank_account(self, db_session, test_accounts):
         with pytest.raises(ValueError, match="does not exist"):
@@ -829,6 +833,58 @@ class TestCategorizationEngine:
         assert txn.expected_counterpart_ba_id == test_bank_account_wise.id
         # ... and NOT enriched: counterparty stays clear despite the matching counterparty.
         assert txn.counterparty_id is None
+
+    def test_claim_only_rule_claims_without_je(
+        self, db_session, test_accounts, test_bank_account_wise
+    ):
+        """A target-less transfer rule claims the txn as AWAITING_MATCH with NO JE
+        — protecting it from enrichment/AI — and waits for the knowing side."""
+        rule_service.create(db_session, RuleCreate(
+            name="Wise money-added claim-only",
+            direction=TransactionDirection.INCOMING,
+            category=TransactionCategory.INTERNAL_TRANSFER,
+            description_operator=MatchOperator.CONTAINS, description_value="Money added",
+        ))
+        txn = _make_transaction(db_session, test_bank_account_wise,
+                                description="FROM: Drive Lah Pte. Ltd. Money added",
+                                amount=5000.0)
+        categorization_service.run(db_session)
+        db_session.refresh(txn)
+        assert txn.status == TransactionStatus.AWAITING_MATCH
+        assert txn.reconciled_journal_entry_id is None      # no JE — claim only
+        assert txn.categorization_type == CategorizationType.INTERNAL_TRANSFER
+        assert txn.counterparty_id is None                  # enrichment never saw it
+
+    def test_knowing_side_attaches_claim_only_waiter(
+        self, db_session, test_accounts, test_bank_account, test_bank_account_wise
+    ):
+        """The knowing side's JE adopts a claim-only waiter: both legs end MATCHED
+        sharing ONE journal entry (no double-booking)."""
+        rule_service.create(db_session, RuleCreate(
+            name="Wise money-added claim-only",
+            direction=TransactionDirection.INCOMING,
+            category=TransactionCategory.INTERNAL_TRANSFER,
+            description_operator=MatchOperator.CONTAINS, description_value="Money added",
+        ))
+        rule_service.create(db_session, RuleCreate(
+            name="OCBC to Wise (knowing side)",
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.INTERNAL_TRANSFER,
+            target_bank_account_id=test_bank_account_wise.id,
+            description_operator=MatchOperator.CONTAINS, description_value="OTHR WISE",
+        ))
+        wise_leg = _make_transaction(db_session, test_bank_account_wise,
+                                     description="FROM: Drive Lah Pte. Ltd. Money added",
+                                     amount=5000.0, fingerprint="wise-leg")
+        bank_leg = _make_transaction(db_session, test_bank_account,
+                                     description="FAST PAYMENT OTHR WISE REF123",
+                                     amount=-5000.0, fingerprint="bank-leg")
+        categorization_service.run(db_session)
+        db_session.refresh(wise_leg); db_session.refresh(bank_leg)
+        assert bank_leg.status == TransactionStatus.MATCHED
+        assert wise_leg.status == TransactionStatus.MATCHED
+        assert bank_leg.reconciled_journal_entry_id is not None
+        assert wise_leg.reconciled_journal_entry_id == bank_leg.reconciled_journal_entry_id
 
     def test_transfer_to_no_feed_target_matches_standalone(
         self, db_session, test_accounts, test_bank_account, test_entity
