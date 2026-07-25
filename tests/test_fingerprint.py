@@ -163,7 +163,7 @@ class TestOCBCFingerprintBehaviour:
         row = _make_row(running_balance=None)
         fields = ADAPTER.fingerprint_fields(row)
         # The balance position should be an empty string, not blow up
-        assert fields[3] == ""
+        assert fields[2] == ""
         fp = generate_fingerprint(bank_account_id=1, fields=fields)
         assert len(fp) == 64
 
@@ -183,15 +183,13 @@ class TestOCBCFingerprintBehaviour:
         fp_empty = generate_fingerprint(bank_account_id=1, fields=ADAPTER.fingerprint_fields(row_empty))
         assert fp_none == fp_empty
 
-    def test_reference_normalised_to_lowercase(self):
-        """Upper/mixed-case references must produce the same fingerprint."""
-        row_upper = _make_row(reference_number="REF123")
-        row_lower = _make_row(reference_number="ref123")
-        row_mixed = _make_row(reference_number="ReF123")
-        fp_upper = generate_fingerprint(bank_account_id=1, fields=ADAPTER.fingerprint_fields(row_upper))
-        fp_lower = generate_fingerprint(bank_account_id=1, fields=ADAPTER.fingerprint_fields(row_lower))
-        fp_mixed = generate_fingerprint(bank_account_id=1, fields=ADAPTER.fingerprint_fields(row_mixed))
-        assert fp_upper == fp_lower == fp_mixed
+    def test_reference_ignored_by_design(self):
+        """References differ across formats (CSV has them, PDF doesn't) — they
+        must NOT affect the fingerprint (cross-format dedup, 2026-07-25)."""
+        fp_a = generate_fingerprint(bank_account_id=1, fields=ADAPTER.fingerprint_fields(_make_row(reference_number="REF123")))
+        fp_b = generate_fingerprint(bank_account_id=1, fields=ADAPTER.fingerprint_fields(_make_row(reference_number=None)))
+        assert fp_a == fp_b
+
 
     def test_amount_formatted_to_2dp(self):
         """Amount field must be 2 decimal places regardless of Decimal precision."""
@@ -201,22 +199,20 @@ class TestOCBCFingerprintBehaviour:
         fp_3dp = generate_fingerprint(bank_account_id=1, fields=ADAPTER.fingerprint_fields(row_3dp))
         assert fp_2dp == fp_3dp
 
-    def test_fingerprint_fields_returns_four_elements(self):
-        """OCBC fingerprint_fields must always return exactly 4 elements."""
+    def test_fingerprint_fields_returns_three_elements(self):
+        """Format-agnostic scheme (2026-07-25): exactly [date, amount, balance] —
+        no reference/description, so CSV and PDF of the same txn hash alike."""
         row = _make_row()
         fields = ADAPTER.fingerprint_fields(row)
-        assert len(fields) == 4
+        assert len(fields) == 3
 
     def test_fingerprint_fields_order(self):
-        """Verify the expected field order: date, amount, reference, balance."""
+        """Field order: date, amount, balance (format-agnostic scheme)."""
         row = _make_row(
             transaction_date=date(2024, 3, 1),
             amount=Decimal("-75.25"),
-            reference_number="  MyRef  ",
             running_balance=Decimal("500.00"),
         )
         fields = ADAPTER.fingerprint_fields(row)
-        assert fields[0] == "2024-03-01"
-        assert fields[1] == "-75.25"
-        assert fields[2] == "myref"        # stripped + lowercased
-        assert fields[3] == "500.00"
+        assert fields == ["2024-03-01", "-75.25", "500.00"]
+
