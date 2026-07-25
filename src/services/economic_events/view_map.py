@@ -85,6 +85,7 @@ VIEW_MAP: dict[tuple[str, str], ViewSpec] = {
     ("AU", "host_transfers_cash"): ViewSpec("view_AU_c_host_transfers", date_col="month_year"),
     ("AU", "incidentals_direct_revenue"): ViewSpec("view_AU_a_incidentals_direct_revenue"),
     ("AU", "host_subscription_collected"): ViewSpec("view_AU_a_host_subscription_collected"),
+    ("AU", "host_misc_charge_collected"): ViewSpec("view_AU_a_host_misc_charge_collected"),
     ("AU", "trip_distance_invoiced"): ViewSpec("view_AU_a_trip_distance_invoiced",
                                                date_col="month_year", amount_col="total_invoiced"),
     ("AU", "trip_distance_invoice_paid"): ViewSpec("view_AU_c_trip_distance_invoice_paid",
