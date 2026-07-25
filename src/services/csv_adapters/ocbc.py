@@ -27,6 +27,7 @@ Key mapping decisions:
 """
 import csv
 import io
+import re
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from typing import Any, Optional
@@ -168,9 +169,15 @@ class OCBCCsvAdapter(BankCSVAdapter):
         reference_number = row.get("Our Ref", "").strip() or None
         currency = row.get("Account Currency", "").strip() or None
 
-        # Ref For Account Owner: store raw as counterparty_name regardless of content.
-        # Categorization engine will overwrite with canonical name when a rule matches.
+        # Ref For Account Owner: usually the payee, BUT on card-purchase rows
+        # OCBC puts the purchase DATE here (e.g. '29/12/2025') — storing that as
+        # a counterparty poisons enrichment (A-12 finding, 2026-07-25). Guard:
+        # date-shaped values fold into the description instead.
         counterparty_name = row.get("Ref For Account Owner", "").strip() or None
+        if counterparty_name and re.fullmatch(
+                r"\d{2}/\d{2}/\d{4}|\d{8}|\d{2}-\d{2}-\d{4}", counterparty_name):
+            description = f"{description} {counterparty_name}".strip()
+            counterparty_name = None
 
         transaction_type = row.get("Transaction Type Code", "").strip() or None
         running_balance = _parse_decimal(row.get("Closing Book Balance", ""))
