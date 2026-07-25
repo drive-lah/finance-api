@@ -263,6 +263,7 @@ These finance-api endpoints work but are **not yet surfaced in the UI**. Wire ea
 | Sync employees (button + cron) | `POST /api/jobs/sync-employees` |
 | Set salary / add deduction rule | `POST /api/hr/employees/{id}/compensation` · `/deduction-rules` |
 | Create payroll run (DRAFT) → review → submit | `POST /api/hr/payroll-runs` (dup-guarded, 400 on duplicate) · `GET .../{id}/items` · `POST .../{id}/submit` |
+| **Economic Events screen** (NEW, A-5a): month picker + Stage button · staged table (event_type × amount × status × JE link) · **Post month** button (human-only) · payout-line import button | `POST /api/accounting/economic-events/stage` · `GET /api/accounting/economic-events` · `POST /api/accounting/economic-events/project` · `POST /api/accounting/economic-events/import-payouts` |
 
 > `/api/payroll/*` was removed — `/api/hr/*` is the only payroll API. Bank import + categorization screens already exist; HR/payroll screens are the gap.
 
