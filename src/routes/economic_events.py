@@ -97,3 +97,30 @@ def import_payouts():
     with db_session() as db:
         result = economic_event_service.import_payout_lines(db, int(entity_id), period)
     return jsonify(result), 200
+
+
+@economic_events_bp.route("/sync-runs", methods=["GET"])
+def list_sync_runs():
+    """Receipts of every data-arrival/engine run (newest first).
+    Filters: source, status, limit (default 50)."""
+    from src.models.sync_run import FinanceSyncRun
+    src_f = request.args.get("source")
+    status_f = request.args.get("status")
+    limit = min(request.args.get("limit", default=50, type=int), 500)
+    with db_session() as db:
+        q = db.query(FinanceSyncRun)
+        if src_f:
+            q = q.filter(FinanceSyncRun.source == src_f)
+        if status_f:
+            q = q.filter(FinanceSyncRun.status == status_f.upper())
+        rows = q.order_by(FinanceSyncRun.id.desc()).limit(limit).all()
+        return jsonify([{
+            "id": r.id, "source": r.source, "status": r.status,
+            "entity_id": r.entity_id, "bank_account_id": r.bank_account_id,
+            "window_from": r.window_from.isoformat() if r.window_from else None,
+            "window_to": r.window_to.isoformat() if r.window_to else None,
+            "started_at": r.started_at.isoformat() if r.started_at else None,
+            "finished_at": r.finished_at.isoformat() if r.finished_at else None,
+            "fetched": r.fetched, "created": r.created, "duplicates": r.duplicates,
+            "error": r.error,
+        } for r in rows]), 200
