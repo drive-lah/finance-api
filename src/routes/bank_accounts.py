@@ -39,7 +39,22 @@ def list_bank_accounts():
 
     with db_session() as db:
         bank_accounts = bank_account_service.get_all(db, entity_id=entity_id)
-        response_data = [BankAccountResponse.model_validate(ba).model_dump() for ba in bank_accounts]
+        # Latest KNOWN balance per account, derived from the newest transaction
+        # line carrying a running balance (Gaurav 2026-07-25): works identically
+        # for out-of-order statements, CSVs, PDFs and API syncs — the data's own
+        # most recent truth, no stored column to drift.
+        from sqlalchemy import text as _text
+        latest = {r[0]: (r[1], r[2]) for r in db.execute(_text("""
+            SELECT DISTINCT ON (bank_account_id) bank_account_id, running_balance, transaction_date
+            FROM finance_transactions WHERE running_balance IS NOT NULL
+            ORDER BY bank_account_id, transaction_date DESC, id DESC"""))}
+        response_data = []
+        for ba in bank_accounts:
+            d = BankAccountResponse.model_validate(ba).model_dump()
+            bal = latest.get(ba.id)
+            d["latest_balance"] = str(bal[0]) if bal else None
+            d["latest_balance_date"] = bal[1].isoformat() if bal else None
+            response_data.append(d)
         return jsonify(response_data), 200
 
 

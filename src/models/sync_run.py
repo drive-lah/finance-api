@@ -24,6 +24,7 @@ class FinanceSyncRun(Base):
     created: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     duplicates: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    detail: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
 
 def start_run(db, source, entity_id=None, bank_account_id=None, window_from=None, window_to=None):
@@ -34,10 +35,13 @@ def start_run(db, source, entity_id=None, bank_account_id=None, window_from=None
     return run
 
 
-def finish_run(db, run, fetched=None, created=None, duplicates=None, error=None):
+def finish_run(db, run, fetched=None, created=None, duplicates=None, error=None, detail=None):
     from datetime import UTC, datetime as dt
     run.status = "FAILED" if error else "SUCCESS"
     run.finished_at = dt.now(UTC)
     run.fetched, run.created, run.duplicates = fetched, created, duplicates
+    if detail is not None:
+        import json as _json
+        run.detail = _json.dumps(detail)
     run.error = str(error)[:2000] if error else None
     db.commit()

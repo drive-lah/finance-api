@@ -102,11 +102,21 @@ class CategorizationService:
         except Exception as _e:
             finish_run(db, _run_receipt, error=_e)
             raise
+        _results = _summary.get("results") or []
+        _by_status: dict[str, int] = {}
+        for _r in _results:
+            _k = str(_r.get("status") or "?")
+            _by_status[_k] = _by_status.get(_k, 0) + 1
+        _total = _summary.get("total_processed") or 0
         finish_run(db, _run_receipt,
-                   fetched=_summary.get("total_processed"),
+                   fetched=_total,
                    created=_summary.get("categorized"),
                    duplicates=_summary.get("uncategorized"),
-                   error=(f"{_summary.get('errors')} txn errors" if _summary.get("errors") else None))
+                   error=(f"{_summary.get('errors')} txn errors" if _summary.get("errors") else None),
+                   detail={
+                       "by_status": _by_status,
+                       "pct_categorized": round(100 * (_summary.get("categorized") or 0) / _total, 1) if _total else 0,
+                   })
         return _summary
 
     def _run_inner(

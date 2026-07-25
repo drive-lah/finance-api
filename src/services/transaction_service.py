@@ -315,6 +315,8 @@ class TransactionService:
                    created=result.get("transactions_created"),
                    duplicates=result.get("duplicates_skipped"),
                    error="; ".join(str(e) for e in (result.get("errors") or [])[:5]) or None)
+        result["statement_opening_balance"] = str(getattr(adapter, "statement_opening_balance", "") or "")
+        result["statement_closing_balance"] = str(getattr(adapter, "statement_closing_balance", "") or "")
         return result
 
     def import_from_rows(

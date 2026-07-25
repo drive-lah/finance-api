@@ -72,6 +72,8 @@ class OCBCPdfAdapter(BankCSVAdapter):
         rows = []
         self.errors = []
         self.statement_account_number: str = ""
+        self.statement_opening_balance = None
+        self.statement_closing_balance = None
 
         try:
             # pdf_content is raw bytes; write to temp file for pdfplumber
@@ -217,6 +219,10 @@ class OCBCPdfAdapter(BankCSVAdapter):
                     if bal:
                         finalize()
                         prev_balance = _parse_decimal(bal.group(2))
+                        if bal.group(1) == 'B/F' and self.statement_opening_balance is None:
+                            self.statement_opening_balance = prev_balance
+                        if bal.group(1) == 'C/F':
+                            self.statement_closing_balance = prev_balance
                         continue
 
                     if not line or self._should_skip_line(line):
@@ -279,6 +285,17 @@ class OCBCPdfAdapter(BankCSVAdapter):
                     if cur is not None:
                         cur['desc_parts'].append(line)
         finalize()
+        if self.statement_closing_balance is None and rows:
+            self.statement_closing_balance = rows[-1].running_balance
+        # SELF-RECONCILIATION GATE: the statement must agree with itself.
+        if (self.statement_opening_balance is not None
+                and self.statement_closing_balance is not None and rows):
+            total = sum(r.amount for r in rows)
+            if self.statement_opening_balance + total != self.statement_closing_balance:
+                raise ValueError(
+                    f"Statement does not reconcile: opening {self.statement_opening_balance} "
+                    f"+ movements {total} != closing {self.statement_closing_balance}. "
+                    f"Import refused — lines are missing or misparsed.")
         return rows
 
     def _should_skip_line(self, line: str) -> bool:
