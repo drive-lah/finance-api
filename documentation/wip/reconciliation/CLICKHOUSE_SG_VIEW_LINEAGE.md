@@ -62,3 +62,22 @@ cross-source consistency is itself an A-5b verification: if payout_entries and S
 disagree, the diff shows up as a stuck 2120 balance. One known odd one: superhost still
 reads the OLD Stripe-raw source — no _new exists; either the payout ledger has no
 superhost category or the view was never migrated.
+
+---
+
+# AU addendum (audited 2026-07-25)
+
+**38 AU views.** No old/new split — AU `a_*` views already read `au_payout_entries`
+(migrated in place). Cash `c_*` views read AU Stripe raw. Extra source tables:
+`au_stripe_application_fees` + `host_transfer_components` (host transfers view).
+
+**Unread-material wired into templates (Gaurav-approved):** trip_distance trio →
+4024 (invoiced A$138k / paid A$81k / cash A$146k H1 — the REAL `code='2'` story) ·
+fuel_refunds −A$21.8k → 5053 · verification pair (nets ≈0) → 4025/5053 ·
+referral_payout A$32.6k → 5042 (host misc per Gaurav).
+
+**HELD:** `view_AU_a_host_misc_charge_collected` (−A$61,777 H1) — negative sign
+needs dissection of payout entries before mapping.
+
+**Registry state:** SG 33 rows/32 active · AU 37 rows/36 active
+(snapshot: `je_templates_snapshot.csv`).
