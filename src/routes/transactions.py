@@ -69,7 +69,13 @@ def list_transactions():
             offset=offset,
         )
 
-        return jsonify([TransactionResponse.model_validate(t).model_dump() for t in transactions]), 200
+        total = transaction_service.count_all(
+            db, bank_account_id=bank_account_id, entity_id=entity_id, status=status,
+            date_from=date_from, date_to=date_to, search=search)
+        resp = jsonify([TransactionResponse.model_validate(t).model_dump() for t in transactions])
+        resp.headers["X-Total-Count"] = str(total)
+        resp.headers["Access-Control-Expose-Headers"] = "X-Total-Count"
+        return resp, 200
 
 
 @transactions_bp.route('/<int:transaction_id>', methods=['GET'])

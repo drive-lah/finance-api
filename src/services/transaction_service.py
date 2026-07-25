@@ -62,11 +62,49 @@ class TransactionService:
             )
 
         return (
-            query.order_by(FinanceTransaction.transaction_date.desc())
+            # id tiebreak: offset paging must never skip/duplicate rows on same-date ties
+            query.order_by(FinanceTransaction.transaction_date.desc(),
+                           FinanceTransaction.id.desc())
             .limit(limit)
             .offset(offset)
             .all()
         )
+
+    def count_all(
+        self,
+        db: Session,
+        bank_account_id: Optional[int] = None,
+        entity_id: Optional[int] = None,
+        status: Optional[TransactionStatus] = None,
+        date_from: Optional[date] = None,
+        date_to: Optional[date] = None,
+        search: Optional[str] = None,
+    ) -> int:
+        """Total rows matching the same filters as get_all (for the pagination header)."""
+        query = db.query(FinanceTransaction)
+        if bank_account_id is not None:
+            query = query.filter(FinanceTransaction.bank_account_id == bank_account_id)
+        if entity_id is not None:
+            bank_account_ids = (
+                db.query(FinanceBankAccount.id)
+                .filter(FinanceBankAccount.entity_id == entity_id)
+                .subquery()
+            )
+            query = query.filter(FinanceTransaction.bank_account_id.in_(bank_account_ids))
+        if status is not None:
+            query = query.filter(FinanceTransaction.status == status)
+        if date_from is not None:
+            query = query.filter(FinanceTransaction.transaction_date >= date_from)
+        if date_to is not None:
+            query = query.filter(FinanceTransaction.transaction_date <= date_to)
+        if search:
+            term = f"%{search}%"
+            query = query.filter(
+                FinanceTransaction.description.ilike(term)
+                | FinanceTransaction.counterparty_name.ilike(term)
+                | FinanceTransaction.reference_number.ilike(term)
+            )
+        return query.count()
 
     def get_by_id(self, db: Session, transaction_id: int) -> Optional[FinanceTransaction]:
         """Get transaction by ID."""
