@@ -353,18 +353,9 @@ def sync_bank_account(bank_account_id: int):
         bank_account.api_sync_state = {"last_synced_at": date_to.isoformat()}
         db.commit()
 
-        # ── Auto-categorize new transactions ──────────────────────────────────
-        if result.get("transactions_created", 0) > 0:
-            try:
-                cat = categorization_service.run(db, bank_account_id=bank_account_id)
-                result["categorization"] = {
-                    "categorized": cat["categorized"],
-                    "uncategorized": cat["uncategorized"],
-                    "errors": cat["errors"],
-                }
-            except Exception as e:
-                logger.warning(f"Auto-categorization failed after Wise sync: {e}", exc_info=True)
-                result["categorization"] = {"error": str(e)}
+        # Categorization is ALWAYS an explicit act (Gaurav 2026-07-25) — synced
+        # lines stay IMPORTED; the engine runs only when deliberately triggered.
+        result["categorization"] = "skipped — imports stage as IMPORTED; run the engine explicitly"
 
         result["date_from"] = date_from.isoformat()
         result["date_to"] = date_to.isoformat()
