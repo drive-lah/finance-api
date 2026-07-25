@@ -7,7 +7,8 @@ journal entries using the finance_je_templates registry (event_type → Dr/Cr,
 per region). Events carry facts, never accounts: mapping is finance-owned
 policy (F-1), and re-mapping means re-projecting, not re-staging.
 """
-from datetime import datetime
+from datetime import date, datetime
+from decimal import Decimal
 from typing import Optional
 
 from sqlalchemy import (
@@ -50,8 +51,8 @@ class FinanceEconomicEvent(Base):
     entity_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("finance_entities.id", ondelete="RESTRICT"), nullable=False)
     event_type: Mapped[str] = mapped_column(String(64), nullable=False)
-    period: Mapped[object] = mapped_column(Date, nullable=False)
-    amount: Mapped[object] = mapped_column(Numeric(18, 2), nullable=False)
+    period: Mapped[date] = mapped_column(Date, nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), nullable=False)
     payload: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     journal_entry_id: Mapped[Optional[int]] = mapped_column(
