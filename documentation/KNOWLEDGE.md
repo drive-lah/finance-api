@@ -116,6 +116,7 @@ Feeds: (1) the RAG "company facts" input (IDEAL_STATE §3 — the AI never runs 
 - **POL-15** A counterparty seed loads by UPSERT (normalized name + aliases); never blind-insert against a live directory. *(2026-07-23)*
 
 - **FLOW-10** Gaurav reports a **~2.7M device PURCHASE in September 2024** that must be capitalized (1510) and depreciated. NOT yet located in the mined bank lines — the only ≈2.7M line found is Ventures' Oct-2023 SGD 2,750,210 inflow (USD 2,000,000 from ComfortDelGro — the CDG loan, unrelated). Locate at replay (may be AP/journal-side, a different month, or inside the missing-statement window) and capitalize. *(Gaurav, 2026-07-24)*
+- **FLOW-11** Fuel has THREE distinct economic streams: (1) guests pay fuel via Stripe (view_SG_c_trip_fuel_cash_collected, ~S$63k/H1-26) = fuel REVENUE (4000); (2) the fuel-inclusion product pays hosts (payoutType=fuel_inclusion, ~S$79k/H1-26) = fuel COGS (5023); (3) fuel charges collected FROM hosts by payout deduction (~S$2k/H1-26) net off host payable (2120→4000). The old sync conflated (1) and (3). *(view lineage audit, 2026-07-25)*
 
 ## 5. Data quirks & traps (DQ)
 
