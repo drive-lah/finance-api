@@ -56,6 +56,7 @@ class CategorizationService:
         bank_account_id: Optional[int] = None,
         rule_id: Optional[int] = None,
         limit: int = 100,
+        txn_ids: Optional[list[int]] = None,
     ) -> dict[str, Any]:
         """
         Run the four-phase categorization pipeline on pending transactions.
@@ -88,10 +89,42 @@ class CategorizationService:
 
         Returns:
             Summary: total_processed, categorized, uncategorized, errors, results
+
+        Every run writes a finance_sync_runs receipt (source='categorization'):
+        fetched=processed, created=categorized, duplicates=uncategorized —
+        so run history and hit-rates are queryable (Gaurav, 2026-07-25).
         """
+        from src.models.sync_run import start_run, finish_run
+        _run_receipt = start_run(db, "categorization", entity_id=entity_id,
+                                 bank_account_id=bank_account_id)
+        try:
+            _summary = self._run_inner(db, entity_id, bank_account_id, rule_id, limit, txn_ids)
+        except Exception as _e:
+            finish_run(db, _run_receipt, error=_e)
+            raise
+        finish_run(db, _run_receipt,
+                   fetched=_summary.get("total_processed"),
+                   created=_summary.get("categorized"),
+                   duplicates=_summary.get("uncategorized"),
+                   error=(f"{_summary.get('errors')} txn errors" if _summary.get("errors") else None))
+        return _summary
+
+    def _run_inner(
+        self,
+        db: Session,
+        entity_id: Optional[int] = None,
+        bank_account_id: Optional[int] = None,
+        rule_id: Optional[int] = None,
+        limit: int = 100,
+        txn_ids: Optional[list[int]] = None,
+    ) -> dict[str, Any]:
+        """(see run() docstring)"""
         query = db.query(FinanceTransaction).filter(
             FinanceTransaction.status.in_([TransactionStatus.PENDING, TransactionStatus.IMPORTED])
         )
+        if txn_ids:
+            # bulk-selection scope: process EXACTLY these ids, nothing else
+            query = query.filter(FinanceTransaction.id.in_(txn_ids))
 
         if bank_account_id is not None:
             query = query.filter(FinanceTransaction.bank_account_id == bank_account_id)

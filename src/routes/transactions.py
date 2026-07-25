@@ -11,7 +11,7 @@ from src.database import db_session
 from src.services.transaction_service import transaction_service
 from src.services.categorization_service import categorization_service
 from src.models.schemas import StripeTransactionCreate, TransactionResponse
-from src.models.transaction import TransactionStatus
+from src.models.transaction import FinanceTransaction, TransactionStatus
 from src.utils.errors import BadRequestError, NotFoundError, ConflictError
 
 transactions_bp = Blueprint('transactions', __name__, url_prefix='/api/finance/transactions')
@@ -154,7 +154,7 @@ def bulk_action():
                     t.ai_confidence = None
                     t.ai_reasoning = None
             db.commit()
-            summary = categorization_service.run(db, limit=len(ids) + 1)
+            summary = categorization_service.run(db, limit=len(ids) + 1, txn_ids=ids)
             for i in ids:
                 results.append({"id": i, "ok": i in found,
                                 "error": None if i in found else "not found"})
