@@ -122,6 +122,72 @@ def reject_transaction(transaction_id: int):
         return jsonify(TransactionResponse.model_validate(transaction).model_dump()), 200
 
 
+@transactions_bp.route('/bulk', methods=['POST'])
+def bulk_action():
+    """
+    Bulk action over selected transactions (FE multiselect).
+
+    Body: { action: approve|reject|run_categorization|reset_to_imported, ids: [int] }
+    Returns per-id results — one bad row never aborts the rest.
+    """
+    body = request.get_json(silent=True) or {}
+    action = (body.get('action') or '').strip()
+    ids = body.get('ids') or []
+    if action not in ('approve', 'reject', 'run_categorization', 'reset_to_imported'):
+        raise BadRequestError("action must be approve | reject | run_categorization | reset_to_imported")
+    if not ids or not isinstance(ids, list):
+        raise BadRequestError("ids must be a non-empty list")
+    if len(ids) > 500:
+        raise BadRequestError("max 500 ids per bulk call")
+
+    results, ok = [], 0
+    with db_session() as db:
+        if action == 'run_categorization':
+            # engine over just these ids: flip them PENDING then run scoped by id set
+            from src.services.categorization_service import categorization_service
+            txns = db.query(FinanceTransaction).filter(FinanceTransaction.id.in_(ids)).all()
+            found = {t.id for t in txns}
+            for t in txns:
+                if t.status in (TransactionStatus.IMPORTED, TransactionStatus.NEEDS_REVIEW):
+                    t.status = TransactionStatus.PENDING
+                    t.ai_suggested_account_code = None
+                    t.ai_confidence = None
+                    t.ai_reasoning = None
+            db.commit()
+            summary = categorization_service.run(db, limit=len(ids) + 1)
+            for i in ids:
+                results.append({"id": i, "ok": i in found,
+                                "error": None if i in found else "not found"})
+            ok = len(found)
+            return jsonify({"action": action, "ok": ok, "failed": len(ids) - ok,
+                            "engine": {k: v for k, v in summary.items() if k != 'results'},
+                            "results": results}), 200
+
+        for i in ids:
+            try:
+                if action == 'approve':
+                    transaction_service.approve(db, i)
+                elif action == 'reject':
+                    transaction_service.reject(db, i)
+                elif action == 'reset_to_imported':
+                    t = db.get(FinanceTransaction, i)
+                    if t is None:
+                        raise ValueError("not found")
+                    if t.reconciled_journal_entry_id:
+                        raise ValueError("has a journal entry — reject it first")
+                    t.status = TransactionStatus.IMPORTED
+                    t.ai_suggested_account_code = None
+                    t.ai_confidence = None
+                    t.ai_reasoning = None
+                    db.commit()
+                results.append({"id": i, "ok": True, "error": None})
+                ok += 1
+            except Exception as e:
+                db.rollback()
+                results.append({"id": i, "ok": False, "error": str(e)[:200]})
+    return jsonify({"action": action, "ok": ok, "failed": len(ids) - ok, "results": results}), 200
+
+
 @transactions_bp.route('/import', methods=['POST'])
 def import_transactions():
     """
