@@ -29,7 +29,7 @@
 | 3 | A-10 | Bank-statement balance tie-out: ledger cash == statement closing balance, per account per month (Q8 layer 3) | me |
 | 4 | A-11 | Review-gate + feedback wiring (Q4/Q5): ALL AI results → NEEDS_REVIEW · auto-append approvals to live corpus · record categorizing route per txn → deterministic-override exception report | me |
 | 5 | A-6 | Depreciation execution per D1 (mirror Jan–Mar-26, compute Apr–Jun-26, seed schedules from QB carrying values) · GST return summary | me |
-| 6 | A-5a | Stripe sync code: `code='2'` patch + rewrite stripe_sync tests (views path) | me |
+| 6 | A-5a | **IN PROGRESS 2026-07-25.** ✅ ClickHouse CONNECTED (H1-26 complete in views: SG trip revenue Jan 400k → Jun 499k, data through Jun-26) · ✅ migration 037 LIVE (first live migration; additive): `finance_economic_events` staging + `finance_je_templates` registry (DB table per Gaurav) · ✅ SG registry seeded (24 active + JE24 inactive — payouts → line importer). REMAINING: AU template seeding · stage/project sync refactor · `code='2'` patch · payout-line importer · stripe_sync tests | me |
 | 7 | A-1 | **Jan–Jun-26 bank statements (all 4 accounts) + ClickHouse access + last-12-mo invoices** | **Gaurav** — unblocks 8–10 |
 | 8 | A-4 | Import H1 (`IMPORTED`) → bulk-approve invoices → run ladder → review walks (in Claude Code, per Q5) | both |
 | 9 | A-5b | E2E-verify Stripe views vs ClickHouse → run Jan–Jun-26 economic JEs | me |
