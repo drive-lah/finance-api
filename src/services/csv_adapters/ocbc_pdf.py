@@ -209,13 +209,17 @@ class OCBCPdfAdapter(BankCSVAdapter):
                     continue
                 for raw_line in text.split('\n'):
                     line = raw_line.strip()
-                    if not line or self._should_skip_line(line):
-                        continue
 
+                    # balance markers FIRST: the 2026 layout prints 'BALANCE B/F'
+                    # with no leading date, which the skip-list's 'Balance' prefix
+                    # would swallow — losing the sign anchor for line 1.
                     bal = _BAL_MARK.match(line)
                     if bal:
                         finalize()
                         prev_balance = _parse_decimal(bal.group(2))
+                        continue
+
+                    if not line or self._should_skip_line(line):
                         continue
 
                     m = _TXN_START.match(line)

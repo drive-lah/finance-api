@@ -104,3 +104,27 @@ class TestOcbcPdfRealStatement:
         parsed, _ = rows
         assert not any(r.description == "OCBC Transaction" for r in parsed)
         assert any("STRIPE" in (r.description or "").upper() for r in parsed)
+
+
+REAL_PDF_2026 = os.path.join(
+    os.path.dirname(__file__), "..", "documentation", "wip", "bank_statements",
+    "OCBC_3001", "BUSINESS GROWTH ACCOUNT-3001-Jan-2026 (1).pdf")
+
+
+@pytest.mark.skipif(not os.path.exists(REAL_PDF_2026), reason="2026 statement fixture not on disk")
+class TestOcbcPdf2026Layout:
+    """The 2026 layout prints 'BALANCE B/F' with no leading date — must anchor
+    the chain (was swallowed by the skip list, leaving line 1's sign guessed)."""
+
+    def test_anchored_chain_no_advisories(self):
+        a = OCBCPdfAdapter()
+        rows = a.parse(open(REAL_PDF_2026, "rb").read())
+        assert len(rows) == 14
+        assert a.errors == []                      # no assumed signs
+        assert a.statement_account_number == "588154393001"
+        assert rows[0].amount == Decimal("25000.00")   # inflow, proven by B/F anchor
+        prev = None
+        for r in rows:
+            if prev is not None:
+                assert prev + r.amount == r.running_balance
+            prev = r.running_balance
