@@ -329,14 +329,25 @@ def sync_bank_account(bank_account_id: int):
             statement, bank_account.currency
         )
 
-        result = transaction_service.import_from_rows(
-            db=db,
-            bank_account=bank_account,
-            normalized_rows=normalized_rows,
-            fingerprint_fn=lambda row: [row.source_id or ""],
-            source="wise_api_sync",
-            extra_errors=parse_errors,
-        )
+        from src.models.sync_run import start_run, finish_run
+        run = start_run(db, "wise", entity_id=bank_account.entity_id,
+                        bank_account_id=bank_account.id,
+                        window_from=date_from, window_to=date_to)
+        try:
+            result = transaction_service.import_from_rows(
+                db=db,
+                bank_account=bank_account,
+                normalized_rows=normalized_rows,
+                fingerprint_fn=lambda row: [row.source_id or ""],
+                source="wise_api_sync",
+                extra_errors=parse_errors,
+            )
+        except Exception as sync_err:
+            finish_run(db, run, error=sync_err)
+            raise
+        finish_run(db, run, fetched=len(normalized_rows),
+                   created=result.get("transactions_created"),
+                   duplicates=result.get("duplicates_skipped"))
 
         # ── Update last_synced_at in sync state ───────────────────────────────
         bank_account.api_sync_state = {"last_synced_at": date_to.isoformat()}

@@ -59,6 +59,20 @@ class EconomicEventService:
     # ------------------------------------------------------------------
 
     def stage_month(self, db: Session, entity_id: int, period: date) -> dict[str, Any]:
+        from src.models.sync_run import start_run, finish_run
+        run = start_run(db, "clickhouse_stage", entity_id=entity_id,
+                        window_from=period.replace(day=1), window_to=period.replace(day=1))
+        try:
+            result = self._stage_month_inner(db, entity_id, period)
+        except Exception as e:
+            finish_run(db, run, error=e)
+            raise
+        finish_run(db, run, fetched=len(result["staged"]),
+                   error="; ".join(q["error"] for q in result["query_errors"]) or None
+                   if result["query_errors"] else None)
+        return result
+
+    def _stage_month_inner(self, db: Session, entity_id: int, period: date) -> dict[str, Any]:
         entity = db.get(FinanceEntity, entity_id)
         if entity is None:
             raise ValueError(f"Unknown entity {entity_id}")
@@ -184,6 +198,19 @@ class EconomicEventService:
 
     def import_payout_lines(self, db: Session, entity_id: int,
                             period: Optional[date] = None) -> dict[str, Any]:
+        from src.models.sync_run import start_run, finish_run
+        run = start_run(db, "stripe_payouts", entity_id=entity_id)
+        try:
+            result = self._import_payout_lines_inner(db, entity_id, period)
+        except Exception as e:
+            finish_run(db, run, error=e)
+            raise
+        finish_run(db, run, fetched=result["lines"], created=result["created"],
+                   duplicates=result["duplicates"])
+        return result
+
+    def _import_payout_lines_inner(self, db: Session, entity_id: int,
+                                   period: Optional[date] = None) -> dict[str, Any]:
         """Wise-style sync: with no period, brings the account fully up to speed —
         first run pulls ALL payout lines; later runs pull from the latest imported
         line minus a 3-day overlap (balance_transaction_id dedup makes the
