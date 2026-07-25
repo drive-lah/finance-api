@@ -45,9 +45,12 @@ def list_bank_accounts():
         # most recent truth, no stored column to drift.
         from sqlalchemy import text as _text
         latest = {r[0]: (r[1], r[2]) for r in db.execute(_text("""
-            SELECT DISTINCT ON (bank_account_id) bank_account_id, running_balance, transaction_date
-            FROM finance_transactions WHERE running_balance IS NOT NULL
-            ORDER BY bank_account_id, transaction_date DESC, id DESC"""))}
+            SELECT bank_account_id, running_balance, transaction_date FROM (
+                SELECT bank_account_id, running_balance, transaction_date,
+                       ROW_NUMBER() OVER (PARTITION BY bank_account_id
+                                          ORDER BY transaction_date DESC, id DESC) AS rn
+                FROM finance_transactions WHERE running_balance IS NOT NULL
+            ) ranked WHERE rn = 1"""))}
         response_data = []
         for ba in bank_accounts:
             d = BankAccountResponse.model_validate(ba).model_dump()
