@@ -63,9 +63,9 @@ VIEW_MAP: dict[tuple[str, str], ViewSpec] = {
     # 'fuel_charges' template has NO map on purpose; the stager skips-and-logs it.
     ("AU", "host_fuel_charges_collected"): ViewSpec("view_AU_a_host_fuel_charge_collected"),
     ("AU", "incidentals_invoiced"): ViewSpec("view_AU_a_incidentals_invoiced"),
-    ("AU", "incidentals_paid"): ViewSpec("view_AU_c_incidentals_invoice_paid"),
+    ("AU", "incidentals_paid"): ViewSpec("view_AU_c_incidentals_invoice_paid", date_col="month_year", amount_col="total_amount"),
     ("AU", "subscriptions_invoiced"): ViewSpec("view_AU_a_subscription_invoiced"),
-    ("AU", "subscriptions_paid"): ViewSpec("view_AU_c_subscription_invoice_paid", date_col="month_year"),
+    ("AU", "subscriptions_paid"): ViewSpec("view_AU_c_subscription_invoice_paid", date_col="month_year", amount_col="total_amount"),
     ("AU", "host_trip_earnings"): ViewSpec("view_AU_a_host_trip_earnings_accrual",
                                            amount_col="total_host_trip_earnings"),
     ("AU", "host_damage_payout"): ViewSpec("view_AU_a_host_incidentals_damage"),
