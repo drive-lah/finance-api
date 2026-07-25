@@ -328,7 +328,6 @@ Derkjan Adriaan Lutgert,investor,entity,DL Ventures,3000,Share Capital,Derkjan A
 Dhevnesh,employee,entity,DL SG,,,,0,live,deactivate-live,,GAURAV: remove -> deactivate in live at apply
 Diana Kelly,employee,entity,DL SG,6000,Salaries & Wages,,0,decided,live-only,,
 Dirk-Jan ter Horst,employee,entity,DL SG,6003,Directors Salary,Dirk Jan | Dirk-Jan,17,decided,new,,
-Dom Drive lah,employee,entity,DL SG,5063,Customer Support - Salary,,0,decided,live-only,,
 DOMINADOR GAMIT,vendor,entity,DL SG,5063,Customer Support - Salary,,1,triaged,new,,
 Doris Eto,employee,entity,DL SG,5063,Customer Support - Salary,,0,decided,live-only,,
 DUTCHLINK PTY LTD,vendor,entity,DL AU,6700,Technology - Infrastructure,,2,approved,new,,
@@ -516,7 +515,7 @@ Stevu Beheer BV,investor,entity,DL Ventures,2400,Loans from Others,STEVU BEHEER 
 Street Smart Auto Group,vendor,entity,DL AU,5032,Incidentals Payout - Workshop,Street Smart Auto Group Pty Ltd,4,triaged,new,,
 Taimoor Hassan,employee,entity,DL SG,6000,Salaries & Wages,,0,decided,live-only,,
 Tan Chun Peng (Chen Junbin),vendor,entity,DL SG,5001,Host Payouts - P2P RMS,,0,decided,new,,from live-rule identity walk (Gaurav 2026-07-23)
-Terrence Dimagan Genetiano,employee,entity,DL SG,,,,0,live,deactivate-live,,GAURAV: remove -> deactivate in live at apply
+Terrence Dimagan Genetiano,employee,entity,DL SG,5063,Customer Support Salaries,,0,live,deactivate-live,,GAURAV: remove -> deactivate in live at apply
 The Fleet Dr Pty Ltd,vendor,entity,DL AU,5064,Cost of Device - Installation,,3,decided,exists-resolved,5054,
 Thinxtra,vendor,entity,DL AU,5030,Cost of Device Subscriptions,,1,triaged,exists,5030,
 Thiruniraise Orange Towing,vendor,entity,DL SG,5033,Incidentals Payout - Towing,Orange Towing,4,triaged,new,,
