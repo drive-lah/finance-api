@@ -69,18 +69,26 @@ class EconomicEventService:
         templates = (db.query(FinanceJETemplate)
                      .filter_by(entity_id=entity_id, is_active=True).all())
         staged, skipped_no_map, skipped_empty, mismatches = [], [], [], []
+        query_errors: list[dict] = []
 
         for t in templates:
             spec = VIEW_MAP.get((region, t.event_type))
             if spec is None:
                 skipped_no_map.append(t.event_type)
                 continue
-            row = self.ch.execute_single(
-                f"SELECT round(sum({spec.amount_col}), 2) AS amount, count(*) AS n "
-                f"FROM {spec.view} WHERE {spec.date_col} >= '{month_str}' "
-                f"AND {spec.date_col} < ('{month_str}'::Date + INTERVAL 1 MONTH)"
-            )
-            amount = row.get("amount") if row else None
+            try:
+                row = self.ch.execute_single(
+                    f"SELECT round(sum({spec.amount_col}), 2) AS total_amount, count(*) AS n "
+                    f"FROM {spec.view} WHERE {spec.date_col} >= '{month_str}' "
+                    f"AND {spec.date_col} < ('{month_str}'::Date + INTERVAL 1 MONTH)"
+                )
+            except Exception as query_err:
+                # one broken view must not abort the month — surface it instead
+                logger.error(f"stage query failed for {t.event_type} ({spec.view}): {query_err}")
+                query_errors.append({"event_type": t.event_type, "view": spec.view,
+                                     "error": str(query_err)[:200]})
+                continue
+            amount = row.get("total_amount") if row else None
             if amount in (None, 0, "0", ""):
                 skipped_empty.append(t.event_type)
                 continue
@@ -115,7 +123,7 @@ class EconomicEventService:
             logger.warning(f"stage_month {entity.name} {month_str}: no view map for {skipped_no_map}")
         return {"entity_id": entity_id, "period": month_str, "staged": staged,
                 "mismatches": mismatches, "skipped_empty": skipped_empty,
-                "skipped_no_view_map": skipped_no_map}
+                "skipped_no_view_map": skipped_no_map, "query_errors": query_errors}
 
     # ------------------------------------------------------------------
     # PROJECT
@@ -137,8 +145,12 @@ class EconomicEventService:
                 amount = Decimal(str(ev.amount))
                 debit, credit = t.debit_code, t.credit_code
                 if amount < 0:
-                    # negative fact (discounts, refund-like rows) books flipped
-                    debit, credit = credit, debit
+                    # Sign policy lives on the template: outflow views (refunds,
+                    # host transfers) report negative but the template already
+                    # encodes direction -> book the magnitude. Only flip when a
+                    # negative genuinely reverses meaning (e.g. discounts).
+                    if t.flip_on_negative:
+                        debit, credit = credit, debit
                     amount = -amount
                 je = FinanceJournalEntry(
                     entity_id=entity_id, entry_date=ev.period,

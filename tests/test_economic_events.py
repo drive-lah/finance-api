@@ -28,8 +28,8 @@ class FakeClickHouse:
     def execute_single(self, query):
         for view, amount in self.amounts.items():
             if view in query:
-                return {"amount": amount, "n": 1}
-        return {"amount": None, "n": 0}
+                return {"total_amount": amount, "n": 1}
+        return {"total_amount": None, "n": 0}
 
     def execute_many(self, query):
         return self.payout_rows
@@ -130,15 +130,28 @@ class TestProject:
         assert result2["posted"] == []
         assert db.query(FinanceJournalEntry).count() == 1
 
-    def test_negative_amount_books_flipped(self, db, sg):
-        """Discount-style negative facts flip Dr/Cr instead of booking negative lines."""
-        _template(db, sg, "host_long_term_discount", "5050", "2120")
+    def test_negative_outflow_books_magnitude_as_authored(self, db, sg):
+        """Refund-style views report negative, but the template already encodes
+        the outflow direction — book the magnitude, no flip (default policy)."""
+        _template(db, sg, "trip_refunds", "5052", "1017")
+        svc = EconomicEventService(FakeClickHouse({"view_SG_c_trip_refunds": -97264.12}))
+        svc.stage_month(db, sg.id, JAN)
+        svc.project_month(db, sg.id, JAN)
+        lines = {l.account_code: l for l in db.query(FinanceJournalLine).all()}
+        assert lines["5052"].debit_amount == Decimal("97264.12")   # as authored
+        assert lines["1017"].credit_amount == Decimal("97264.12")
+
+    def test_negative_with_flip_flag_books_flipped(self, db, sg):
+        """Discounts genuinely reverse meaning when negative -> flip_on_negative."""
+        t = _template(db, sg, "host_long_term_discount", "5050", "2120")
+        t.flip_on_negative = True
+        db.commit()
         svc = EconomicEventService(
             FakeClickHouse({"view_SG_a_host_long_term_discount_new": -42356.65}))
         svc.stage_month(db, sg.id, JAN)
         svc.project_month(db, sg.id, JAN)
         lines = {l.account_code: l for l in db.query(FinanceJournalLine).all()}
-        assert lines["2120"].debit_amount == Decimal("42356.65")
+        assert lines["2120"].debit_amount == Decimal("42356.65")   # flipped
         assert lines["5050"].credit_amount == Decimal("42356.65")
 
 
