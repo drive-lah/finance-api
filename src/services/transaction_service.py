@@ -278,6 +278,18 @@ class TransactionService:
         normalized_rows = adapter.parse(file_bytes)
         parse_errors = list(adapter.errors)
 
+        # WRONG-ACCOUNT GUARD (Gaurav, 2026-07-25): when the statement declares
+        # its own account number, it must match the selected bank account.
+        stmt_acct = getattr(adapter, "statement_account_number", "") or ""
+        if stmt_acct:
+            ours = "".join(ch for ch in (bank_account.account_number or "") if ch.isdigit())
+            theirs = "".join(ch for ch in stmt_acct if ch.isdigit())
+            if ours and theirs and ours != theirs:
+                raise ValueError(
+                    f"Statement belongs to account {stmt_acct}, but you selected "
+                    f"'{bank_account.account_name}' ({bank_account.account_number}). "
+                    f"Upload it to the matching bank account.")
+
         return self.import_from_rows(
             db=db,
             bank_account=bank_account,
@@ -353,7 +365,7 @@ class TransactionService:
                 transaction = FinanceTransaction(
                     bank_account_id=bank_account_id,
                     transaction_date=normalized.transaction_date,
-                    description=normalized.description,
+                    description=(normalized.description or '')[:500],
                     amount=normalized.amount,
                     reference_number=normalized.reference_number,
                     currency=normalized.currency or bank_account.currency,

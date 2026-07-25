@@ -71,6 +71,7 @@ class OCBCPdfAdapter(BankCSVAdapter):
 
         rows = []
         self.errors = []
+        self.statement_account_number: str = ""
 
         try:
             # pdf_content is raw bytes; write to temp file for pdfplumber
@@ -79,6 +80,7 @@ class OCBCPdfAdapter(BankCSVAdapter):
                 tmp_path = tmp.name
 
             period = self._extract_statement_period(tmp_path)
+            self.statement_account_number = self._extract_account_number(tmp_path)
             rows = self._extract_transactions_from_pdf(tmp_path, period)
 
             # Clean up temp file
@@ -89,6 +91,18 @@ class OCBCPdfAdapter(BankCSVAdapter):
             self.errors.append(f"PDF parsing failed: {str(e)}")
 
         return rows
+
+    def _extract_account_number(self, pdf_path: str) -> str:
+        """Read 'Account No. NNNN' from page 1 — used to refuse uploads
+        against the wrong bank account."""
+        try:
+            import pdfplumber
+            with pdfplumber.open(pdf_path) as pdf:
+                text = pdf.pages[0].extract_text() or ""
+            m = re.search(r"Account No\.?\s*([0-9\-]+)", text)
+            return m.group(1) if m else ""
+        except Exception:
+            return ""
 
     def _extract_statement_period(self, pdf_path: str) -> dict[str, int]:
         """
@@ -278,6 +292,11 @@ class OCBCPdfAdapter(BankCSVAdapter):
             ':.oN', '.geR', '.oC', 'DRIVE LAH', 'STATEMENT OF ACCOUNT',
             'BUSINESS GROWTH ACCOUNT', 'OCBC North Branch', 'Co. Reg',
             'Deposit Insurance Scheme', 'Insured up to', 'Monies and deposits',
+            # statement-closing legal footer (2026 layout) — swallowed into the
+            # LAST transaction's description and blew varchar(500) on import
+            'Please check this statement', 'If we do not hear', 'depositor per Scheme',
+            'Foreign currency deposits', 'dual currency', 'are not insured',
+            'is incorporated with limited liability',
         ]
         return any(line.lower().startswith(p.lower()) for p in skip_patterns) or not line
 
