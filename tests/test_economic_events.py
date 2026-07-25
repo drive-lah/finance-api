@@ -170,10 +170,10 @@ class TestPayoutImport:
              "amount": -15000, "description": ""},
         ]
         svc = EconomicEventService(FakeClickHouse(payout_rows=rows))
-        r1 = svc.import_payout_lines(db, sg.id, JAN)
-        assert r1["created"] == 2
-        r2 = svc.import_payout_lines(db, sg.id, JAN)   # rerun: balance_transaction_id dedups
-        assert r2["created"] == 0 and r2["duplicates"] == 2
+        r1 = svc.import_payout_lines(db, sg.id)        # Wise-style: no period = full sync
+        assert r1["window"] == "full history" and r1["created"] == 2
+        r2 = svc.import_payout_lines(db, sg.id)        # rerun: incremental + dedup
+        assert r2["window"].startswith("since") and r2["created"] == 0 and r2["duplicates"] == 2
         txns = db.query(FinanceTransaction).all()
         assert len(txns) == 2
         assert all(t.source == "stripe_payout_import" for t in txns)

@@ -78,7 +78,17 @@ def project():
 
 @economic_events_bp.route("/import-payouts", methods=["POST"])
 def import_payouts():
-    entity_id, period = _parse_body()
+    """Wise-style: period optional — omitted, the sync brings the Stripe
+    Platform account fully up to speed (full history first run, incremental
+    with overlap after)."""
+    body = request.get_json(silent=True) or {}
+    entity_id = body.get("entity_id")
+    if not entity_id:
+        raise BadRequestError("entity_id is required")
+    period = None
+    if body.get("period"):
+        p_raw = body["period"]
+        period = date.fromisoformat(p_raw if len(p_raw) > 7 else f"{p_raw}-01")
     with db_session() as db:
-        result = economic_event_service.import_payout_lines(db, entity_id, period)
+        result = economic_event_service.import_payout_lines(db, int(entity_id), period)
     return jsonify(result), 200

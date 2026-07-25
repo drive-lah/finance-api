@@ -182,7 +182,12 @@ class EconomicEventService:
     # PAYOUT-LINE IMPORT (cash lane)
     # ------------------------------------------------------------------
 
-    def import_payout_lines(self, db: Session, entity_id: int, period: date) -> dict[str, Any]:
+    def import_payout_lines(self, db: Session, entity_id: int,
+                            period: Optional[date] = None) -> dict[str, Any]:
+        """Wise-style sync: with no period, brings the account fully up to speed —
+        first run pulls ALL payout lines; later runs pull from the latest imported
+        line minus a 3-day overlap (balance_transaction_id dedup makes the
+        overlap free). A period narrows to one month (kept for backfills)."""
         from src.services.transaction_service import transaction_service
         from src.services.csv_adapters.base import NormalizedRow
 
@@ -191,8 +196,6 @@ class EconomicEventService:
             raise ValueError(f"Unknown entity {entity_id}")
         region = _region_for_entity(entity)
         spec = PAYOUT_LINE_VIEWS[region]
-        period = period.replace(day=1)
-        month_str = period.strftime("%Y-%m-%d")
 
         ba = (db.query(FinanceBankAccount)
               .filter(FinanceBankAccount.entity_id == entity_id,
@@ -201,11 +204,27 @@ class EconomicEventService:
         if ba is None or not ba.coa_account_code:
             raise ValueError(f"No Stripe Platform bank account (with COA code) for entity {entity_id}")
 
+        if period is not None:
+            start = period.replace(day=1)
+            window = (f"WHERE {spec.date_col} >= '{start}' "
+                      f"AND {spec.date_col} < ('{start}'::Date + INTERVAL 1 MONTH)")
+            window_label = start.strftime("%Y-%m")
+        else:
+            from datetime import timedelta
+            from sqlalchemy import func
+            from src.models.transaction import FinanceTransaction
+            last = (db.query(func.max(FinanceTransaction.transaction_date))
+                    .filter(FinanceTransaction.bank_account_id == ba.id,
+                            FinanceTransaction.source == "stripe_payout_import").scalar())
+            if last:
+                since = last - timedelta(days=3)   # overlap; dedup eats repeats
+                window = f"WHERE {spec.date_col} >= '{since}'"
+                window_label = f"since {since}"
+            else:
+                window = ""                        # first sync: full history
+                window_label = "full history"
         rows = self.ch.execute_many(
-            f"SELECT * FROM {spec.view} "
-            f"WHERE {spec.date_col} >= '{month_str}' "
-            f"AND {spec.date_col} < ('{month_str}'::Date + INTERVAL 1 MONTH) "
-            f"ORDER BY {spec.date_col}"
+            f"SELECT * FROM {spec.view} {window} ORDER BY {spec.date_col}"
         )
         normalized = []
         for r in rows:
@@ -224,9 +243,9 @@ class EconomicEventService:
         result = transaction_service.import_from_rows(
             db=db, bank_account=ba, normalized_rows=normalized,
             fingerprint_fn=lambda row: [row.source_id or ""],
-            import_batch_id=f"stripe-payouts-{region}-{month_str}",
+            import_batch_id=f"stripe-payouts-{region}-{window_label}",
             source="stripe_payout_import", auto_categorize=False)
-        return {"entity_id": entity_id, "period": month_str,
+        return {"entity_id": entity_id, "window": window_label,
                 "lines": len(normalized),
                 "created": result.get("transactions_created"),
                 "duplicates": result.get("duplicates_skipped")}
