@@ -184,3 +184,4 @@ id,name,reason
 71,Drive Lah Ventures Holding Pte Ltd - DBS SGD Incoming,SGD-side leg of DBS FX corridor; #70 books it (FX pairing gap noted)
 206,Drive Lah Pte Ltd - Wise transfer,generic 'Wise' catch-all on all accounts
 238,Drive Lah Ventures Holding Pte Ltd - Transfer Agent Charges,bank FEES not a transfer (Gaurav 2026-07-25) — replaced by expense rule → 6600
+31,Drive Lah Pte Ltd - 3001 Outgoing to 1001 Transfer,duplicate of #2 — its pattern contains #2's substring '713147601001' (Gaurav 2026-07-25)
