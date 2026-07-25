@@ -81,13 +81,17 @@ class OCBCAdapter(BankCSVAdapter):
 
     def fingerprint_fields(self, row) -> list[str]:
         """
-        Fingerprint: [date, amount, reference, running_balance]
-        Both CSV and PDF use the same fingerprinting scheme.
+        Fingerprint: [date, amount, running_balance] — FORMAT-AGNOSTIC.
+
+        Deliberately excludes reference/description: the same real transaction
+        must hash identically whether it arrived via CSV or PDF (the two carry
+        different wording/refs). Jan-2026 duplicated across formats before this
+        (Gaurav catch, 2026-07-25). Balance makes same-day same-amount rows
+        unique; both formats carry it.
         """
         return [
             row.transaction_date.isoformat(),
             f"{row.amount:.2f}",
-            (row.reference_number or "").strip().lower() if hasattr(row, 'reference_number') else "",
             f"{row.running_balance:.2f}" if row.running_balance is not None else "",
         ]
 
