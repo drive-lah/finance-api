@@ -830,6 +830,34 @@ class TestCategorizationEngine:
         # ... and NOT enriched: counterparty stays clear despite the matching counterparty.
         assert txn.counterparty_id is None
 
+    def test_transfer_to_no_feed_target_matches_standalone(
+        self, db_session, test_accounts, test_bank_account, test_entity
+    ):
+        """Transfers into Stripe CONNECT targets (no statement feed by design)
+        complete as MATCHED immediately — no eternal AWAITING_MATCH for a
+        counterpart statement line that will never be imported."""
+        connect_ba = FinanceBankAccount(
+            entity_id=test_entity.id, bank_name="Stripe",
+            account_number="acct_connect", account_name="Stripe Connect",
+            currency="SGD", coa_account_code="1001", status=BankAccountStatus.ACTIVE,
+        )
+        db_session.add(connect_ba)
+        db_session.commit()
+        rule_service.create(db_session, RuleCreate(
+            name="Fleet micro-settlement",
+            direction=TransactionDirection.INCOMING,
+            category=TransactionCategory.INTERNAL_TRANSFER,
+            target_bank_account_id=connect_ba.id,
+            description_operator=MatchOperator.CONTAINS, description_value="CSDB STRIPE",
+        ))
+        txn = _make_transaction(db_session, test_bank_account,
+                                description="CSDB STRIPE PAYMENTS SIN", amount=43.50)
+        categorization_service.run(db_session)
+        db_session.refresh(txn)
+        assert txn.status == TransactionStatus.MATCHED     # standalone, not AWAITING
+        assert txn.reconciled_journal_entry_id is not None  # JE fully books it
+        assert txn.expected_counterpart_ba_id is None
+
     def test_inactive_rules_skipped(self, db_session, test_accounts, test_bank_account):
         rule_service.create(db_session, _expense_rule(
             name="Inactive Rule",

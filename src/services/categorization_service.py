@@ -1353,7 +1353,22 @@ Return only the JSON object, no explanation."""
         # For internal transfers: try to immediately pair with counter-transaction.
         # If counter not found yet → AWAITING_MATCH; the counter-transaction will
         # complete the pair when it arrives and Step 0 runs next time.
-        if rule.category == TransactionCategory.INTERNAL_TRANSFER and rule.target_bank_account_id:
+        # EXCEPTION: targets with NO statement feed (Stripe Connect — per-booking
+        # micro-payouts we deliberately never import, Gaurav 2026-07-25) complete
+        # as MATCHED standalone: the JE fully books the movement and the second
+        # statement line does not exist by design. The Connect ledger balance is
+        # verified in AGGREGATE at the Stripe-sync tie-out instead.
+        if (rule.category == TransactionCategory.INTERNAL_TRANSFER
+                and rule.target_bank_account_id
+                and self._target_has_no_statement_feed(db, rule.target_bank_account_id)):
+            transaction.status = TransactionStatus.MATCHED
+            transaction.reconciled_journal_entry_id = journal_entry.id
+            transaction.matched_at = datetime.now(UTC)
+            logger.info(
+                f"Internal transfer standalone-matched: txn {transaction.id} — "
+                f"target ba={rule.target_bank_account_id} has no statement feed"
+            )
+        elif rule.category == TransactionCategory.INTERNAL_TRANSFER and rule.target_bank_account_id:
             counter_txn = self._find_counter_transaction(
                 db, transaction, rule.target_bank_account_id
             )
@@ -1399,6 +1414,18 @@ Return only the JSON object, no explanation."""
             "journal_entry_id": journal_entry.id,
             "error": None,
         }
+
+    def _target_has_no_statement_feed(self, db: Session, target_ba_id: int) -> bool:
+        """True for transfer targets whose statements we deliberately never import.
+
+        Stripe CONNECT balances: thousands of per-booking micro-payouts, verified
+        in aggregate at the Stripe-sync tie-out instead (Gaurav, 2026-07-25).
+        Transfers into these targets complete as MATCHED standalone — the second
+        statement line does not exist by design.
+        """
+        ba = db.get(FinanceBankAccount, target_ba_id)
+        return bool(ba and ba.bank_name == "Stripe"
+                    and "connect" in (ba.account_name or "").lower())
 
     # ------------------------------------------------------------------
     # Journal entry creation
