@@ -47,7 +47,10 @@ def list_events():
     q_entity = request.args.get("entity_id", type=int)
     q_period = request.args.get("period")
     q_status = request.args.get("status")
+    from src.models.economic_event import FinanceJETemplate
     with db_session() as db:
+        labels = {(t.entity_id, t.event_type): (t.display_group, t.display_label)
+                  for t in db.query(FinanceJETemplate).all()}
         q = db.query(FinanceEconomicEvent)
         if q_entity:
             q = q.filter(FinanceEconomicEvent.entity_id == q_entity)
@@ -61,6 +64,8 @@ def list_events():
         return jsonify([{
             "id": e.id, "source": e.source, "entity_id": e.entity_id,
             "event_type": e.event_type, "period": e.period.isoformat(),
+            "display_group": labels.get((e.entity_id, e.event_type), (None, None))[0],
+            "display_label": labels.get((e.entity_id, e.event_type), (None, None))[1],
             "amount": str(e.amount), "currency": e.currency, "status": e.status,
             "journal_entry_id": e.journal_entry_id,
             "staged_at": e.staged_at.isoformat() if e.staged_at else None,
