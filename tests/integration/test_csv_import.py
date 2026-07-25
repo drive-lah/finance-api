@@ -11,6 +11,26 @@ from src.models.transaction import FinanceTransaction
 
 
 @pytest.mark.integration
+import pytest as _pytest
+
+
+@_pytest.fixture(autouse=True)
+def _clean_csv_test_rows(db_session_fixture):
+    """These integration tests write to the REAL database — remove our
+    fingerprints before AND after so residue can never fail the next run."""
+    from src.models.transaction import FinanceTransaction
+    def _purge():
+        db_session_fixture.query(FinanceTransaction).filter(
+            FinanceTransaction.fingerprint.like("csv_test_%")).delete(synchronize_session=False)
+        db_session_fixture.commit()
+    _purge()
+    yield
+    try:
+        _purge()
+    except Exception:
+        db_session_fixture.rollback()
+
+
 def test_ocbc_csv_import_creates_transactions(db_session_fixture, test_bank_account):
     """
     Test that uploading an OCBC CSV creates the expected transactions.
