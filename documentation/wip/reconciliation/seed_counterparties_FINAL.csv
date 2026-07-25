@@ -554,3 +554,9 @@ Zaim,employee,entity,DL SG,5061,On-Ground Team - Salary,,4,approved,new,,
 Zilla M. Cenido,vendor,entity,DL SG,5063,Customer Support - Salary,,3,triaged,new,,
 Zilla Marie,employee,entity,DL SG,6000,Salaries & Wages,,0,decided,live-only,,
 ZLR*Hills,other,entity,DL AU,6402,Entertainment,,0,live,deactivate-live,6402,GAURAV: remove -> deactivate in live at apply
+Altimobility Corp,vendor,entity,DL AU,5030,Cost of Device Subscriptions,Altimobility,2,approved,new,,"Device subscription vendor (Gaurav, 2026-07-25)"
+Australian Financial Complaints Authority,vendor,entity,DL AU,5025,Incidentals Payout - Other,Australian Financial Complaints | AFCA,8,approved,new,,"AFCA complaint payouts -> 5025 (Gaurav, 2026-07-25)"
+Victorian Auto Services Pty Ltd,vendor,entity,DL AU,5032,Incidentals Payout - Workshop,VICTORIAN AUTO SERVICES,6,approved,new,,
+Rohde Smash Repairs,vendor,entity,DL AU,5032,Incidentals Payout - Workshop,,1,approved,new,,
+Danyal Trucking,vendor,entity,DL AU,5033,Incidentals Payout - Towing,,2,approved,new,,
+Riezel Basilio Villanueva,employee,entity,DL AU,5063,Customer Support - Salary,,2,approved,new,,

@@ -85,3 +85,4 @@ live#284,Own-platform test charges (Drive Mate) - incoming,5,incoming,,,CONTAINS
 live#285,Wise top-up (own money in),1,incoming,,"[11, 12]",IS_EXACTLY,Topped up account,,,,,,internal_transfer,,17,,,,kept-new
 live#290,SG Wise funding received (claim-only),1,incoming,,"[2, 3, 4, 5, 6, 7]",CONTAINS,FROM: Drive Lah Pte. Ltd. | Money added,,,,,,internal_transfer,,,,,,kept-new
 live#71,Drive Lah Ventures Holding Pte Ltd - DBS SGD Incoming (claim-only reinstated),,incoming,,"[15]",CONTAINS,Drive lah Ventures,,,,,,internal_transfer,,,,,,reinstated-claim-only
+live#292,Bus/MRT fares,5,outgoing,,,CONTAINS,Bus/mrt,,,,,,expense,6400,,,,,kept-new
