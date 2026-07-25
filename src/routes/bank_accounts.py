@@ -57,6 +57,12 @@ def list_bank_accounts():
             bal = latest.get(ba.id)
             d["latest_balance"] = str(bal[0]) if bal else None
             d["latest_balance_date"] = bal[1].isoformat() if bal else None
+            # provider-reported balance wins when the sync stamped one
+            # (Stripe: payout lines alone can't express the true balance)
+            state = ba.api_sync_state or {}
+            if state.get("latest_balance") is not None:
+                d["latest_balance"] = str(state["latest_balance"])
+                d["latest_balance_date"] = state.get("balance_as_of") or d["latest_balance_date"]
             response_data.append(d)
         return jsonify(response_data), 200
 

@@ -274,6 +274,24 @@ class EconomicEventService:
             fingerprint_fn=lambda row: [row.source_id or ""],
             import_batch_id=f"stripe-payouts-{region}-{window_label}",
             source="stripe_payout_import", auto_categorize=False)
+
+        # Consistency with other accounts (Gaurav 2026-07-25): stamp the coverage
+        # watermark, and the TRUE Stripe balance (net sum of ALL balance txns —
+        # payout lines alone can't tell it) so the account view shows it like
+        # any bank account.
+        bt_table = "sg_stripe_balance_transactions" if region == "SG" else "au_stripe_balance_transactions"
+        try:
+            bal_row = self.ch.execute_single(f"SELECT round(sum(net)/100, 2) AS bal FROM {bt_table}")
+            bal = bal_row.get("bal") if bal_row else None
+        except Exception:
+            bal = None
+        state = dict(ba.api_sync_state or {})
+        state["last_synced_at"] = date.today().isoformat()
+        if bal is not None:
+            state["latest_balance"] = str(bal)
+            state["balance_as_of"] = date.today().isoformat()
+        ba.api_sync_state = state
+        db.commit()
         return {"entity_id": entity_id, "window": window_label,
                 "lines": len(normalized),
                 "created": result.get("transactions_created"),
