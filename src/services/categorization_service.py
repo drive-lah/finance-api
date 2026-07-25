@@ -829,9 +829,20 @@ class CategorizationService:
         """
         L1: deterministic exact/substring matching against name and aliases.
         Returns the first matching counterparty or None.
+
+        Short names/aliases (< 6 chars) match on WORD BOUNDARIES, not raw
+        substring — party "URA" must never match "InsURAnce" or "BuenaventURA"
+        (the 2026-07-25 false-enrichment bug; same trap class as DQ-13).
         """
         raw_cp = (txn.counterparty_name or "").lower().strip()
         raw_desc = (txn.description or "").lower().strip()
+
+        def contains(needle: str, haystack: str) -> bool:
+            if not haystack:
+                return False
+            if len(needle) >= 6:
+                return needle in haystack
+            return re.search(r"\b" + re.escape(needle) + r"\b", haystack) is not None
 
         for cp in counterparties:
             name_lower = cp.name.lower().strip()
@@ -842,10 +853,10 @@ class CategorizationService:
             if raw_cp and raw_cp == name_lower:
                 return cp
             # 2. Counterparty name as substring in description
-            if name_lower in raw_desc:
+            if contains(name_lower, raw_desc):
                 return cp
             # 3. Counterparty name as substring in raw counterparty field
-            if raw_cp and name_lower in raw_cp:
+            if raw_cp and contains(name_lower, raw_cp):
                 return cp
 
             # 4-6. Same strategies against each alias
@@ -854,9 +865,9 @@ class CategorizationService:
                     continue
                 if raw_cp and raw_cp == alias:
                     return cp
-                if alias in raw_desc:
+                if contains(alias, raw_desc):
                     return cp
-                if raw_cp and alias in raw_cp:
+                if raw_cp and contains(alias, raw_cp):
                     return cp
 
         return None

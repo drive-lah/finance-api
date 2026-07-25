@@ -1065,6 +1065,25 @@ class TestCounterpartyAliasEnrichment:
         db_session.refresh(txn)
         assert txn.counterparty_id == cp.id
 
+    def test_l1_short_name_requires_word_boundary(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """Party 'URA' must not match 'InsURAnce'/'BuenaventURA' — short names
+        (<6 chars) match on word boundaries only (2026-07-25 bug)."""
+        ura = _make_counterparty(db_session, "URA")
+        txn_bad = _make_transaction(
+            db_session, test_bank_account,
+            description="Sent money to The Hollard Insurance Company", amount=-100.0,
+            fingerprint="ura-bad")
+        txn_good = _make_transaction(
+            db_session, test_bank_account,
+            description="PAYMENT TO URA PARKING", amount=-50.0,
+            fingerprint="ura-good")
+        categorization_service._enrich_counterparties(db_session, [txn_bad, txn_good])
+        db_session.refresh(txn_bad); db_session.refresh(txn_good)
+        assert txn_bad.counterparty_id != ura.id     # no substring hijack
+        assert txn_good.counterparty_id == ura.id    # word-boundary still matches
+
     def test_l1_matches_inactive_dormant_counterparty(
         self, db_session, test_accounts, test_bank_account
     ):
