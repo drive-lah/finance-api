@@ -23,7 +23,8 @@ class FinanceJETemplate(Base):
     __tablename__ = "finance_je_templates"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    region: Mapped[str] = mapped_column(String(8), nullable=False)
+    entity_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("finance_entities.id", ondelete="RESTRICT"), nullable=False)
     event_type: Mapped[str] = mapped_column(String(64), nullable=False)
     je_num: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     debit_code: Mapped[str] = mapped_column(String(16), nullable=False)
@@ -37,7 +38,7 @@ class FinanceJETemplate(Base):
         DateTime, server_default=func.now(), onupdate=func.now())
 
     __table_args__ = (
-        UniqueConstraint("region", "event_type", name="uq_je_template_region_event"),
+        UniqueConstraint("entity_id", "event_type", name="uq_je_template_entity_event"),
     )
 
 
@@ -46,7 +47,6 @@ class FinanceEconomicEvent(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     source: Mapped[str] = mapped_column(String(32), nullable=False, default="clickhouse_views")
-    region: Mapped[str] = mapped_column(String(8), nullable=False)
     entity_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("finance_entities.id", ondelete="RESTRICT"), nullable=False)
     event_type: Mapped[str] = mapped_column(String(64), nullable=False)
@@ -61,6 +61,6 @@ class FinanceEconomicEvent(Base):
     posted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     __table_args__ = (
-        UniqueConstraint("source", "region", "event_type", "period",
-                         name="uq_econ_event_source_region_type_period"),
+        UniqueConstraint("source", "entity_id", "event_type", "period",
+                         name="uq_econ_event_source_entity_type_period"),
     )
