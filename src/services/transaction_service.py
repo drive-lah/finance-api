@@ -275,8 +275,15 @@ class TransactionService:
         if import_batch_id is None:
             import_batch_id = datetime.utcnow().strftime('%Y%m%d%H%M%S')
 
-        normalized_rows = adapter.parse(file_bytes)
-        parse_errors = list(adapter.errors)
+        from src.models.sync_run import start_run, finish_run
+        run = start_run(db, "file_import", entity_id=bank_account.entity_id,
+                        bank_account_id=bank_account.id)
+        try:
+            normalized_rows = adapter.parse(file_bytes)
+            parse_errors = list(adapter.errors)
+        except Exception as parse_err:
+            finish_run(db, run, error=parse_err)
+            raise
 
         # WRONG-ACCOUNT GUARD (Gaurav, 2026-07-25): when the statement declares
         # its own account number, it must match the selected bank account.
@@ -290,16 +297,25 @@ class TransactionService:
                     f"'{bank_account.account_name}' ({bank_account.account_number}). "
                     f"Upload it to the matching bank account.")
 
-        return self.import_from_rows(
-            db=db,
-            bank_account=bank_account,
-            normalized_rows=normalized_rows,
-            fingerprint_fn=adapter.fingerprint_fields,
-            import_batch_id=import_batch_id,
-            source="file_import",
-            extra_errors=parse_errors,
-            auto_categorize=auto_categorize,
-        )
+        try:
+            result = self.import_from_rows(
+                db=db,
+                bank_account=bank_account,
+                normalized_rows=normalized_rows,
+                fingerprint_fn=adapter.fingerprint_fields,
+                import_batch_id=import_batch_id,
+                source="file_import",
+                extra_errors=parse_errors,
+                auto_categorize=auto_categorize,
+            )
+        except Exception as import_err:
+            finish_run(db, run, fetched=len(normalized_rows), error=import_err)
+            raise
+        finish_run(db, run, fetched=len(normalized_rows),
+                   created=result.get("transactions_created"),
+                   duplicates=result.get("duplicates_skipped"),
+                   error="; ".join(str(e) for e in (result.get("errors") or [])[:5]) or None)
+        return result
 
     def import_from_rows(
         self,
