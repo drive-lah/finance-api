@@ -133,8 +133,8 @@ def bulk_action():
     body = request.get_json(silent=True) or {}
     action = (body.get('action') or '').strip()
     ids = body.get('ids') or []
-    if action not in ('approve', 'reject', 'run_categorization', 'reset_to_imported'):
-        raise BadRequestError("action must be approve | reject | run_categorization | reset_to_imported")
+    if action not in ('approve', 'reject', 'run_categorization', 'reset_to_imported', 'delete'):
+        raise BadRequestError("action must be approve | reject | run_categorization | reset_to_imported | delete")
     if not ids or not isinstance(ids, list):
         raise BadRequestError("ids must be a non-empty list")
     if len(ids) > 500:
@@ -169,6 +169,14 @@ def bulk_action():
                     transaction_service.approve(db, i)
                 elif action == 'reject':
                     transaction_service.reject(db, i)
+                elif action == 'delete':
+                    t = db.get(FinanceTransaction, i)
+                    if t is None:
+                        raise ValueError("not found")
+                    if t.reconciled_journal_entry_id:
+                        raise ValueError("has a journal entry — reject it first, then delete")
+                    db.delete(t)
+                    db.commit()
                 elif action == 'reset_to_imported':
                     t = db.get(FinanceTransaction, i)
                     if t is None:
