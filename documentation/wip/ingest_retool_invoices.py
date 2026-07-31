@@ -28,7 +28,7 @@ from sqlalchemy.exc import IntegrityError
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 from src.services.ai_extraction_service import ai_extraction_service
-from src.services.vendor_matching_service import fuzzy_match_vendor
+from src.services.vendor_matching_service import fuzzy_match_vendor, llm_match_vendor
 from src.services.s3_service import s3_service
 from src.models.invoice import FinanceInvoice
 from src.models.counterparty import FinanceCounterparty, CounterpartyType
@@ -87,8 +87,7 @@ def main():
 
     with Session(engine) as db:
         vendors=db.query(FinanceCounterparty).filter(
-            FinanceCounterparty.type==CounterpartyType.VENDOR.value,
-            FinanceCounterparty.status=="active").all()
+            FinanceCounterparty.type==CounterpartyType.VENDOR.value).all()  # all vendors, active+inactive
         entity_names=[r[0] for r in db.execute(text("select name from finance_entities")).all()]
         run_id=db.execute(text("insert into finance_sync_runs (source,status,started_at) "
             "values ('retool_invoice','RUNNING',now()) returning id")).scalar()
@@ -127,6 +126,7 @@ def main():
 
                 ev=ex.get("vendor_name") or r.get("third_party_payee") or ""
                 cp,conf=fuzzy_match_vendor(ev, vendors)
+                if cp is None: cp,conf=llm_match_vendor(ev, vendors)  # fuzzy fails -> Haiku fallback
                 cp_id=cp.id if cp else None
                 contra=(cp.default_account_code if cp else None) or None
                 entity_id,ent_src=resolve_entity(ex.get("bill_to_entity_hint"), r.get("platform"), cp, ex.get("currency") or r.get("currency"))

@@ -945,7 +945,12 @@ class CategorizationService:
             if txn.counterparty_id:
                 continue  # already linked
 
-            matched = self._match_l1(txn, counterparties)
+            matched, ambiguous = self._match_l1(txn, counterparties)
+            if ambiguous:
+                # >1 counterparty ties at L1's STRONGEST tier — never guess (kills the
+                # old first-match-wins misattribution); let the L3 LLM decide.
+                unmatched.append(txn)
+                continue
             if matched is None:
                 matched = self._match_l2(txn, counterparties)
 
@@ -969,14 +974,26 @@ class CategorizationService:
         self,
         txn: FinanceTransaction,
         counterparties: list,
-    ) -> Optional[Any]:
+    ) -> tuple[Optional[Any], bool]:
         """
-        L1: deterministic exact/substring matching against name and aliases.
-        Returns the first matching counterparty or None.
+        L1: deterministic TIERED matching against name and aliases.
 
-        Short names/aliases (< 6 chars) match on WORD BOUNDARIES, not raw
-        substring — party "URA" must never match "InsURAnce" or "BuenaventURA"
-        (the 2026-07-25 false-enrichment bug; same trap class as DQ-13).
+        Match strength (strongest first), so a weak signal never beats a strong one:
+          Tier 1 — exact: raw counterparty_name == name/alias
+          Tier 2 — name/alias is a substring of the raw counterparty_name
+          Tier 3 — name/alias is a substring of the DESCRIPTION (weakest — bank
+                   statement footers/disclaimers live here, e.g. the SDIC "…CPF
+                   Investment Scheme…" boilerplate that falsely hits party "CPF")
+
+        Returns (matched_cp, ambiguous):
+          - unique best-tier match  → (cp, False)
+          - ≥2 parties tie at the best tier → (None, True)  ← caller routes to the LLM
+          - no match at all           → (None, False)
+        This kills the old first-match-wins misattribution: an exact counterparty_name
+        hit (Tier 1) always wins over a description-footer substring (Tier 3).
+
+        Short names/aliases (< 6 chars) match on WORD BOUNDARIES, not raw substring —
+        party "URA" must never match "InsURAnce" (2026-07-25 bug; trap class DQ-13).
         """
         raw_cp = (txn.counterparty_name or "").lower().strip()
         raw_desc = (txn.description or "").lower().strip()
@@ -988,33 +1005,41 @@ class CategorizationService:
                 return needle in haystack
             return re.search(r"\b" + re.escape(needle) + r"\b", haystack) is not None
 
-        for cp in counterparties:
-            name_lower = cp.name.lower().strip()
-            if not name_lower:
-                continue
-
-            # 1. Exact match on raw counterparty name from bank CSV
-            if raw_cp and raw_cp == name_lower:
-                return cp
-            # 2. Counterparty name as substring in description
-            if contains(name_lower, raw_desc):
-                return cp
-            # 3. Counterparty name as substring in raw counterparty field
-            if raw_cp and contains(name_lower, raw_cp):
-                return cp
-
-            # 4-6. Same strategies against each alias
-            for alias in [a.lower().strip() for a in (cp.aliases or []) if a]:
-                if not alias:
+        def cp_tier(cp) -> Optional[int]:
+            """Best (lowest) tier this counterparty achieves for this txn, or None."""
+            best = None
+            for term in ([cp.name] + list(cp.aliases or [])):
+                if not isinstance(term, str):
                     continue
-                if raw_cp and raw_cp == alias:
-                    return cp
-                if contains(alias, raw_desc):
-                    return cp
-                if raw_cp and contains(alias, raw_cp):
-                    return cp
+                t = term.lower().strip()
+                if not t:
+                    continue
+                if raw_cp and raw_cp == t:
+                    return 1  # can't beat exact
+                if raw_cp and contains(t, raw_cp):
+                    best = min(best or 9, 2)
+                elif contains(t, raw_desc):
+                    best = min(best or 9, 3)
+            return best
 
-        return None
+        best_tier = 99
+        winners: list = []
+        for cp in counterparties:
+            if not (cp.name or "").strip():
+                continue
+            tier = cp_tier(cp)
+            if tier is None:
+                continue
+            if tier < best_tier:
+                best_tier, winners = tier, [cp]
+            elif tier == best_tier and all(w.id != cp.id for w in winners):
+                winners.append(cp)
+
+        if not winners:
+            return None, False
+        if len(winners) == 1:
+            return winners[0], False
+        return None, True  # tie at the strongest tier → ambiguous → LLM decides
 
     def _match_l2(
         self,

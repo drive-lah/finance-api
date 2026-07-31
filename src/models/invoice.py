@@ -107,6 +107,15 @@ class FinanceInvoice(Base):
     )
     approved_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     rejection_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # Full action-audit trail (migration 047) — who/when/why for every transition.
+    submitted_by: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    submitted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    submit_override_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    voided_by: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    voided_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    void_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    rejected_by: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    rejected_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Upload metadata
     uploaded_by: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)

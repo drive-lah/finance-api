@@ -31,8 +31,8 @@ logger = logging.getLogger(__name__)
 
 # Standard AP liability account
 AP_ACCOUNT_CODE = "2000"
-# Prepaid asset account for amortization
-PREPAID_ACCOUNT_CODE = "1200"
+# Prepaid asset account for amortization (COA: 1300 Prepayments; 1200 is Trade Receivables)
+PREPAID_ACCOUNT_CODE = "1300"
 # GST / VAT input tax credit (recoverable on purchases)
 GST_INPUT_ACCOUNT_CODE = "1350"
 
@@ -94,6 +94,37 @@ def _invoice_dict(invoice: "FinanceInvoice", db: Optional[Session] = None) -> di
                 "default_account_code": counterparty.default_account_code,
             }
 
+    # Transitional "Retool tags" for the review UI — derived from ai_extraction_raw,
+    # NO DB columns (Retool is a temporary migration source). Render as badges
+    # (Retool #id · DUP→#orig · Paid/Unpaid · stub-reason). (Gaurav 2026-07-31)
+    raw = invoice.ai_extraction_raw or {}
+    recon = raw.get("recon") or {}
+    dup = recon.get("duplicate") or {}
+    result["tags"] = {
+        "retool_id": (raw.get("retool_ref") or {}).get("finance_db_id"),
+        "provisional_paid": (raw.get("provisional_paid") or {}).get("is_provisional_paid"),
+        "is_duplicate": bool(dup.get("is_duplicate", False)),
+        "duplicate_of": dup.get("duplicate_of"),
+        "ingest_outcome": recon.get("ingest_outcome"),  # not_invoice/no_attachment/no_file/duplicate
+        "stub": bool(recon.get("stub", False)),
+        # matched/quarantine derived from LIVE counterparty, not the frozen flag
+        "matched": invoice.counterparty_id is not None,
+    }
+
+    # Full action-audit trail — who/when/why for every transition (migration 047).
+    def _iso(dt):
+        return dt.isoformat() if dt else None
+    result["audit"] = {
+        "uploaded_by": invoice.uploaded_by,
+        "submitted_by": invoice.submitted_by, "submitted_at": _iso(invoice.submitted_at),
+        "submit_override_reason": invoice.submit_override_reason,
+        "approved_by": invoice.approved_by, "approved_at": _iso(invoice.approved_at),
+        "rejected_by": invoice.rejected_by, "rejected_at": _iso(invoice.rejected_at),
+        "rejection_reason": invoice.rejection_reason,
+        "voided_by": invoice.voided_by, "voided_at": _iso(invoice.voided_at),
+        "void_reason": invoice.void_reason,
+    }
+
     return result
 
 
@@ -116,7 +147,7 @@ class InvoiceService:
     def _apply_filters(self, query, *, entity_id=None, status=None, counterparty_id=None,
                        search=None, vendor_flag=None, coa_flag=None, document_gate=None,
                        currency_flag=None, retool_status=None, sub_category=None, amount_match=None,
-                       provisional_paid=None):
+                       provisional_paid=None, retool_id=None, is_duplicate=None):
         """Shared filter builder for get_all + count_all (server-side, incl. ai_extraction_raw JSON)."""
         from sqlalchemy import or_, func
 
@@ -145,6 +176,10 @@ class InvoiceService:
             query = query.filter(jtext("retool_ref", "status") == retool_status)
         if sub_category:
             query = query.filter(jtext("retool_ref", "sub_category") == sub_category)
+        if retool_id:
+            query = query.filter(jtext("retool_ref", "finance_db_id") == str(retool_id))
+        if is_duplicate is not None:
+            query = query.filter(jtext("recon", "duplicate", "is_duplicate") == str(is_duplicate).lower())
         if search:
             like = f"%{search}%"
             query = query.filter(or_(
@@ -303,9 +338,39 @@ class InvoiceService:
         for field, value in update_data.items():
             setattr(invoice, field, value)
 
+        # Refresh the recon flags to reflect the edit — the review UI reads these
+        # (Gaurav 2026-07-31: after assigning counterparty / COA the flags must update).
+        raw = dict(invoice.ai_extraction_raw or {})
+        recon = dict(raw.get("recon") or {})
+        recon["vendor_flag"] = "MATCHED" if invoice.counterparty_id else "QUARANTINE"
+        recon["coa_flag"] = "OK" if invoice.contra_account_code else "NEEDS-COA"
+        raw["recon"] = recon
+        invoice.ai_extraction_raw = raw
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(invoice, "ai_extraction_raw")
+
         db.commit()
         db.refresh(invoice)
         return invoice
+
+    def _payable_account_for(self, db: Session, contra_code: Optional[str]) -> str:
+        """Resolve the credit (offset) leg for a given debit (expense/COS/asset) account.
+
+        The offset is PURELY a function of the COA: every account carries an explicit
+        offset_account_code (NOT NULL DEFAULT '2000'). The chart already segregates
+        employee-facing accounts (6010-6014, 5062 -> 2303 Employee Claims Payable) and
+        statutory ones (6002 -> 2302 super, 6001 -> 2300 CPF, 9000 -> 2305 income tax)
+        from vendor accounts (-> 2000), so no counterparty logic is needed. (POL-77/78)
+        """
+        if not contra_code:
+            return AP_ACCOUNT_CODE
+        from src.models.account import FinanceAccount
+        acct = (
+            db.query(FinanceAccount)
+            .filter(FinanceAccount.code == contra_code)
+            .first()
+        )
+        return acct.offset_account_code if acct and acct.offset_account_code else AP_ACCOUNT_CODE
 
     def approve(self, db: Session, invoice_id: int, approved_by: str, contra_account_code: Optional[str] = None) -> FinanceInvoice:
         """
@@ -316,11 +381,13 @@ class InvoiceService:
         """
         invoice = self.get_by_id(db, invoice_id)
 
-        if invoice.status not in (InvoiceStatus.DRAFT.value, InvoiceStatus.PENDING_APPROVAL.value):
+        # POL (Gaurav 2026-07-31): NO direct-to-approved. Every invoice must pass
+        # through pending_approval first — a draft cannot be approved directly.
+        if invoice.status != InvoiceStatus.PENDING_APPROVAL.value:
             from src.utils.errors import ConflictError
             raise ConflictError(
                 f"Cannot approve invoice in '{invoice.status}' status. "
-                f"Only draft or pending_approval invoices can be approved."
+                f"Only pending_approval invoices can be approved (submit it first)."
             )
 
         # COA priority at approval time:
@@ -380,6 +447,11 @@ class InvoiceService:
         else:
             debit_code = invoice.contra_account_code
 
+        # Credit leg: dedicated liability if the chosen expense account declares one
+        # (e.g. 6002 super -> 2302 payable), else generic 2000 AP. Resolve from the
+        # real expense (invoice.contra_account_code), not the prepaid substitute.
+        credit_code = self._payable_account_for(db, invoice.contra_account_code)
+
         inv_ref = f"Invoice {invoice.invoice_number or invoice.id}"
 
         if tax > 0:
@@ -398,14 +470,14 @@ class InvoiceService:
                     "description": f"GST Input Tax - {inv_ref}",
                 },
                 {
-                    "account_code": AP_ACCOUNT_CODE,
+                    "account_code": credit_code,
                     "debit_amount": 0.0,
                     "credit_amount": round(total, 2),
                     "description": inv_ref,
                 },
             ]
         else:
-            # Standard 2-line JE: Dr expense / Cr AP
+            # Standard 2-line JE: Dr expense / Cr payable (dedicated liability or 2000 AP)
             lines = [
                 {
                     "account_code": debit_code,
@@ -414,7 +486,7 @@ class InvoiceService:
                     "description": inv_ref,
                 },
                 {
-                    "account_code": AP_ACCOUNT_CODE,
+                    "account_code": credit_code,
                     "debit_amount": 0.0,
                     "credit_amount": total,
                     "description": inv_ref,
@@ -468,8 +540,9 @@ class InvoiceService:
         db.refresh(invoice)
         return invoice
 
-    def reject(self, db: Session, invoice_id: int, rejection_reason: str) -> FinanceInvoice:
-        """Reject an invoice with a reason."""
+    def reject(self, db: Session, invoice_id: int, rejection_reason: str,
+               rejected_by: Optional[str] = None) -> FinanceInvoice:
+        """Reject an invoice with a reason. Captures who/when (rejected_by = logged-in user)."""
         invoice = self.get_by_id(db, invoice_id)
 
         if invoice.status not in (InvoiceStatus.DRAFT.value, InvoiceStatus.PENDING_APPROVAL.value):
@@ -480,12 +553,16 @@ class InvoiceService:
 
         invoice.status = InvoiceStatus.REJECTED.value
         invoice.rejection_reason = rejection_reason
+        invoice.rejected_by = rejected_by
+        invoice.rejected_at = datetime.now(UTC)
         db.commit()
         db.refresh(invoice)
         return invoice
 
-    def void(self, db: Session, invoice_id: int) -> FinanceInvoice:
-        """Void an invoice. Only draft, pending_approval, or rejected invoices can be voided."""
+    def void(self, db: Session, invoice_id: int, voided_by: Optional[str] = None,
+             void_reason: Optional[str] = None) -> FinanceInvoice:
+        """Void an invoice. Only draft, pending_approval, or rejected invoices can be voided.
+        Captures who/when/why for traceability (voided_by = logged-in user)."""
         invoice = self.get_by_id(db, invoice_id)
 
         allowed = (
@@ -501,6 +578,9 @@ class InvoiceService:
             )
 
         invoice.status = InvoiceStatus.VOID.value
+        invoice.voided_by = voided_by
+        invoice.voided_at = datetime.now(UTC)
+        invoice.void_reason = void_reason
         db.commit()
         db.refresh(invoice)
         return invoice
@@ -965,6 +1045,10 @@ class InvoiceService:
         bank_coa = bank_account.coa_account_code
         inv_ref = f"Invoice {invoice.invoice_number or invoice.id}"
 
+        # Clear the SAME liability the approval JE credited — dedicated (e.g. 2302
+        # Superannuation Payable) or generic 2000 AP — else the sub-payable never closes.
+        ap_code = self._payable_account_for(db, invoice.contra_account_code)
+
         if bank_entity_id == invoice_entity_id:
             # ── Same-entity: single 2-line JE ──────────────────────────────
             entry = journal_service.create(
@@ -974,7 +1058,7 @@ class InvoiceService:
                 description=description,
                 lines=[
                     {
-                        "account_code": AP_ACCOUNT_CODE,
+                        "account_code": ap_code,
                         "debit_amount": abs_amount,
                         "credit_amount": 0.0,
                         "description": inv_ref,
@@ -1025,7 +1109,7 @@ class InvoiceService:
         bank_entry.source = source
         bank_entry.intercompany_group_id = ic_group_id
 
-        # Invoice entity: Dr 2000 AP / Cr IC Payable
+        # Invoice entity: Dr AP (dedicated liability or 2000) / Cr IC Payable
         inv_entry = journal_service.create(
             db=db,
             entity_id=invoice_entity_id,
@@ -1033,7 +1117,7 @@ class InvoiceService:
             description=description,
             lines=[
                 {
-                    "account_code": AP_ACCOUNT_CODE,
+                    "account_code": ap_code,
                     "debit_amount": abs_amount,
                     "credit_amount": 0.0,
                     "description": inv_ref,
@@ -1278,7 +1362,8 @@ class InvoiceService:
         return invoice
 
 
-    def submit(self, db: Session, invoice_id: int, confirmed: bool = False) -> dict:
+    def submit(self, db: Session, invoice_id: int, confirmed: bool = False,
+               submitted_by: Optional[str] = None, override_reason: Optional[str] = None) -> dict:
         """
         Submit a draft invoice for approval.
 
@@ -1309,11 +1394,34 @@ class InvoiceService:
             missing.append("counterparty_id")
         if not invoice.contra_account_code:
             missing.append("contra_account_code (expense account)")
+        # Posting is dated on invoice_date — block the 1900 unknown-date sentinel (backfill
+        # stubs). A real invoice_date is required before an invoice can post. (Gaurav 2026-07-31)
+        from datetime import date as _date
+        if not invoice.invoice_date or invoice.invoice_date <= _date(1901, 1, 1):
+            missing.append("invoice_date (a real date — this stub carries the 1900 unknown-date sentinel)")
         if missing:
             from src.utils.errors import BadRequestError
             raise BadRequestError(
                 f"Cannot submit invoice — missing required fields: {', '.join(missing)}"
             )
+
+        # --- SOFT BLOCK (Gaurav 2026-07-31): submitting a doc flagged NOT-an-invoice
+        # requires an explicit reason. Not a hard stop — they may proceed WITH a reason. ---
+        recon = (invoice.ai_extraction_raw or {}).get("recon") or {}
+        is_not_invoice = (recon.get("document_gate") == "not_invoice"
+                          or recon.get("ingest_outcome") == "not_invoice")
+        if is_not_invoice and not (override_reason and override_reason.strip()):
+            from src.utils.errors import BadRequestError
+            raise BadRequestError(
+                "This document is flagged as NOT an invoice. Provide a reason to submit it "
+                "for approval anyway."
+            )
+
+        # Traceability: who submitted + when (+ the not-invoice override reason, if any)
+        invoice.submitted_by = submitted_by
+        invoice.submitted_at = datetime.now(UTC)
+        if override_reason and override_reason.strip():
+            invoice.submit_override_reason = override_reason.strip()
 
         # --- Phase 2: approval rules ---
         # Hard overrides — always require human even if rule says auto_approve
@@ -1336,18 +1444,14 @@ class InvoiceService:
                 "invoice": _invoice_dict(invoice, db),
             }
 
-        new_status, auto_approved_by = self._evaluate_approval_rules(db, invoice)
-
-        if new_status == InvoiceStatus.APPROVED.value:
-            db.commit()  # flush before approve()
-            updated = self.approve(db, invoice_id, approved_by=auto_approved_by or "auto")
-            message = "Invoice auto-approved via approval rule"
-        else:
-            invoice.status = new_status
-            db.commit()
-            db.refresh(invoice)
-            updated = invoice
-            message = "Invoice marked for approval (no matching auto-approve rule)"
+        # POL (Gaurav 2026-07-31): NO auto-approve. Every submitted invoice lands in
+        # pending_approval for human sign-off — approval rules are not evaluated here.
+        new_status = InvoiceStatus.PENDING_APPROVAL.value
+        invoice.status = new_status
+        db.commit()
+        db.refresh(invoice)
+        updated = invoice
+        message = "Invoice marked for approval"
 
         from src.models.schemas import InvoiceResponse
         return {

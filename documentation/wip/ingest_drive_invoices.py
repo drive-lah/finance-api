@@ -27,7 +27,7 @@ from sqlalchemy.exc import IntegrityError
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 from src.services.ai_extraction_service import ai_extraction_service
-from src.services.vendor_matching_service import fuzzy_match_vendor
+from src.services.vendor_matching_service import fuzzy_match_vendor, llm_match_vendor
 from src.services.s3_service import s3_service
 from src.models.invoice import FinanceInvoice
 from src.models.counterparty import FinanceCounterparty, CounterpartyType
@@ -68,8 +68,7 @@ def main():
     if hdr: mw.writeheader()
     with Session(engine) as db:
         vendors=db.query(FinanceCounterparty).filter(
-            FinanceCounterparty.type==CounterpartyType.VENDOR.value,
-            FinanceCounterparty.status=="active").all()
+            FinanceCounterparty.type==CounterpartyType.VENDOR.value).all()  # all vendors, active+inactive
         ent=[r[0] for r in db.execute(text("select name from finance_entities")).all()]
         run_id=db.execute(text("insert into finance_sync_runs (source,status,started_at) values ('gdrive_invoice','RUNNING',now()) returning id")).scalar()
         db.commit()
@@ -86,7 +85,9 @@ def main():
                 is_inv=ex.get("is_invoice"); dt=ex.get("document_type")
                 gate="not_invoice" if (is_inv is False or dt in ("statement","letter","report","spreadsheet_screenshot")) else "ok"
                 ev=ex.get("vendor_name") or ""
-                cp,conf=fuzzy_match_vendor(ev,vendors); cp_id=cp.id if cp else None
+                cp,conf=fuzzy_match_vendor(ev,vendors)
+                if cp is None: cp,conf=llm_match_vendor(ev,vendors)  # fuzzy fails -> Haiku fallback
+                cp_id=cp.id if cp else None
                 contra=(cp.default_account_code if cp else None) or None
                 eid,esrc=resolve_entity(ex.get("bill_to_entity_hint"),cp,ex.get("currency"))
                 total=ex.get("total_amount"); idate=dpart(ex.get("invoice_date"))

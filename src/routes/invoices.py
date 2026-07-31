@@ -30,6 +30,8 @@ def list_invoices():
         sub_category=request.args.get("sub_category", type=str),
         amount_match=request.args.get("amount_match", type=str),
         provisional_paid=request.args.get("provisional_paid", type=str),
+        retool_id=request.args.get("retool_id", type=str),
+        is_duplicate=request.args.get("is_duplicate", type=str),
     )
     limit = min(request.args.get("limit", default=100, type=int), 500)
     offset = request.args.get("offset", default=0, type=int)
@@ -100,15 +102,21 @@ def reject_invoice(invoice_id: int):
         return jsonify({"error": "rejection_reason is required"}), 400
 
     with db_session() as db:
-        invoice = invoice_service.reject(db, invoice_id, rejection_reason)
+        invoice = invoice_service.reject(db, invoice_id, rejection_reason,
+                                         rejected_by=data.get("rejected_by"))
         return jsonify(_invoice_dict(invoice, db)), 200
 
 
 @invoices_bp.route("/<int:invoice_id>/void", methods=["POST"])
 def void_invoice(invoice_id: int):
-    """Void an invoice."""
+    """Void an invoice. Body: { void_reason: str (required), voided_by: str (logged-in user) }."""
+    data = request.get_json() or {}
+    void_reason = data.get("void_reason")
+    if not void_reason:
+        return jsonify({"error": "void_reason is required"}), 400
     with db_session() as db:
-        invoice = invoice_service.void(db, invoice_id)
+        invoice = invoice_service.void(db, invoice_id,
+                                       voided_by=data.get("voided_by"), void_reason=void_reason)
         return jsonify(_invoice_dict(invoice, db)), 200
 
 
@@ -135,7 +143,9 @@ def submit_invoice(invoice_id: int):
     data = request.get_json() or {}
 
     with db_session() as db:
-        result = invoice_service.submit(db, invoice_id, confirmed=False)
+        result = invoice_service.submit(db, invoice_id, confirmed=False,
+                                        submitted_by=data.get("submitted_by"),
+                                        override_reason=data.get("override_reason"))
         return jsonify(result), 200
 
 

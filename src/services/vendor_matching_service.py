@@ -1,18 +1,17 @@
 """
-Vendor Matching Service
+Counterparty Matching Service (invoice ingestion)
 
-Fuzzy-matches an AI-extracted vendor name against existing counterparties.
-If no match is found, auto-creates a draft (unverified) counterparty.
+Matches an AI-extracted invoice counterparty name against the ENTIRE existing
+counterparty book. If no match is found, auto-creates a draft (unverified) vendor.
 
-Match algorithm (no external dependencies):
-  1. Normalize: lowercase, strip punctuation and legal suffixes
-  2. Exact match on normalized name → confidence 1.0
-  3. Substring match (one contains the other) → confidence 0.85
-  4. Token overlap ratio → confidence proportional to overlap
+Match order (Gaurav 2026-07-31):
+  1. Exact tax-ID identity match (a hard identifier — not fuzzy)
+  2. ALWAYS a cheap LLM (Haiku) semantic match by name — NEVER fuzzy string matching
+  3. No match → auto-create unverified counterparty
 
-Thresholds:
-  ≥ 0.80 → accepted match
-  < 0.80 → no match → auto-create
+Candidate set is the WHOLE book: every type (vendor / employee / investor /
+government / customer) and both active AND inactive. `fuzzy_match_vendor` below is
+retained only for other callers; the invoice path no longer uses it.
 """
 import logging
 import re
@@ -116,16 +115,20 @@ def llm_match_vendor(
     if not vendor_name or not vendor_name.strip() or not counterparties:
         return None, 0.0
     by_id = {cp.id: cp for cp in counterparties}
-    cp_lines = "\n".join(f"{cp.id}: {cp.name}" for cp in counterparties)
+    # id: name [type] — type gives the LLM context (an invoice counterparty can be a
+    # vendor, employee, investor, government body, etc.).
+    cp_lines = "\n".join(f"{cp.id}: {cp.name} [{cp.type}]" for cp in counterparties)
     prompt = (
-        "You match an extracted invoice vendor name to our existing vendor counterparties.\n"
+        "You match an extracted invoice counterparty name to our existing counterparties.\n"
+        "A counterparty can be a vendor, employee, investor, government body, or customer.\n"
         "Handle abbreviations (URDrive=U R Drive, CDG=ComfortDelGro), legal-name variants "
-        "(Income Insurance Limited=Income), extra descriptors, spacing, and word order.\n\n"
-        f"Our counterparties (id: name):\n{cp_lines}\n\n"
-        f'Extracted vendor name: "{vendor_name}"\n\n'
+        "(Income Insurance Limited=Income), personal-name variants (J. Reyes=Jennilyn Reyes), "
+        "extra descriptors, spacing, and word order.\n\n"
+        f"Our counterparties (id: name [type]):\n{cp_lines}\n\n"
+        f'Extracted counterparty name: "{vendor_name}"\n\n'
         'Return ONLY JSON: {"match_id": <int or null>, "confidence": <0-1>, "reason": "..."}. '
-        "match_id null if it is genuinely a NEW vendor not in the list, or if it is our own "
-        "company (Drive lah / Drive mate)."
+        "match_id null if it is genuinely a NEW counterparty not in the list, or if it is our "
+        "own company (Drive lah / Drive mate)."
     )
     try:
         msg = _get_anthropic().messages.create(
@@ -164,33 +167,21 @@ class VendorMatchingService:
         if not vendor_name or not vendor_name.strip():
             return None, False, 0.0  # type: ignore[return-value]
 
-        # Load all vendor-type counterparties
-        candidates = (
-            db.query(FinanceCounterparty)
-            .filter(
-                FinanceCounterparty.status == "active",
-                FinanceCounterparty.type == CounterpartyType.VENDOR.value,
-            )
-            .all()
-        )
+        # Load the ENTIRE counterparty list — ALL types (vendor, employee, investor,
+        # government, customer, …) and BOTH active AND inactive (Gaurav 2026-07-31:
+        # an invoice counterparty can be anyone in the book, not just vendors).
+        candidates = db.query(FinanceCounterparty).all()
 
-        # Try tax ID match first (most reliable)
+        # Exact tax-ID identity match (a hard identifier, not fuzzy) — still the most
+        # reliable signal when present.
         if vendor_tax_id:
             for cp in candidates:
                 if cp.tax_registration_number and cp.tax_registration_number == vendor_tax_id:
-                    logger.info(f"Vendor matched by tax ID: {vendor_name} → {cp.name} (id={cp.id})")
+                    logger.info(f"Counterparty matched by tax ID: {vendor_name} → {cp.name} (id={cp.id})")
                     return cp, False, 1.0
 
-        # Confident fuzzy match (name or alias) — cheap, no LLM
-        matched, confidence = fuzzy_match_vendor(vendor_name, candidates, threshold=0.90)
-        if matched:
-            logger.info(
-                f"Vendor fuzzy matched: '{vendor_name}' → '{matched.name}' "
-                f"(id={matched.id}, confidence={confidence:.2f})"
-            )
-            return matched, False, confidence
-
-        # Semantic fallback (Haiku) — catches abbreviations / legal-name variants
+        # ALWAYS use the LLM to match by name — NEVER fuzzy string matching (Gaurav
+        # 2026-07-31: fuzzy is unreliable; a cheap LLM is the single matching path).
         matched, confidence = llm_match_vendor(vendor_name, candidates)
         if matched:
             return matched, False, confidence

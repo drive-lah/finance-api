@@ -1285,8 +1285,8 @@ class TestL2FuzzyEnrichment:
             description="SINGAPORE GRAB CO", amount=-20.0,
             counterparty_name="SINGAPORE GRAB CO", fingerprint="grab-e2e-01"
         )
-        l1_result = categorization_service._match_l1(txn, [cp])
-        assert l1_result is None   # verify L1 misses
+        l1_matched, l1_ambiguous = categorization_service._match_l1(txn, [cp])
+        assert l1_matched is None and not l1_ambiguous   # verify L1 misses
         # Full enrichment pipeline resolves via L2
         categorization_service._enrich_counterparties(db_session, [txn])
         db_session.refresh(txn)
