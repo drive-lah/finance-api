@@ -2,10 +2,17 @@
 
 # Status — finance-api
 
-**Last updated:** 2026-07-24
+**Last updated:** 2026-07-31
 **Overall:** Multi-entity (SG + AU) double-entry accounting platform. The **Capture → Classify → Record** core is strong and green; the **last mile** — financial reports (P&L / Balance Sheet / Business-Line Margin), period close, consolidation — is the thin, mostly-unbuilt part. We're ~75% an ingestion engine, ~25% an accounting system. **Active workstream:** the **6-year historical reconciliation** — Stage-1 DECISION-COMPLETE for counterparties (S-2) and rules (S-3); execution blocked on the target-DB call (S-5); corpus persistence (S-4) and RAG wiring remain; then Stage-2 replay.
 
-**Verified ground truth (2026-07-25):** `pytest tests/ --ignore=tests/stripe_sync` = **596 pass / 0 fail**, `mypy src/` = **23 errors / 9 files** (pre-existing baseline), verified 2026-07-25 after the A-3 RAG wiring. **Committed locally through bd4f446, 2026-07-25** (branch `feature/us-018-mypy`, ahead of origin, unpushed). Canonical docs: STATUS (state) · IDEAL_STATE (vision) · KNOWLEDGE (business facts).
+**Verified ground truth (2026-07-31):** `pytest tests/ --ignore=tests/stripe_sync` = **637 pass / 8 fail** — the 8 are ALL `test_economic_events` (view-map seed missing: "no view map for trip_revenue_accrual"); **proven pre-existing** (fail identically on HEAD~1, untouched by this session). This session's modules green: categorization **138/0**, invoice **21/0**. **Committed locally at 41eb1fe, 2026-07-31** (branch `finance-system-2026-07-31`, unpushed). **DB migrations applied through 050** (`alembic current` == head). Canonical docs: STATUS (state) · IDEAL_STATE (vision) · KNOWLEDGE (business facts).
+
+**Session 2026-07-31 — invoice engine + counterparty quality (committed 41eb1fe, migrations→050):**
+1. **Invoice review dashboard** — full action-audit trail (submit/approve/void/reject: who·when·why), NO direct draft→approved (must pass pending_approval), hard-leave-draft gates (COA+counterparty+amount+real invoice_date) + not-invoice soft-block (mig 046/047). FE (admincontrols): two-pane edit modal, Retool-tags column + sticky header, Retool-ID/duplicate filters, searchable COA combobox, zoom-scroll invoice preview, inline quick-add counterparty. **Code-complete + tsc-clean, NOT pixel-verified** (Interceptor unavailable this session).
+2. **AP offset engine** (POL-75/77/78/79; mig 048-050) — invoice credit leg resolves purely from COA: employee-claims(6010-14/5062)→2303, super→2302, CPF→2300, income-tax→2305 (**new account**), else 2000; scoped payables-only (revenue/liability/equity NULL). Prepaid constant 1200→1300 fix (DQ-67).
+3. **Counterparty matching** — invoice ingestion LLM-always over the WHOLE book, all types active+inactive, never fuzzy (POL-80); txn matching tiered L1 (exact name > name-substring > description-footer) + LLM-on-tie, first-match-wins removed (POL-81, DQ-69).
+4. **Data cleanup** (DB, one-off scripts) — counterparty dedup 631→602 (Gaurav CSV 34 actions + 6 audit-found merges), alias scrub 1458→687 (raw statement lines stripped); L1 ambiguity 189→0 (DQ-65/66/68). Historical txn attributions NOT re-run (forward safeguard).
+**Open from this session:** super double-count check (does payroll already accrue super?); optional re-enrich of historical txns with the tiered matcher; alias enrichment (~314 counterparties still no aliases); pixel-verify the invoice-dashboard FE once Interceptor is available.
 
 **Pointers:** ideal state + mental model → `IDEAL_STATE.md` (vision only; the *gap* + current state live here in STATUS) · deep architecture (archived) → `wip/SYSTEM_OVERVIEW.md` (§-refs below) · diagrams → `visuals/` (`ARCHITECTURE`, `CATEGORIZATION_ROUTES`, `JOURNAL_ENTRY_FLOWS`, `HR_PAYROLL_PROCESS_DIAGRAM`, `FINANCE_SYSTEM_STATE_VS_IDEAL`).
 
