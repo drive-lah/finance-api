@@ -16,16 +16,30 @@ invoices_bp = Blueprint("invoices", __name__, url_prefix="/api/finance/invoices"
 
 @invoices_bp.route("", methods=["GET"])
 def list_invoices():
-    """List invoices with optional filtering by entity_id, status, counterparty_id."""
-    entity_id = request.args.get("entity_id", type=int)
-    status = request.args.get("status", type=str)
-    counterparty_id = request.args.get("counterparty_id", type=int)
+    """List invoices with server-side filtering + pagination (limit/offset, X-Total-Count header)."""
+    filters = dict(
+        entity_id=request.args.get("entity_id", type=int),
+        status=request.args.get("status", type=str),
+        counterparty_id=request.args.get("counterparty_id", type=int),
+        search=request.args.get("search", type=str),
+        vendor_flag=request.args.get("vendor_flag", type=str),
+        coa_flag=request.args.get("coa_flag", type=str),
+        document_gate=request.args.get("document_gate", type=str),
+        currency_flag=request.args.get("currency_flag", type=str),
+        retool_status=request.args.get("retool_status", type=str),
+        sub_category=request.args.get("sub_category", type=str),
+        amount_match=request.args.get("amount_match", type=str),
+        provisional_paid=request.args.get("provisional_paid", type=str),
+    )
+    limit = min(request.args.get("limit", default=100, type=int), 500)
+    offset = request.args.get("offset", default=0, type=int)
 
     with db_session() as db:
-        invoices = invoice_service.get_all(
-            db, entity_id=entity_id, status=status, counterparty_id=counterparty_id,
-        )
-        return jsonify([_invoice_dict(inv, db) for inv in invoices]), 200
+        invoices = invoice_service.get_all(db, limit=limit, offset=offset, **filters)
+        total = invoice_service.count_all(db, **filters)
+        resp = jsonify([_invoice_dict(inv, db) for inv in invoices])
+        resp.headers["X-Total-Count"] = str(total)
+        return resp, 200
 
 
 @invoices_bp.route("", methods=["POST"])

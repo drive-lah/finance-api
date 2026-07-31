@@ -48,13 +48,22 @@ def _token_overlap(a: str, b: str) -> float:
     return len(ta & tb) / max(len(ta), len(tb))
 
 
+def _cp_all_names(cp: FinanceCounterparty) -> list[str]:
+    """Canonical name plus any recorded aliases (so an applied alias matches instantly next time)."""
+    names = [cp.name] if cp.name else []
+    aliases = getattr(cp, "aliases", None)
+    if isinstance(aliases, list):
+        names += [a for a in aliases if isinstance(a, str) and a.strip()]
+    return names
+
+
 def fuzzy_match_vendor(
     vendor_name: str,
     counterparties: list[FinanceCounterparty],
     threshold: float = 0.80,
 ) -> tuple[Optional[FinanceCounterparty], float]:
     """
-    Find the best matching counterparty for a vendor name.
+    Find the best matching counterparty for a vendor name (checks name + aliases).
     Returns (counterparty, confidence) or (None, 0.0).
     """
     norm_input = _normalize(vendor_name)
@@ -65,26 +74,75 @@ def fuzzy_match_vendor(
     best_score = 0.0
 
     for cp in counterparties:
-        norm_cp = _normalize(cp.name)
-        if not norm_cp:
-            continue
-
-        if norm_input == norm_cp:
-            return cp, 1.0  # exact match — short-circuit
-
-        score = 0.0
-        if norm_input in norm_cp or norm_cp in norm_input:
-            score = 0.85
-        else:
-            score = _token_overlap(norm_input, norm_cp)
-
-        if score > best_score:
-            best_score = score
-            best = cp
+        for cand in _cp_all_names(cp):
+            norm_cp = _normalize(cand)
+            if not norm_cp:
+                continue
+            if norm_input == norm_cp:
+                return cp, 1.0  # exact match (name or alias) — short-circuit
+            score = 0.85 if (norm_input in norm_cp or norm_cp in norm_input) else _token_overlap(norm_input, norm_cp)
+            if score > best_score:
+                best_score = score
+                best = cp
 
     if best_score >= threshold:
         return best, best_score
     return None, best_score
+
+
+# ── LLM (Haiku) semantic matcher — catches abbreviations / legal-name variants
+#    that pure string matching misses (URDrive→U R Drive, CDG→ComfortDelGro, etc.)
+_anthropic_client = None
+
+
+def _get_anthropic():
+    global _anthropic_client
+    if _anthropic_client is None:
+        import anthropic
+        _anthropic_client = anthropic.Anthropic()
+    return _anthropic_client
+
+
+def llm_match_vendor(
+    vendor_name: str,
+    counterparties: list[FinanceCounterparty],
+    min_confidence: float = 0.7,
+) -> tuple[Optional[FinanceCounterparty], float]:
+    """
+    Semantic match of an extracted vendor name against the counterparty list via Haiku.
+    Returns (counterparty, confidence) or (None, 0.0). Fails safe to (None, 0.0) on any error.
+    """
+    import json
+    if not vendor_name or not vendor_name.strip() or not counterparties:
+        return None, 0.0
+    by_id = {cp.id: cp for cp in counterparties}
+    cp_lines = "\n".join(f"{cp.id}: {cp.name}" for cp in counterparties)
+    prompt = (
+        "You match an extracted invoice vendor name to our existing vendor counterparties.\n"
+        "Handle abbreviations (URDrive=U R Drive, CDG=ComfortDelGro), legal-name variants "
+        "(Income Insurance Limited=Income), extra descriptors, spacing, and word order.\n\n"
+        f"Our counterparties (id: name):\n{cp_lines}\n\n"
+        f'Extracted vendor name: "{vendor_name}"\n\n'
+        'Return ONLY JSON: {"match_id": <int or null>, "confidence": <0-1>, "reason": "..."}. '
+        "match_id null if it is genuinely a NEW vendor not in the list, or if it is our own "
+        "company (Drive lah / Drive mate)."
+    )
+    try:
+        msg = _get_anthropic().messages.create(
+            model="claude-haiku-4-5-20251001", max_tokens=256,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        text = msg.content[0].text.strip()
+        if text.startswith("```"):
+            text = "\n".join(text.split("\n")[1:-1] if text.rstrip().endswith("```") else text.split("\n")[1:])
+        data = json.loads(text)
+        mid, conf = data.get("match_id"), float(data.get("confidence") or 0)
+        if mid and conf >= min_confidence and mid in by_id:
+            logger.info(f"Vendor LLM-matched: '{vendor_name}' → '{by_id[mid].name}' (id={mid}, conf={conf:.2f})")
+            return by_id[mid], conf
+    except Exception as e:
+        logger.warning(f"LLM vendor match failed for '{vendor_name}': {e}")
+    return None, 0.0
 
 
 class VendorMatchingService:
@@ -123,13 +181,18 @@ class VendorMatchingService:
                     logger.info(f"Vendor matched by tax ID: {vendor_name} → {cp.name} (id={cp.id})")
                     return cp, False, 1.0
 
-        # Fuzzy name match
-        matched, confidence = fuzzy_match_vendor(vendor_name, candidates)
+        # Confident fuzzy match (name or alias) — cheap, no LLM
+        matched, confidence = fuzzy_match_vendor(vendor_name, candidates, threshold=0.90)
         if matched:
             logger.info(
                 f"Vendor fuzzy matched: '{vendor_name}' → '{matched.name}' "
                 f"(id={matched.id}, confidence={confidence:.2f})"
             )
+            return matched, False, confidence
+
+        # Semantic fallback (Haiku) — catches abbreviations / legal-name variants
+        matched, confidence = llm_match_vendor(vendor_name, candidates)
+        if matched:
             return matched, False, confidence
 
         # No match — auto-create unverified counterparty

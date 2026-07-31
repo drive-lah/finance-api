@@ -57,6 +57,15 @@ def list_transactions():
             except ValueError:
                 raise BadRequestError("date_to must be YYYY-MM-DD")
 
+        journal_entry_id = request.args.get('journal_entry_id', type=int)
+
+        sort_by = request.args.get('sort_by', default='date')
+        sort_dir = request.args.get('sort_dir', default='desc')
+        if sort_by not in ('date', 'amount'):
+            raise BadRequestError("sort_by must be date | amount")
+        if sort_dir not in ('asc', 'desc'):
+            raise BadRequestError("sort_dir must be asc | desc")
+
         transactions = transaction_service.get_all(
             db,
             bank_account_id=bank_account_id,
@@ -65,13 +74,17 @@ def list_transactions():
             date_from=date_from,
             date_to=date_to,
             search=search,
+            journal_entry_id=journal_entry_id,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
             limit=min(limit, 500),
             offset=offset,
         )
 
         total = transaction_service.count_all(
             db, bank_account_id=bank_account_id, entity_id=entity_id, status=status,
-            date_from=date_from, date_to=date_to, search=search)
+            date_from=date_from, date_to=date_to, search=search,
+            journal_entry_id=journal_entry_id)
         resp = jsonify([TransactionResponse.model_validate(t).model_dump() for t in transactions])
         resp.headers["X-Total-Count"] = str(total)
         resp.headers["Access-Control-Expose-Headers"] = "X-Total-Count"
@@ -142,6 +155,9 @@ def bulk_action():
 
     results, ok = [], 0
     with db_session() as db:
+        from src.models.sync_run import start_run, finish_run
+        run = start_run(db, "bulk_action")
+
         if action == 'run_categorization':
             # engine over just these ids: flip them PENDING then run scoped by id set
             from src.services.categorization_service import categorization_service
@@ -153,12 +169,17 @@ def bulk_action():
                     t.ai_suggested_account_code = None
                     t.ai_confidence = None
                     t.ai_reasoning = None
+                    t.categorized_by_rule_id = None
+                    t.categorized_by_logic = None
             db.commit()
             summary = categorization_service.run(db, limit=len(ids) + 1, txn_ids=ids)
             for i in ids:
                 results.append({"id": i, "ok": i in found,
                                 "error": None if i in found else "not found"})
             ok = len(found)
+            finish_run(db, run, fetched=len(ids), created=ok,
+                       detail={"action": action, "requested": len(ids), "ok": ok,
+                               "engine": {k: v for k, v in summary.items() if k != 'results'}})
             return jsonify({"action": action, "ok": ok, "failed": len(ids) - ok,
                             "engine": {k: v for k, v in summary.items() if k != 'results'},
                             "results": results}), 200
@@ -166,6 +187,15 @@ def bulk_action():
         for i in ids:
             try:
                 if action == 'approve':
+                    # A pair-leg already reconciled by its partner's approval
+                    # (shared JE) is a success, not an error.
+                    t = db.get(FinanceTransaction, i)
+                    if t is not None and t.status == TransactionStatus.RECONCILED:
+                        results.append({"id": i, "ok": True,
+                                        "error": None,
+                                        "note": "already reconciled (pair leg)"})
+                        ok += 1
+                        continue
                     transaction_service.approve(db, i)
                 elif action == 'reject':
                     transaction_service.reject(db, i)
@@ -187,12 +217,19 @@ def bulk_action():
                     t.ai_suggested_account_code = None
                     t.ai_confidence = None
                     t.ai_reasoning = None
+                    t.categorized_by_rule_id = None
+                    t.categorized_by_logic = None
                     db.commit()
                 results.append({"id": i, "ok": True, "error": None})
                 ok += 1
             except Exception as e:
                 db.rollback()
                 results.append({"id": i, "ok": False, "error": str(e)[:200]})
+
+        finish_run(db, run, fetched=len(ids), created=ok,
+                   detail={"action": action, "requested": len(ids), "ok": ok,
+                           "failed": len(ids) - ok,
+                           "errors_sample": [r for r in results if not r["ok"]][:5]})
     return jsonify({"action": action, "ok": ok, "failed": len(ids) - ok, "results": results}), 200
 
 
@@ -238,6 +275,17 @@ def import_transactions():
 
     # Process import
     with db_session() as db:
+        # DBS multi-currency: it must not matter which DBS account was selected —
+        # the statement fans out per currency to the entity's DBS accounts.
+        from src.models.bank_account import FinanceBankAccount
+        ba = db.get(FinanceBankAccount, bank_account_id)
+        if ba is not None and (ba.file_adapter or '').lower() == 'dbs':
+            try:
+                result = transaction_service.import_dbs_statement(db, ba.entity_id, file_bytes)
+            except ValueError as e:
+                raise BadRequestError(str(e))
+            return jsonify(result), 200
+
         try:
             result = transaction_service.import_file(
                 db=db,

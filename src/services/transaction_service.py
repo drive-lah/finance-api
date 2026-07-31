@@ -27,6 +27,9 @@ class TransactionService:
         date_from: Optional[date] = None,
         date_to: Optional[date] = None,
         search: Optional[str] = None,
+        journal_entry_id: Optional[int] = None,
+        sort_by: str = "date",
+        sort_dir: str = "desc",
         limit: int = 100,
         offset: int = 0,
     ) -> List[FinanceTransaction]:
@@ -35,6 +38,10 @@ class TransactionService:
 
         if bank_account_id is not None:
             query = query.filter(FinanceTransaction.bank_account_id == bank_account_id)
+
+        # All legs of one journal entry — how the FE shows "paired with" for transfers
+        if journal_entry_id is not None:
+            query = query.filter(FinanceTransaction.reconciled_journal_entry_id == journal_entry_id)
 
         if entity_id is not None:
             bank_account_ids = (
@@ -61,10 +68,15 @@ class TransactionService:
                 | FinanceTransaction.reference_number.ilike(term)
             )
 
+        # id tiebreak: offset paging must never skip/duplicate rows on ties
+        asc = sort_dir == "asc"
+        if sort_by == "amount":
+            primary = FinanceTransaction.amount.asc() if asc else FinanceTransaction.amount.desc()
+        else:
+            primary = FinanceTransaction.transaction_date.asc() if asc else FinanceTransaction.transaction_date.desc()
+        tiebreak = FinanceTransaction.id.asc() if asc else FinanceTransaction.id.desc()
         return (
-            # id tiebreak: offset paging must never skip/duplicate rows on same-date ties
-            query.order_by(FinanceTransaction.transaction_date.desc(),
-                           FinanceTransaction.id.desc())
+            query.order_by(primary, tiebreak)
             .limit(limit)
             .offset(offset)
             .all()
@@ -79,11 +91,14 @@ class TransactionService:
         date_from: Optional[date] = None,
         date_to: Optional[date] = None,
         search: Optional[str] = None,
+        journal_entry_id: Optional[int] = None,
     ) -> int:
         """Total rows matching the same filters as get_all (for the pagination header)."""
         query = db.query(FinanceTransaction)
         if bank_account_id is not None:
             query = query.filter(FinanceTransaction.bank_account_id == bank_account_id)
+        if journal_entry_id is not None:
+            query = query.filter(FinanceTransaction.reconciled_journal_entry_id == journal_entry_id)
         if entity_id is not None:
             bank_account_ids = (
                 db.query(FinanceBankAccount.id)
@@ -130,15 +145,32 @@ class TransactionService:
         je = db.get(FinanceJournalEntry, transaction.reconciled_journal_entry_id)
         if not je:
             raise ValueError("Linked journal entry not found")
-        if je.status == JournalEntryStatus.POSTED:
-            raise ValueError("Journal entry is already posted")
 
-        je.status = JournalEntryStatus.POSTED
-        je.posted_at = datetime.utcnow()
-        je.posting_user_id = "admin"
+        # A transfer pair shares ONE journal entry: posting happens once, on the
+        # first leg approved. The second leg is a quiet completion, not an error
+        # ("Journal entry is already posted" broke bulk approve for every pair,
+        # Gaurav 2026-07-26). Approving the first leg also reconciles the other
+        # MATCHED legs of the same JE — one JE, one approval.
+        now = datetime.utcnow()
+        if je.status != JournalEntryStatus.POSTED:
+            je.status = JournalEntryStatus.POSTED
+            je.posted_at = now
+            je.posting_user_id = "admin"
+            partners = (
+                db.query(FinanceTransaction)
+                .filter(
+                    FinanceTransaction.reconciled_journal_entry_id == je.id,
+                    FinanceTransaction.id != transaction.id,
+                    FinanceTransaction.status == TransactionStatus.MATCHED,
+                )
+                .all()
+            )
+            for p in partners:
+                p.status = TransactionStatus.RECONCILED
+                p.reconciled_at = now
 
         transaction.status = TransactionStatus.RECONCILED
-        transaction.reconciled_at = datetime.utcnow()
+        transaction.reconciled_at = now
 
         # Self-improving aliases: if the transaction's raw bank description differs
         # from the canonical counterparty name, add it as an alias so future
@@ -218,14 +250,42 @@ class TransactionService:
                 f"Transaction must be in Matched status to reject (current: {transaction.status.value})"
             )
 
-        if transaction.reconciled_journal_entry_id:
-            je = db.get(FinanceJournalEntry, transaction.reconciled_journal_entry_id)
+        je_voided = False
+        je_id = transaction.reconciled_journal_entry_id
+        if je_id:
+            je = db.get(FinanceJournalEntry, je_id)
             if je and je.status == JournalEntryStatus.DRAFT:
                 je.status = JournalEntryStatus.VOID
+                je_voided = True
 
-        transaction.status = TransactionStatus.PENDING
-        transaction.reconciled_journal_entry_id = None
-        transaction.reconciled_at = None
+        def _reset(t: FinanceTransaction) -> None:
+            t.status = TransactionStatus.PENDING
+            t.reconciled_journal_entry_id = None
+            t.reconciled_at = None
+            t.categorized_by_rule_id = None
+            t.categorized_by_logic = None
+            t.coa_account_code = None
+            t.categorization_type = None
+            t.expected_counterpart_ba_id = None
+
+        _reset(transaction)
+
+        # CASCADE (Gaurav, 2026-07-26): a transfer pair shares ONE journal entry.
+        # Voiding it must reset BOTH legs — otherwise the partner stays "Matched"
+        # pointing at a VOID JE. Only MATCHED partners cascade; a RECONCILED
+        # partner means a human approved a POSTED JE, which reject never touches.
+        if je_voided:
+            partners = (
+                db.query(FinanceTransaction)
+                .filter(
+                    FinanceTransaction.reconciled_journal_entry_id == je_id,
+                    FinanceTransaction.id != transaction.id,
+                    FinanceTransaction.status == TransactionStatus.MATCHED,
+                )
+                .all()
+            )
+            for p in partners:
+                _reset(p)
 
         db.commit()
         db.refresh(transaction)
@@ -319,6 +379,74 @@ class TransactionService:
         result["statement_closing_balance"] = str(getattr(adapter, "statement_closing_balance", "") or "")
         return result
 
+    def import_dbs_statement(self, db: Session, entity_id: int, pdf_bytes: bytes) -> Dict[str, Any]:
+        """One DBS multi-currency PDF → per-currency fan-out to the entity's
+        DBS accounts (SGD/USD/EUR...). Used by BOTH the dedicated /dbs/import
+        route AND the generic per-account import when a DBS account is selected
+        (Gaurav 2026-07-27: it must not matter WHICH DBS account you pick).
+        """
+        dbs_adapter = get_adapter("dbs")
+        sections = dbs_adapter.parse_pdf(pdf_bytes)   # raises ValueError on parse failure
+        results: dict = {}
+        total_created = total_dupes = 0
+        all_errors: list = list(dbs_adapter.errors)
+        section_balances = getattr(dbs_adapter, "section_balances", {}) or {}
+        period_end = getattr(dbs_adapter, "statement_period_end", None)
+        for currency, rows in sections.items():
+            bank_account = (
+                db.query(FinanceBankAccount)
+                .filter(FinanceBankAccount.entity_id == entity_id,
+                        FinanceBankAccount.bank_name.ilike('dbs'),
+                        FinanceBankAccount.currency == currency)
+                .first())
+            if not bank_account:
+                results[currency] = {"skipped": f"No DBS {currency} bank account for this entity — create one first."}
+                continue
+
+            # Stamp the statement's own carried-forward balance (exists even
+            # for ZERO-transaction sections — a dormant currency's standing
+            # balance must still show; Gaurav 2026-07-27). Same api_sync_state
+            # mechanism as Stripe's provider balance. Never regress the as-of:
+            # out-of-order uploads keep the newest statement's stamp.
+            cf = (section_balances.get(currency) or {}).get("carried_forward")
+            if cf is not None and period_end is not None:
+                state = dict(bank_account.api_sync_state or {})
+                prior = state.get("balance_as_of")
+                if not prior or str(period_end) >= str(prior)[:10]:
+                    state["latest_balance"] = str(cf)
+                    state["balance_as_of"] = period_end.isoformat()
+                    bank_account.api_sync_state = state
+                    db.commit()
+
+            if not rows:
+                results[currency] = {"skipped": "No transactions in statement",
+                                     "statement_balance": str(cf) if cf is not None else None}
+                continue
+            from src.models.sync_run import start_run, finish_run
+            run = start_run(db, "file_import", entity_id=entity_id, bank_account_id=bank_account.id)
+            try:
+                r = self.import_from_rows(
+                    db=db, bank_account=bank_account, normalized_rows=rows,
+                    fingerprint_fn=dbs_adapter.fingerprint_fields, source="dbs_pdf_import")
+            except Exception as e:
+                finish_run(db, run, error=e)
+                raise
+            finish_run(db, run, fetched=len(rows), created=r.get("transactions_created"),
+                       duplicates=r.get("duplicates_skipped"))
+            r["bank_account_id"] = bank_account.id
+            results[currency] = r
+            total_created += r.get("transactions_created", 0)
+            total_dupes += r.get("duplicates_skipped", 0)
+        return {
+            "currencies_found": list(sections.keys()),
+            "results": results,
+            "parse_warnings": list(dbs_adapter.errors),
+            # generic-import-shaped summary so the normal upload dialog renders
+            "transactions_created": total_created,
+            "duplicates_skipped": total_dupes,
+            "errors": all_errors,
+        }
+
     def import_from_rows(
         self,
         db: Session,
@@ -353,12 +481,25 @@ class TransactionService:
 
         for normalized in normalized_rows:
             try:
-                # Use source_id (e.g., Wise TransferWise ID) as sole fingerprint
-                # when available — it is globally unique and stable across re-syncs.
-                if normalized.source_id:
-                    fp_fields = [normalized.source_id]
-                else:
-                    fp_fields = list(fingerprint_fn(normalized))
+                # CURRENCY GUARD (Gaurav, 2026-07-27): a row can never land in an
+                # account of a different currency — that silently corrupts the
+                # ledger and the balance chain (seen: a multi-currency DBS PDF
+                # dumped whole into the EUR account via the generic import).
+                row_ccy = getattr(normalized, "currency", None)
+                if row_ccy and bank_account.currency and row_ccy != bank_account.currency:
+                    errors.append({
+                        "row": getattr(normalized, "description", "")[:60],
+                        "error": f"currency {row_ccy} != account currency {bank_account.currency} — row refused",
+                    })
+                    continue
+
+                # The adapter/caller's fingerprint_fn is ALWAYS authoritative.
+                # (A source_id override lived here on the claim that platform ids
+                # are globally unique — Wise reference ids are NOT (related rows
+                # share one), which silently dropped 36+ real transactions as
+                # duplicates. Callers that want id-only dedup pass [source_id]
+                # as their fn — the Stripe payout importer does exactly that.)
+                fp_fields = list(fingerprint_fn(normalized))
 
                 fingerprint = generate_fingerprint(
                     bank_account_id=bank_account_id,
@@ -540,6 +681,22 @@ class TransactionService:
         amount = float(transaction.amount) if transaction.amount is not None else 0.0
         abs_amount = abs(amount)
 
+        # POL-25: book in the entity's functional currency, converted at the
+        # monthly standard rate (POL-26); native amount + rate stamped per line.
+        from decimal import Decimal
+        from src.models.entity import FinanceEntity
+        from src.services.fx_service import fx_service
+        entity_row = db.get(FinanceEntity, bank_account.entity_id)
+        functional_ccy = entity_row.base_currency if entity_row else None
+        native_ccy = transaction.currency or functional_ccy
+        native_abs = Decimal(str(abs_amount))
+        fx_rate = Decimal("1")
+        if functional_ccy and native_ccy != functional_ccy:
+            functional_abs, fx_rate = fx_service.to_functional(
+                db, native_abs, native_ccy, functional_ccy,
+                transaction.transaction_date)
+            abs_amount = float(functional_abs)
+
         # Build JE lines: outgoing (negative) → Dr account / Cr bank
         #                 incoming (positive) → Dr bank / Cr account
         if amount < 0:
@@ -552,6 +709,10 @@ class TransactionService:
                 {"account_code": bank_account.coa_account_code,   "debit_amount": abs_amount, "credit_amount": 0.0,       "description": transaction.description},
                 {"account_code": account_code,                    "debit_amount": 0.0,        "credit_amount": abs_amount, "description": transaction.description},
             ]
+        for l in lines:
+            l["currency"] = native_ccy
+            l["fx_rate"] = fx_rate
+            l["native_amount"] = native_abs
 
         je = journal_service.create(
             db=db,
@@ -571,6 +732,8 @@ class TransactionService:
         transaction.status = TransactionStatus.MATCHED
         transaction.reconciled_journal_entry_id = je.id
         transaction.matched_at = now
+        transaction.coa_account_code = account_code
+        transaction.categorized_by_logic = 'needs_review_resolution'
 
         # Alias suggestion: add add_alias string to counterparty's alias list
         if add_alias and transaction.counterparty_id:

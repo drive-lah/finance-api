@@ -99,6 +99,72 @@ def import_payouts():
     return jsonify(result), 200
 
 
+def _month_iter(d_from: date, d_to: date):
+    y, m = d_from.year, d_from.month
+    while (y, m) <= (d_to.year, d_to.month):
+        yield date(y, m, 1)
+        m += 1
+        if m > 12:
+            m, y = 1, y + 1
+
+
+@economic_events_bp.route("/sync", methods=["POST"])
+def sync():
+    """Stripe 'press sync' — one call that brings the Stripe lane up to speed:
+    STAGE every month in the range (events land STAGED, ZERO ledger effect) and
+    IMPORT the Stripe payout lines. Posting is NOT done here — PROJECT stays the
+    explicit human gate (POST /project per month). POSTED events are immutable:
+    re-staging a changed amount flags MISMATCH, never a silent re-post.
+
+    Body: { entity_id (req), date_from?, date_to? }  (YYYY-MM or YYYY-MM-DD).
+    Defaults: date_to = today, date_from = 1 Jan of date_to's year.
+    """
+    body = request.get_json(silent=True) or {}
+    entity_id = body.get("entity_id")
+    if not entity_id:
+        raise BadRequestError("entity_id is required")
+    entity_id = int(entity_id)
+
+    def _parse(raw, default):
+        if not raw:
+            return default
+        try:
+            return date.fromisoformat(raw if len(raw) > 7 else f"{raw}-01")
+        except ValueError:
+            raise BadRequestError(f"Invalid date: {raw}")
+
+    d_to = _parse(body.get("date_to"), date.today())
+    d_from = _parse(body.get("date_from"), date(d_to.year, 1, 1))
+    if d_from > d_to:
+        raise BadRequestError("date_from must be on or before date_to")
+
+    with db_session() as db:
+        months = []
+        for period in _month_iter(d_from, d_to):
+            st = economic_event_service.stage_month(db, entity_id, period)
+            months.append({
+                "period": period.isoformat(),
+                "staged": len(st["staged"]),
+                "mismatches": st["mismatches"],
+                "skipped_empty": len(st["skipped_empty"]),
+                "skipped_no_view_map": st["skipped_no_view_map"],
+                "query_errors": st["query_errors"],
+            })
+        payouts = economic_event_service.import_payout_lines(db, entity_id, None)
+
+    total_staged = sum(m["staged"] for m in months)
+    total_mismatch = sum(len(m["mismatches"]) for m in months)
+    return jsonify({
+        "entity_id": entity_id,
+        "date_from": d_from.isoformat(), "date_to": d_to.isoformat(),
+        "months": months,
+        "payouts": payouts,
+        "summary": {"months": len(months), "events_staged": total_staged,
+                    "mismatches": total_mismatch},
+        "note": "Events STAGED only (not posted). Run POST /project per month to post.",
+    }), 200
+
+
 @economic_events_bp.route("/sync-runs", methods=["GET"])
 def list_sync_runs():
     """Receipts of every data-arrival/engine run (newest first).

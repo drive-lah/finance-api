@@ -58,3 +58,6 @@ htmlcov/
 .serena/
 .mypy_cache/
 .ruff_cache/
+documentation/wip/googledrive_invoices/
+documentation/wip/bank_statements/
+documentation/wip/reconciliation/backups/

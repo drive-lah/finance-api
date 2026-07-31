@@ -174,12 +174,21 @@ class EconomicEventService:
                 )
                 db.add(je)
                 db.flush()
+                # POL-25: events are already denominated in the entity's
+                # functional currency (Stripe views report in account currency),
+                # so every line stamps currency=functional, native=amount, rate=1
+                # — same completeness contract as _create_simple_entry.
+                ccy = ev.currency
                 db.add(FinanceJournalLine(entry_id=je.id, entity_id=entity_id,
                                           account_code=debit, debit_amount=amount,
-                                          credit_amount=Decimal("0"), description=je.description))
+                                          credit_amount=Decimal("0"), description=je.description,
+                                          currency=ccy, native_amount=amount,
+                                          fx_rate=Decimal("1")))
                 db.add(FinanceJournalLine(entry_id=je.id, entity_id=entity_id,
                                           account_code=credit, debit_amount=Decimal("0"),
-                                          credit_amount=amount, description=je.description))
+                                          credit_amount=amount, description=je.description,
+                                          currency=ccy, native_amount=amount,
+                                          fx_rate=Decimal("1")))
                 ev.journal_entry_id = je.id
                 ev.status = "POSTED"
                 ev.posted_at = datetime.now(UTC)
@@ -276,20 +285,57 @@ class EconomicEventService:
             source="stripe_payout_import", auto_categorize=False)
 
         # Consistency with other accounts (Gaurav 2026-07-25): stamp the coverage
-        # watermark, and the TRUE Stripe balance (net sum of ALL balance txns —
+        # watermark, and the TRUE Stripe balance (net sum of balance txns —
         # payout lines alone can't tell it) so the account view shows it like
-        # any bank account.
+        # any bank account. Synced-through = the SLOWER of the two lanes
+        # (Gaurav 2026-07-27): the events lane and the payout lane must move
+        # together, so the stamp is only as fresh as the lane that lags —
+        # summing balance txns past the events lane would flag phantom
+        # residuals for activity the books legitimately don't carry yet.
+        from datetime import timedelta
+        from sqlalchemy import func as _func
+        from src.models.economic_event import FinanceEconomicEvent
+        from src.models.transaction import FinanceTransaction as _FT
+
+        last_event_period = (db.query(_func.max(FinanceEconomicEvent.period))
+                             .filter(FinanceEconomicEvent.entity_id == entity_id).scalar())
+        if last_event_period:
+            nxt = (last_event_period.replace(day=1) + timedelta(days=32)).replace(day=1)
+            events_through = nxt - timedelta(days=1)   # end of last staged/posted month
+        else:
+            events_through = None
+        payouts_through = (db.query(_func.max(_FT.transaction_date))
+                           .filter(_FT.bank_account_id == ba.id,
+                                   _FT.source == "stripe_payout_import").scalar())
+        lane_marks = [d for d in (events_through, payouts_through, date.today()) if d]
+        as_of = min(lane_marks)
+
+        # Cutoff in the ENTITY'S local timezone (Gaurav 2026-07-27): the Stripe
+        # dashboard presents balances in account-local time, so a UTC midnight
+        # cut disagrees with what he sees by the overnight activity. `created`
+        # is stored UTC; convert local midnight after as_of back to UTC.
+        from datetime import datetime as _dt, time as _time
+        from zoneinfo import ZoneInfo
+        tz = ZoneInfo("Asia/Singapore" if region == "SG" else "Australia/Melbourne")
+        cutoff_utc = (_dt.combine(as_of + timedelta(days=1), _time.min, tzinfo=tz)
+                      .astimezone(ZoneInfo("UTC")).strftime("%Y-%m-%d %H:%M:%S"))
+
         bt_table = "sg_stripe_balance_transactions" if region == "SG" else "au_stripe_balance_transactions"
         try:
-            bal_row = self.ch.execute_single(f"SELECT round(sum(net)/100, 2) AS bal FROM {bt_table}")
+            bal_row = self.ch.execute_single(
+                f"SELECT round(sum(net)/100, 2) AS bal FROM {bt_table} "
+                f"WHERE created < '{cutoff_utc}'")
             bal = bal_row.get("bal") if bal_row else None
         except Exception:
             bal = None
         state = dict(ba.api_sync_state or {})
         state["last_synced_at"] = date.today().isoformat()
+        # synced_through = coverage (min of both lanes) — what the FE shows;
+        # last_synced_at = when the sync ACTION last ran. Different questions.
+        state["synced_through"] = as_of.isoformat()
         if bal is not None:
             state["latest_balance"] = str(bal)
-            state["balance_as_of"] = date.today().isoformat()
+            state["balance_as_of"] = as_of.isoformat()
         ba.api_sync_state = state
         db.commit()
         return {"entity_id": entity_id, "window": window_label,

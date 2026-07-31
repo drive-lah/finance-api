@@ -9,7 +9,7 @@ import json
 import re
 import uuid
 import logging
-from datetime import datetime, UTC
+from datetime import datetime, date, UTC
 from decimal import Decimal
 from typing import Optional, Any, TYPE_CHECKING, cast
 from sqlalchemy.orm import Session
@@ -38,6 +38,25 @@ logger = logging.getLogger(__name__)
 # GST account codes
 GST_INPUT_TAX_CODE = "1350"   # Input Tax (paid on purchases)
 GST_OUTPUT_TAX_CODE = "2500"  # Output Tax (collected on sales)
+
+# Books-open date (POL-28). The engine NEVER categorizes a transaction dated
+# before this — pre-2026 rows (e.g. the 358 all-history Stripe payouts) are
+# already inside the opening balances, so booking them would double-count.
+# They belong to the Phase B historical replay, not Phase A (Gaurav 2026-07-27).
+BOOKS_OPEN_DATE = date(2026, 1, 1)
+
+# POL-34 direction guard: every counterparty TYPE has a normal money direction.
+# A default account may auto-book ONLY when the money flows that way; a mismatch
+# (a vendor sending us money = a refund; us paying an investor = a repayment) is
+# an exception that must go to review, never book blind against the default.
+# 'out' = we pay them (amount < 0); 'in' = they pay us (amount > 0); None = both.
+CP_TYPE_NORMAL_DIRECTION = {
+    "vendor": "out",
+    "employee": "out",
+    "government": "out",
+    "investor": "in",
+    "bank": None,      # fees out, interest in — allow both
+}
 
 
 class CategorizationService:
@@ -130,7 +149,11 @@ class CategorizationService:
     ) -> dict[str, Any]:
         """(see run() docstring)"""
         query = db.query(FinanceTransaction).filter(
-            FinanceTransaction.status.in_([TransactionStatus.PENDING, TransactionStatus.IMPORTED])
+            FinanceTransaction.status.in_([TransactionStatus.PENDING, TransactionStatus.IMPORTED]),
+            # POL-28 Phase-A floor: never categorize pre-books-open rows (they
+            # live in the opening balances; categorizing = double-count). This
+            # holds even under an explicit txn_ids selection — Phase B only.
+            FinanceTransaction.transaction_date >= BOOKS_OPEN_DATE,
         )
         if txn_ids:
             # bulk-selection scope: process EXACTLY these ids, nothing else
@@ -198,11 +221,17 @@ class CategorizationService:
         # transfers up front: they never get a (wrong) external-party
         # counterparty written, and never reach the expensive L3 LLM.
         if transactions:
+            # Intercompany rules (POL-27) ride the same protected lane: both are
+            # deterministic, counterparty-independent, and must claim BEFORE
+            # enrichment/AI can misread a cross-entity movement as P&L.
             transfer_rules = (
                 db.query(FinanceCategorizationRule)
                 .filter(
                     FinanceCategorizationRule.status == RuleStatus.ACTIVE,
-                    FinanceCategorizationRule.category == TransactionCategory.INTERNAL_TRANSFER,
+                    FinanceCategorizationRule.category.in_([
+                        TransactionCategory.INTERNAL_TRANSFER,
+                        TransactionCategory.INTERCOMPANY_TRANSFER,
+                    ]),
                 )
                 .order_by(FinanceCategorizationRule.priority)
                 .all()
@@ -287,8 +316,9 @@ class CategorizationService:
                 # and won't reach Phase 4 (already marked MATCHED and in ap_handled_ids)
                 if result is None and transaction.counterparty_id and transaction.counterparty_id in cp_map:
                     cp = cp_map[transaction.counterparty_id]
-                    # Use counterparty's default account if available
-                    if cp.default_account_code:
+                    # Use counterparty's default account — but only when the money
+                    # flows in this counterparty-type's normal direction (POL-34).
+                    if cp.default_account_code and self._default_direction_ok(cp, transaction):
                         result = self._apply_default_account(db, transaction, cp)
 
                 if result is not None:
@@ -401,27 +431,10 @@ class CategorizationService:
             if not candidates:
                 continue
 
-            waiting_amount = float(waiting_txn.amount)
-            abs_waiting = abs(waiting_amount)
-
-            counter = None
-            for candidate in candidates:
-                if candidate.id in handled_ids:
-                    continue  # already paired in this run
-                cand_amount = float(candidate.amount)
-                # Amounts should be opposite sign and roughly equal magnitude
-                if waiting_amount * cand_amount >= 0:
-                    continue  # same sign — not a counter
-                if abs_waiting == 0:
-                    continue
-                if abs(abs(cand_amount) - abs_waiting) / abs_waiting > 0.02:
-                    continue  # >2% difference
-                date_diff = abs((candidate.transaction_date - waiting_txn.transaction_date).days)
-                if date_diff > 5:
-                    continue
-                counter = candidate
-                break
-
+            counter = self._pick_counter(
+                waiting_txn,
+                [c for c in candidates if c.id not in handled_ids],
+            )
             if not counter:
                 continue
 
@@ -436,6 +449,8 @@ class CategorizationService:
             counter.status = TransactionStatus.MATCHED
             counter.reconciled_journal_entry_id = je_id
             counter.matched_at = now
+            counter.categorized_by_logic = 'transfer_pairing'
+            counter.categorization_type = CategorizationType.INTERNAL_TRANSFER
 
             db.commit()
 
@@ -461,6 +476,72 @@ class CategorizationService:
 
         return handled_ids, results
 
+    @staticmethod
+    def _ref_tokens(description: Optional[str]) -> set[str]:
+        """Long alphanumeric tokens (bank references like CT0038530178) — the
+        only description content stable across both statement legs (DQ-14)."""
+        import re
+        return set(re.findall(r"[A-Z0-9]{7,}", (description or "").upper()))
+
+    def _pick_counter(
+        self,
+        waiting_txn: FinanceTransaction,
+        candidates: list[FinanceTransaction],
+    ) -> Optional[FinanceTransaction]:
+        """Select THE counter-leg among candidates, or None.
+
+        Hard filters: different bank account (a transfer's legs can never live
+        in one account), opposite sign, amount within ±2%, date within ±5 days.
+        When several candidates survive (e.g. two identical 10k transfers on
+        the same day — the Apr-11 mispair), prefer a shared bank-reference
+        token, then the tightest date. If the tie still can't be broken by
+        evidence, REFUSE to guess: the leg stays awaiting for a human.
+        """
+        waiting_amount = float(waiting_txn.amount)
+        abs_waiting = abs(waiting_amount)
+        if abs_waiting == 0:
+            return None
+
+        viable = []
+        for c in candidates:
+            if c.bank_account_id == waiting_txn.bank_account_id:
+                continue  # same-account "pair" is an impossibility
+            cand_amount = float(c.amount)
+            if waiting_amount * cand_amount >= 0:
+                continue  # same sign — not a counter
+            if abs(abs(cand_amount) - abs_waiting) / abs_waiting > 0.02:
+                continue
+            if abs((c.transaction_date - waiting_txn.transaction_date).days) > 5:
+                continue
+            viable.append(c)
+
+        if not viable:
+            return None
+        if len(viable) == 1:
+            return viable[0]
+
+        # Ambiguous — discriminate on shared reference tokens first
+        w_tokens = self._ref_tokens(waiting_txn.description)
+        if w_tokens:
+            token_hits = [c for c in viable if w_tokens & self._ref_tokens(c.description)]
+            if len(token_hits) == 1:
+                return token_hits[0]
+            if token_hits:
+                viable = token_hits
+
+        # Then the tightest date
+        best_gap = min(abs((c.transaction_date - waiting_txn.transaction_date).days)
+                       for c in viable)
+        closest = [c for c in viable
+                   if abs((c.transaction_date - waiting_txn.transaction_date).days) == best_gap]
+        if len(closest) == 1:
+            return closest[0]
+
+        logger.warning(
+            f"Pairing ambiguity: txn {waiting_txn.id} has {len(closest)} equally "
+            f"plausible counters ({[c.id for c in closest]}) — refusing to guess")
+        return None
+
     def _find_counter_transaction(
         self,
         db: Session,
@@ -470,19 +551,20 @@ class CategorizationService:
         """
         Look for a counter-transaction on target_ba_id that mirrors txn.
 
-        Candidates are PENDING lines — or CLAIM-ONLY waiters: transactions a
+        Candidates are PENDING or IMPORTED lines (IMPORTED: staged rows outside
+        the current run's scope — e.g. a Dec-31 payout whose bank leg lands
+        Jan-2 — are legitimate counters; the Jan-2026 25k sat unpaired for
+        exactly this reason) — or CLAIM-ONLY waiters: transactions a
         target-less transfer rule claimed as AWAITING_MATCH without a JE (the
         two-rules-per-corridor law: the side that doesn't know its counterpart
         claims the transfer and waits to be attached to the knowing side's JE).
 
-        Criteria: opposite sign, amount within ±2%, date within ±5 days.
-        Returns the best match or None.
+        Selection + ambiguity law live in _pick_counter.
         """
         from datetime import timedelta
         from sqlalchemy import and_, or_
 
-        abs_amount = abs(float(txn.amount))
-        if abs_amount == 0:
+        if abs(float(txn.amount)) == 0:
             return None
 
         date_low = txn.transaction_date - timedelta(days=5)
@@ -491,7 +573,8 @@ class CategorizationService:
         candidates = db.query(FinanceTransaction).filter(
             FinanceTransaction.bank_account_id == target_ba_id,
             or_(
-                FinanceTransaction.status == TransactionStatus.PENDING,
+                FinanceTransaction.status.in_(
+                    [TransactionStatus.PENDING, TransactionStatus.IMPORTED]),
                 and_(
                     FinanceTransaction.status == TransactionStatus.AWAITING_MATCH,
                     FinanceTransaction.reconciled_journal_entry_id.is_(None),
@@ -500,16 +583,33 @@ class CategorizationService:
             FinanceTransaction.transaction_date.between(date_low, date_high),
         ).all()
 
-        txn_amount = float(txn.amount)
-        for candidate in candidates:
-            cand_amount = float(candidate.amount)
-            if txn_amount * cand_amount >= 0:
-                continue  # same sign
-            if abs(abs(cand_amount) - abs_amount) / abs_amount > 0.02:
-                continue
-            return candidate
+        return self._pick_counter(txn, candidates)
 
-        return None
+    def _find_awaiting_mirror_je(
+        self,
+        db: Session,
+        txn: FinanceTransaction,
+        target_ba_id: int,
+    ) -> Optional[FinanceTransaction]:
+        """The OTHER side already booked this movement: an AWAITING txn on the
+        target account WITH a JE, expecting a counterpart from OUR account,
+        opposite amount. Attaching to that JE instead of creating our own kills
+        the both-sides-know duplicate (Apr-11 JEs 3218+2480 were this class).
+        """
+        from datetime import timedelta
+
+        if abs(float(txn.amount)) == 0:
+            return None
+        date_low = txn.transaction_date - timedelta(days=5)
+        date_high = txn.transaction_date + timedelta(days=5)
+        candidates = db.query(FinanceTransaction).filter(
+            FinanceTransaction.bank_account_id == target_ba_id,
+            FinanceTransaction.status == TransactionStatus.AWAITING_MATCH,
+            FinanceTransaction.reconciled_journal_entry_id.isnot(None),
+            FinanceTransaction.expected_counterpart_ba_id == txn.bank_account_id,
+            FinanceTransaction.transaction_date.between(date_low, date_high),
+        ).all()
+        return self._pick_counter(txn, candidates)
 
     # ------------------------------------------------------------------
     # Phase 2: AP Knock-off
@@ -626,6 +726,7 @@ class CategorizationService:
                         txn.reconciled_journal_entry_id = entry.id
                         txn.matched_at = datetime.now(UTC)
                         txn.coa_account_code = "1300"
+                        txn.categorized_by_logic = 'asset_parking'
                         # No categorization_type for asset-parked transactions
                         db.commit()
 
@@ -1064,6 +1165,30 @@ Return only the JSON object, no explanation."""
     # Phase 4A: Default account fallback
     # ------------------------------------------------------------------
 
+    @staticmethod
+    def _default_direction_ok(counterparty: Any, transaction: FinanceTransaction) -> bool:
+        """POL-34: a counterparty default fires only when the money moves in the
+        counterparty-type's normal direction. Vendor/employee/government money
+        normally goes OUT (we pay them); investor money comes IN (they pay us).
+        A mismatch is a refund / repayment / claw-back — an exception that must
+        reach review, not auto-book against the default. Unknown types and
+        types with no clear direction (bank) always pass."""
+        normal = CP_TYPE_NORMAL_DIRECTION.get(
+            getattr(counterparty, "type", None), None)
+        if normal is None:
+            return True
+        amount = float(transaction.amount) if transaction.amount is not None else 0.0
+        if amount == 0:
+            return True
+        actual = "out" if amount < 0 else "in"
+        if actual == normal:
+            return True
+        logger.info(
+            f"cp-direction-guard: txn {transaction.id} ({actual}, {amount}) contradicts "
+            f"{counterparty.type} normal direction ({normal}) — skipping default "
+            f"{counterparty.default_account_code}, routing to review")
+        return False
+
     def _apply_default_account(
         self,
         db: Session,
@@ -1106,6 +1231,7 @@ Return only the JSON object, no explanation."""
         transaction.reconciled_journal_entry_id = entry.id
         transaction.matched_at = datetime.now(UTC)
         transaction.coa_account_code = counterparty.default_account_code
+        transaction.categorized_by_logic = 'counterparty_default'
 
         db.commit()
 
@@ -1397,6 +1523,8 @@ Return only the JSON object, no explanation."""
             transaction.categorization_type = CategorizationType.INTERNAL_TRANSFER
             transaction.status = TransactionStatus.AWAITING_MATCH
             transaction.expected_counterpart_ba_id = None
+            transaction.categorized_by_rule_id = rule.id
+            transaction.categorized_by_logic = 'transfer_rule'
             self._apply_tags(db, transaction.id, rule.tag_ids)
             db.commit()
             logger.info(
@@ -1412,6 +1540,36 @@ Return only the JSON object, no explanation."""
             }
 
         if rule.category == TransactionCategory.INTERNAL_TRANSFER:
+            # Both-sides-know guard: if the movement is ALREADY booked by an
+            # awaiting leg on the counterpart account (corridors where both
+            # directions carry a knowing rule, e.g. C1 #2/#26), attach to that
+            # JE instead of writing a second one for the same cash.
+            if rule.target_bank_account_id:
+                mirror = self._find_awaiting_mirror_je(
+                    db, transaction, rule.target_bank_account_id)
+                if mirror:
+                    now = datetime.now(UTC)
+                    je_id = mirror.reconciled_journal_entry_id
+                    for leg in (transaction, mirror):
+                        leg.status = TransactionStatus.MATCHED
+                        leg.matched_at = now
+                        leg.expected_counterpart_ba_id = None
+                    transaction.reconciled_journal_entry_id = je_id
+                    transaction.categorization_type = CategorizationType.INTERNAL_TRANSFER
+                    transaction.categorized_by_rule_id = rule.id
+                    transaction.categorized_by_logic = 'transfer_pairing'
+                    self._apply_tags(db, transaction.id, rule.tag_ids)
+                    db.commit()
+                    logger.info(
+                        f"Transfer attached to mirror JE {je_id}: txn {transaction.id} "
+                        f"↔ awaiting txn {mirror.id} (both-sides-know corridor)")
+                    return {
+                        "transaction_id": transaction.id,
+                        "status": "categorized",
+                        "rule_name": f"{rule.name} [attached to mirror JE {je_id}]",
+                        "journal_entry_id": je_id,
+                        "error": None,
+                    }
             journal_entry = self._create_internal_transfer_entries(
                 db, transaction, rule, bank_account, amount, abs_amount
             )
@@ -1446,9 +1604,20 @@ Return only the JSON object, no explanation."""
             TransactionCategory.DEPOSIT: CategorizationType.DEPOSIT,
             TransactionCategory.INTERNAL_TRANSFER: CategorizationType.INTERNAL_TRANSFER,
             TransactionCategory.CROSS_ENTITY_ALLOCATION: CategorizationType.EXPENSE,  # Cross-entity is a specialized expense
+            TransactionCategory.INTERCOMPANY_TRANSFER: CategorizationType.INTERCOMPANY,
         }
         if rule.category in category_map:
             transaction.categorization_type = category_map[rule.category]
+
+        # Route audit — stamped for every rule outcome below (MATCHED, paired,
+        # awaiting); transfer rules get their own label so the FE can say
+        # "recognized as internal transfer" rather than a generic rule hit.
+        transaction.categorized_by_rule_id = rule.id
+        transaction.categorized_by_logic = (
+            'transfer_rule' if rule.category == TransactionCategory.INTERNAL_TRANSFER
+            else 'ic_rule' if rule.category == TransactionCategory.INTERCOMPANY_TRANSFER
+            else 'rule'
+        )
 
         # For internal transfers: try to immediately pair with counter-transaction.
         # If counter not found yet → AWAITING_MATCH; the counter-transaction will
@@ -1481,6 +1650,8 @@ Return only the JSON object, no explanation."""
                 counter_txn.status = TransactionStatus.MATCHED
                 counter_txn.reconciled_journal_entry_id = journal_entry.id
                 counter_txn.matched_at = now
+                counter_txn.categorized_by_logic = 'transfer_pairing'
+                counter_txn.categorization_type = CategorizationType.INTERNAL_TRANSFER
                 logger.info(
                     f"Internal transfer paired: txn {transaction.id} ↔ txn {counter_txn.id} "
                     f"via JE {journal_entry.id}"
@@ -1499,9 +1670,6 @@ Return only the JSON object, no explanation."""
             transaction.status = TransactionStatus.MATCHED
             transaction.reconciled_journal_entry_id = journal_entry.id
             transaction.matched_at = datetime.now(UTC)
-            # Track which rule was used for categorization
-            transaction.categorized_by_rule_id = rule.id
-            transaction.categorized_by_logic = 'rule'
 
         self._apply_tags(db, transaction.id, rule.tag_ids)
         db.commit()
@@ -1553,7 +1721,33 @@ Return only the JSON object, no explanation."""
 
         If GST applies, creates a 3-line entry splitting GST from the amount.
         """
+        # SELF-JE GUARD (Gaurav, 2026-07-26): contra == the bank's own account
+        # would book Dr X / Cr X — a no-op entry that LOOKS matched. The AI has
+        # produced this twice (Wise top-up → 1001, Stripe AU payouts → 1019);
+        # such movements are internal transfers and belong to the transfer lane.
+        if contra_code == bank_coa_code:
+            raise ValueError(
+                f"Refusing self-referencing journal entry: contra account {contra_code} "
+                f"IS the bank account's own COA code. This transaction is almost "
+                f"certainly an internal transfer — categorize it via a transfer rule.")
+
         je_description = description_override or transaction.description or "Categorized transaction"
+
+        # POL-25: the ledger books in the entity's FUNCTIONAL currency, converted
+        # at booking time (monthly standard rate, POL-26); the native statement
+        # amount + rate survive on every line. Same-currency txns pass through
+        # at rate 1 unchanged.
+        from src.models.entity import FinanceEntity
+        from src.services.fx_service import fx_service
+        entity_row = db.get(FinanceEntity, entity_id)
+        functional_ccy = entity_row.base_currency if entity_row else None
+        native_ccy = transaction.currency or functional_ccy
+        fx_rate = Decimal("1")
+        if functional_ccy and native_ccy != functional_ccy:
+            functional_abs, fx_rate = fx_service.to_functional(
+                db, Decimal(str(abs_amount)), native_ccy, functional_ccy,
+                transaction.transaction_date)
+            abs_amount = float(functional_abs)
 
         apply_gst = self._should_apply_gst(db, contra_code, rule, entity_id, gst_override)
         gst_rate = self._get_gst_rate(db, entity_id) if apply_gst else 0.0
@@ -1584,6 +1778,22 @@ Return only the JSON object, no explanation."""
                     {"account_code": contra_code,   "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
                     {"account_code": bank_coa_code, "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
                 ]
+
+        # Stamp the currency facts on every line (native derived per line so
+        # GST splits keep proportional native amounts).
+        full_native = Decimal(str(transaction.amount)).copy_abs() if transaction.amount is not None else None
+        for l in lines:
+            func_amt = Decimal(str(l["debit_amount"] if l["debit_amount"] else l["credit_amount"]))
+            l["currency"] = native_ccy
+            l["fx_rate"] = fx_rate
+            if fx_rate == 1:
+                l["native_amount"] = func_amt
+            elif full_native is not None and func_amt == Decimal(str(abs_amount)):
+                # full-amount lines carry the txn's TRUE native (never re-derive
+                # by division — rounding drift breaks native-basis recon)
+                l["native_amount"] = full_native
+            else:
+                l["native_amount"] = (func_amt / fx_rate).quantize(Decimal("0.01"))
 
         entry = journal_service.create(
             db=db,
@@ -1951,6 +2161,7 @@ Return only the JSON object, no explanation."""
         transaction.reconciled_journal_entry_id = entry.id
         transaction.coa_account_code = contra_account_code
         transaction.reconciled_at = datetime.now(UTC)
+        transaction.categorized_by_logic = 'manual'
 
         if tag_ids:
             self._apply_tags(db, transaction.id, json.dumps(tag_ids))
@@ -2007,16 +2218,26 @@ Return only the JSON object, no explanation."""
             ).all():
                 bank_accounts[ba.id] = ba
 
-            # Build entity COA context (active accounts, one entity at a time)
+            # Build entity COA context (active accounts, one entity at a time).
+            # The master COA is GROUP-LEVEL (entity_id IS NULL) — only bank
+            # accounts are entity-specific — so each entity's list is the shared
+            # COA plus its own rows. (Was `entity_id == X AND status == "active"`,
+            # which matched NOTHING: it dropped all 136 shared accounts and the
+            # lowercase literal never equals AccountStatus.ACTIVE — the AI ran
+            # with an EMPTY chart from the RAG wiring until 2026-07-26.)
+            from sqlalchemy import or_
+            from src.models.account import AccountStatus, FinanceAccount
             entity_ids = {ba.entity_id for ba in bank_accounts.values()}
-            from src.models.account import FinanceAccount
             coa_by_entity: dict[int, list[dict]] = {}
             for entity_id in entity_ids:
                 accounts = (
                     db.query(FinanceAccount)
                     .filter(
-                        FinanceAccount.entity_id == entity_id,
-                        FinanceAccount.status == "active",
+                        or_(
+                            FinanceAccount.entity_id == entity_id,
+                            FinanceAccount.entity_id.is_(None),
+                        ),
+                        FinanceAccount.status == AccountStatus.ACTIVE,
                     )
                     .order_by(FinanceAccount.code)
                     .all()
@@ -2165,6 +2386,29 @@ Rules:
                     if not ba or not ba.coa_account_code:
                         raise ValueError("No bank COA code")
 
+                    # BANK-CODE GUARD (2026-07-26): the AI may never book a
+                    # simple entry against ANY bank account's COA code — money
+                    # moving between our own accounts belongs to the transfer/IC
+                    # lanes (rules + pairing), else it double-counts against the
+                    # corridor JE. Route to review instead.
+                    all_bank_codes = {
+                        b.coa_account_code
+                        for b in db.query(FinanceBankAccount).all()
+                        if b.coa_account_code
+                    }
+                    if account_code in all_bank_codes:
+                        txn.status = TransactionStatus.NEEDS_REVIEW
+                        txn.categorized_by_logic = 'ai'
+                        db.commit()
+                        results[txn.id] = {
+                            "transaction_id": txn.id,
+                            "status": "needs_review",
+                            "rule_name": f"[ai:bank-code-guard {account_code}]",
+                            "journal_entry_id": None,
+                            "error": None,
+                        }
+                        continue
+
                     amount = float(txn.amount)
                     abs_amount = abs(amount)
                     je = self._create_simple_entry(
@@ -2181,6 +2425,7 @@ Rules:
                     txn.reconciled_journal_entry_id = je.id
                     txn.matched_at = now
                     txn.coa_account_code = account_code
+                    txn.categorized_by_logic = 'ai'
                     db.commit()
 
                     results[txn.id] = {
@@ -2199,6 +2444,7 @@ Rules:
             else:
                 # Low confidence — NEEDS_REVIEW
                 txn.status = TransactionStatus.NEEDS_REVIEW
+                txn.categorized_by_logic = 'ai'
                 db.commit()
 
                 results[txn.id] = {

@@ -120,6 +120,12 @@ class TestProject:
         lines = db.query(FinanceJournalLine).filter_by(entry_id=je.id).all()
         assert sum(l.debit_amount for l in lines) == sum(l.credit_amount for l in lines)
         assert {l.account_code for l in lines} == {"2100", "4000"}
+        # POL-25 completeness (AUD-7): every projected line carries currency facts
+        from decimal import Decimal as _D
+        for l in lines:
+            assert l.currency == sg.base_currency
+            assert l.fx_rate == _D("1")
+            assert l.native_amount == (l.debit_amount or _D("0")) + (l.credit_amount or _D("0"))
 
     def test_project_is_idempotent(self, db, sg):
         _template(db, sg, "trip_revenue_accrual", "2100", "4000")

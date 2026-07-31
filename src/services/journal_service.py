@@ -200,15 +200,27 @@ class JournalService:
         db.add(entry)
         db.flush()  # Get entry.id for the lines
         
-        # Create journal lines
+        # Create journal lines. POL-25: debit/credit are functional-currency
+        # amounts (callers convert BEFORE building lines); currency/native/rate
+        # metadata defaults to same-currency when the caller doesn't supply it.
+        from src.models.entity import FinanceEntity
+        entity_row = db.get(FinanceEntity, entity_id)
+        functional_ccy = entity_row.base_currency if entity_row else None
         for line_data in lines:
+            debit = Decimal(str(line_data.get("debit_amount", 0)))
+            credit = Decimal(str(line_data.get("credit_amount", 0)))
             line = FinanceJournalLine(
                 entry_id=entry.id,
                 entity_id=entity_id,
                 account_code=line_data["account_code"],
-                debit_amount=Decimal(str(line_data.get("debit_amount", 0))),
-                credit_amount=Decimal(str(line_data.get("credit_amount", 0))),
-                description=line_data.get("description")
+                debit_amount=debit,
+                credit_amount=credit,
+                description=line_data.get("description"),
+                currency=line_data.get("currency") or functional_ccy,
+                native_amount=Decimal(str(line_data["native_amount"]))
+                    if line_data.get("native_amount") is not None
+                    else (debit if debit > 0 else credit),
+                fx_rate=Decimal(str(line_data.get("fx_rate") or "1")),
             )
             db.add(line)
         

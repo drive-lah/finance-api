@@ -1,0 +1,126 @@
+Old view,New (v_ canonical),Change,Used as,Optional further normalization
+view_AU_a_cost_fuel_payout,v_AU_a_cost_fuel_payout,prefix,economic-events,
+view_AU_a_cost_fuel_refund_to_guest,v_AU_a_cost_fuel_refund_to_guest,prefix,economic-events,
+view_AU_a_cost_late_return,v_AU_a_cost_late_return,prefix,economic-events,
+view_AU_a_fuel_charged_to_host,v_AU_a_fuel_charged_to_host,prefix,economic-events,
+view_AU_a_host_discounts,v_AU_a_host_discounts,prefix,economic-events,
+view_AU_a_host_flexplus_payout,v_AU_a_host_flexplus_payout,prefix,economic-events,
+view_AU_a_host_incidentals_cleanliness,v_AU_a_host_incidentals_cleanliness,prefix,economic-events,host_incidentals_X -> host_X (parallel with revenue)
+view_AU_a_host_incidentals_damage,v_AU_a_host_incidentals_damage,prefix,economic-events,host_incidentals_X -> host_X (parallel with revenue)
+view_AU_a_host_incidentals_excess_mileage,v_AU_a_host_incidentals_excess_mileage,prefix,economic-events,host_incidentals_X -> host_X (parallel with revenue)
+view_AU_a_host_incidentals_tolls,v_AU_a_host_incidentals_tolls,prefix,economic-events,host_incidentals_X -> host_X (parallel with revenue)
+view_AU_a_host_misc_charge_collected,v_AU_a_host_misc_charge_collected,prefix,economic-events,drop redundant '_collected' (lane letter already says it)
+view_AU_a_host_payout_regular_p2p,v_AU_a_host_payout_regular_p2p,prefix,economic-events,unify host-cost verb (host_<category>)
+view_AU_a_host_referral_payout,v_AU_a_host_referral_payout,prefix,economic-events,
+view_AU_a_host_subscription_collected,v_AU_a_host_subscription_collected,prefix,economic-events,drop redundant '_collected' (lane letter already says it)
+view_AU_a_host_trip_earnings_rms,v_AU_a_host_trip_earnings_rms,prefix,economic-events,unify host-cost verb (host_<category>)
+view_AU_a_incidentals_classified,v_AU_a_incidentals_classified,prefix,feeder,
+view_AU_a_incidentals_cleaning_invoiced,v_AU_a_incidentals_cleaning_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_AU_a_incidentals_damage_invoiced,v_AU_a_incidentals_damage_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_AU_a_incidentals_excess_mileage_invoiced,v_AU_a_incidentals_excess_mileage_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_AU_a_incidentals_fines_invoiced,v_AU_a_incidentals_fines_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_AU_a_incidentals_flexplus_leak_invoiced,v_AU_a_incidentals_flexplus_leak_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_AU_a_incidentals_fuel_charge_invoiced,v_AU_a_incidentals_fuel_charge_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_AU_a_incidentals_insurance_leak_invoiced,v_AU_a_incidentals_insurance_leak_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_AU_a_incidentals_late_return_invoiced,v_AU_a_incidentals_late_return_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_AU_a_incidentals_other_invoiced,v_AU_a_incidentals_other_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_AU_a_incidentals_paginated_hold,v_AU_a_incidentals_paginated_hold,prefix,economic-events,
+view_AU_a_incidentals_penalty_invoiced,v_AU_a_incidentals_penalty_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_AU_a_incidentals_platform_fees_invoiced,v_AU_a_incidentals_platform_fees_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_AU_a_incidentals_tolls_invoiced,v_AU_a_incidentals_tolls_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_AU_a_incidentals_trip_to_base_invoiced,v_AU_a_incidentals_trip_to_base_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_AU_a_misc_corrections,v_AU_a_misc_corrections,prefix,economic-events,
+view_AU_a_misc_damage,v_AU_a_misc_damage,prefix,economic-events,
+view_AU_a_misc_downtime,v_AU_a_misc_downtime,prefix,economic-events,
+view_AU_a_misc_parking,v_AU_a_misc_parking,prefix,economic-events,
+view_AU_a_misc_payout_classified,v_AU_a_misc_payout_classified,prefix,feeder,
+view_AU_a_misc_residual,v_AU_a_misc_residual,prefix,economic-events,
+view_AU_a_misc_sticker,v_AU_a_misc_sticker,prefix,economic-events,
+view_AU_a_misc_superhost,v_AU_a_misc_superhost,prefix,economic-events,
+view_AU_a_misc_tolls,v_AU_a_misc_tolls,prefix,economic-events,
+view_AU_a_misc_towing,v_AU_a_misc_towing,prefix,economic-events,
+view_AU_a_subscription_device_invoiced,v_AU_a_subscription_device_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_AU_a_subscription_flexplus_invoiced,v_AU_a_subscription_flexplus_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_AU_a_subscription_insurance_invoiced,v_AU_a_subscription_insurance_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_AU_a_subscription_other_invoiced,v_AU_a_subscription_other_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_AU_a_trip_distance_invoiced,v_AU_a_trip_distance_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_AU_a_trip_revenue_p2p,v_AU_a_trip_revenue_p2p,prefix,economic-events,
+view_AU_a_trip_revenue_rms,v_AU_a_trip_revenue_rms,prefix,economic-events,
+view_AU_c_customer_deposits_received,v_AU_c_customer_deposits_received,prefix,economic-events,drop redundant '_received' (lane letter already says it)
+view_AU_c_deposit_refunds,v_AU_c_deposit_refunds,prefix,economic-events,
+view_AU_c_disputes,v_AU_c_disputes,prefix,economic-events,
+view_AU_c_fuel_refunds,v_AU_c_fuel_refunds,prefix,feeder,
+view_AU_c_host_rms_internal_clearing,v_AU_c_host_rms_internal_clearing,prefix,economic-events,"lane -> _x_ (internal/clearing, no P&L)"
+view_AU_c_host_transfers,v_AU_c_host_transfers,prefix,economic-events,
+view_AU_c_incidentals_invoice_paid,v_AU_c_incidentals_invoice_paid,prefix,economic-events,drop redundant '_paid' (lane letter already says it)
+view_AU_c_invoice_payment_refunds,v_AU_c_invoice_payment_refunds,prefix,economic-events,
+view_AU_c_stripe_fees_paid,v_AU_c_stripe_fees_paid,prefix,economic-events,drop redundant '_paid' (lane letter already says it)
+view_AU_c_stripe_payouts,v_AU_c_stripe_payouts,prefix,payout lane,
+view_AU_c_subscription_invoice_paid,v_AU_c_subscription_invoice_paid,prefix,economic-events,drop redundant '_paid' (lane letter already says it)
+view_AU_c_subscription_refunds_device,v_AU_c_subscription_refunds_device,prefix,economic-events,
+view_AU_c_subscription_refunds_insurance,v_AU_c_subscription_refunds_insurance,prefix,economic-events,
+view_AU_c_trip_cash_collected,v_AU_c_trip_cash_collected,prefix,economic-events,drop redundant '_collected' (lane letter already says it)
+view_AU_c_trip_distance_cash_collected,v_AU_c_trip_distance_cash_collected,prefix,economic-events,drop redundant '_collected' (lane letter already says it)
+view_AU_c_trip_distance_invoice_paid,v_AU_c_trip_distance_invoice_paid,prefix,economic-events,drop redundant '_paid' (lane letter already says it)
+view_AU_c_trip_refunds,v_AU_c_trip_refunds,prefix,economic-events,
+view_AU_c_verification_charge_received,v_AU_c_verification_charge_received,prefix,economic-events,drop redundant '_received' (lane letter already says it)
+view_AU_c_verification_refunds,v_AU_c_verification_refunds,prefix,economic-events,
+view_SG_a_cost_fuel_net,v_SG_a_cost_fuel_net,prefix,economic-events,
+view_SG_a_cost_late_return,v_SG_a_cost_late_return,prefix,economic-events,
+view_SG_a_host_delivery_payout_new,v_SG_a_host_delivery_payout,prefix+drop_new,economic-events,
+view_SG_a_host_discounts,v_SG_a_host_discounts,prefix,economic-events,
+view_SG_a_host_flexplus_payout_new,v_SG_a_host_flexplus_payout,prefix+drop_new,economic-events,
+view_SG_a_host_incidentals_cleanliness_new,v_SG_a_host_incidentals_cleanliness,prefix+drop_new,economic-events,host_incidentals_X -> host_X (parallel with revenue)
+view_SG_a_host_incidentals_damage_new,v_SG_a_host_incidentals_damage,prefix+drop_new,economic-events,host_incidentals_X -> host_X (parallel with revenue)
+view_SG_a_host_incidentals_excess_mileage_new,v_SG_a_host_incidentals_excess_mileage,prefix+drop_new,economic-events,host_incidentals_X -> host_X (parallel with revenue)
+view_SG_a_host_incidentals_tolls_new,v_SG_a_host_incidentals_tolls,prefix+drop_new,economic-events,host_incidentals_X -> host_X (parallel with revenue)
+view_SG_a_host_misc_charge_collected_new,v_SG_a_host_misc_charge_collected,prefix+drop_new,economic-events,drop redundant '_collected' (lane letter already says it)
+view_SG_a_host_payout_regular_p2p,v_SG_a_host_payout_regular_p2p,prefix,economic-events,unify host-cost verb (host_<category>)
+view_SG_a_host_subscription_collected_new,v_SG_a_host_subscription_collected,prefix+drop_new,economic-events,drop redundant '_collected' (lane letter already says it)
+view_SG_a_host_superhost_payout,v_SG_a_host_superhost_payout,prefix,economic-events,unify host-cost verb (host_<category>)
+view_SG_a_host_trip_earnings_rms,v_SG_a_host_trip_earnings_rms,prefix,economic-events,unify host-cost verb (host_<category>)
+view_SG_a_incidentals_classified,v_SG_a_incidentals_classified,prefix,feeder,
+view_SG_a_incidentals_cleaning_invoiced,v_SG_a_incidentals_cleaning_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_SG_a_incidentals_damage_invoiced,v_SG_a_incidentals_damage_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_SG_a_incidentals_excess_mileage_invoiced,v_SG_a_incidentals_excess_mileage_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_SG_a_incidentals_fines_invoiced,v_SG_a_incidentals_fines_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_SG_a_incidentals_flexplus_leak_invoiced,v_SG_a_incidentals_flexplus_leak_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_SG_a_incidentals_fuel_charge_invoiced,v_SG_a_incidentals_fuel_charge_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_SG_a_incidentals_insurance_leak_invoiced,v_SG_a_incidentals_insurance_leak_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_SG_a_incidentals_late_return_invoiced,v_SG_a_incidentals_late_return_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_SG_a_incidentals_other_invoiced,v_SG_a_incidentals_other_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_SG_a_incidentals_penalty_invoiced,v_SG_a_incidentals_penalty_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_SG_a_incidentals_platform_fees_invoiced,v_SG_a_incidentals_platform_fees_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_SG_a_incidentals_tolls_invoiced,v_SG_a_incidentals_tolls_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_SG_a_incidentals_trip_to_base_invoiced,v_SG_a_incidentals_trip_to_base_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_SG_a_misc_damage,v_SG_a_misc_damage,prefix,economic-events,
+view_SG_a_misc_downtime,v_SG_a_misc_downtime,prefix,economic-events,
+view_SG_a_misc_parking,v_SG_a_misc_parking,prefix,economic-events,
+view_SG_a_misc_payout_classified,v_SG_a_misc_payout_classified,prefix,feeder,
+view_SG_a_misc_residual,v_SG_a_misc_residual,prefix,economic-events,
+view_SG_a_misc_sticker,v_SG_a_misc_sticker,prefix,economic-events,
+view_SG_a_misc_superhost,v_SG_a_misc_superhost,prefix,economic-events,
+view_SG_a_misc_tolls,v_SG_a_misc_tolls,prefix,economic-events,
+view_SG_a_misc_towing,v_SG_a_misc_towing,prefix,economic-events,
+view_SG_a_subscription_device_invoiced,v_SG_a_subscription_device_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_SG_a_subscription_flexplus_invoiced,v_SG_a_subscription_flexplus_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_SG_a_subscription_insurance_invoiced,v_SG_a_subscription_insurance_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_SG_a_subscription_other_invoiced,v_SG_a_subscription_other_invoiced,prefix,economic-events,drop redundant '_invoiced' (lane letter already says it)
+view_SG_a_trip_revenue_p2p,v_SG_a_trip_revenue_p2p,prefix,economic-events,
+view_SG_a_trip_revenue_rms,v_SG_a_trip_revenue_rms,prefix,economic-events,
+view_SG_c_customer_deposits_received,v_SG_c_customer_deposits_received,prefix,economic-events,drop redundant '_received' (lane letter already says it)
+view_SG_c_deposit_refunds,v_SG_c_deposit_refunds,prefix,economic-events,
+view_SG_c_disputes,v_SG_c_disputes,prefix,economic-events,
+view_SG_c_host_rms_internal_clearing,v_SG_c_host_rms_internal_clearing,prefix,economic-events,"lane -> _x_ (internal/clearing, no P&L)"
+view_SG_c_host_transfers,v_SG_c_host_transfers,prefix,economic-events,
+view_SG_c_incidentals_invoice_paid,v_SG_c_incidentals_invoice_paid,prefix,economic-events,drop redundant '_paid' (lane letter already says it)
+view_SG_c_invoice_payment_refunds,v_SG_c_invoice_payment_refunds,prefix,economic-events,
+view_SG_c_stripe_fees_paid,v_SG_c_stripe_fees_paid,prefix,economic-events,drop redundant '_paid' (lane letter already says it)
+view_SG_c_stripe_payouts,v_SG_c_stripe_payouts,prefix,payout lane,
+view_SG_c_subscription_invoice_paid,v_SG_c_subscription_invoice_paid,prefix,economic-events,drop redundant '_paid' (lane letter already says it)
+view_SG_c_subscription_refunds_device,v_SG_c_subscription_refunds_device,prefix,economic-events,
+view_SG_c_subscription_refunds_insurance,v_SG_c_subscription_refunds_insurance,prefix,economic-events,
+view_SG_c_trip_cash_collected,v_SG_c_trip_cash_collected,prefix,economic-events,drop redundant '_collected' (lane letter already says it)
+view_SG_c_trip_fuel_cash_collected,v_SG_c_trip_fuel_cash_collected,prefix,economic-events,drop redundant '_collected' (lane letter already says it)
+view_SG_c_trip_refunds,v_SG_c_trip_refunds,prefix,economic-events,
+view_host_mechanism_map,v_host_mechanism_map,prefix,feeder,

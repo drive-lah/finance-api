@@ -113,22 +113,56 @@ class InvoiceService:
             .first()
         )
 
-    def get_all(
-        self,
-        db: Session,
-        entity_id: Optional[int] = None,
-        status: Optional[str] = None,
-        counterparty_id: Optional[int] = None,
-    ) -> list[FinanceInvoice]:
-        """Retrieve invoices with optional filtering."""
-        query = db.query(FinanceInvoice)
+    def _apply_filters(self, query, *, entity_id=None, status=None, counterparty_id=None,
+                       search=None, vendor_flag=None, coa_flag=None, document_gate=None,
+                       currency_flag=None, retool_status=None, sub_category=None, amount_match=None,
+                       provisional_paid=None):
+        """Shared filter builder for get_all + count_all (server-side, incl. ai_extraction_raw JSON)."""
+        from sqlalchemy import or_, func
+
+        def jtext(*path):  # column is JSONB in the DB -> use jsonb_extract_path_text
+            return func.jsonb_extract_path_text(FinanceInvoice.ai_extraction_raw, *path)
+
         if entity_id is not None:
             query = query.filter(FinanceInvoice.entity_id == entity_id)
         if status is not None:
             query = query.filter(FinanceInvoice.status == status)
         if counterparty_id is not None:
             query = query.filter(FinanceInvoice.counterparty_id == counterparty_id)
-        return query.order_by(FinanceInvoice.invoice_date.desc(), FinanceInvoice.id.desc()).all()
+        if vendor_flag:
+            query = query.filter(jtext("recon", "vendor_flag") == vendor_flag)
+        if coa_flag:
+            query = query.filter(jtext("recon", "coa_flag") == coa_flag)
+        if document_gate:  # 'ok' (real invoice, incl. legacy null) or 'not_invoice'
+            query = query.filter(func.coalesce(jtext("recon", "document_gate"), "ok") == document_gate)
+        if currency_flag is not None:
+            query = query.filter(jtext("recon", "currency_entity_flag") == str(currency_flag).lower())
+        if amount_match is not None:
+            query = query.filter(jtext("recon", "amount_match") == str(amount_match).lower())
+        if provisional_paid is not None:
+            query = query.filter(jtext("provisional_paid", "is_provisional_paid") == str(provisional_paid).lower())
+        if retool_status:
+            query = query.filter(jtext("retool_ref", "status") == retool_status)
+        if sub_category:
+            query = query.filter(jtext("retool_ref", "sub_category") == sub_category)
+        if search:
+            like = f"%{search}%"
+            query = query.filter(or_(
+                FinanceInvoice.invoice_number.ilike(like),
+                jtext("extraction", "vendor_name").ilike(like),
+                jtext("retool_ref", "payee").ilike(like),
+            ))
+        return query
+
+    def get_all(self, db: Session, *, limit: int = 100, offset: int = 0, **filters) -> list[FinanceInvoice]:
+        """Retrieve invoices with optional server-side filtering + pagination."""
+        query = self._apply_filters(db.query(FinanceInvoice), **filters)
+        return (query.order_by(FinanceInvoice.invoice_date.desc(), FinanceInvoice.id.desc())
+                .limit(limit).offset(offset).all())
+
+    def count_all(self, db: Session, **filters) -> int:
+        """Count invoices matching the same filters (for pagination total)."""
+        return self._apply_filters(db.query(FinanceInvoice), **filters).count()
 
     def get_by_id(self, db: Session, invoice_id: int) -> FinanceInvoice:
         """Retrieve an invoice by ID. Raises NotFoundError if missing."""
@@ -1017,6 +1051,210 @@ class InvoiceService:
 
         db.flush()
         return bank_entry
+
+    def statement_for_counterparty(
+        self,
+        db: Session,
+        counterparty_id: int,
+        entity_id: Optional[int] = None,
+    ) -> dict:
+        """
+        Build a vendor-level Statement of Account for a counterparty.
+
+        Queried straight off finance_invoices + finance_counterparties.
+
+        Money totals EXCLUDE rows gated as `not_invoice`
+        (ai_extraction_raw->recon->>document_gate == 'not_invoice').
+
+        Paid-date signal (current state): all ingested invoices are draft /
+        amount_paid=0, so the paid-date comes from Retool's provisional close:
+          ai_extraction_raw->provisional_paid->>provisional_paid_at  (timestamp str)
+          ai_extraction_raw->provisional_paid->>is_provisional_paid  ('true'/'false')
+        A future bank-confirmed paid_date (from reconciliation) supersedes this —
+        see `_line_paid_date` where the precedence lives.
+        """
+        from sqlalchemy import func
+
+        counterparty = db.get(FinanceCounterparty, counterparty_id)
+        if not counterparty:
+            raise NotFoundError(f"Counterparty {counterparty_id} not found")
+
+        def jtext(*path):  # JSONB column -> text extraction
+            return func.jsonb_extract_path_text(FinanceInvoice.ai_extraction_raw, *path)
+
+        query = db.query(FinanceInvoice).filter(
+            FinanceInvoice.counterparty_id == counterparty_id
+        )
+        if entity_id is not None:
+            query = query.filter(FinanceInvoice.entity_id == entity_id)
+
+        invoices = query.order_by(
+            FinanceInvoice.invoice_date.asc(), FinanceInvoice.id.asc()
+        ).all()
+
+        today = date.today()
+
+        def _gate(inv: FinanceInvoice) -> str:
+            raw = inv.ai_extraction_raw or {}
+            recon = raw.get("recon") or {}
+            return (recon.get("document_gate") or "ok")
+
+        def _is_not_invoice(inv: FinanceInvoice) -> bool:
+            return _gate(inv) == "not_invoice"
+
+        def _prov(inv: FinanceInvoice) -> dict:
+            raw = inv.ai_extraction_raw or {}
+            return raw.get("provisional_paid") or {}
+
+        def _is_provisionally_paid(inv: FinanceInvoice) -> bool:
+            return str(_prov(inv).get("is_provisional_paid")).lower() == "true"
+
+        def _provisional_paid_at(inv: FinanceInvoice):
+            return _prov(inv).get("provisional_paid_at") or None
+
+        def _line_paid_date(inv: FinanceInvoice):
+            """Bank-confirmed paid date supersedes the provisional one.
+
+            Real reconciliation isn't wired yet (all invoices amount_paid=0),
+            so for now this resolves to the provisional close date. When
+            reconciliation lands, prefer the matched transaction date here.
+            """
+            # Future: if inv.amount_paid > 0 -> derive from matched transaction.
+            return _provisional_paid_at(inv)
+
+        # ── Aggregates (real, non-not_invoice rows only) ──────────────────
+        outstanding = 0.0
+        provisionally_paid_total = 0.0
+        invoice_count = 0
+        not_invoice_count = 0
+        oldest_unpaid_date = None
+        currency_breakdown: dict[str, float] = {}
+        aging = {"current": 0.0, "d1_30": 0.0, "d31_60": 0.0, "d61_90": 0.0, "d90_plus": 0.0}
+
+        for inv in invoices:
+            if _is_not_invoice(inv):
+                not_invoice_count += 1
+                continue
+
+            invoice_count += 1
+            total = float(inv.total_amount or 0)
+            paid = float(inv.amount_paid or 0)
+            remaining = total - paid
+            prov_paid = _is_provisionally_paid(inv)
+
+            if prov_paid:
+                provisionally_paid_total += total
+
+            # Outstanding = balance on real invoices NOT provisionally-paid.
+            if not prov_paid and remaining > 0:
+                outstanding += remaining
+                cur = inv.currency or "?"
+                currency_breakdown[cur] = round(currency_breakdown.get(cur, 0.0) + remaining, 2)
+
+                if oldest_unpaid_date is None or inv.invoice_date < oldest_unpaid_date:
+                    oldest_unpaid_date = inv.invoice_date
+
+                # Aging bucket by due_date (fall back to invoice_date) vs today.
+                ref_date = inv.due_date or inv.invoice_date
+                days_overdue = (today - ref_date).days
+                if days_overdue <= 0:
+                    aging["current"] += remaining
+                elif days_overdue <= 30:
+                    aging["d1_30"] += remaining
+                elif days_overdue <= 60:
+                    aging["d31_60"] += remaining
+                elif days_overdue <= 90:
+                    aging["d61_90"] += remaining
+                else:
+                    aging["d90_plus"] += remaining
+
+        aging = {k: round(v, 2) for k, v in aging.items()}
+
+        # ── Statement lines (chronological; running balance) ──────────────
+        # One "invoice" (billed) row per invoice; a "payment" row when a
+        # provisional paid date exists. Sort all events by date, then compute
+        # a running balance. not_invoice rows are shown but do not move money.
+        events = []
+        for inv in invoices:
+            not_inv = _is_not_invoice(inv)
+            total = float(inv.total_amount or 0)
+            events.append({
+                "sort_date": inv.invoice_date,
+                "seq": 0,  # billed before payment on same date
+                "line": {
+                    "date": inv.invoice_date.isoformat() if inv.invoice_date else None,
+                    "type": "invoice",
+                    "invoice_id": inv.id,
+                    "invoice_number": inv.invoice_number,
+                    "entity_id": inv.entity_id,
+                    "billed": total if not not_inv else 0.0,
+                    "paid": 0.0,
+                    "status": inv.status,
+                    "currency": inv.currency,
+                    "document_gate": _gate(inv),
+                    "is_not_invoice": not_inv,
+                },
+            })
+
+            paid_at = _line_paid_date(inv)
+            if paid_at and not not_inv:
+                # Parse the timestamp string just for sorting; keep raw value in output.
+                sort_dt = inv.invoice_date
+                try:
+                    sort_dt = datetime.fromisoformat(str(paid_at).replace("Z", "+00:00")).date()
+                except (ValueError, TypeError):
+                    pass
+                events.append({
+                    "sort_date": sort_dt,
+                    "seq": 1,
+                    "line": {
+                        "date": paid_at,
+                        "type": "payment",
+                        "invoice_id": inv.id,
+                        "invoice_number": inv.invoice_number,
+                        "entity_id": inv.entity_id,
+                        "billed": 0.0,
+                        "paid": total,
+                        "status": inv.status,
+                        "currency": inv.currency,
+                        "provisional": True,
+                        "note": "Retool provisional",
+                    },
+                })
+
+        events.sort(key=lambda e: (e["sort_date"] or date.min, e["seq"]))
+
+        running = 0.0
+        lines = []
+        for ev in events:
+            line = ev["line"]
+            running += float(line.get("billed", 0.0)) - float(line.get("paid", 0.0))
+            line["balance"] = round(running, 2)
+            lines.append(line)
+
+        return {
+            "counterparty": {
+                "id": counterparty.id,
+                "name": counterparty.name,
+                "type": counterparty.type,
+                "tax_registration_number": counterparty.tax_registration_number,
+                "default_account_code": counterparty.default_account_code,
+                "entity_id": counterparty.entity_id,
+                "is_verified": counterparty.is_verified,
+                "currency": counterparty.currency,
+                "payment_terms_days": counterparty.payment_terms_days,
+            },
+            "summary": {
+                "outstanding": round(outstanding, 2),
+                "provisionally_paid_total": round(provisionally_paid_total, 2),
+                "invoice_count": invoice_count,
+                "not_invoice_count": not_invoice_count,
+                "oldest_unpaid_date": oldest_unpaid_date.isoformat() if oldest_unpaid_date else None,
+                "currency_breakdown": currency_breakdown,
+            },
+            "aging": aging,
+            "lines": lines,
+        }
 
     def record_payment(self, db: Session, invoice_id: int, amount_paid: float) -> FinanceInvoice:
         """

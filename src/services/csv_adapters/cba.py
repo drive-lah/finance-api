@@ -3,22 +3,34 @@ Commonwealth Bank of Australia (CBA) CSV and PDF Adapters
 
 Provides three classes:
   1. CBACsvAdapter - Parses CSV format only
-  2. CBAiPdfAdapter - Parses PDF format only
-  3. CBAAdapter (wrapper) - Auto-detects CSV vs PDF and dispatches to appropriate adapter
+  2. CBAiPdfAdapter - Parses PDF format only (rebuilt 2026-07-26, OCBC-grade)
+  3. CBAAdapter (wrapper) - Auto-detects CSV vs PDF and dispatches
 
 CSV Format (4 columns):
   Date (DD/MM/YYYY), Amount (signed), Description, Running Balance
 
-PDF Format (5 columns):
-  Date (DD MMM), Transaction (multi-line), Debit, Credit, Balance
-  Year inferred from "Statement Period: 31 Mar 2023 - 30 Jun 2023" header
+PDF Format (text layout, proven on all 23 real statements 2022-2025):
+  - Header: "Account Number 06 2246 10347311" and a period that wraps lines:
+        Statement
+        Period 31 Mar 2023 - 30 Jun 2023
+  - Transaction blocks: first line "DD MMM <description>", optional
+    continuation lines, and a FINAL line carrying amount + balance:
+        debit :  "NetBank inv 00002181...   200.00 $ $12,192.76CR"
+        credit:  "Charles - March          $2,756.63 $12,392.76CR"
+    i.e. debit amounts are BARE numbers followed by a stray '$'; credit
+    amounts are '$'-prefixed. Balance is '$X,XXX.XXCR' or 'DR'.
+  - Anchors: "OPENING BALANCE $X CR" opens the chain, "CLOSING BALANCE"
+    closes it, "BALANCE CARRIED/BROUGHT FORWARD" re-anchors at page breaks.
+  - Every row is verified against the running-balance chain
+    (prev + amount == balance); the statement's own summary equation line
+    feeds the self-reconcile gate.
 """
 import csv
 import io
 import re
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
-from typing import Any, Optional, Sequence
+from typing import Optional, Sequence
 
 from src.services.csv_adapters.base import BankCSVAdapter, NormalizedRow
 
@@ -27,6 +39,12 @@ try:
     PDFPLUMBER_AVAILABLE = True
 except ImportError:
     PDFPLUMBER_AVAILABLE = False
+
+
+MONTH_MAP = {
+    'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
+    'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12,
+}
 
 
 def _parse_dmy(value: str) -> Optional[date]:
@@ -40,27 +58,9 @@ def _parse_dmy(value: str) -> Optional[date]:
         return None
 
 
-def _parse_dmy_custom(value: str, year: int = 2023) -> Optional[date]:
-    """Parse DD/MM/YYYY from a string or infer year if partial."""
-    val = value.strip()
-    if not val:
-        return None
-    try:
-        # Try full DD/MM/YYYY first
-        return datetime.strptime(val, "%d/%m/%Y").date()
-    except ValueError:
-        pass
-    try:
-        # Try DD/MM only and append year
-        dt = datetime.strptime(val, "%d/%m")
-        return dt.replace(year=year).date()
-    except ValueError:
-        return None
-
-
 def _parse_decimal(value: str) -> Optional[Decimal]:
-    """Parse a decimal string, returning None if blank or unparseable."""
-    val = value.strip()
+    """Parse a decimal string (commas tolerated), None if blank/unparseable."""
+    val = value.strip().replace(',', '')
     if not val:
         return None
     try:
@@ -103,7 +103,6 @@ class CBACsvAdapter(BankCSVAdapter):
 
                     date_str, amount_str, description, balance_str = row[0], row[1], row[2], row[3]
 
-                    # Parse fields
                     txn_date = _parse_dmy(date_str)
                     if not txn_date:
                         self.errors.append(f"Row {row_idx}: Invalid date '{date_str}'")
@@ -114,19 +113,16 @@ class CBACsvAdapter(BankCSVAdapter):
                         self.errors.append(f"Row {row_idx}: Invalid amount '{amount_str}'")
                         continue
 
-                    # Parse running balance (remove leading +, parse as decimal)
                     balance_clean = balance_str.strip().lstrip('+')
                     running_balance = _parse_decimal(balance_clean)
 
-                    # Create normalized row
-                    normalized = NormalizedRow(
+                    rows.append(NormalizedRow(
                         transaction_date=txn_date,
                         description=description.strip(),
                         amount=amount,
                         currency="AUD",
                         running_balance=running_balance,
-                    )
-                    rows.append(normalized)
+                    ))
 
                 except Exception as e:
                     self.errors.append(f"Row {row_idx}: {str(e)}")
@@ -139,342 +135,333 @@ class CBACsvAdapter(BankCSVAdapter):
 
     def fingerprint_fields(self, row: NormalizedRow) -> Sequence[str]:
         """
-        Fingerprint: [date, amount, description, running_balance]
-        Running balance distinguishes duplicate transactions on same day.
+        Format-agnostic fingerprint: [date, amount, running_balance] — the same
+        statement uploaded as CSV and PDF must dedup against itself (the OCBC
+        standard, 2026-07-25). Description is format-specific, so it stays OUT.
         """
         return [
             row.transaction_date.isoformat(),
             f"{row.amount:.2f}",
-            row.description,
-            f"{row.running_balance:.2f}" if row.running_balance else "",
+            f"{row.running_balance:.2f}" if row.running_balance is not None else "",
         ]
+
+
+# Balance token that ends a transaction/marker line. Pre-2026 layouts print
+# "$12,153.33CR"; the 2026 generator dropped the '$' entirely: "8,815.84CR".
+_BAL_RE = re.compile(r'\$?\s*([\d,]+\.\d{2})\s*(CR|DR)\s*$')
+# Pre-2026 sign law — credit amount '$'-prefixed: "... $2,756.63"
+_CREDIT_RE = re.compile(r'\$\s*([\d,]+\.\d{2})\s*$')
+# Pre-2026 sign law — debit amount bare + stray '$': "... 200.00 $"
+_DEBIT_RE = re.compile(r'([\d,]+\.\d{2})\s*\$\s*$')
+# 2026 layout — bare amount, sign unknowable from typography (chain decides)
+_BARE_AMT_RE = re.compile(r'([\d,]+\.\d{2})\s*$')
+# A transaction block's first line: "04 Apr DidiChuxing ..." / "01Apr CIRCLECI..."
+_TXN_START_RE = re.compile(r'^(\d{1,2})\s*([A-Z][a-z]{2})\b\s*(.*)$')
+# Header period, tolerant of the line wrap between "Statement" and "Period"
+# and of the 2026 space-collapse ("Period 31Mar2026-30Jun2026")
+_PERIOD_RE = re.compile(
+    r'Statement\s*Period\s*:?\s*'
+    r'(\d{1,2})\s*([A-Za-z]{3})\s*(\d{4})\s*-\s*'
+    r'(\d{1,2})\s*([A-Za-z]{3})\s*(\d{4})',
+    re.DOTALL,
+)
+_ACCOUNT_RE = re.compile(r'Account\s*Number\s+([\d\s]+?)\s*$', re.MULTILINE)
+_OPENING_RE = re.compile(r'OPENING\s*BALANCE')
+_CLOSING_RE = re.compile(r'CLOSING\s*BALANCE')
+_FORWARD_RE = re.compile(r'BALANCE\s*(CARRIED|BROUGHT)\s*FORWARD')
+# The 2026 generator loses inter-word spaces at default extraction tolerance;
+# a date glued to its month ("31Mar2026") is the vintage signature.
+_COLLAPSED_SIG_RE = re.compile(r'\d{1,2}[A-Za-z]{3}\d{4}')
+# Page furniture that can land mid-block at page breaks
+_NOISE_RES = [
+    re.compile(r'^Statement\s*\d+\s*\(?Page\s*\d+\s*of\s*\d+\)?'),
+    re.compile(r'^Account\s*Number'),
+    re.compile(r'^Date\s*Transaction\s*Debit\s*Credit\s*Balance$'),
+    re.compile(r'^\*#?\*$'),
+]
 
 
 class CBAiPdfAdapter(BankCSVAdapter):
     """
-    Parses Commonwealth Bank PDF statements (5-column format).
+    Parses Commonwealth Bank PDF statements (rebuilt 2026-07-26).
 
-    Requires pdfplumber for text extraction.
-
-    Format:
-      Date (DD MMM), Transaction (multi-line), Debit, Credit, Balance
-      Year inferred from statement header.
+    Only the region between OPENING BALANCE and CLOSING BALANCE is read.
+    Signs come from the printed debit/credit form and every row is verified
+    against the running-balance chain; a broken chain becomes an advisory in
+    `errors`. After parsing, opening + Σ(amounts) must equal closing or the
+    import is refused (self-reconcile gate — a partial parse must never load).
     """
 
     def __init__(self):
-        self.errors = []
-        if not PDFPLUMBER_AVAILABLE:
-            self.errors.append("pdfplumber not installed; PDF parsing unavailable")
+        self.errors: list[str] = []
+        self.statement_account_number: str = ""
+        self.statement_opening_balance: Optional[Decimal] = None
+        self.statement_closing_balance: Optional[Decimal] = None
 
     @property
     def bank_name(self) -> str:
         return "Commonwealth Bank of Australia"
 
-    def parse(self, pdf_content: str) -> list[NormalizedRow]:
-        """Parse CBA PDF statement into NormalizedRow list."""
+    def parse(self, pdf_content: bytes) -> list[NormalizedRow]:
         if not PDFPLUMBER_AVAILABLE:
-            self.errors.append("pdfplumber required for PDF parsing")
+            self.errors = ["pdfplumber required for PDF parsing"]
             return []
 
-        rows = []
         self.errors = []
+        self.statement_account_number = ""
+        self.statement_opening_balance = None
+        self.statement_closing_balance = None
 
+        import tempfile, os
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp:
+            tmp.write(pdf_content if isinstance(pdf_content, bytes) else pdf_content.encode('latin-1'))
+            tmp_path = tmp.name
         try:
-            # pdf_content is raw bytes; write to temp file for pdfplumber
-            import tempfile
-            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp:
-                tmp.write(pdf_content if isinstance(pdf_content, bytes) else pdf_content.encode())
-                tmp_path = tmp.name
-
-            period = self._infer_year_from_pdf(tmp_path)
-            rows = self._extract_transactions_from_pdf(tmp_path, period)
-
-            # Clean up temp file
-            import os
+            lines = self._extract_lines(tmp_path)
+            # 2026 generator: default tolerance glues words together
+            # ("TransferToWiseAustraliaPtyLtd", "Period 31Mar2026-30Jun2026").
+            # Re-extract tighter to recover real word spacing — categorization
+            # rules match on description text, so this is not cosmetic.
+            if any(_COLLAPSED_SIG_RE.search(l) for l in lines[:60]):
+                lines = self._extract_lines(tmp_path, x_tolerance=2)
+        finally:
             os.unlink(tmp_path)
 
-        except Exception as e:
-            self.errors.append(f"PDF parsing failed: {str(e)}")
+        full_text = "\n".join(lines)
+
+        m = _ACCOUNT_RE.search(full_text)
+        if m:
+            self.statement_account_number = m.group(1).strip()
+
+        period = self._parse_period(full_text)
+        if period is None:
+            raise ValueError(
+                "CBA PDF: statement period not found in header — cannot infer "
+                "transaction years; refusing to guess.")
+
+        rows = self._walk_lines(lines, period)
+
+        # Self-reconcile gate: the statement's own arithmetic must hold.
+        if self.statement_opening_balance is not None and self.statement_closing_balance is not None:
+            total = sum((r.amount for r in rows), Decimal("0"))
+            expected = self.statement_closing_balance - self.statement_opening_balance
+            if total != expected:
+                raise ValueError(
+                    f"CBA PDF failed self-reconciliation: opening {self.statement_opening_balance} "
+                    f"+ movements {total} != closing {self.statement_closing_balance} "
+                    f"(off by {expected - total}). Import refused — the parse is incomplete or wrong.")
+        else:
+            self.errors.append(
+                "CBA PDF: OPENING/CLOSING BALANCE anchors not both found — "
+                "self-reconciliation skipped")
 
         return rows
 
-    def _infer_year_from_pdf(self, pdf_path: str) -> dict[str, int]:
-        """
-        Extract full statement period date range from PDF header.
-
-        Returns dict with:
-          - 'start_month': int (1-12)
-          - 'start_year': int (e.g., 2023)
-          - 'end_month': int (1-12)
-          - 'end_year': int (e.g., 2024)
-
-        Raises ValueError if statement period not found.
-
-        Example: "Statement Period: 31 Oct 2023 - 31 Jan 2024"
-        Returns: {'start_month': 10, 'start_year': 2023, 'end_month': 1, 'end_year': 2024}
-        """
-        try:
-            import pdfplumber
-            with pdfplumber.open(pdf_path) as pdf:
-                # Statement period typically on first page
-                text = pdf.pages[0].extract_text()
-                if not text:
-                    raise ValueError("Could not extract text from PDF")
-
-                # Parse: "Statement Period: DD MMM YYYY - DD MMM YYYY"
-                # Pattern matches: 31 Oct 2023 - 31 Jan 2024
-                pattern = (
-                    r'Statement\s+Period\s*:\s*'
-                    r'(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})\s*-\s*'
-                    r'(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})'
-                )
-                match = re.search(pattern, text)
-                if not match:
-                    raise ValueError("Statement Period not found in PDF header")
-
-                # Parse months
-                start_day, start_month_str, start_year_str = match.group(1), match.group(2), match.group(3)
-                end_day, end_month_str, end_year_str = match.group(4), match.group(5), match.group(6)
-
-                # Month name → number
-                month_map = {
-                    'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
-                    'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
-                }
-
-                return {
-                    'start_month': month_map.get(start_month_str, 1),
-                    'start_year': int(start_year_str),
-                    'end_month': month_map.get(end_month_str, 12),
-                    'end_year': int(end_year_str),
-                }
-        except Exception as e:
-            raise ValueError(f"Failed to extract statement period from PDF: {str(e)}")
-
-    def _get_transaction_year(self, month: int, period: dict[str, int]) -> int:
-        """
-        Determine transaction year based on month and statement period range.
-
-        If statement spans two years (e.g., Oct 2023 - Jan 2024):
-          - Oct, Nov, Dec → use start_year (2023)
-          - Jan, Feb, ... up to end month → use end_year (2024)
-
-        Args:
-            month: Transaction month (1-12)
-            period: Dict with 'start_month', 'start_year', 'end_month', 'end_year'
-
-        Returns:
-            int: year for this transaction
-        """
-        start_month = period['start_month']
-        start_year = period['start_year']
-        end_month = period['end_month']
-        end_year = period['end_year']
-
-        # If period doesn't span years, always use start year
-        if start_year == end_year:
-            return start_year
-
-        # Period spans two years (e.g., Oct 2023 - Jan 2024)
-        # If month >= start_month, use start_year; otherwise use end_year
-        if month >= start_month:
-            return start_year
-        else:
-            return end_year
-
-    def _extract_transactions_from_pdf(self, pdf_path: str, period: dict[str, int]) -> list[NormalizedRow]:
-        """Extract transactions from PDF pages."""
-        import pdfplumber
-        rows = []
-
+    @staticmethod
+    def _extract_lines(pdf_path: str, x_tolerance: Optional[float] = None) -> list[str]:
+        lines: list[str] = []
         with pdfplumber.open(pdf_path) as pdf:
             for page in pdf.pages:
-                # Extract all text from page
-                text = page.extract_text()
-                if not text:
-                    continue
+                if x_tolerance is not None:
+                    text = page.extract_text(x_tolerance=x_tolerance) or ""
+                else:
+                    text = page.extract_text() or ""
+                lines.extend(text.split('\n'))
+        return lines
 
-                # Parse transaction lines from text
-                lines = text.split('\n')
-                i = 0
-                while i < len(lines):
-                    line = lines[i].strip()
-                    i += 1
+    def _parse_period(self, full_text: str) -> Optional[dict]:
+        m = _PERIOD_RE.search(full_text)
+        if not m:
+            return None
+        sm, sy = MONTH_MAP.get(m.group(2)), int(m.group(3))
+        em, ey = MONTH_MAP.get(m.group(5)), int(m.group(6))
+        if sm is None or em is None:
+            return None
+        return {'start_month': sm, 'start_year': sy, 'end_month': em, 'end_year': ey}
 
-                    # Skip header rows and empty lines
-                    if self._should_skip_line(line):
-                        continue
+    def _year_for(self, month: int, period: dict) -> int:
+        """Statement periods can span a year boundary (e.g. 30 Dec 2023 - 30 Mar 2024)."""
+        if period['start_year'] == period['end_year']:
+            return period['start_year']
+        return period['start_year'] if month >= period['start_month'] else period['end_year']
 
-                    # Try to parse transaction start line (Date, Transaction description)
-                    row = self._parse_transaction_line(line, lines, i, period)
-                    if row:
-                        rows.append(row[0])
-                        i = row[1]  # Update position in lines
+    def _walk_lines(self, lines: list[str], period: dict) -> list[NormalizedRow]:
+        rows: list[NormalizedRow] = []
+        in_range = False          # between OPENING and CLOSING markers
+        prev_balance: Optional[Decimal] = None
+        block: list[str] = []     # accumulated lines of the current transaction
+        last_date: Optional[date] = None
+
+        for raw in lines:
+            line = raw.strip()
+            if not line:
+                continue
+
+            bal_match = _BAL_RE.search(line)
+            upper = line.upper()
+
+            # ---- markers (checked before anything else) ----
+            if bal_match and _OPENING_RE.search(upper):
+                bal = self._signed(bal_match)
+                self.statement_opening_balance = bal
+                prev_balance = bal
+                in_range = True
+                block = []
+                continue
+            if bal_match and _CLOSING_RE.search(upper):
+                self.statement_closing_balance = self._signed(bal_match)
+                in_range = False
+                continue
+            if bal_match and _FORWARD_RE.search(upper):
+                prev_balance = self._signed(bal_match)
+                block = []
+                continue
+
+            if not in_range:
+                continue
+            if any(nre.search(line) for nre in _NOISE_RES):
+                continue
+            # The summary equation line carries 2+ CR/DR tokens — never a txn
+            if len(re.findall(r'\b(CR|DR)\b', line)) >= 2:
+                continue
+
+            if not bal_match:
+                block.append(line)
+                continue
+
+            # ---- a balance line closes the current transaction block ----
+            balance = self._signed(bal_match)
+            head = line[:bal_match.start()].strip()
+
+            amount, head_desc, sign_known = self._extract_amount(head)
+            if amount is None:
+                self.errors.append(f"CBA PDF: no amount on balance line {line!r} — row skipped")
+                prev_balance = balance
+                block = []
+                continue
+
+            # Chain check: the statement's own arithmetic decides ambiguity.
+            # 2026 layout has NO typographic sign at all — the chain IS the sign.
+            if prev_balance is not None:
+                if prev_balance + amount == balance:
+                    pass
+                elif prev_balance - amount == balance:
+                    amount = -amount
+                    if sign_known:
+                        self.errors.append(
+                            f"CBA PDF: sign corrected by balance chain on {line!r}")
+                else:
+                    self.errors.append(
+                        f"CBA PDF: balance chain broke at {line!r} "
+                        f"(prev {prev_balance} +/- {amount} != {balance})")
+            elif not sign_known:
+                self.errors.append(
+                    f"CBA PDF: unanchored sign (no prior balance) on {line!r}")
+
+            block.append(head_desc)
+            txn_date, description = self._block_to_txn(block, period, last_date)
+            if txn_date is None:
+                self.errors.append(
+                    f"CBA PDF: transaction without a date near {line!r} — row skipped")
+                prev_balance = balance
+                block = []
+                continue
+            last_date = txn_date
+
+            block_text = " ".join(block)
+            value_date = None
+            vd = re.search(r'Value\s*Date:?\s*(\d{1,2})/(\d{1,2})/(\d{4})', block_text)
+            if vd:
+                try:
+                    value_date = date(int(vd.group(3)), int(vd.group(2)), int(vd.group(1)))
+                except ValueError:
+                    pass
+            card = re.search(r'Card\s*xx(\d+)', block_text)
+
+            rows.append(NormalizedRow(
+                transaction_date=txn_date,
+                description=description,
+                amount=amount,
+                currency="AUD",
+                running_balance=balance,
+                value_date=value_date,
+                reference_number=card.group(0) if card else None,
+            ))
+            prev_balance = balance
+            block = []
 
         return rows
 
-    def _should_skip_line(self, line: str) -> bool:
-        """Determine if a line should be skipped (header, footer, etc)."""
-        skip_prefixes = [
-            'Date', 'Transaction', 'Debit', 'Credit', 'Balance',
-            'Account Number', 'Statement Period', 'Closing Balance',
-            'Page', 'OPENING BALANCE', 'BALANCE CARRIED FORWARD',
-            'Statement', 'Enquiries', 'Business Transaction',
-            'Account', '—', 'No transactions',
-        ]
-        return any(line.lower().startswith(p.lower()) for p in skip_prefixes) or not line
+    @staticmethod
+    def _signed(bal_match: "re.Match[str]") -> Decimal:
+        val = Decimal(bal_match.group(1).replace(',', ''))
+        return val if bal_match.group(2) == 'CR' else -val
 
-    def _parse_transaction_line(self, line: str, all_lines: list, start_idx: int, period: dict[str, int]) -> Optional[tuple]:
+    @staticmethod
+    def _extract_amount(head: str) -> tuple[Optional[Decimal], str, bool]:
+        """Amount from the head of a balance line.
+
+        Pre-2026: '$X' = credit, 'X $' = debit (sign_known=True).
+        2026: bare 'X' — typography carries no sign; returned positive with
+        sign_known=False so the balance chain decides.
         """
-        Parse a transaction from the current line and subsequent detail lines.
-        Returns (NormalizedRow, next_index) or None if not a valid transaction start.
+        md = _DEBIT_RE.search(head)
+        if md:
+            return -Decimal(md.group(1).replace(',', '')), head[:md.start()].strip(), True
+        mc = _CREDIT_RE.search(head)
+        if mc:
+            return Decimal(mc.group(1).replace(',', '')), head[:mc.start()].strip(), True
+        mb = _BARE_AMT_RE.search(head)
+        if mb:
+            return Decimal(mb.group(1).replace(',', '')), head[:mb.start()].strip(), False
+        return None, head, False
 
-        Args:
-            period: Dict with 'start_month', 'start_year', 'end_month', 'end_year'
-        """
-        # Transaction lines start with date like "31 Mar" or "18 Apr"
-        date_match = re.match(r'^(\d{1,2})\s+([A-Za-z]{3})', line)
-        if not date_match:
-            return None
-
-        day = int(date_match.group(1))
-        month_str = date_match.group(2)
-
-        # Determine month number and transaction year based on statement period
-        month_map = {
-            'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
-            'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
-        }
-        month = month_map.get(month_str)
-        if not month:
-            return None
-
-        # Get year for this transaction based on month and statement period
-        txn_year = self._get_transaction_year(month, period)
-
-        # Parse date with determined year
-        try:
-            txn_date = datetime.strptime(f"{day} {month_str} {txn_year}", "%d %b %Y").date()
-        except ValueError:
-            return None
-
-        # Rest of the line is transaction description
-        desc_start = date_match.end()
-        description = line[desc_start:].strip()
-
-        # Next line(s) contain amounts and balance
-        # Format: [spaces] DEBIT [spaces] CREDIT [spaces] BALANCE
-        # Example: "19.53              $12,515.44 CR"
-        detail_line = ""
-        idx = start_idx
-        while idx < len(all_lines):
-            next_line = all_lines[idx].strip()
-            if not next_line:
-                idx += 1
-                continue
-            # If next line starts with a date, we're done with this transaction
-            if re.match(r'^\d{1,2}\s+[A-Za-z]{3}', next_line):
-                break
-            detail_line = next_line
-            idx += 1
-            break
-
-        # Parse amounts and balance from detail line
-        # Pattern: optional debit amount, optional credit amount, balance with currency
-        amounts = re.findall(r'-?[\d,]+\.?\d*', detail_line)
-        if not amounts:
-            return None
-
-        # Extract debit and credit (usually 2 numbers) and balance (last number or last with $)
-        debit = None
-        credit = None
-        balance = None
-
-        # Find the balance (preceded by $ in original, but numbers extracted)
-        if '$' in detail_line:
-            # Balance is the last amount
-            balance_str = amounts[-1] if amounts else ""
-            balance = _parse_decimal(balance_str)
-            amounts = amounts[:-1]  # Remove balance from amounts list
-
-        # Now parse remaining amounts as debit and credit
-        if len(amounts) >= 2:
-            debit = _parse_decimal(amounts[-2])  # Second to last is debit
-            credit = _parse_decimal(amounts[-1])  # Last is credit
-        elif len(amounts) == 1:
-            # Single amount: could be debit or credit
-            # Check the context; for now assume credit if positive
-            val = _parse_decimal(amounts[0])
-            if val and val > 0:
-                credit = val
+    def _block_to_txn(
+        self, block: list[str], period: dict, last_date: Optional[date],
+    ) -> tuple[Optional[date], str]:
+        """First block line carries 'DD MMM'; date falls back to the previous
+        transaction's when a page break separated the date from its block."""
+        desc_parts: list[str] = []
+        txn_date: Optional[date] = None
+        for i, ln in enumerate(block):
+            m = _TXN_START_RE.match(ln) if i == 0 else None
+            if m and MONTH_MAP.get(m.group(2)):
+                month = MONTH_MAP[m.group(2)]
+                try:
+                    txn_date = date(self._year_for(month, period), month, int(m.group(1)))
+                except ValueError:
+                    txn_date = None
+                desc_parts.append(m.group(3))
             else:
-                debit = val
-
-        # Calculate amount: credit - debit (or credit if only credit, or -debit if only debit)
-        amount = Decimal(0)
-        if credit and debit:
-            # Make debit negative: credit - (-debit) = credit + debit (in magnitude)
-            amount = (credit or Decimal(0)) - (debit or Decimal(0))
-        elif credit:
-            amount = credit
-        elif debit:
-            amount = -debit
-
-        # Extract value date from description/detail
-        value_date = None
-        value_date_match = re.search(r'Value Date:\s*(\d{1,2})/(\d{1,2})/(\d{4})', description + detail_line)
-        if value_date_match:
-            try:
-                value_date = date(
-                    int(value_date_match.group(3)),
-                    int(value_date_match.group(2)),
-                    int(value_date_match.group(1))
-                )
-            except ValueError:
-                pass
-
-        # Extract reference (card info, reference number, etc)
-        card_match = re.search(r'Card\s+xx(\d+)', description)
-        reference = card_match.group(0) if card_match else None
-
-        normalized = NormalizedRow(
-            transaction_date=txn_date,
-            description=description.strip(),
-            amount=amount,
-            currency="AUD",
-            running_balance=balance,
-            value_date=value_date,
-            reference_number=reference,
-        )
-
-        return (normalized, idx)
+                desc_parts.append(ln)
+        if txn_date is None:
+            txn_date = last_date
+        description = " ".join(p for p in desc_parts if p).strip()
+        return txn_date, description
 
     def fingerprint_fields(self, row: NormalizedRow) -> Sequence[str]:
-        """
-        Fingerprint: [date, amount, description, running_balance]
-        Running balance distinguishes duplicate transactions on same day.
-        """
+        """Format-agnostic fingerprint: [date, amount, running_balance]."""
         return [
             row.transaction_date.isoformat(),
             f"{row.amount:.2f}",
-            row.description,
-            f"{row.running_balance:.2f}" if row.running_balance else "",
+            f"{row.running_balance:.2f}" if row.running_balance is not None else "",
         ]
 
 
 class CBAAdapter(BankCSVAdapter):
     """
-    Smart wrapper adapter for Commonwealth Bank that auto-detects CSV vs PDF format.
+    Smart wrapper adapter for Commonwealth Bank that auto-detects CSV vs PDF.
 
-    Accepts either CSV string or PDF bytes as input and automatically dispatches
-    to the appropriate parser (CBACsvAdapter or CBAiPdfAdapter).
-
-    This allows a single CBA bank account to accept both CSV and PDF uploads
-    without requiring the user to specify the file type.
+    Surfaces the PDF adapter's statement metadata (account number, opening/
+    closing balances) so the import-time wrong-account guard and reconcile
+    reporting work through the wrapper.
     """
 
     def __init__(self):
         self.errors = []
+        self.statement_account_number: str = ""
+        self.statement_opening_balance = None
+        self.statement_closing_balance = None
         self._csv_adapter = CBACsvAdapter()
         self._pdf_adapter = CBAiPdfAdapter()
 
@@ -483,58 +470,30 @@ class CBAAdapter(BankCSVAdapter):
         return "Commonwealth Bank of Australia"
 
     def parse(self, content: str | bytes) -> list[NormalizedRow]:
-        """
-        Auto-detect format and parse accordingly.
-
-        Args:
-            content: CSV string or PDF bytes. Detects format automatically.
-
-        Returns:
-            List of NormalizedRow instances.
-        """
         self.errors = []
+        self.statement_account_number = ""
+        self.statement_opening_balance = None
+        self.statement_closing_balance = None
 
-        # Detect format: PDF files start with b'%PDF' or '%PDF' string
-        is_pdf = False
-        if isinstance(content, bytes):
-            is_pdf = content.startswith(b'%PDF')
+        is_pdf = content.startswith(b'%PDF') if isinstance(content, bytes) else content.startswith('%PDF')
+
+        if is_pdf:
+            content_bytes = content if isinstance(content, bytes) else content.encode('latin-1')
+            rows = self._pdf_adapter.parse(content_bytes)
+            self.errors = list(self._pdf_adapter.errors)
+            self.statement_account_number = self._pdf_adapter.statement_account_number
+            self.statement_opening_balance = self._pdf_adapter.statement_opening_balance
+            self.statement_closing_balance = self._pdf_adapter.statement_closing_balance
         else:
-            is_pdf = content.startswith('%PDF')
-
-        try:
-            if is_pdf:
-                # PDF format: content should be bytes or convertible to bytes
-                if isinstance(content, str):
-                    content_bytes = content.encode('latin-1')
-                else:
-                    content_bytes = content
-
-                rows = self._pdf_adapter.parse(content_bytes)
-                self.errors = list(self._pdf_adapter.errors)
-            else:
-                # CSV format: content should be string
-                if isinstance(content, bytes):
-                    content_str = content.decode('utf-8')
-                else:
-                    content_str = content
-
-                rows = self._csv_adapter.parse(content_str)
-                self.errors = list(self._csv_adapter.errors)
-
-            return rows
-
-        except Exception as e:
-            self.errors.append(f"Parse failed: {str(e)}")
-            return []
+            content_str = content.decode('utf-8') if isinstance(content, bytes) else content
+            rows = self._csv_adapter.parse(content_str)
+            self.errors = list(self._csv_adapter.errors)
+        return rows
 
     def fingerprint_fields(self, row: NormalizedRow) -> Sequence[str]:
-        """
-        Fingerprint: [date, amount, description, running_balance]
-        Both CSV and PDF use the same fingerprinting scheme.
-        """
+        """Format-agnostic fingerprint: [date, amount, running_balance]."""
         return [
             row.transaction_date.isoformat(),
             f"{row.amount:.2f}",
-            row.description,
-            f"{row.running_balance:.2f}" if row.running_balance else "",
+            f"{row.running_balance:.2f}" if row.running_balance is not None else "",
         ]

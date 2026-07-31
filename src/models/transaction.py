@@ -50,6 +50,7 @@ class CategorizationType(enum.Enum):
     EXPENSE = "expense"
     DEPOSIT = "deposit"
     INTERNAL_TRANSFER = "internal_transfer"
+    INTERCOMPANY = "intercompany"
 
 
 class FinanceTransaction(Base):
@@ -184,6 +185,19 @@ class FinanceTransaction(Base):
         nullable=True,
         comment="Plain-English reasoning from AI classification for human reviewers",
     )
+    # Route audit — columns created by migration 030 but never declared here,
+    # so every engine stamp silently vanished (all rows NULL until 2026-07-26).
+    categorized_by_rule_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("finance_categorization_rules.id", ondelete="SET NULL"),
+        nullable=True,
+        comment="Which rule was used to categorize this transaction (rule_id from Phase 4A)",
+    )
+    categorized_by_logic: Mapped[Optional[str]] = mapped_column(
+        String(50),
+        nullable=True,
+        comment="Logic path used: rule|transfer_rule|transfer_pairing|counterparty_default|invoice_knockoff|payroll_knockoff|asset_parking|ai|manual|needs_review_resolution",
+    )
     reopen_reason: Mapped[Optional[str]] = mapped_column(
         Text,
         nullable=True,
@@ -255,6 +269,8 @@ class FinanceTransaction(Base):
             "ai_suggested_account_code": self.ai_suggested_account_code,
             "ai_confidence": float(self.ai_confidence) if self.ai_confidence is not None else None,
             "ai_reasoning": self.ai_reasoning,
+            "categorized_by_rule_id": self.categorized_by_rule_id,
+            "categorized_by_logic": self.categorized_by_logic,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
