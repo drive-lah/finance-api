@@ -57,6 +57,39 @@ _IC_PAYABLE_CODES: dict[tuple[str, str], str] = {
 }
 
 
+def _coerce_amount(raw: object) -> float | None:
+    """Parse an extractor amount to float, locale-aware. Returns None (never a
+    silently-wrong value) when it cannot parse — the caller surfaces that.
+
+    Handles: native numbers; US `1,234.56`; EU `1.234,56`; parenthesised
+    negatives `(500.00)`; currency symbols/spaces. Ambiguity rule: when both
+    separators appear, the LAST one is the decimal point; a lone comma with a
+    2-digit tail is decimal, otherwise a thousands separator.
+    """
+    if raw is None:
+        return None
+    if isinstance(raw, (int, float)):
+        return float(raw)
+    import re as _re
+    s = str(raw).strip()
+    neg = s.startswith("(") and s.endswith(")")
+    s = _re.sub(r"[^0-9.,-]", "", s)  # drop currency symbols, spaces, letters
+    if not s or s in {"-", ".", ","}:
+        return None
+    if "," in s and "." in s:
+        if s.rfind(",") > s.rfind("."):
+            s = s.replace(".", "").replace(",", ".")   # EU: 1.234,56 -> 1234.56
+        else:
+            s = s.replace(",", "")                       # US: 1,234.56 -> 1234.56
+    elif "," in s:
+        s = s.replace(",", ".") if len(s.rsplit(",", 1)[1]) == 2 else s.replace(",", "")
+    try:
+        val = float(s)
+    except ValueError:
+        return None
+    return -val if neg else val
+
+
 def _entity_short(name: str) -> str:
     """Resolve an entity name to its IC-map key: SG / AU / Ventures.
 
@@ -407,18 +440,22 @@ class InvoiceService:
         d = _dpart(ex.get("invoice_date"))
         if d:
             invoice.invoice_date = d
-        # Coerce extracted amounts to float — the AI extractor can return a
-        # string ("1,234.56"); assigning raw would store garbage in a financial
-        # column that drives dedup, amortization and the AP JE. Skip on failure.
+        # Coerce extracted amounts locale-aware (US/EU/parenthesised/currency).
+        # A raw assignment stores garbage in a financial column that drives
+        # dedup, amortization and the AP JE. On a genuine parse failure we do
+        # NOT silently skip — we SURFACE it so the review UI flags the row.
+        _amount_warnings: list[str] = []
         for _fld, _key in (("total_amount", "total_amount"),
                            ("net_amount", "subtotal_amount"),
                            ("tax_amount", "tax_amount")):
             _raw = ex.get(_key)
             if _raw is not None:
-                try:
-                    setattr(invoice, _fld, float(str(_raw).replace(",", "").strip()))
-                except (TypeError, ValueError):
-                    logger.warning("attach_document: non-numeric %s %r for invoice %s — skipped",
+                _val = _coerce_amount(_raw)
+                if _val is not None:
+                    setattr(invoice, _fld, _val)
+                else:
+                    _amount_warnings.append(f"{_key}={_raw!r}")
+                    logger.warning("attach_document: unparseable %s %r for invoice %s — left unchanged",
                                    _key, _raw, invoice.id)
         if ex.get("currency"):
             invoice.currency = (ex.get("currency") or invoice.currency)[:3]
@@ -447,6 +484,12 @@ class InvoiceService:
                                                    ("statement", "letter", "report", "spreadsheet_screenshot")) else "ok"
         recon["vendor_flag"] = "MATCHED" if cp_id else "QUARANTINE"
         recon["coa_flag"] = "OK" if invoice.contra_account_code else ("NEEDS-COA" if cp_id else "NO-COUNTERPARTY")
+        if _amount_warnings:
+            recon["amount_flag"] = "UNPARSEABLE"
+            recon["extraction_warnings"] = _amount_warnings
+        else:
+            recon.pop("amount_flag", None)
+            recon.pop("extraction_warnings", None)
         raw["extraction"] = {k: ex.get(k) for k in (
             "vendor_name", "vendor_tax_id", "invoice_number", "invoice_date", "due_date",
             "total_amount", "subtotal_amount", "tax_amount", "currency", "description",

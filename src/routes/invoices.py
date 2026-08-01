@@ -203,7 +203,10 @@ def extract_invoice():
         logger.error(f"Invalid extension. ext='{ext}', allowed={ALLOWED_EXTENSIONS}")
         return jsonify({"error": "File must be a PDF or image (JPEG, PNG)"}), 400
 
-    file_bytes = file.read()
+    _MAX_BYTES = 20 * 1024 * 1024
+    file_bytes = file.read(_MAX_BYTES + 1)  # one over the cap to detect overflow
+    if len(file_bytes) > _MAX_BYTES:
+        return jsonify({"error": "File too large (max 20 MB)"}), 413
     logger.info(f"File read successfully. Size: {len(file_bytes)} bytes")
 
     # --- Duplicate detection: ADVISORY only (Gaurav 2026-08-01) ---
