@@ -54,6 +54,23 @@
 
 **Phase B — historical rebuild (2019 → 2025):** replay with the locked simplifications — payroll = direct expense (no historic runs, D2); AP legs only where invoices exist (≈Jul-25→Jun-26, D3); older = expense-on-payment; depreciation per D1; cross-check per year vs QB (reference, not truth — POL-21).
 
+## ▶ Finance Access Modules — LOCKED PLAN (Gaurav, 2026-08-01)
+
+**Goal:** retire the single `finance` mega-module; gate the admin console per functional area + add row-level `own` scope so employees see only their own expenses/payslip. Spans **admin-bff** + **admincontrols** (NOT finance-api code). Canonical facts: DQ-72/73 (KNOWLEDGE). Live audit ground truth (queried 2026-08-01): 318 grant rows / 65 users / 13 live modules; only 3 modules route-enforced (`ai-agents`,`finance`,`user-mgmt`); FE finance tabs have ZERO gating today (all tabs show to all).
+
+**Final module set = 19** (12 kept + 7 new finance; only `finance` retired). Kept: `users`(marketplace), `user-mgmt`(console ops), `ai-agents`, `core`, `tech`, `listings`, `transactions`(marketplace), `resolution`, `claims`(insurance), `host-management`, `flexplus`, `verification`. New finance (map to FE tabs by GROUP): `finance.counterparties`→Counterparties · `finance.collections`→Collections · `finance.invoices`→Accounting▸Invoices+Contracts · `finance.ledger`→Accounting▸[entities,COA,bank-accts,transactions,journal-entries,economic-events,reconciliation,trial-balance,categorization-rules,amortization] · `finance.reports`→Accounting▸Reports+FP&A · `finance.expenses`(OWN-scoped, new "My Expenses" surface) · `finance.payroll`(OWN-scoped, new "My Payslip" surface). Retire FE "Revenue & Expenses" tab. Access tier gains `own` below read: `own<read<write<admin`; `PERSONAL_MODULES={finance.expenses,finance.payroll}` filter rows to `owner_user_id=req.user.id` unless level≥read.
+
+| # | Step | Breaking? | State |
+|---|------|-----------|-------|
+| M0 | `MODULES`/`TEAMS` const in admin-bff (single source of truth) + FE mirror | no | 🔄 started (BFF const written) |
+| M1 | Add `own` tier (CHECK + ordering array); route `requireModuleAccess` unchanged | no | ⬜ |
+| M2 | Additive grants: 8 `finance:admin`→admin on all 7 `finance.*`; every employee→`finance.expenses:own`+`finance.payroll:own` (old `finance` row untouched) | no (additive) | ⬜ |
+| M3 | FE nav: `requiredModule` per tab + filter, **behind legacy-`finance` shim** (legacy grant ⇒ all `finance.*`) | guarded | ⬜ |
+| M4 | `owner_user_id` on expenses/payroll rows + `own`-filter in handlers (the real build; hinges on identity→row mapping, DQ risk) | new surface | ⬜ |
+| M5 | Flip finance route gates `finance`→specific sub-module; drop dead `finance` + shim after verify | breaking→verified | ⬜ |
+
+**Safety protocol (expand→migrate→contract):** additive grants BEFORE any gate/name removal · backward-compat shim (`finance` legacy ⇒ all `finance.*`) at both BFF gate + FE nav during transition · BFF stays the REAL gate (reads DB live per request — new grants take effect without re-login; FE nav is display-only, may need 1 re-login for JWT refresh) · Phase-1 locks NOTHING tighter than today (only nav visibility changes) · verify each phase with SQL row counts + login smoke test · rollback = drop new grants/shim (additive ⇒ reversible). **Name traps:** `finance.expenses`≠`claims`(insurance); Accounting▸Transactions tab gated by `finance.ledger` NOT the marketplace `transactions` module; `users`≠`user-mgmt` (DQ-73).
+
 **Phase C — future-forward (from Jul-2026):** payroll runs live (D2) · live categorization with RAG · Stripe sync scheduled · TMS event feed when real (F-3) · promote the review/feedback interface from Claude Code sessions to a chat agent in the dashboard (Q5 deferral) · monthly mining pass suggesting rule/default promotions (walked one-by-one). Reporting cadence per IDEAL_STATE.
 
 ## 1. What's Done

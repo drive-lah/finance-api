@@ -74,6 +74,23 @@ def update_invoice(invoice_id: int):
         return jsonify(_invoice_dict(invoice, db)), 200
 
 
+@invoices_bp.route("/<int:invoice_id>/attach", methods=["POST"])
+def attach_invoice_document(invoice_id: int):
+    """Attach a document to an EXISTING invoice (fills a no-document stub in place).
+    Multipart upload: field 'file'. Extracts + backfills + dedups the same row."""
+    import os
+    file = request.files.get("file")
+    if not file or not file.filename:
+        return jsonify({"error": "No file provided"}), 400
+    ext = os.path.splitext(file.filename.lower())[1]
+    if ext not in {'.pdf', '.jpg', '.jpeg', '.png'}:
+        return jsonify({"error": f"Unsupported file type '{ext}'"}), 400
+    file_bytes = file.read()
+    with db_session() as db:
+        invoice, verdict = invoice_service.attach_document(db, invoice_id, file_bytes, filename=file.filename)
+        return jsonify({"invoice": _invoice_dict(invoice, db), "duplicate_check": verdict.as_dict()}), 200
+
+
 @invoices_bp.route("/<int:invoice_id>/approve", methods=["POST"])
 def approve_invoice(invoice_id: int):
     """Approve an invoice, creating the AP journal entry.
@@ -186,16 +203,17 @@ def extract_invoice():
     file_bytes = file.read()
     logger.info(f"File read successfully. Size: {len(file_bytes)} bytes")
 
-    # --- Duplicate detection: exact file hash check ---
+    # --- Duplicate detection: ADVISORY only (Gaurav 2026-08-01) ---
+    # Duplicates are allowed at draft, flagged, and blocked at promotion — so we no
+    # longer 409 here. The same-file hint is surfaced (result["duplicate_check"] below,
+    # + this exact-file note) so the reviewer can proceed knowingly.
     file_hash = hashlib.sha256(file_bytes).hexdigest()
+    exact_dup = None
     with db_session() as db:
         existing = invoice_service.find_by_pdf_hash(db, file_hash)
         if existing and existing.status != 'void':
-            return jsonify({
-                "error": "Duplicate invoice",
-                "detail": f"This file has already been uploaded (Invoice #{existing.invoice_number or existing.id}, status: {existing.status}).",
-                "existing_invoice_id": existing.id,
-            }), 409
+            exact_dup = {"duplicate_of": existing.id, "level": "hash",
+                         "detail": f"Identical file already on invoice #{existing.invoice_number or existing.id} ({existing.status})."}
 
     from src.services.ai_extraction_service import ai_extraction_service
     from src.services.s3_service import s3_service
@@ -227,6 +245,31 @@ def extract_invoice():
                     "match_confidence": round(confidence, 2),
                 }
     result["vendor_match"] = vendor_match
+
+    # Advisory duplicate check (post-extraction): the identical-file case already 409'd
+    # above; this surfaces the SEMANTIC signal (same vendor + invoice number, or same
+    # vendor + amount + date without a number) so the reviewer sees it before saving.
+    try:
+        from src.services.duplicate_detection_service import duplicate_detection_service
+        from datetime import date as _date
+        raw_dt = result.get("invoice_date")
+        inv_dt = _date.fromisoformat(raw_dt) if isinstance(raw_dt, str) and len(raw_dt) >= 10 else None
+        with db_session() as db:
+            verdict = duplicate_detection_service.detect(
+                db,
+                entity_id=result.get("entity_id"),
+                counterparty_id=vendor_match["counterparty_id"],
+                invoice_number=result.get("invoice_number"),
+                total_amount=result.get("total_amount"),
+                invoice_date=inv_dt,
+                currency=result.get("currency"),
+                pdf_content_hash=file_hash,
+            )
+        result["duplicate_check"] = verdict.as_dict()
+    except Exception as e:
+        logger.warning(f"Duplicate advisory check failed (non-fatal): {e}")
+        result["duplicate_check"] = None
+    result["exact_file_match"] = exact_dup   # identical-file hint (advisory, never blocks)
 
     # Upload to S3 (best-effort)
     logger.info("Starting S3 upload...")

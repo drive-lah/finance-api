@@ -213,26 +213,9 @@ class InvoiceService:
         Checks for semantic duplicates (same entity+counterparty+invoice_number+date+currency)
         before inserting. Auto-matches against contracts if counterparty is set.
         """
-        # Semantic duplicate check
-        if data.counterparty_id and data.invoice_number:
-            existing = (
-                db.query(FinanceInvoice)
-                .filter(
-                    FinanceInvoice.entity_id == data.entity_id,
-                    FinanceInvoice.counterparty_id == data.counterparty_id,
-                    FinanceInvoice.invoice_number == data.invoice_number,
-                    FinanceInvoice.invoice_date == data.invoice_date,
-                    FinanceInvoice.currency == data.currency,
-                )
-                .first()
-            )
-            if existing:
-                from src.utils.errors import ConflictError
-                raise ConflictError(
-                    f"Invoice {data.invoice_number} from this vendor on {data.invoice_date} "
-                    f"already exists (ID {existing.id}, status: {existing.status})."
-                )
-
+        # Duplicates are ALLOWED at draft (Gaurav 2026-08-01): we create the invoice and
+        # FLAG it if it duplicates an earlier one; promotion is blocked later (submit gate).
+        # No hard reject here — the dedup verdict is applied after insert.
         invoice = FinanceInvoice(
             entity_id=data.entity_id,
             counterparty_id=data.counterparty_id,
@@ -313,10 +296,33 @@ class InvoiceService:
         try:
             db.commit()
         except IntegrityError:
+            # active-only indexes let drafts duplicate; a violation here means a clash
+            # with a LIVE (non-draft) invoice — that genuinely can't be created.
             db.rollback()
             from src.utils.errors import ConflictError
-            raise ConflictError("Duplicate invoice detected (unique constraint violation).")
+            raise ConflictError("This invoice already exists as a posted/approved record.")
         db.refresh(invoice)
+
+        # Flag (don't reject) if this duplicates an EARLIER invoice — hash or vendor+number+amount.
+        from src.services.duplicate_detection_service import duplicate_detection_service
+        from sqlalchemy.orm.attributes import flag_modified
+        verdict = duplicate_detection_service.detect(
+            db, entity_id=invoice.entity_id, counterparty_id=invoice.counterparty_id,
+            invoice_number=invoice.invoice_number, total_amount=invoice.total_amount,
+            invoice_date=invoice.invoice_date, currency=invoice.currency,
+            pdf_content_hash=invoice.pdf_content_hash, exclude_id=invoice.id,
+        )
+        if verdict.duplicate_of and verdict.duplicate_of < invoice.id:
+            raw = dict(invoice.ai_extraction_raw or {})
+            recon = dict(raw.get("recon") or {})
+            recon["duplicate"] = {"is_duplicate": bool(verdict.is_duplicate),
+                                  "duplicate_of": f"inv#{verdict.duplicate_of}",
+                                  "dup_reason": verdict.level}
+            raw["recon"] = recon
+            invoice.ai_extraction_raw = raw
+            flag_modified(invoice, "ai_extraction_raw")
+            db.commit()
+            db.refresh(invoice)
         return invoice
 
     def update(self, db: Session, invoice_id: int, data: InvoiceUpdate) -> FinanceInvoice:
@@ -352,6 +358,113 @@ class InvoiceService:
         db.commit()
         db.refresh(invoice)
         return invoice
+
+    def attach_document(self, db: Session, invoice_id: int, file_bytes: bytes,
+                        filename: str = "invoice.pdf") -> tuple:
+        """Attach a real document to an EXISTING invoice (typically a no-document stub),
+        backfilling its fields IN PLACE — never creating a new row. (Gaurav 2026-08-01)
+
+        Runs the same pipeline as fresh ingestion: hash → extract → vendor-match → S3 →
+        backfill → clear stub markers → duplicate detect. Returns (invoice, DuplicateVerdict).
+        """
+        import hashlib
+        from datetime import date as _date
+        from sqlalchemy.orm.attributes import flag_modified
+        from src.services.ai_extraction_service import ai_extraction_service
+        from src.services.vendor_matching_service import vendor_matching_service
+        from src.services.s3_service import s3_service
+        from src.services.duplicate_detection_service import duplicate_detection_service
+        from src.models.entity import FinanceEntity
+
+        invoice = self.get_by_id(db, invoice_id)
+        if invoice.status not in (InvoiceStatus.DRAFT.value, InvoiceStatus.PENDING_APPROVAL.value):
+            from src.utils.errors import ConflictError
+            raise ConflictError(
+                f"Cannot attach a document to an invoice in '{invoice.status}' status "
+                f"(only draft / pending_approval)."
+            )
+
+        h = hashlib.sha256(file_bytes).hexdigest()
+        ext = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ".pdf"
+        entity_names = [e.name for e in db.query(FinanceEntity).filter(FinanceEntity.status == "active").all()]
+        ex = ai_extraction_service.extract_invoice_data(file_bytes, entity_names=entity_names, file_extension=ext)
+
+        def _dpart(s):
+            try:
+                return _date.fromisoformat(str(s)[:10]) if s else None
+            except ValueError:
+                return None
+
+        # Vendor match if the stub has no counterparty yet
+        cp_id = invoice.counterparty_id
+        if not cp_id and (ex.get("vendor_name") or None):
+            cp, _is_new, _conf = vendor_matching_service.match_or_create(db, ex.get("vendor_name"), ex.get("vendor_tax_id"))
+            cp_id = cp.id if cp else None
+
+        # Backfill from the document (extracted values are authoritative for a real doc)
+        if ex.get("invoice_number"):
+            invoice.invoice_number = ex.get("invoice_number")
+        d = _dpart(ex.get("invoice_date"))
+        if d:
+            invoice.invoice_date = d
+        if ex.get("total_amount") is not None:
+            invoice.total_amount = ex.get("total_amount")
+        if ex.get("subtotal_amount") is not None:
+            invoice.net_amount = ex.get("subtotal_amount")
+        if ex.get("tax_amount") is not None:
+            invoice.tax_amount = ex.get("tax_amount")
+        if ex.get("currency"):
+            invoice.currency = (ex.get("currency") or invoice.currency)[:3]
+        dd = _dpart(ex.get("due_date"))
+        if dd:
+            invoice.due_date = dd
+        invoice.counterparty_id = cp_id
+        if cp_id and not invoice.contra_account_code:
+            from src.models.counterparty import FinanceCounterparty
+            cp = db.get(FinanceCounterparty, cp_id)
+            if cp and cp.default_account_code:
+                invoice.contra_account_code = cp.default_account_code
+                invoice.coa_source = "db"
+
+        invoice.pdf_s3_key = s3_service.upload_invoice_pdf(file_bytes, filename=filename, entity_id=invoice.entity_id)
+        invoice.pdf_content_hash = h
+
+        # Refresh recon: clear the stub markers, record the extraction, refresh flags
+        raw = dict(invoice.ai_extraction_raw or {})
+        recon = dict(raw.get("recon") or {})
+        recon.pop("document_status", None)
+        recon["stub"] = False
+        recon["ingest_outcome"] = "attached"
+        is_inv = ex.get("is_invoice")
+        recon["document_gate"] = "not_invoice" if (is_inv is False or ex.get("document_type") in
+                                                   ("statement", "letter", "report", "spreadsheet_screenshot")) else "ok"
+        recon["vendor_flag"] = "MATCHED" if cp_id else "QUARANTINE"
+        recon["coa_flag"] = "OK" if invoice.contra_account_code else ("NEEDS-COA" if cp_id else "NO-COUNTERPARTY")
+        raw["extraction"] = {k: ex.get(k) for k in (
+            "vendor_name", "vendor_tax_id", "invoice_number", "invoice_date", "due_date",
+            "total_amount", "subtotal_amount", "tax_amount", "currency", "description",
+            "suggested_coa_account", "is_invoice", "document_type", "confidence")}
+
+        # Duplicate detection on the now-populated row
+        verdict = duplicate_detection_service.detect(
+            db, entity_id=invoice.entity_id, counterparty_id=cp_id,
+            invoice_number=invoice.invoice_number, total_amount=invoice.total_amount,
+            invoice_date=invoice.invoice_date, currency=invoice.currency,
+            pdf_content_hash=h, exclude_id=invoice.id,
+        )
+        # Flag as duplicate only if an EARLIER invoice matches (first one wins)
+        if verdict.duplicate_of and verdict.duplicate_of < invoice.id:
+            recon["duplicate"] = {"is_duplicate": bool(verdict.is_duplicate),
+                                  "duplicate_of": f"inv#{verdict.duplicate_of}",
+                                  "dup_reason": verdict.level}
+        raw["recon"] = recon
+        invoice.ai_extraction_raw = raw
+        flag_modified(invoice, "ai_extraction_raw")
+
+        invoice.ai_confidence_score = ex.get("confidence")
+        db.commit()
+        db.refresh(invoice)
+        return invoice, verdict
 
     def _payable_account_for(self, db: Session, contra_code: Optional[str]) -> str:
         """Resolve the credit (offset) leg for a given debit (expense/COS/asset) account.
@@ -1403,6 +1516,31 @@ class InvoiceService:
             from src.utils.errors import BadRequestError
             raise BadRequestError(
                 f"Cannot submit invoice — missing required fields: {', '.join(missing)}"
+            )
+
+        # --- HARD BLOCK (Gaurav 2026-08-01): a duplicate cannot be promoted past draft —
+        # "first one wins". The deterministic layers (identical file, or same vendor +
+        # invoice number + amount) block; same-number-different-amount or numberless
+        # same-amount only warns (surfaced elsewhere as review, not blocked here). ---
+        from src.services.duplicate_detection_service import duplicate_detection_service
+        dup = duplicate_detection_service.detect(
+            db,
+            entity_id=invoice.entity_id,
+            counterparty_id=invoice.counterparty_id,
+            invoice_number=invoice.invoice_number,
+            total_amount=invoice.total_amount,
+            invoice_date=invoice.invoice_date,
+            currency=invoice.currency,
+            pdf_content_hash=invoice.pdf_content_hash,
+            exclude_id=invoice.id,
+        )
+        # "first one wins": block only if the matched original was ingested BEFORE this
+        # one (lower id). If THIS is the earliest, it is the original and may proceed.
+        if dup.is_duplicate and dup.duplicate_of and dup.duplicate_of < invoice.id:
+            from src.utils.errors import ConflictError
+            raise ConflictError(
+                f"Duplicate of invoice #{dup.duplicate_of} ({dup.level}). {dup.reason} "
+                f"A duplicate cannot be promoted past draft (first one wins)."
             )
 
         # --- SOFT BLOCK (Gaurav 2026-07-31): submitting a doc flagged NOT-an-invoice
