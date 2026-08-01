@@ -62,6 +62,9 @@
 
 **PRs raised 2026-08-01:** admin-bff #5 · admin-controls #24 · finance-api #2 (this). BFF+FE both `tsc --noEmit` exit 0; finance invoice/dup tests 25/25.
 
+**REVIEW ROUNDS DONE (2026-08-01):** 4 specialist reviewers + 3 adversarial (Forge/cross-vendor) over all 3 PRs. Fixed: FE gate-bypass (gated component mounted when tab filtered out) + **Dashboard entry card** gated on retired flat `finance` (locked out sub-module users); BFF prod migration lock (→NOT VALID), silent-403 DB-error swallow, seed idempotency, shim over-match (→FINANCE_MODULES exact), grant `granted_by` CTE; finance-api **money regression I introduced** (`replace(',','')` turned EU `1.234,56`→`1.23456`, 1000×) → locale-aware `_coerce_amount` (16 cases incl EU verified) + surfaced parse failures + `/extract` 20MB cap. Verified: BFF/FE tsc 0, finance 25/25, gating proofs (inner 8/8 + card 6/6, deterministic vs real modules.ts). Pixel view DEFERRED (Interceptor binary uninstalled — logic proven behaviorally instead). **Grant script made flip-safe:** STEP 1 = 5 SHARED modules only; STEP 2 (payroll/expenses `own`) HELD/commented — blocked on M4 (owner-row scoping) or it's a payslip PII hole.
+**FLIP (M5) GATED ON:** M4 owner-scoping (payroll/expenses `own`-filter, needs identity→row mapping) + M5 per-route BE enforcement (routes still gate flat `finance` inside the 1892-line accounting router). Merge is safe now (additive, shim-protected); the full switch-flip is the next build, not a bug-fix.
+
 | # | Step | Breaking? | State |
 |---|------|-----------|-------|
 | M0 | `MODULES`/`TEAMS` const in admin-bff (single source of truth) + FE mirror | no | ✅ done (BFF `src/constants/modules.ts` + FE `src/shared/constants/modules.ts`; PR #5/#24) |
