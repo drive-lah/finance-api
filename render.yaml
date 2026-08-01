@@ -51,8 +51,9 @@ services:
         sync: false
       - key: WISE_API_KEY
         sync: false
-      # RAG file paths — in-repo defaults usually suffice; set only if relocated.
-      - key: RAG_CORPUS_PATH
-        sync: false
-      - key: RAG_KNOWLEDGE_PATH
-        sync: false
+      # NOTE: RAG_CORPUS_PATH / RAG_KNOWLEDGE_PATH are intentionally NOT declared.
+      # The code defaults them to in-repo files that ship with the checkout
+      # (documentation/wip/reconciliation/corpus_v2/corpus_v2.csv and
+      # documentation/KNOWLEDGE.md). Declaring them sync:false would prompt in
+      # Render, and a BLANK value becomes an empty string — which os.environ.get
+      # returns instead of the default, silently disabling RAG. Leave them unset.
