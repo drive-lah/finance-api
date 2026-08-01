@@ -407,12 +407,19 @@ class InvoiceService:
         d = _dpart(ex.get("invoice_date"))
         if d:
             invoice.invoice_date = d
-        if ex.get("total_amount") is not None:
-            invoice.total_amount = ex.get("total_amount")
-        if ex.get("subtotal_amount") is not None:
-            invoice.net_amount = ex.get("subtotal_amount")
-        if ex.get("tax_amount") is not None:
-            invoice.tax_amount = ex.get("tax_amount")
+        # Coerce extracted amounts to float — the AI extractor can return a
+        # string ("1,234.56"); assigning raw would store garbage in a financial
+        # column that drives dedup, amortization and the AP JE. Skip on failure.
+        for _fld, _key in (("total_amount", "total_amount"),
+                           ("net_amount", "subtotal_amount"),
+                           ("tax_amount", "tax_amount")):
+            _raw = ex.get(_key)
+            if _raw is not None:
+                try:
+                    setattr(invoice, _fld, float(str(_raw).replace(",", "").strip()))
+                except (TypeError, ValueError):
+                    logger.warning("attach_document: non-numeric %s %r for invoice %s — skipped",
+                                   _key, _raw, invoice.id)
         if ex.get("currency"):
             invoice.currency = (ex.get("currency") or invoice.currency)[:3]
         dd = _dpart(ex.get("due_date"))

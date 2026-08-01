@@ -85,7 +85,10 @@ def attach_invoice_document(invoice_id: int):
     ext = os.path.splitext(file.filename.lower())[1]
     if ext not in {'.pdf', '.jpg', '.jpeg', '.png'}:
         return jsonify({"error": f"Unsupported file type '{ext}'"}), 400
-    file_bytes = file.read()
+    _MAX_BYTES = 20 * 1024 * 1024
+    file_bytes = file.read(_MAX_BYTES + 1)  # one over the cap to detect overflow
+    if len(file_bytes) > _MAX_BYTES:
+        return jsonify({"error": "File too large (max 20 MB)"}), 413
     with db_session() as db:
         invoice, verdict = invoice_service.attach_document(db, invoice_id, file_bytes, filename=file.filename)
         return jsonify({"invoice": _invoice_dict(invoice, db), "duplicate_check": verdict.as_dict()}), 200
