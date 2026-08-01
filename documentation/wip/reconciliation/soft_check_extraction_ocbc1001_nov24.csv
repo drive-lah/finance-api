@@ -1,0 +1,729 @@
+#,txn_date,value_date,amount,running_balance,description
+1,2024-10-31,2024-11-01,-1.81,16292.91,DEBIT PURCHASE AUD 2.00 29/10/24 xx-4180 DRIVE MATE MEL
+2,2024-10-31,2024-11-01,-1.81,16291.10,DEBIT PURCHASE AUD 2.00 29/10/24 xx-4180 DRIVE MATE MEL
+3,2024-10-31,2024-11-01,-1.81,16289.29,DEBIT PURCHASE AUD 2.00 29/10/24 xx-4180 DRIVE MATE MEL
+4,2024-10-31,2024-11-01,-1.81,16287.48,DEBIT PURCHASE AUD 2.00 29/10/24 xx-4180 DRIVE MATE MEL
+5,2024-10-31,2024-11-01,-1.81,16285.67,DEBIT PURCHASE AUD 2.00 29/10/24 xx-4180 DRIVE MATE MEL
+6,2024-10-31,2024-11-01,-1.81,16283.86,DEBIT PURCHASE AUD 2.00 29/10/24 xx-4180 DRIVE MATE MEL
+7,2024-10-31,2024-11-01,-204.68,16079.18,"DEBIT PURCHASE USD 150.00 28/10/24 xx-8724 PAPERTRAIL-SOLARWINDS 866 RNB05ESNB\1 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured. A/C Account 账户 INT Interest 利息 A/C CLOSED Account Closed 关闭账户 I/COLLN Inward Collection 进口托收 ATM O ATM Overseas 海外自动柜员机 IBG Inter-Bank GIRO 财路 ATM PAYMENT Automated Teller Machine Payment 自动柜员机付款 INB Internet Banking 网络银行 ATM TRANSFER Automated Teller Machine Transfer 自动柜员机转账 INB TRANSFER Internet Banking Transfer 网络银行转账 ACU Foreign Currency 外币 INS Insurance 保险 ADJ Adjustment 调整 L/C Letter of Credit 信用证 ADV Advance 预付款 L CHQ Late Cheque 逾期支票 AMD Amendment 修改 MER Merchant 信用卡特约商家 ASI Automated Standing Instruction 自动长期指示 NEGN Negotiation 信用证议付 BANK CHARGES Bank Charges 银行费用 NETS NETS 电子转账网络系统 BAL Balance 余款 NOM Nominee 信托人 C/Order Cashier's Order 本票 O/COLLN Outward Collection 出口托收 CHQ DP Cheque Deposit 支票存入 PAYMENT-MAS MEPS Payment 货币管理(MAS)电子付款系统-付款 CC Cash Card 现金卡 PER LOAN Personal Loan 个人贷款 CDP Central Depository 中央托收私人有限公司 PHN TRANSFER PhoneBank Transfer 电话银行转账 COM Commission 佣金 POS Point of Sale 销售终端 CONV Conversion 外币兌換 POST Postage 邮费 CR Credit 货方/存货 PREM Premium 保险费 CRVISA VISA Electron Credit 维萨电子付款 PS Power Supply 能源供应公司 CANC TT Telegraphic Transfer Cancellation 电子汇款撤消 REIMB Reimbursement 偿付 DIV Dividend 股息 RTN GIRO Return GIRO 退回财路 DR Debit 借方/付出 RTN CHQ Return Cheque 退回支票 DD Demand Draft 即期汇票 RECEIPTS-MAS MEPS Receipts 货币管理局电子付款系统-存入 DVE VISA Electron Purchases 维萨电子 SEC Security 证券 DDB Direct Debit 直接财路付款 SGD Singapore Dollar 新币 DCR Direct Credit 直接财路存款 SATM Shared ATM 供享自动柜员机 EPS Electronic Payment of Shares 电子购股付款 ST SingTel 新电信 ES EasiSave 易式储蓄户口 SER CHARGE Service Charge 服务费 ES FIXED FEE EasiSave Fixed Fee 易式账户固定费用 SHR Share NETS 供享电子转账网络系统 ESA Electronic Share Application 电子股票认购 T/R Trust Receipt 信托收据 EXPORT LOAN Export Loan 出口贷款 TT Telegraphic Transfer 电子付款 FCY Foreign Currency 外币 TRAN CHARGE Transaction Charge 交易费用 HSE LOAN House Loan 房屋贷款 TRADE FINANCE Trade Finance 货易融资 IMPORT LOAN Import Loan 进口贷款 TRANSFER Transfer 转账 Contact for Consumer Banking: 1800 363 3333 Contact for Business Banking:(65) 6538 1111 APPLICATIONS FOR INDIVIDUALS ATM Card INTERNET/MOBILE BANKING Application for Banking Services Apply at any OCBC Bank Branch Three easy ways to apply:- 1. Apply at any OCBC ATM with your ATM Card and PIN. Select 'Other Services' Select 'Internet Banking/Mobile Banking Application'; or 2. Download and complete the 'Internet/Mobile Banking Services Form (Personal)' available at www.ocbc.com, and mail it back to the address stated on the form or 3. Apply at any OCBC Branch. eBANKING APPLICATIONS FOR BUSINESSES ATM Card INTERNET BANKING Application for Access Apply at any OCBC Bank Branch Complete the Apply & Manage OCBC Velocity Account Form available at www.ocbc.com, and mail it back to the address stated on the form. Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+8,2024-10-31,2024-11-01,-272.94,15806.24,DEBIT PURCHASE USD 200.02 28/10/24 xx-4699 Twilio DTF98NLXCM299Z5 San
+9,2024-10-31,2024-11-01,-1.80,15804.44,DEBIT PURCHASE AUD 2.00 29/10/24 xx-4180 DRIVE MATE MEL
+10,2024-10-31,2024-11-01,-1.80,15802.64,DEBIT PURCHASE AUD 2.00 29/10/24 xx-4180 DRIVE MATE MEL
+11,2024-10-31,2024-11-01,-1.80,15800.84,DEBIT PURCHASE AUD 2.00 29/10/24 xx-4180 DRIVE MATE MEL
+12,2024-10-31,2024-11-01,-1.80,15799.04,DEBIT PURCHASE AUD 2.00 29/10/24 xx-4180 DRIVE MATE MEL
+13,2024-10-31,2024-11-01,-1.80,15797.24,DEBIT PURCHASE AUD 2.00 29/10/24 xx-4180 DRIVE MATE MEL
+14,2024-10-31,2024-11-01,-1.80,15795.44,DEBIT PURCHASE AUD 2.00 29/10/24 xx-4180 DRIVE MATE MEL
+15,2024-10-31,2024-11-01,-1.80,15793.64,"DEBIT PURCHASE AUD 2.00 29/10/24 xx-4180 DRIVE MATE MEL RNB05ESNB\2 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+16,2024-10-31,2024-11-01,-1.80,15791.84,DEBIT PURCHASE AUD 2.00 29/10/24 xx-4180 DRIVE MATE MEL
+17,2024-10-31,2024-11-01,-1.80,15790.04,DEBIT PURCHASE AUD 2.00 29/10/24 xx-4180 DRIVE MATE MEL
+18,2024-10-31,2024-11-01,-1.80,15788.24,DEBIT PURCHASE AUD 2.00 29/10/24 xx-4180 DRIVE MATE MEL
+19,2024-10-31,2024-11-01,-1.80,15786.44,DEBIT PURCHASE AUD 2.00 29/10/24 xx-4180 DRIVE MATE MEL
+20,2024-10-31,2024-11-01,10.00,15796.44,PAYMENT/TRANSFER OTHR S$ MUSTAFFA KAMAL BIN via PayNow: Mustaffakamal
+21,2024-11-01,2024-11-01,-13.63,15782.81,"CCY CONVERSION FEE FOR: 1,362.50 SGD"
+22,2024-11-01,2024-11-01,-1362.50,14420.31,DEBIT PURCHASE 29/10/24 xx-8724 FACEBK *6MLDSD4BY Dub
+23,2024-11-01,2024-11-01,-273.02,14147.29,DEBIT PURCHASE USD 200.08 29/10/24 xx-4699 Twilio PH223F4B2MRQ4V4 San
+24,2024-11-01,2024-11-01,-7.04,14140.25,"DEBIT PURCHASE USD 5.14 29/10/24 xx-4180 WHALE RON RNB05ESNB\3 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+25,2024-11-01,2024-11-01,-3.36,14136.89,DEBIT PURCHASE USD 2.46 30/10/24 xx-4180 WHALE RON
+26,2024-11-01,2024-11-01,90.14,14227.03,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+27,2024-11-01,2024-11-01,36.00,14263.03,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+28,2024-11-01,2024-11-01,168.00,14431.03,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+29,2024-11-01,2024-11-01,155.61,14586.64,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+30,2024-11-01,2024-11-01,94.88,14681.52,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+31,2024-11-01,2024-11-01,4.86,14686.38,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+32,2024-11-01,2024-11-01,10.00,14696.38,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+33,2024-11-01,2024-11-01,60.68,14757.06,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+34,2024-11-01,2024-11-01,43.48,14800.54,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\4 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+35,2024-11-01,2024-11-01,4.60,14805.14,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+36,2024-11-01,2024-11-01,100.00,14905.14,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+37,2024-11-01,2024-11-01,72.00,14977.14,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+38,2024-11-01,2024-11-01,64.52,15041.66,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+39,2024-11-01,2024-11-01,4.86,15046.52,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+40,2024-11-01,2024-11-01,5.00,15051.52,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+41,2024-11-01,2024-11-01,5.12,15056.64,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+42,2024-11-01,2024-11-01,64.91,15121.55,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+43,2024-11-01,2024-11-01,924.00,16045.55,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+44,2024-11-01,2024-11-01,4.65,16050.20,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\5 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+45,2024-11-01,2024-11-01,3.34,16053.54,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+46,2024-11-01,2024-11-01,37.80,16091.34,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+47,2024-11-01,2024-11-01,35.68,16127.02,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+48,2024-11-01,2024-11-01,4.71,16131.73,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+49,2024-11-01,2024-11-01,40.00,16171.73,FUND TRANSFER via PayNow-UEN from SYUHENDRA BIN OTHR - Drivelah SITI SU
+50,2024-11-02,2024-11-02,20.00,16191.73,PAYMENT/TRANSFER OTHR S$ KOH CHUAN QUAN (XU via PayNow: From Mohamed
+51,2024-11-03,2024-11-04,-234.09,15957.64,DEBIT PURCHASE USD 170.96 01/11/24 xx-4180 MARLEE (F4S AUSTRALIA) SYD
+52,2024-11-03,2024-11-04,-274.45,15683.19,DEBIT PURCHASE USD 200.36 31/10/24 xx-4699 Twilio VQ3ZF2T4R583FKG San
+53,2024-11-03,2024-11-04,-67.09,15616.10,"DEBIT PURCHASE USD 49.00 31/10/24 xx-4648 MONDAY.COM 120 RNB05ESNB\6 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+54,2024-11-03,2024-11-04,-41.02,15575.08,DEBIT PURCHASE USD 30.00 01/11/24 xx-4109 FIGMA MONTHLY RENEWAL SAN
+55,2024-11-03,2024-11-04,-51.95,15523.13,DEBIT PURCHASE USD 38.00 01/11/24 xx-4180 ARCADE SAN
+56,2024-11-03,2024-11-04,10.00,15533.13,PAYMENT/TRANSFER OTHR S$ MUSTAFFA KAMAL BIN via PayNow: Mustaffakamal@gmail.co
+57,2024-11-04,2024-11-04,-217.95,15315.18,DEBIT PURCHASE USD 159.41 01/11/24 xx-6767 METABASE INC SPR
+58,2024-11-04,2024-11-04,-273.89,15041.29,DEBIT PURCHASE USD 200.02 01/11/24 xx-4699 Twilio XPQ5QTQHJBWGBB6 San
+59,2024-11-04,2024-11-04,-2489.16,12552.13,DEBIT PURCHASE 01/11/24 xx-8724 GOOGLE*ADS9173773995 CC
+60,2024-11-04,2024-11-04,-6478.88,6073.25,DEBIT PURCHASE 01/11/24 xx-8724 GOOGLE*CLOUD ML4X CC
+61,2024-11-04,2024-11-04,-1233.37,4839.88,"DEBIT PURCHASE EUR 828.44 01/11/24 xx-8724 GOOGLE*GSUITE DRIVELAH CC RNB05ESNB\7 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+62,2024-11-04,2024-11-04,-4117.80,722.08,DEBIT PURCHASE USD 3011.77 01/11/24 xx-5342 SHARETRIBE HEL
+63,2024-11-04,2024-11-04,10000.00,10722.08,MEPS RECEIPTS IM241104005062000 TT-SGD10000.00
+64,2024-11-04,2024-11-04,8.78,10730.86,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+65,2024-11-04,2024-11-04,85.00,10815.86,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+66,2024-11-04,2024-11-04,72.11,10887.97,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+67,2024-11-04,2024-11-04,3.89,10891.86,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+68,2024-11-04,2024-11-04,10.13,10901.99,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+69,2024-11-04,2024-11-04,187.87,11089.86,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+70,2024-11-04,2024-11-04,41.18,11131.04,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+71,2024-11-04,2024-11-04,80.65,11211.69,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\8 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+72,2024-11-04,2024-11-04,85.80,11297.49,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+73,2024-11-04,2024-11-04,95.00,11392.49,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+74,2024-11-04,2024-11-04,159.40,11551.89,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+75,2024-11-04,2024-11-04,85.00,11636.89,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+76,2024-11-04,2024-11-04,9.55,11646.44,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN DRVLAHldTwM bczI
+77,2024-11-04,2024-11-04,9.99,11656.43,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+78,2024-11-04,2024-11-04,75.91,11732.34,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+79,2024-11-04,2024-11-04,22.65,11754.99,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+80,2024-11-04,2024-11-04,48.04,11803.03,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+81,2024-11-04,2024-11-04,86.35,11889.38,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\9 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+82,2024-11-04,2024-11-04,83.00,11972.38,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+83,2024-11-04,2024-11-04,78.00,12050.38,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+84,2024-11-04,2024-11-04,54.40,12104.78,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+85,2024-11-04,2024-11-04,80.80,12185.58,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+86,2024-11-04,2024-11-04,92.00,12277.58,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+87,2024-11-04,2024-11-04,28.35,12305.93,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+88,2024-11-04,2024-11-04,170.00,12475.93,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+89,2024-11-04,2024-11-04,3.68,12479.61,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+90,2024-11-04,2024-11-04,4.44,12484.05,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+91,2024-11-04,2024-11-04,64.91,12548.96,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\10 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+92,2024-11-04,2024-11-04,74.80,12623.76,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+93,2024-11-04,2024-11-04,62.40,12686.16,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+94,2024-11-04,2024-11-04,209.64,12895.80,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+95,2024-11-04,2024-11-04,5.00,12900.80,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+96,2024-11-04,2024-11-04,90.36,12991.16,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+97,2024-11-04,2024-11-04,29.34,13020.50,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+98,2024-11-04,2024-11-04,90.14,13110.64,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+99,2024-11-04,2024-11-04,93.94,13204.58,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+100,2024-11-04,2024-11-04,178.00,13382.58,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+101,2024-11-04,2024-11-04,90.00,13472.58,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\11 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+102,2024-11-04,2024-11-04,81.60,13554.18,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+103,2024-11-04,2024-11-04,87.29,13641.47,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+104,2024-11-04,2024-11-04,85.00,13726.47,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+105,2024-11-04,2024-11-04,96.00,13822.47,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+106,2024-11-04,2024-11-04,85.00,13907.47,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+107,2024-11-04,2024-11-04,20.00,13927.47,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+108,2024-11-04,2024-11-04,2.72,13930.19,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+109,2024-11-04,2024-11-04,84.45,14014.64,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+110,2024-11-04,2024-11-04,92.00,14106.64,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+111,2024-11-04,2024-11-04,8.70,14115.34,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\12 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+112,2024-11-04,2024-11-04,95.00,14210.34,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+113,2024-11-04,2024-11-04,101.00,14311.34,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+114,2024-11-04,2024-11-04,58.88,14370.22,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+115,2024-11-04,2024-11-04,94.88,14465.10,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+116,2024-11-04,2024-11-04,8.19,14473.29,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+117,2024-11-04,2024-11-04,100.58,14573.87,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+118,2024-11-04,2024-11-04,4.35,14578.22,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+119,2024-11-04,2024-11-04,80.00,14658.22,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+120,2024-11-04,2024-11-04,65.00,14723.22,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+121,2024-11-04,2024-11-04,5.88,14729.10,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\13 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+122,2024-11-04,2024-11-04,3.44,14732.54,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+123,2024-11-04,2024-11-04,22.95,14755.49,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+124,2024-11-04,2024-11-04,105.00,14860.49,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+125,2024-11-04,2024-11-04,5.12,14865.61,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+126,2024-11-04,2024-11-04,40.60,14906.21,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+127,2024-11-05,2024-11-05,-268.47,14637.74,DEBIT PURCHASE USD 196.20 02/11/24 xx-2970 DOCUSIGN INC. Wil
+128,2024-11-05,2024-11-05,-273.66,14364.08,DEBIT PURCHASE USD 200.16 02/11/24 xx-4699 Twilio MWDWQ4XVB2BCKMG San
+129,2024-11-05,2024-11-05,-41.81,14322.27,DEBIT PURCHASE USD 30.56 03/11/24 xx-8140 ZOOM.US 888-799-9666 San
+130,2024-11-05,2024-11-05,-17.71,14304.56,"DEBIT PURCHASE USD 12.95 03/11/24 xx-8724 EXPRESSVPN.COM WIL RNB05ESNB\14 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+131,2024-11-05,2024-11-05,39291.00,53595.56,TT IN SGD USD 30000.00 OC241105003579000 TT-USD30000.00
+132,2024-11-05,2024-11-05,20.00,53615.56,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+133,2024-11-05,2024-11-05,2.24,53617.80,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+134,2024-11-05,2024-11-05,1.68,53619.48,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+135,2024-11-05,2024-11-05,89.00,53708.48,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+136,2024-11-05,2024-11-05,3.24,53711.72,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+137,2024-11-05,2024-11-05,78.00,53789.72,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+138,2024-11-05,2024-11-05,70.00,53859.72,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+139,2024-11-05,2024-11-05,37.92,53897.64,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+140,2024-11-05,2024-11-05,58.90,53956.54,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\15 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+141,2024-11-05,2024-11-05,163.00,54119.54,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+142,2024-11-05,2024-11-05,66.40,54185.94,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+143,2024-11-05,2024-11-05,19.71,54205.65,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+144,2024-11-05,2024-11-05,70.00,54275.65,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+145,2024-11-05,2024-11-05,6.16,54281.81,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+146,2024-11-05,2024-11-05,-25000.00,29281.81,FAST PAYMENT OTHR WISE SM3P241105937158 SM3P241105937158
+147,2024-11-05,2024-11-05,10000.00,39281.81,TRANSFER CT0033274810 SMIT241105686487
+148,2024-11-06,2024-11-06,-0.43,39281.38,CCY CONVERSION FEE FOR: 42.51 SGD
+149,2024-11-06,2024-11-06,-273.82,39007.56,DEBIT PURCHASE USD 200.11 03/11/24 xx-4699 Twilio CLKHGBGS293MX23 San
+150,2024-11-06,2024-11-06,-42.51,38965.05,"DEBIT PURCHASE 03/11/24 xx-8724 INTUIT *QBooks Online 800 RNB05ESNB\16 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+151,2024-11-06,2024-11-06,-677.34,38287.71,DEBIT PURCHASE USD 495.00 04/11/24 xx-4180 WHALE RON
+152,2024-11-06,2024-11-06,35.68,38323.39,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+153,2024-11-06,2024-11-06,34.84,38358.23,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+154,2024-11-06,2024-11-06,3.99,38362.22,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+155,2024-11-06,2024-11-06,39.20,38401.42,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+156,2024-11-06,2024-11-06,32.76,38434.18,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+157,2024-11-06,2024-11-06,138.00,38572.18,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+158,2024-11-06,2024-11-06,2.24,38574.42,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+159,2024-11-06,2024-11-06,180.00,38754.42,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+160,2024-11-06,2024-11-06,1.68,38756.10,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\17 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+161,2024-11-07,2024-11-07,-13.63,38742.47,"CCY CONVERSION FEE FOR: 1,362.50 SGD"
+162,2024-11-07,2024-11-07,-1362.50,37379.97,DEBIT PURCHASE 04/11/24 xx-8724 FACEBK *ZH2MYCCBY Dub
+163,2024-11-07,2024-11-07,-1.80,37378.17,DEBIT PURCHASE AUD 2.00 05/11/24 xx-4180 DRIVE MATE MEL
+164,2024-11-07,2024-11-07,-1.80,37376.37,DEBIT PURCHASE AUD 2.00 05/11/24 xx-4180 DRIVE MATE MEL
+165,2024-11-07,2024-11-07,-1.80,37374.57,DEBIT PURCHASE AUD 2.00 05/11/24 xx-4180 DRIVE MATE MEL
+166,2024-11-07,2024-11-07,-1.80,37372.77,DEBIT PURCHASE AUD 2.00 05/11/24 xx-4180 DRIVE MATE MEL
+167,2024-11-07,2024-11-07,-1.80,37370.97,DEBIT PURCHASE AUD 2.00 05/11/24 xx-4180 DRIVE MATE MEL
+168,2024-11-07,2024-11-07,-1.80,37369.17,DEBIT PURCHASE AUD 2.00 05/11/24 xx-4180 DRIVE MATE MEL
+169,2024-11-07,2024-11-07,-3000.00,34369.17,"DEBIT PURCHASE 04/11/24 xx-8724 GOOGLE*ADS9173773995 CC RNB05ESNB\18 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+170,2024-11-07,2024-11-07,-1.81,34367.36,DEBIT PURCHASE AUD 2.00 05/11/24 xx-4180 DRIVE MATE MEL
+171,2024-11-07,2024-11-07,-1.81,34365.55,DEBIT PURCHASE AUD 2.00 05/11/24 xx-4180 DRIVE MATE MEL
+172,2024-11-07,2024-11-07,-1.81,34363.74,DEBIT PURCHASE AUD 2.00 05/11/24 xx-4180 DRIVE MATE MEL
+173,2024-11-07,2024-11-07,-1.81,34361.93,DEBIT PURCHASE AUD 2.00 05/11/24 xx-4180 DRIVE MATE MEL
+174,2024-11-07,2024-11-07,-1.81,34360.12,DEBIT PURCHASE AUD 2.00 05/11/24 xx-4180 DRIVE MATE MEL
+175,2024-11-07,2024-11-07,-1.81,34358.31,DEBIT PURCHASE AUD 2.00 05/11/24 xx-4180 DRIVE MATE MEL
+176,2024-11-07,2024-11-07,-1.81,34356.50,DEBIT PURCHASE AUD 2.00 05/11/24 xx-4180 DRIVE MATE MEL
+177,2024-11-07,2024-11-07,-1.81,34354.69,"DEBIT PURCHASE AUD 2.00 05/11/24 xx-4180 DRIVE MATE MEL RNB05ESNB\19 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+178,2024-11-07,2024-11-07,-1.81,34352.88,DEBIT PURCHASE AUD 2.00 05/11/24 xx-4180 DRIVE MATE MEL
+179,2024-11-07,2024-11-07,-1.81,34351.07,DEBIT PURCHASE AUD 2.00 05/11/24 xx-4180 DRIVE MATE MEL
+180,2024-11-07,2024-11-07,-1.81,34349.26,DEBIT PURCHASE AUD 2.00 05/11/24 xx-4180 DRIVE MATE MEL
+181,2024-11-07,2024-11-07,-39.72,34309.54,DEBIT PURCHASE USD 29.00 05/11/24 xx-3225 TLDX SOLUTIONS GM AAC
+182,2024-11-07,2024-11-07,-19.88,34289.66,DEBIT PURCHASE USD 14.52 05/11/24 xx-4180 WHALE RON
+183,2024-11-07,2024-11-07,-19.86,34269.80,DEBIT PURCHASE USD 14.50 05/11/24 xx-4180 WHALE RON
+184,2024-11-07,2024-11-07,-213.64,34056.16,DEBIT PURCHASE 05/11/24 xx-9628 Hubspot Singapore Ltd Sin
+185,2024-11-07,2024-11-07,3.43,34059.59,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\20 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+186,2024-11-07,2024-11-07,80.00,34139.59,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+187,2024-11-07,2024-11-07,56.56,34196.15,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+188,2024-11-07,2024-11-07,94.88,34291.03,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+189,2024-11-07,2024-11-07,22.91,34313.94,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+190,2024-11-07,2024-11-07,86.35,34400.29,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+191,2024-11-07,2024-11-07,85.40,34485.69,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+192,2024-11-07,2024-11-07,68.64,34554.33,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+193,2024-11-07,2024-11-07,85.80,34640.13,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+194,2024-11-07,2024-11-07,80.65,34720.78,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+195,2024-11-07,2024-11-07,161.30,34882.08,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\21 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+196,2024-11-07,2024-11-07,85.80,34967.88,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+197,2024-11-07,2024-11-07,87.56,35055.44,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+198,2024-11-07,2024-11-07,132.00,35187.44,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+199,2024-11-07,2024-11-07,41.20,35228.64,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+200,2024-11-07,2024-11-07,12.00,35240.64,PAYMENT/TRANSFER OTHR S$ FABIAN ONG JIA HAO via PayNow: Upgrade Insurance
+201,2024-11-08,2024-11-08,10.00,35250.64,"FUND TRANSFER via PayNow-UEN from CHEOK MEY ZHI, OTHR - OTHR"
+202,2024-11-08,2024-11-08,-27.20,35223.44,DEBIT PURCHASE USD 19.95 05/11/24 xx-1715 TWILIO SENDGRID SAN
+203,2024-11-08,2024-11-08,-2758.64,32464.80,DEBIT PURCHASE USD 2022.72 06/11/24 xx-8259 KORE WIRELESS ATL
+204,2024-11-08,2024-11-08,-72.99,32391.81,"DEBIT PURCHASE EUR 49.00 06/11/24 xx-8724 CLOJURESTREAM-CLOJU... OB RNB05ESNB\22 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+205,2024-11-08,2024-11-08,-386.65,32005.16,DEBIT PURCHASE USD 283.50 06/11/24 xx-5711 ZAPIER.COM/CHARGE SAN
+206,2024-11-08,2024-11-08,62.00,32067.16,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+207,2024-11-08,2024-11-08,151.81,32218.97,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+208,2024-11-08,2024-11-08,68.32,32287.29,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+209,2024-11-08,2024-11-08,78.76,32366.05,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+210,2024-11-08,2024-11-08,5.17,32371.22,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+211,2024-11-08,2024-11-08,2.94,32374.16,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+212,2024-11-08,2024-11-08,79.45,32453.61,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+213,2024-11-08,2024-11-08,2.28,32455.89,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+214,2024-11-08,2024-11-08,47.52,32503.41,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\23 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+215,2024-11-08,2024-11-08,68.00,32571.41,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+216,2024-11-08,2024-11-08,61.30,32632.71,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+217,2024-11-09,2024-11-09,-18.68,32614.03,DEBIT PURCHASE USD 13.54 07/11/24 xx-4180 WHALE RON
+218,2024-11-09,2024-11-09,-18.66,32595.37,DEBIT PURCHASE USD 13.53 07/11/24 xx-4180 WHALE RON
+219,2024-11-09,2024-11-09,-18.66,32576.71,DEBIT PURCHASE USD 13.53 07/11/24 xx-4180 WHALE RON
+220,2024-11-09,2024-11-09,-37.23,32539.48,DEBIT PURCHASE USD 26.98 07/11/24 xx-4180 WHALE RON
+221,2024-11-09,2024-11-09,-40.01,32499.47,DEBIT PURCHASE USD 29.00 07/11/24 xx-3136 XERO GLOBAL IN-5405451 WEL
+222,2024-11-09,2024-11-09,-15000.00,17499.47,FAST PAYMENT OTHR WISE SM3P241109999849 SM3P241109999849
+223,2024-11-09,2024-11-09,10.00,17509.47,"PAYMENT/TRANSFER OTHR S$ MUHAMMAD AZFAR AKMA via PayNow: AdditionalDriver RNB05ESNB\24 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+224,2024-11-10,2024-11-11,-13.63,17495.84,"CCY CONVERSION FEE FOR: 1,362.50 SGD"
+225,2024-11-10,2024-11-11,-1362.50,16133.34,DEBIT PURCHASE 07/11/24 xx-8724 FACEBK *RMXF6DCBY Dub
+226,2024-11-10,2024-11-11,-2238.53,13894.81,DEBIT PURCHASE EUR 1500.00 07/11/24 xx-6811 VOUCHERIFY KAT
+227,2024-11-10,2024-11-11,10.00,13904.81,PAYMENT/TRANSFER OTHR S$ MUSTAFFA KAMAL BIN via PayNow: Mustaffakamal@gmail.co
+228,2024-11-11,2024-11-11,-5.07,13899.74,CCY CONVERSION FEE FOR: 507.32 SGD
+229,2024-11-11,2024-11-11,-507.32,13392.42,DEBIT PURCHASE 08/11/24 xx-8724 FACEBK *XH7RVFQBY Dub
+230,2024-11-11,2024-11-11,-3000.00,10392.42,DEBIT PURCHASE 08/11/24 xx-8724 GOOGLE*ADS9173773995 CC
+231,2024-11-11,2024-11-11,-405.35,9987.07,DEBIT PURCHASE USD 295.52 08/11/24 xx-4313 SENTRY SAN
+232,2024-11-11,2024-11-11,-24.28,9962.79,DEBIT PURCHASE AUD 26.65 09/11/24 xx-8724 DRIVE MATE MEL
+233,2024-11-11,2024-11-11,103.68,10066.47,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\25 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+234,2024-11-11,2024-11-11,4.24,10070.71,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+235,2024-11-11,2024-11-11,4.91,10075.62,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+236,2024-11-11,2024-11-11,4.71,10080.33,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+237,2024-11-11,2024-11-11,4.86,10085.19,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+238,2024-11-11,2024-11-11,3.63,10088.82,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+239,2024-11-11,2024-11-11,272.00,10360.82,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+240,2024-11-11,2024-11-11,4.39,10365.21,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+241,2024-11-11,2024-11-11,2.45,10367.66,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+242,2024-11-11,2024-11-11,170.00,10537.66,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+243,2024-11-11,2024-11-11,31.02,10568.68,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\26 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+244,2024-11-11,2024-11-11,2.69,10571.37,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+245,2024-11-11,2024-11-11,89.00,10660.37,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+246,2024-11-11,2024-11-11,109.12,10769.49,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+247,2024-11-11,2024-11-11,63.56,10833.05,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+248,2024-11-11,2024-11-11,90.14,10923.19,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+249,2024-11-11,2024-11-11,3.73,10926.92,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+250,2024-11-11,2024-11-11,101.00,11027.92,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+251,2024-11-11,2024-11-11,92.00,11119.92,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+252,2024-11-11,2024-11-11,10.00,11129.92,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+253,2024-11-11,2024-11-11,2.88,11132.80,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\27 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+254,2024-11-11,2024-11-11,78.76,11211.56,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+255,2024-11-11,2024-11-11,79.00,11290.56,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+256,2024-11-11,2024-11-11,162.82,11453.38,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+257,2024-11-11,2024-11-11,3.68,11457.06,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+258,2024-11-11,2024-11-11,24.30,11481.36,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+259,2024-11-11,2024-11-11,58.76,11540.12,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+260,2024-11-11,2024-11-11,14.80,11554.92,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+261,2024-11-11,2024-11-11,28.35,11583.27,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+262,2024-11-11,2024-11-11,78.76,11662.03,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+263,2024-11-11,2024-11-11,16.23,11678.26,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\28 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+264,2024-11-11,2024-11-11,78.00,11756.26,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+265,2024-11-11,2024-11-11,1.75,11758.01,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN DRVLAHLhJ5x ClPW
+266,2024-11-11,2024-11-11,72.00,11830.01,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+267,2024-11-11,2024-11-11,6.48,11836.49,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+268,2024-11-11,2024-11-11,5.00,11841.49,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+269,2024-11-11,2024-11-11,83.00,11924.49,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+270,2024-11-11,2024-11-11,40.32,11964.81,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+271,2024-11-11,2024-11-11,1.38,11966.19,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+272,2024-11-11,2024-11-11,29.75,11995.94,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+273,2024-11-11,2024-11-11,144.22,12140.16,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\29 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+274,2024-11-11,2024-11-11,87.29,12227.45,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+275,2024-11-11,2024-11-11,117.52,12344.97,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+276,2024-11-11,2024-11-11,140.00,12484.97,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+277,2024-11-11,2024-11-11,13.82,12498.79,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+278,2024-11-11,2024-11-11,17.00,12515.79,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+279,2024-11-11,2024-11-11,81.41,12597.20,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+280,2024-11-11,2024-11-11,74.01,12671.21,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+281,2024-11-11,2024-11-11,63.45,12734.66,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+282,2024-11-11,2024-11-11,116.51,12851.17,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+283,2024-11-11,2024-11-11,60.00,12911.17,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\30 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+284,2024-11-11,2024-11-11,18.90,12930.07,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+285,2024-11-11,2024-11-11,30.66,12960.73,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+286,2024-11-11,2024-11-11,7.78,12968.51,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+287,2024-11-12,2024-11-12,6518.56,19487.07,PAYMENT/TRANSFER CDCD J&N INTERNATIONAL EBGPP41112692105
+288,2024-11-12,2024-11-12,68.00,19555.07,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+289,2024-11-12,2024-11-12,23.84,19578.91,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+290,2024-11-12,2024-11-12,18.42,19597.33,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+291,2024-11-12,2024-11-12,15.84,19613.17,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+292,2024-11-12,2024-11-12,92.36,19705.53,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+293,2024-11-12,2024-11-12,13.43,19718.96,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\31 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+294,2024-11-12,2024-11-12,39.76,19758.72,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+295,2024-11-12,2024-11-12,22.24,19780.96,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+296,2024-11-12,2024-11-12,24.84,19805.80,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+297,2024-11-12,2024-11-12,11.11,19816.91,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+298,2024-11-12,2024-11-12,62.00,19878.91,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+299,2024-11-12,2024-11-12,26.46,19905.37,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+300,2024-11-12,2024-11-12,35.68,19941.05,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+301,2024-11-13,2024-11-13,-13.63,19927.42,"CCY CONVERSION FEE FOR: 1,362.50 SGD"
+302,2024-11-13,2024-11-13,-1362.50,18564.92,DEBIT PURCHASE 11/11/24 xx-8724 FACEBK *PZYQYE8BY Dub
+303,2024-11-13,2024-11-13,11.11,18576.03,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\32 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+304,2024-11-13,2024-11-13,231.00,18807.03,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+305,2024-11-13,2024-11-13,5.00,18812.03,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN DRVLAHzpbGx KmYC
+306,2024-11-13,2024-11-13,22.72,18834.75,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+307,2024-11-13,2024-11-13,57.60,18892.35,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+308,2024-11-13,2024-11-13,87.00,18979.35,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+309,2024-11-13,2024-11-13,72.00,19051.35,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+310,2024-11-13,2024-11-13,54.00,19105.35,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+311,2024-11-13,2024-11-13,2.80,19108.15,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+312,2024-11-13,2024-11-13,31.35,19139.50,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+313,2024-11-13,2024-11-13,11.11,19150.61,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\33 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+314,2024-11-13,2024-11-13,35.68,19186.29,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+315,2024-11-13,2024-11-13,26.46,19212.75,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+316,2024-11-13,2024-11-13,1.45,19214.20,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+317,2024-11-13,2024-11-13,25.55,19239.75,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+318,2024-11-14,2024-11-14,-1.81,19237.94,DEBIT PURCHASE AUD 2.00 12/11/24 xx-4180 DRIVE MATE MEL
+319,2024-11-14,2024-11-14,-1.81,19236.13,DEBIT PURCHASE AUD 2.00 12/11/24 xx-4180 DRIVE MATE MEL
+320,2024-11-14,2024-11-14,-1.81,19234.32,DEBIT PURCHASE AUD 2.00 12/11/24 xx-4180 DRIVE MATE MEL
+321,2024-11-14,2024-11-14,-1.81,19232.51,DEBIT PURCHASE AUD 2.00 12/11/24 xx-4180 DRIVE MATE MEL
+322,2024-11-14,2024-11-14,-1.81,19230.70,"DEBIT PURCHASE AUD 2.00 12/11/24 xx-4180 DRIVE MATE MEL RNB05ESNB\34 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+323,2024-11-14,2024-11-14,-1.81,19228.89,DEBIT PURCHASE AUD 2.00 12/11/24 xx-4180 DRIVE MATE MEL
+324,2024-11-14,2024-11-14,-15.33,19213.56,DEBIT PURCHASE USD 11.12 11/11/24 xx-4180 WHALE RON
+325,2024-11-14,2024-11-14,-40.53,19173.03,DEBIT PURCHASE USD 29.40 12/11/24 xx-4180 OCTOPODS OMNICHANNEL COR
+326,2024-11-14,2024-11-14,-1306.09,17866.94,DEBIT PURCHASE USD 952.19 11/11/24 xx-4699 Twilio XMD6XCXP2MRQ4V4 San
+327,2024-11-14,2024-11-14,-1.82,17865.12,DEBIT PURCHASE AUD 2.00 12/11/24 xx-4180 DRIVE MATE MEL
+328,2024-11-14,2024-11-14,-1.82,17863.30,DEBIT PURCHASE AUD 2.00 12/11/24 xx-4180 DRIVE MATE MEL
+329,2024-11-14,2024-11-14,-1.82,17861.48,DEBIT PURCHASE AUD 2.00 12/11/24 xx-4180 DRIVE MATE MEL
+330,2024-11-14,2024-11-14,-1.82,17859.66,"DEBIT PURCHASE AUD 2.00 12/11/24 xx-4180 DRIVE MATE MEL RNB05ESNB\35 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+331,2024-11-14,2024-11-14,-1.82,17857.84,DEBIT PURCHASE AUD 2.00 12/11/24 xx-4180 DRIVE MATE MEL
+332,2024-11-14,2024-11-14,-1.82,17856.02,DEBIT PURCHASE AUD 2.00 12/11/24 xx-4180 DRIVE MATE MEL
+333,2024-11-14,2024-11-14,40.00,17896.02,PAYMENT/TRANSFER OTHR S$ BALIWALA SHABBIR AB via PayNow: drivelah driv insura
+334,2024-11-14,2024-11-14,105.00,18001.02,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+335,2024-11-14,2024-11-14,99.75,18100.77,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+336,2024-11-14,2024-11-14,51.62,18152.39,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+337,2024-11-14,2024-11-14,68.32,18220.71,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+338,2024-11-14,2024-11-14,68.64,18289.35,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+339,2024-11-14,2024-11-14,15.67,18305.02,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\36 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+340,2024-11-14,2024-11-14,19.98,18325.00,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+341,2024-11-14,2024-11-14,5.94,18330.94,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+342,2024-11-14,2024-11-14,44.24,18375.18,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+343,2024-11-14,2024-11-14,79.00,18454.18,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+344,2024-11-14,2024-11-14,59.92,18514.10,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+345,2024-11-14,2024-11-14,154.08,18668.18,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+346,2024-11-14,2024-11-14,4.04,18672.22,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+347,2024-11-14,2024-11-14,69.27,18741.49,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+348,2024-11-14,2024-11-14,30.69,18772.18,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+349,2024-11-14,2024-11-14,2.31,18774.49,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\37 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+350,2024-11-14,2024-11-14,4.45,18778.94,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+351,2024-11-15,2024-11-15,-131.50,18647.44,DEBIT PURCHASE USD 95.38 12/11/24 xx-2035 TRELLO.COM* ATLASSIAN NEW
+352,2024-11-15,2024-11-15,-3000.00,15647.44,DEBIT PURCHASE 12/11/24 xx-8724 GOOGLE*ADS9173773995 CC
+353,2024-11-15,2024-11-15,-43.74,15603.70,DEBIT PURCHASE USD 31.62 13/11/24 xx-4180 WHALE RON
+354,2024-11-15,2024-11-15,-14.56,15589.14,DEBIT PURCHASE USD 10.53 13/11/24 xx-4180 WHALE RON
+355,2024-11-15,2024-11-15,-14.52,15574.62,DEBIT PURCHASE USD 10.50 13/11/24 xx-4180 WHALE RON
+356,2024-11-15,2024-11-15,30.00,15604.62,PAYMENT/TRANSFER OTHR S$ DZULFARHAN BIN ZULK via PayNow: Dzulfarhan
+357,2024-11-15,2024-11-15,171.60,15776.22,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+358,2024-11-15,2024-11-15,36.18,15812.40,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\38 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+359,2024-11-15,2024-11-15,20.00,15832.40,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN DRVLAH8LZ3N 00Fv
+360,2024-11-15,2024-11-15,86.00,15918.40,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+361,2024-11-15,2024-11-15,83.00,16001.40,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+362,2024-11-15,2024-11-15,148.00,16149.40,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+363,2024-11-15,2024-11-15,83.00,16232.40,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+364,2024-11-15,2024-11-15,37.48,16269.88,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+365,2024-11-15,2024-11-15,3.63,16273.51,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+366,2024-11-15,2024-11-15,24.17,16297.68,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+367,2024-11-15,2024-11-15,2.01,16299.69,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+368,2024-11-15,2024-11-15,91.09,16390.78,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\39 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+369,2024-11-15,2024-11-15,3.48,16394.26,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+370,2024-11-15,2024-11-15,2.31,16396.57,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+371,2024-11-15,2024-11-15,74.10,16470.67,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+372,2024-11-15,2024-11-15,82.55,16553.22,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+373,2024-11-15,2024-11-15,46746.00,63299.22,TT IN SGD USD 35000.00 OC241115009579000 TT-USD35000.00
+374,2024-11-15,2024-11-15,-40000.00,23299.22,FAST PAYMENT OTHR WISE SM3P241115783720 SM3P241115783720
+375,2024-11-15,2024-11-15,20.00,23319.22,PAYMENT/TRANSFER OTHR S$ MOHAMAD SAZLEE BIN via PayNow: Drivelah
+376,2024-11-16,2024-11-16,-13.63,23305.59,"CCY CONVERSION FEE FOR: 1,362.50 SGD"
+377,2024-11-16,2024-11-16,-730.98,22574.61,DEBIT PURCHASE USD 527.20 13/11/24 xx-4180 STONLY.COM NEW
+378,2024-11-16,2024-11-16,-27.84,22546.77,"DEBIT PURCHASE USD 20.08 14/11/24 xx-4180 WHALE RON RNB05ESNB\40 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+379,2024-11-16,2024-11-16,-13.91,22532.86,DEBIT PURCHASE USD 10.04 14/11/24 xx-4180 WHALE RON
+380,2024-11-16,2024-11-16,-27.73,22505.13,DEBIT PURCHASE USD 20.00 14/11/24 xx-3180 OPENAI *CHATGPT SUBSCR SAN
+381,2024-11-16,2024-11-16,-310.64,22194.49,DEBIT PURCHASE USD 224.51 13/11/24 xx-8140 ZOOM.US 888-799-9666 San
+382,2024-11-16,2024-11-16,-27.67,22166.82,DEBIT PURCHASE USD 20.00 13/11/24 xx-3180 OPENAI *CHATGPT SUBSCR SAN
+383,2024-11-16,2024-11-16,-1362.50,20804.32,DEBIT PURCHASE 14/11/24 xx-8724 FACEBK *9VN95F8BY Dub
+384,2024-11-16,2024-11-16,-91.92,20712.40,DEBIT PURCHASE USD 66.30 14/11/24 xx-6209 TIMETASTIC WIL
+385,2024-11-17,2024-11-18,-0.59,20711.81,CCY CONVERSION FEE FOR: 59.00 SGD
+386,2024-11-17,2024-11-18,-13.71,20698.10,DEBIT PURCHASE USD 9.89 14/11/24 xx-4180 WHALE RON
+387,2024-11-17,2024-11-18,-59.00,20639.10,"DEBIT PURCHASE 14/11/24 xx-3586 SURVEYMONK* T 46255041 DUB RNB05ESNB\41 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+388,2024-11-18,2024-11-18,-2.20,20636.90,CCY CONVERSION FEE FOR: 220.33 SGD
+389,2024-11-18,2024-11-18,-0.43,20636.47,CCY CONVERSION FEE FOR: 42.51 SGD
+390,2024-11-18,2024-11-18,-42.51,20593.96,DEBIT PURCHASE 15/11/24 xx-8724 INTUIT *QBooks Online 800
+391,2024-11-18,2024-11-18,-71.63,20522.33,DEBIT PURCHASE AUD 79.20 14/11/24 xx-8724 DNH*GODADDY#3410000767 13
+392,2024-11-18,2024-11-18,-1.46,20520.87,DEBIT PURCHASE USD 1.05 15/11/24 xx-4648 MONDAY.COM 120
+393,2024-11-18,2024-11-18,-192.80,20328.07,DEBIT PURCHASE GBP 109.00 15/11/24 xx-2090 DROPBOX DOCSEND SAN
+394,2024-11-18,2024-11-18,-244.85,20083.22,DEBIT PURCHASE USD 175.95 16/11/24 xx-8724 SEMRUSH 312
+395,2024-11-18,2024-11-18,-220.33,19862.89,DEBIT PURCHASE 16/11/24 xx-8724 Adobe 800
+396,2024-11-18,2024-11-18,10.00,19872.89,"PAYMENT/TRANSFER OTHR S$ CHEONG YOON TIAN via PayNow: Add driver Mr Foo RNB05ESNB\42 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+397,2024-11-18,2024-11-18,31.35,19904.24,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+398,2024-11-18,2024-11-18,28.35,19932.59,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+399,2024-11-18,2024-11-18,48.83,19981.42,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+400,2024-11-18,2024-11-18,120.89,20102.31,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+401,2024-11-18,2024-11-18,72.11,20174.42,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+402,2024-11-18,2024-11-18,50.16,20224.58,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+403,2024-11-18,2024-11-18,48.20,20272.78,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+404,2024-11-18,2024-11-18,13.86,20286.64,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+405,2024-11-18,2024-11-18,257.40,20544.04,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+406,2024-11-18,2024-11-18,45.79,20589.83,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\43 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+407,2024-11-18,2024-11-18,7.37,20597.20,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+408,2024-11-18,2024-11-18,18.20,20615.40,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+409,2024-11-18,2024-11-18,43.00,20658.40,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+410,2024-11-18,2024-11-18,14.28,20672.68,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+411,2024-11-18,2024-11-18,16.90,20689.58,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+412,2024-11-18,2024-11-18,67.37,20756.95,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+413,2024-11-18,2024-11-18,100.00,20856.95,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+414,2024-11-18,2024-11-18,48.83,20905.78,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+415,2024-11-18,2024-11-18,15.05,20920.83,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+416,2024-11-18,2024-11-18,54.91,20975.74,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\44 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+417,2024-11-18,2024-11-18,33.60,21009.34,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+418,2024-11-18,2024-11-18,74.96,21084.30,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+419,2024-11-18,2024-11-18,39.97,21124.27,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+420,2024-11-18,2024-11-18,51.16,21175.43,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+421,2024-11-18,2024-11-18,136.63,21312.06,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+422,2024-11-18,2024-11-18,20.20,21332.26,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+423,2024-11-18,2024-11-18,27.53,21359.79,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN DRVLAHP0mIh OB4f
+424,2024-11-18,2024-11-18,90.14,21449.93,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+425,2024-11-18,2024-11-18,80.00,21529.93,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+426,2024-11-18,2024-11-18,85.00,21614.93,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\45 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+427,2024-11-18,2024-11-18,4.40,21619.33,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+428,2024-11-18,2024-11-18,81.41,21700.74,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+429,2024-11-18,2024-11-18,45.89,21746.63,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+430,2024-11-18,2024-11-18,11.11,21757.74,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+431,2024-11-18,2024-11-18,20.00,21777.74,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+432,2024-11-18,2024-11-18,5.14,21782.88,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN DRVLAHpSPsO 8qKk
+433,2024-11-18,2024-11-18,90.00,21872.88,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+434,2024-11-18,2024-11-18,85.80,21958.68,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+435,2024-11-18,2024-11-18,4.48,21963.16,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+436,2024-11-18,2024-11-18,8.78,21971.94,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN DRVLAHqPh9x YJT0 RNB05ESNB\46 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+437,2024-11-18,2024-11-18,64.52,22036.46,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+438,2024-11-18,2024-11-18,24.17,22060.63,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+439,2024-11-18,2024-11-18,16.28,22076.91,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+440,2024-11-18,2024-11-18,82.40,22159.31,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+441,2024-11-18,2024-11-18,71.29,22230.60,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+442,2024-11-18,2024-11-18,36.03,22266.63,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+443,2024-11-18,2024-11-18,4.86,22271.49,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+444,2024-11-18,2024-11-18,50.24,22321.73,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+445,2024-11-18,2024-11-18,56.56,22378.29,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+446,2024-11-18,2024-11-18,1.21,22379.50,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\47 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+447,2024-11-18,2024-11-18,23.16,22402.66,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+448,2024-11-18,2024-11-18,20.22,22422.88,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+449,2024-11-18,2024-11-18,10.00,22432.88,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+450,2024-11-18,2024-11-18,4.55,22437.43,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+451,2024-11-18,2024-11-18,72.00,22509.43,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+452,2024-11-18,2024-11-18,216.33,22725.76,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+453,2024-11-18,2024-11-18,22.42,22748.18,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+454,2024-11-18,2024-11-18,11.67,22759.85,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+455,2024-11-18,2024-11-18,1.80,22761.65,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+456,2024-11-19,2024-11-19,-4393.00,18368.65,"GIRO COLL 201900261M CPF BIZ RNB05ESNB\48 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+457,2024-11-19,2024-11-19,-13.63,18355.02,"CCY CONVERSION FEE FOR: 1,362.50 SGD"
+458,2024-11-19,2024-11-19,-0.43,18354.59,CCY CONVERSION FEE FOR: 42.51 SGD
+459,2024-11-19,2024-11-19,-1362.50,16992.09,DEBIT PURCHASE 16/11/24 xx-8724 FACEBK *8BQYQFYBY Dub
+460,2024-11-19,2024-11-19,-1323.81,15668.28,DEBIT PURCHASE USD 950.23 16/11/24 xx-4699 Twilio ZLMZ7BXQ8PBMPK4 San
+461,2024-11-19,2024-11-19,-42.51,15625.77,DEBIT PURCHASE 16/11/24 xx-8724 INTUIT *QBooks Online 800
+462,2024-11-19,2024-11-19,-468.70,15157.07,DEBIT PURCHASE USD 336.81 16/11/24 xx-4648 MONDAY.COM 120
+463,2024-11-19,2024-11-19,-3000.00,12157.07,DEBIT PURCHASE 16/11/24 xx-8724 GOOGLE*ADS9173773995 CC
+464,2024-11-19,2024-11-19,4.04,12161.11,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+465,2024-11-19,2024-11-19,25.63,12186.74,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+466,2024-11-19,2024-11-19,17.82,12204.56,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\49 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+467,2024-11-19,2024-11-19,2.66,12207.22,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+468,2024-11-19,2024-11-19,75.00,12282.22,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+469,2024-11-19,2024-11-19,87.89,12370.11,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+470,2024-11-19,2024-11-19,51.38,12421.49,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+471,2024-11-19,2024-11-19,50.09,12471.58,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+472,2024-11-19,2024-11-19,61.95,12533.53,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+473,2024-11-19,2024-11-19,2.60,12536.13,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+474,2024-11-19,2024-11-19,3.63,12539.76,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN DRVLAH0zErk DlHS
+475,2024-11-19,2024-11-19,157.78,12697.54,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+476,2024-11-19,2024-11-19,1.16,12698.70,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\50 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+477,2024-11-19,2024-11-19,69.54,12768.24,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+478,2024-11-19,2024-11-19,4.93,12773.17,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+479,2024-11-19,2024-11-19,15.66,12788.83,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+480,2024-11-19,2024-11-19,4.76,12793.59,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN DRVLAH1ceXl mI8d
+481,2024-11-19,2024-11-19,23.90,12817.49,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+482,2024-11-20,2024-11-20,-22.63,12794.86,DEBIT PURCHASE USD 16.26 17/11/24 xx-4180 WHALE RON
+483,2024-11-20,2024-11-20,12000.00,24794.86,TRANSFER CT0033404042 SMIT241120698734
+484,2024-11-20,2024-11-20,19.71,24814.57,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+485,2024-11-20,2024-11-20,56.88,24871.45,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+486,2024-11-20,2024-11-20,19.90,24891.35,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\51 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+487,2024-11-20,2024-11-20,61.00,24952.35,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+488,2024-11-20,2024-11-20,4.86,24957.21,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+489,2024-11-20,2024-11-20,109.00,25066.21,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+490,2024-11-20,2024-11-20,16.13,25082.34,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+491,2024-11-20,2024-11-20,53.76,25136.10,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+492,2024-11-20,2024-11-20,10.00,25146.10,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+493,2024-11-20,2024-11-20,264.72,25410.82,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+494,2024-11-20,2024-11-20,30.66,25441.48,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+495,2024-11-20,2024-11-20,75.60,25517.08,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+496,2024-11-20,2024-11-20,15.00,25532.08,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\52 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+497,2024-11-20,2024-11-20,25.90,25557.98,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+498,2024-11-20,2024-11-20,68.00,25625.98,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+499,2024-11-20,2024-11-20,23.40,25649.38,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+500,2024-11-20,2024-11-20,11.88,25661.26,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+501,2024-11-20,2024-11-20,2.26,25663.52,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+502,2024-11-20,2024-11-20,20.00,25683.52,PAYMENT/TRANSFER OTHR S$ BALAJI NANDHINI via PayNow: Additional driver
+503,2024-11-20,2024-11-20,20.00,25703.52,PAYMENT/TRANSFER OTHR S$ NURUL SYAZWINA BINT via PayNow: NA
+504,2024-11-20,2024-11-20,20.00,25723.52,FUND TRANSFER via PayNow-UEN from GOH CHERN KUAN OTHR - Additional driver SuYi
+505,2024-11-21,2024-11-21,-13.63,25709.89,"CCY CONVERSION FEE FOR: 1,362.50 SGD"
+506,2024-11-21,2024-11-21,-22.11,25687.78,"DEBIT PURCHASE AUD 24.60 19/11/24 xx-8724 DRIVE MATE MEL RNB05ESNB\53 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+507,2024-11-21,2024-11-21,-513.50,25174.28,DEBIT PURCHASE USD 369.00 18/11/24 xx-5342 SHARETRIBE HEL
+508,2024-11-21,2024-11-21,-457.84,24716.44,DEBIT PURCHASE USD 329.00 18/11/24 xx-5342 SHARETRIBE HEL
+509,2024-11-21,2024-11-21,-1362.50,23353.94,DEBIT PURCHASE 19/11/24 xx-8724 FACEBK *4T43VFYBY Dub
+510,2024-11-21,2024-11-21,29.37,23383.31,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+511,2024-11-21,2024-11-21,225.00,23608.31,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+512,2024-11-21,2024-11-21,62.00,23670.31,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+513,2024-11-21,2024-11-21,85.00,23755.31,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+514,2024-11-21,2024-11-21,67.37,23822.68,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+515,2024-11-21,2024-11-21,184.00,24006.68,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\54 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+516,2024-11-21,2024-11-21,92.00,24098.68,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+517,2024-11-21,2024-11-21,14.60,24113.28,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+518,2024-11-21,2024-11-21,19.17,24132.45,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+519,2024-11-21,2024-11-21,38.01,24170.46,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+520,2024-11-21,2024-11-21,3.63,24174.09,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+521,2024-11-21,2024-11-21,85.80,24259.89,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+522,2024-11-22,2024-11-22,-22.13,24237.76,DEBIT PURCHASE AUD 24.60 20/11/24 xx-8724 DRIVE MATE MEL
+523,2024-11-22,2024-11-22,-7.38,24230.38,DEBIT PURCHASE AUD 8.20 20/11/24 xx-8724 DRIVE MATE MEL
+524,2024-11-22,2024-11-22,-22.13,24208.25,"DEBIT PURCHASE AUD 24.60 20/11/24 xx-8724 DRIVE MATE MEL RNB05ESNB\55 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+525,2024-11-22,2024-11-22,22.18,24230.43,DEBIT CREDIT AUD 24.60 19/11/24 xx-8724 DRIVE MATE MEL
+526,2024-11-22,2024-11-22,-1129.30,23101.13,DEBIT PURCHASE USD 812.84 19/11/24 xx-1377 SLACK TLJACME13 DUB
+527,2024-11-22,2024-11-22,-29.30,23071.83,DEBIT PURCHASE USD 21.15 19/11/24 xx-4180 WHALE RON
+528,2024-11-22,2024-11-22,-19.53,23052.30,DEBIT PURCHASE USD 14.10 20/11/24 xx-4180 WHALE RON
+529,2024-11-22,2024-11-22,-126.86,22925.44,DEBIT PURCHASE USD 91.57 19/11/24 xx-5133 MIRO.COM SAN
+530,2024-11-22,2024-11-22,-13.99,22911.45,DEBIT PURCHASE 20/11/24 xx-8724 Google One SIN
+531,2024-11-22,2024-11-22,56.16,22967.61,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+532,2024-11-22,2024-11-22,15.60,22983.21,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+533,2024-11-22,2024-11-22,76.00,23059.21,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\56 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+534,2024-11-22,2024-11-22,57.56,23116.77,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+535,2024-11-22,2024-11-22,71.00,23187.77,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+536,2024-11-22,2024-11-22,3.63,23191.40,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN DRVLAH0real uuVD
+537,2024-11-22,2024-11-22,95.26,23286.66,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+538,2024-11-22,2024-11-22,68.64,23355.30,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+539,2024-11-22,2024-11-22,66.40,23421.70,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+540,2024-11-22,2024-11-22,15.80,23437.50,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+541,2024-11-22,2024-11-22,15.70,23453.20,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+542,2024-11-22,2024-11-22,5.27,23458.47,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+543,2024-11-22,2024-11-22,38.01,23496.48,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\57 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+544,2024-11-22,2024-11-22,3.24,23499.72,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+545,2024-11-22,2024-11-22,10.00,23509.72,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+546,2024-11-22,2024-11-22,1.45,23511.17,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+547,2024-11-22,2024-11-22,32.07,23543.24,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+548,2024-11-22,2024-11-22,2.60,23545.84,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+549,2024-11-22,2024-11-22,3.50,23549.34,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+550,2024-11-22,2024-11-22,2.96,23552.30,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+551,2024-11-22,2024-11-22,15000.00,38552.30,TRANSFER CT0033434073 SMIT241122701297
+552,2024-11-23,2024-11-23,-3000.00,35552.30,DEBIT PURCHASE 20/11/24 xx-8724 GOOGLE*ADS9173773995 CC
+553,2024-11-23,2024-11-23,-193.93,35358.37,"DEBIT PURCHASE USD 139.60 20/11/24 xx-4180 OCTOPODS WHATSAPP COR RNB05ESNB\58 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+554,2024-11-23,2024-11-23,-81.74,35276.63,"DEBIT PURCHASE USD 59.00 20/11/24 xx-6395 CRUNCHBASE, INC. SAN"
+555,2024-11-23,2024-11-23,-17.28,35259.35,DEBIT PURCHASE AUD 19.12 21/11/24 xx-8724 DRIVE MATE MEL
+556,2024-11-23,2024-11-23,-1159.31,34100.04,DEBIT PURCHASE USD 834.50 21/11/24 xx-9595 ATLASSIAN SAN
+557,2024-11-24,2024-11-25,-13.63,34086.41,"CCY CONVERSION FEE FOR: 1,362.50 SGD"
+558,2024-11-24,2024-11-25,-0.18,34086.23,CCY CONVERSION FEE FOR: 17.98 SGD
+559,2024-11-24,2024-11-25,-1316.27,32769.96,DEBIT PURCHASE USD 950.10 21/11/24 xx-4699 Twilio TCSR9RG23MRQ4V4 San
+560,2024-11-24,2024-11-25,-17.28,32752.68,DEBIT PURCHASE AUD 19.12 22/11/24 xx-8724 DRIVE MATE MEL
+561,2024-11-24,2024-11-25,24.15,32776.83,DEBIT CREDIT AUD 26.65 21/11/24 xx-8724 DRIVE MATE MEL
+562,2024-11-24,2024-11-25,-1362.50,31414.33,"DEBIT PURCHASE 21/11/24 xx-8724 FACEBK *YUH3JF8BY DUB RNB05ESNB\59 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+563,2024-11-24,2024-11-25,-22.29,31392.04,DEBIT PURCHASE AUD 24.60 22/11/24 xx-8724 DRIVE MATE MEL
+564,2024-11-24,2024-11-25,-17.98,31374.06,DEBIT PURCHASE 21/11/24 xx-4330 CANVA* I04343-2794985 CAM
+565,2024-11-24,2024-11-25,-17.32,31356.74,DEBIT PURCHASE AUD 19.12 22/11/24 xx-8724 DRIVE MATE MEL
+566,2024-11-24,2024-11-25,-43.64,31313.10,DEBIT PURCHASE AUD 48.17 22/11/24 xx-8724 DRIVE MATE MEL
+567,2024-11-25,2024-11-25,-48.84,31264.26,DEBIT PURCHASE USD 35.00 22/11/24 xx-9146 BITLY.COM NEW
+568,2024-11-25,2024-11-25,17.33,31281.59,DEBIT CREDIT AUD 19.12 22/11/24 xx-8724 DRIVE MATE MEL
+569,2024-11-25,2024-11-25,19.85,31301.44,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+570,2024-11-25,2024-11-25,41.28,31342.72,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+571,2024-11-25,2024-11-25,19.17,31361.89,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\60 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+572,2024-11-25,2024-11-25,15.60,31377.49,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+573,2024-11-25,2024-11-25,81.60,31459.09,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+574,2024-11-25,2024-11-25,20.00,31479.09,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+575,2024-11-25,2024-11-25,20.25,31499.34,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+576,2024-11-25,2024-11-25,61.30,31560.64,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+577,2024-11-25,2024-11-25,2.52,31563.16,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+578,2024-11-25,2024-11-25,3.24,31566.40,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+579,2024-11-25,2024-11-25,100.40,31666.80,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+580,2024-11-25,2024-11-25,68.00,31734.80,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+581,2024-11-25,2024-11-25,28.44,31763.24,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\61 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+582,2024-11-25,2024-11-25,10.00,31773.24,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+583,2024-11-25,2024-11-25,22.21,31795.45,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+584,2024-11-25,2024-11-25,1.22,31796.67,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+585,2024-11-25,2024-11-25,3.94,31800.61,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+586,2024-11-25,2024-11-25,66.59,31867.20,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+587,2024-11-25,2024-11-25,7.59,31874.79,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+588,2024-11-25,2024-11-25,106.00,31980.79,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+589,2024-11-25,2024-11-25,3.24,31984.03,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+590,2024-11-25,2024-11-25,90.14,32074.17,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+591,2024-11-25,2024-11-25,10.00,32084.17,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\62 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+592,2024-11-25,2024-11-25,102.00,32186.17,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+593,2024-11-25,2024-11-25,10.25,32196.42,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+594,2024-11-25,2024-11-25,25.83,32222.25,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+595,2024-11-25,2024-11-25,67.37,32289.62,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+596,2024-11-25,2024-11-25,9.21,32298.83,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+597,2024-11-25,2024-11-25,3.92,32302.75,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+598,2024-11-25,2024-11-25,74.96,32377.71,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+599,2024-11-25,2024-11-25,86.00,32463.71,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+600,2024-11-25,2024-11-25,5.58,32469.29,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+601,2024-11-25,2024-11-25,66.59,32535.88,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\63 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+602,2024-11-25,2024-11-25,20.00,32555.88,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+603,2024-11-25,2024-11-25,85.80,32641.68,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+604,2024-11-25,2024-11-25,91.00,32732.68,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+605,2024-11-25,2024-11-25,84.45,32817.13,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+606,2024-11-25,2024-11-25,76.00,32893.13,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+607,2024-11-25,2024-11-25,17.00,32910.13,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+608,2024-11-25,2024-11-25,227.80,33137.93,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+609,2024-11-25,2024-11-25,136.63,33274.56,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+610,2024-11-25,2024-11-25,7.37,33281.93,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+611,2024-11-25,2024-11-25,65.00,33346.93,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\64 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+612,2024-11-25,2024-11-25,97.73,33444.66,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+613,2024-11-25,2024-11-25,4.35,33449.01,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN DRVLAHCVTaj ONEv
+614,2024-11-25,2024-11-25,208.00,33657.01,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+615,2024-11-25,2024-11-25,71.25,33728.26,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+616,2024-11-25,2024-11-25,20.00,33748.26,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+617,2024-11-25,2024-11-25,92.00,33840.26,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+618,2024-11-25,2024-11-25,52.17,33892.43,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+619,2024-11-25,2024-11-25,81.60,33974.03,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+620,2024-11-25,2024-11-25,162.82,34136.85,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+621,2024-11-25,2024-11-25,83.00,34219.85,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\65 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+622,2024-11-25,2024-11-25,5.00,34224.85,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN DRVLAHJurDc 0wya
+623,2024-11-25,2024-11-25,33.00,34257.85,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+624,2024-11-25,2024-11-25,9.83,34267.68,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+625,2024-11-25,2024-11-25,255.00,34522.68,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+626,2024-11-25,2024-11-25,44.94,34567.62,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+627,2024-11-25,2024-11-25,4.39,34572.01,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN DRVLAH6UtSI hhHZ
+628,2024-11-25,2024-11-25,67.37,34639.38,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+629,2024-11-25,2024-11-25,3.24,34642.62,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+630,2024-11-25,2024-11-25,88.24,34730.86,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+631,2024-11-25,2024-11-25,175.52,34906.38,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\66 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+632,2024-11-25,2024-11-25,20.00,34926.38,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+633,2024-11-25,2024-11-25,43.48,34969.86,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+634,2024-11-25,2024-11-25,25.28,34995.14,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+635,2024-11-26,2024-11-26,30.00,35025.14,PAYMENT/TRANSFER OTHR CHUA SONG CHYE BERN Drivelah car rental 27 Fe 2025
+636,2024-11-26,2024-11-26,-13.63,35011.51,"CCY CONVERSION FEE FOR: 1,362.50 SGD"
+637,2024-11-26,2024-11-26,-70.02,34941.49,DEBIT PURCHASE USD 50.17 23/11/24 xx-4180 BIRTHDAYBOT NEW
+638,2024-11-26,2024-11-26,-40.47,34901.02,DEBIT PURCHASE USD 29.00 23/11/24 xx-9054 MURF.AI SAL
+639,2024-11-26,2024-11-26,-1362.50,33538.52,DEBIT PURCHASE 24/11/24 xx-8724 FACEBK *T8JW2ELBY Dub
+640,2024-11-26,2024-11-26,-83.74,33454.78,"DEBIT PURCHASE USD 60.00 24/11/24 xx-7950 CALENDLY AVO RNB05ESNB\67 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+641,2024-11-26,2024-11-26,-13.95,33440.83,DEBIT PURCHASE USD 10.00 23/11/24 xx-4180 ONELINK.TO JAR
+642,2024-11-26,2024-11-26,313.00,33753.83,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+643,2024-11-26,2024-11-26,15.00,33768.83,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+644,2024-11-26,2024-11-26,85.80,33854.63,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+645,2024-11-26,2024-11-26,152.00,34006.63,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+646,2024-11-26,2024-11-26,90.14,34096.77,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+647,2024-11-26,2024-11-26,3.49,34100.26,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+648,2024-11-26,2024-11-26,43.68,34143.94,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+649,2024-11-26,2024-11-26,2.01,34145.95,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+650,2024-11-26,2024-11-26,19.09,34165.04,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\68 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+651,2024-11-26,2024-11-26,58.76,34223.80,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+652,2024-11-26,2024-11-26,3.26,34227.06,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+653,2024-11-26,2024-11-26,-10000.00,24227.06,FAST PAYMENT OTHR WISE SM3P241126921889 SM3P241126921889
+654,2024-11-26,2024-11-26,40155.00,64382.06,TT IN SGD USD 30000.00 OC241126012497000 TT-USD30000.00
+655,2024-11-27,2024-11-27,-78.08,64303.98,DEBIT PURCHASE USD 55.95 24/11/24 xx-4648 MONDAY.COM 120
+656,2024-11-27,2024-11-27,-3000.00,61303.98,DEBIT PURCHASE 25/11/24 xx-8724 GOOGLE*ADS9173773995 CC
+657,2024-11-27,2024-11-27,-89.75,61214.23,"DEBIT PURCHASE USD 64.31 25/11/24 xx-7293 TYPEFORM, S.L. BAR"
+658,2024-11-27,2024-11-27,-6.50,61207.73,DEBIT PURCHASE USD 4.66 24/11/24 xx-4180 WHALE RON
+659,2024-11-27,2024-11-27,-6.34,61201.39,"DEBIT PURCHASE USD 4.55 25/11/24 xx-4180 WHALE RON RNB05ESNB\69 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+660,2024-11-27,2024-11-27,-367.77,60833.62,DEBIT PURCHASE EUR 250.95 24/11/24 xx-7507 RECRUITEE* BTU1XGTFEPH AMS
+661,2024-11-27,2024-11-27,4.50,60838.12,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+662,2024-11-27,2024-11-27,3.63,60841.75,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+663,2024-11-27,2024-11-27,60.59,60902.34,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+664,2024-11-27,2024-11-27,32.46,60934.80,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+665,2024-11-27,2024-11-27,15.60,60950.40,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+666,2024-11-27,2024-11-27,22.95,60973.35,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+667,2024-11-27,2024-11-27,150.00,61123.35,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+668,2024-11-27,2024-11-27,3.24,61126.59,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+669,2024-11-27,2024-11-27,3.24,61129.83,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\70 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+670,2024-11-27,2024-11-27,72.00,61201.83,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+671,2024-11-27,2024-11-27,52.04,61253.87,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+672,2024-11-27,2024-11-27,58.76,61312.63,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+673,2024-11-27,2024-11-27,58.76,61371.39,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+674,2024-11-27,2024-11-27,34.08,61405.47,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+675,2024-11-27,2024-11-27,1.10,61406.57,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+676,2024-11-27,2024-11-27,11.52,61418.09,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN DRVLAHKNSPF JvME
+677,2024-11-27,2024-11-27,3.78,61421.87,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+678,2024-11-27,2024-11-27,35.52,61457.39,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+679,2024-11-27,2024-11-27,3.94,61461.33,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\71 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+680,2024-11-27,2024-11-27,-40000.00,21461.33,FAST PAYMENT OTHR WISE SM3P241127937647 SM3P241127937647
+681,2024-11-28,2024-11-28,-1326.23,20135.10,DEBIT PURCHASE USD 950.21 25/11/24 xx-4699 Twilio PPBGGJCPPHS2476 San
+682,2024-11-28,2024-11-28,-364.28,19770.82,DEBIT PURCHASE USD 261.00 25/11/24 xx-4180 SAFETYCULTURE.COM AMS
+683,2024-11-28,2024-11-28,-83.52,19687.30,DEBIT PURCHASE USD 60.00 25/11/24 xx-8744 CIRCLECI.COM SAN
+684,2024-11-28,2024-11-28,79.00,19766.30,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+685,2024-11-28,2024-11-28,4.24,19770.54,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+686,2024-11-28,2024-11-28,200.00,19970.54,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+687,2024-11-28,2024-11-28,3.63,19974.17,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+688,2024-11-28,2024-11-28,80.00,20054.17,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\72 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+689,2024-11-28,2024-11-28,65.14,20119.31,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+690,2024-11-28,2024-11-28,6.84,20126.15,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+691,2024-11-28,2024-11-28,4.45,20130.60,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+692,2024-11-28,2024-11-28,15.40,20146.00,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+693,2024-11-28,2024-11-28,15.00,20161.00,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+694,2024-11-28,2024-11-28,60.59,20221.59,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+695,2024-11-28,2024-11-28,79.00,20300.59,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+696,2024-11-28,2024-11-28,67.37,20367.96,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+697,2024-11-28,2024-11-28,9.24,20377.20,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+698,2024-11-28,2024-11-28,23.80,20401.00,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\73 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+699,2024-11-28,2024-11-28,126.35,20527.35,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+700,2024-11-28,2024-11-28,85.00,20612.35,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+701,2024-11-28,2024-11-28,58.76,20671.11,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+702,2024-11-29,2024-11-29,231.96,20903.07,CASH REBATE CASH REBATE
+703,2024-11-29,2024-11-29,-13.63,20889.44,"CCY CONVERSION FEE FOR: 1,362.50 SGD"
+704,2024-11-29,2024-11-29,-1362.50,19526.94,DEBIT PURCHASE 27/11/24 xx-8724 FACEBK *H88ZAF4BY Dub
+705,2024-11-29,2024-11-29,-29.68,19497.26,DEBIT PURCHASE AUD 32.80 27/11/24 xx-8724 DRIVE MATE MEL
+706,2024-11-29,2024-11-29,73.06,19570.32,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+707,2024-11-29,2024-11-29,15.23,19585.55,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+708,2024-11-29,2024-11-29,79.00,19664.55,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+709,2024-11-29,2024-11-29,71.00,19735.55,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\74 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+710,2024-11-29,2024-11-29,86.00,19821.55,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+711,2024-11-29,2024-11-29,12.76,19834.31,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+712,2024-11-29,2024-11-29,103.42,19937.73,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+713,2024-11-29,2024-11-29,71.00,20008.73,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+714,2024-11-29,2024-11-29,14.85,20023.58,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+715,2024-11-29,2024-11-29,213.48,20237.06,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+716,2024-11-29,2024-11-29,95.00,20332.06,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+717,2024-11-29,2024-11-29,51.96,20384.02,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+718,2024-11-29,2024-11-29,1.06,20385.08,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+719,2024-11-29,2024-11-29,99.00,20484.08,"PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN RNB05ESNB\75 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."
+720,2024-11-29,2024-11-29,83.00,20567.08,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+721,2024-11-29,2024-11-29,14.35,20581.43,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+722,2024-11-29,2024-11-29,23.40,20604.83,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+723,2024-11-29,2024-11-29,50.00,20654.83,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+724,2024-11-29,2024-11-29,43.48,20698.31,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+725,2024-11-29,2024-11-29,47.65,20745.96,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+726,2024-11-29,2024-11-29,36.96,20782.92,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+727,2024-11-29,2024-11-29,3.63,20786.55,PAYMENT/TRANSFER CSDB STRIPE PAYMENTS SIN
+728,2024-11-30,2024-11-30,-69.68,20716.87,"DEBIT PURCHASE USD 50.00 28/11/24 xx-1247 LOOM SUBSCRIPTION SAN RNB05ESNB\76 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured. Please check this statement & advise us of any discrepancies within 14 days of receipt. If we do not hear from you, we will take this statement as correct and binding. You may update your address and contact numbers via OCBC Online Banking or our ATMs. Alternatively, you may download and submit the ‘Change of address / contact details’ form available on ocbc.com/forms. REVISIONS TO TERMS AND We will revise the OCBC Business Account Terms and CONDITIONS Conditions with effect from 1 January 2025. Please refer to www.ocbc.com/business-banking/notices for more details on the revisions. REVISION OF CASH DEPOSIT We will be revising our Cash Deposit charges from CHARGES 1 December 2024 (inclusive of this date). For more details, visit OCBC website > Notices. REVISION TO FAST & GIRO From 1 January 2025, we will be revising the number of CHARGES FOR BUSINESS free FAST payment and GIRO transactions to 80 per month, GROWTH ACCOUNT respectively, for Business Growth Account. Please refer to www.ocbc.com/business-banking/notices for more details. RNB05ESNB\77 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured. CHARGING FROM 1ST We will start charging from the first transaction for all BUSINESS ACCOUNTS For more details, visit OCBC website > Notices. For more information, visit any of our branches or log on to www.ocbc.com RNB05ESNB\78 Singapore dollar deposits of non-bank depositors and monies and deposits denominated in Singapore dollars under the Supplementary Retirement Scheme are insured by the Singapore Deposit Insurance Corporation, for up to S$100,000 in aggregate per depositor per Scheme member by law. Monies and deposits denominated in Singapore dollars under the CPF Investment Scheme and CPF Retirement Sum Scheme are aggregated and separately insured up to S$100,000 for each depositor per Scheme member. Foreign currency deposits, dual currency investments, structured deposits and other investment products are not insured."

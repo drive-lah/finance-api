@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify
 
 from src.database import db_session
 from src.services.counterparty_service import counterparty_service
+from src.services.invoice_service import invoice_service
 from src.models.schemas import CounterpartyCreate, CounterpartyUpdate, CounterpartyResponse
 from src.utils.errors import NotFoundError
 
@@ -49,6 +50,26 @@ def update_counterparty(counterparty_id: int):
         if not cp:
             raise NotFoundError(f"Counterparty {counterparty_id} not found")
         return jsonify(CounterpartyResponse.model_validate(cp).model_dump()), 200
+
+
+@counterparties_bp.route('/<int:counterparty_id>/statement', methods=['GET'])
+def counterparty_statement(counterparty_id: int):
+    """Vendor-level Statement of Account for a counterparty.
+
+    Query params:
+      entity_id (optional) — scope invoices to a single entity (POL-27).
+
+    Returns counterparty profile, summary (outstanding / provisionally-paid /
+    counts / oldest-unpaid / currency breakdown), aging buckets, and a
+    chronological statement of billed + provisional-payment lines with a
+    running balance. Money totals exclude not_invoice-gated rows.
+    """
+    entity_id = request.args.get('entity_id', type=int)
+    with db_session() as db:
+        statement = invoice_service.statement_for_counterparty(
+            db, counterparty_id, entity_id=entity_id
+        )
+        return jsonify(statement), 200
 
 
 @counterparties_bp.route('/sync/employees', methods=['POST'])

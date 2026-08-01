@@ -487,3 +487,85 @@ class TestPayrollKnockoff:
         assert secondary_je.lines[2].credit_amount == 8000
         assert secondary_je.lines[3].account_code == "2300"  # CPF Payable
         assert secondary_je.lines[3].credit_amount == 3700  # 1700 + 2000
+
+    def test_payroll_knockoff_prefers_same_entity(self, db_session, entity, bank_account, accounts):
+        """A same-entity payroll run wins over a coincidental same-amount run in another entity."""
+        # Other entity + run created FIRST (lower id → would match first WITHOUT the fix), same net (8000).
+        other_entity = FinanceEntity(name="Other Co", country="AU", base_currency="AUD", status=EntityStatus.ACTIVE)
+        db_session.add(other_entity)
+        db_session.flush()
+        other_bank = FinanceBankAccount(
+            entity_id=other_entity.id, bank_name="NAB", account_number="999",
+            account_name="Other", currency="SGD", coa_account_code="1000",
+            status=BankAccountStatus.ACTIVE,
+        )
+        db_session.add(other_bank)
+        db_session.flush()
+        other_run = _create_run(db_session, other_entity, other_bank, run_date=date(2026, 3, 1))
+        # Same-entity run (the txn's own entity)
+        same_run = _create_run(db_session, entity, bank_account, run_date=date(2026, 3, 1))
+        db_session.commit()
+
+        import hashlib
+        fp = hashlib.sha256(b"prefer-same-entity-payroll").hexdigest()
+        txn = FinanceTransaction(
+            bank_account_id=bank_account.id, transaction_date=date(2026, 3, 2),
+            amount=Decimal("-8000"), description="net salary", fingerprint=fp,
+            status=TransactionStatus.PENDING,
+        )
+        db_session.add(txn)
+        db_session.commit()
+
+        CategorizationService()._try_payroll_knockoff(db_session, [txn], results=[])
+        db_session.refresh(txn)
+        db_session.refresh(same_run)
+        db_session.refresh(other_run)
+
+        assert txn.status == TransactionStatus.MATCHED
+        assert same_run.net_payment_transaction_id == txn.id    # same-entity run won
+        assert other_run.net_payment_transaction_id is None       # other entity NOT matched
+
+    def test_retroactive_knockoff_reopens_premature_salary(self, db_session, entity, bank_account, accounts):
+        """A salary paid + categorized as an expense BEFORE its run exists is re-opened
+        and linked to the run when the run posts — no double count."""
+        import hashlib
+        from src.services.journal_service import journal_service
+
+        # 1) Salary lands and is (mis)categorized as a plain expense — no run yet.
+        txn = FinanceTransaction(
+            bank_account_id=bank_account.id, transaction_date=date(2026, 3, 2),
+            amount=Decimal("-8000"), description="salary", fingerprint=hashlib.sha256(b"premature-salary").hexdigest(),
+            status=TransactionStatus.PENDING,
+        )
+        db_session.add(txn)
+        db_session.commit()
+        wrong_je = journal_service.create(
+            db_session, entity_id=entity.id, entry_date=date(2026, 3, 2), description="misc expense",
+            lines=[
+                {"account_code": "6000", "debit_amount": 8000.0, "credit_amount": 0.0, "description": "x"},
+                {"account_code": "1000", "debit_amount": 0.0, "credit_amount": 8000.0, "description": "x"},
+            ],
+            status=JournalEntryStatus.POSTED,
+        )
+        txn.status = TransactionStatus.MATCHED
+        txn.reconciled_journal_entry_id = wrong_je.id
+        txn.categorized_by_logic = "rule"
+        db_session.commit()
+        wrong_je_id = wrong_je.id
+
+        # 2) The payroll run is created later (net = 10000 - 2000 = 8000).
+        run = _create_run(db_session, entity, bank_account, run_date=date(2026, 3, 1))
+        db_session.commit()
+
+        # 3) Retroactive knock-off.
+        results = payroll_service.run_retroactive_knockoff(db_session, run)
+
+        assert len(results) >= 1
+        db_session.refresh(txn)
+        db_session.refresh(run)
+        # the premature expense JE is voided (no double-count)
+        assert db_session.get(FinanceJournalEntry, wrong_je_id).status == JournalEntryStatus.VOID
+        # the txn is now linked to the run JE (same-entity) as a payroll knock-off
+        assert txn.reconciled_journal_entry_id == run.journal_entry_id
+        assert txn.categorized_by_logic == "payroll_knockoff"
+        assert run.net_payment_transaction_id == txn.id

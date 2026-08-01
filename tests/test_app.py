@@ -12,7 +12,7 @@ class TestAppInitialization:
         """Test that app factory creates a Flask app"""
         app = create_app()
         assert app is not None
-        assert app.config['PORT'] == 8082
+        assert app.config['PORT'] == 8081
     
     def test_create_app_with_custom_config(self):
         """Test app factory with custom configuration"""
@@ -48,7 +48,7 @@ class TestAppInitialization:
     def test_app_starts_on_correct_port(self):
         """Test that app configuration includes correct port"""
         app = create_app()
-        assert app.config['PORT'] == 8082
+        assert app.config['PORT'] == 8081
     
     def test_environment_variable_loading(self):
         """Test that environment variables are loaded correctly"""

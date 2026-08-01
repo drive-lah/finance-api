@@ -334,6 +334,9 @@ class TransactionResponse(BaseModel):
     ai_suggested_account_code: Optional[str] = Field(None, max_length=20, description="AI-suggested COA account code")
     ai_confidence: Optional[float] = Field(None, description="AI confidence score (0-1)")
     ai_reasoning: Optional[str] = Field(None, description="AI reasoning for suggestion")
+    expected_counterpart_ba_id: Optional[int] = Field(None, description="For AWAITING_MATCH transfers: bank account the counter-leg is expected on")
+    categorized_by_rule_id: Optional[int] = Field(None, description="Rule that categorized this transaction, if route was a rule")
+    categorized_by_logic: Optional[str] = Field(None, description="Engine route: rule|transfer_rule|transfer_pairing|counterparty_default|invoice_knockoff|payroll_knockoff|asset_parking|ai|manual|needs_review_resolution")
     created_at: datetime
     updated_at: datetime
 
@@ -379,6 +382,9 @@ class JournalLineResponse(BaseModel):
     credit_amount: float
     description: Optional[str]
     entity_id: int
+    currency: Optional[str] = Field(None, description="Native currency of the underlying transaction")
+    native_amount: Optional[float] = Field(None, description="Absolute amount in the native currency")
+    fx_rate: Optional[float] = Field(None, description="native → functional rate used at booking")
     created_at: datetime
     updated_at: datetime
     
@@ -496,10 +502,21 @@ class RuleCreate(BaseModel):
     contra_account_code: Optional[str] = Field(None, max_length=20, description="Required for expense/deposit/cross_entity_allocation")
     target_bank_account_id: Optional[int] = Field(None, gt=0, description="Required for internal_transfer")
     allocation_entity_id: Optional[int] = Field(None, gt=0, description="Required for cross_entity_allocation — entity that bears the cost")
-    counterparty_name: Optional[str] = Field(None, max_length=255)
-    counterparty_type: Optional[str] = Field(None, max_length=50)
+    counterparty_name: Optional[str] = Field(None, max_length=255, deprecated=True, description="REJECTED — rules never assign counterparties (POL-12)")
+    counterparty_type: Optional[str] = Field(None, max_length=50, deprecated=True, description="REJECTED — rules never assign counterparties (POL-12)")
     tag_ids: Optional[list[int]] = None
     gst_override: Optional[bool] = None
+
+    @field_validator('counterparty_name', 'counterparty_type')
+    @classmethod
+    def _reject_counterparty_action(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            raise ValueError(
+                "Rules cannot assign a counterparty (POL-12): identity belongs to "
+                "enrichment (counterparty names/aliases). Use counterparty_operator/"
+                "counterparty_value to CONDITION on a counterparty instead."
+            )
+        return v
 
 
 class RuleUpdate(BaseModel):
@@ -529,10 +546,21 @@ class RuleUpdate(BaseModel):
     contra_account_code: Optional[str] = Field(None, max_length=20)
     target_bank_account_id: Optional[int] = Field(None, gt=0)
     allocation_entity_id: Optional[int] = Field(None, gt=0)
-    counterparty_name: Optional[str] = Field(None, max_length=255)
-    counterparty_type: Optional[str] = Field(None, max_length=50)
+    counterparty_name: Optional[str] = Field(None, max_length=255, deprecated=True, description="REJECTED — rules never assign counterparties (POL-12)")
+    counterparty_type: Optional[str] = Field(None, max_length=50, deprecated=True, description="REJECTED — rules never assign counterparties (POL-12)")
     tag_ids: Optional[list[int]] = None
     gst_override: Optional[bool] = None
+
+    @field_validator('counterparty_name', 'counterparty_type')
+    @classmethod
+    def _reject_counterparty_action(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            raise ValueError(
+                "Rules cannot assign a counterparty (POL-12): identity belongs to "
+                "enrichment (counterparty names/aliases). Use counterparty_operator/"
+                "counterparty_value to CONDITION on a counterparty instead."
+            )
+        return v
 
 
 class RuleResponse(BaseModel):
@@ -773,6 +801,7 @@ class InvoiceCreate(BaseModel):
 
 class InvoiceUpdate(BaseModel):
     """Schema for updating an invoice."""
+    entity_id: Optional[int] = Field(None, gt=0)  # editable in draft/pending so a mis-assigned entity can be corrected before booking (POL-27)
     counterparty_id: Optional[int] = Field(None, gt=0)
     contract_id: Optional[int] = Field(None, gt=0)
     invoice_number: Optional[str] = Field(None, max_length=100)

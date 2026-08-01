@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drive Lah — HR &amp; Payroll: End-to-End Process</title>
+<style>
+  :root{
+    --ink:#0f1729; --muted:#5b6677; --line:#e6e9ef; --panel:#fff;
+    --green:#16a34a; --green-bg:#e9f8ef; --amber:#d97706; --amber-bg:#fdf3e3;
+    --red:#dc2626; --red-bg:#fdeceb; --blue:#1e6fd9; --blue-bg:#eaf2fd; --slate:#334155;
+    --sg:#7c3aed; --sg-bg:#f1eafe; --au:#0e7490; --au-bg:#e7f6fa;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#eef1f6;color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1240px;margin:0 auto;padding:30px 26px 56px;}
+  .hero{background:linear-gradient(135deg,#10243f 0%,#0f1419 60%,#15243a 100%);color:#fff;
+    border-radius:18px;padding:28px 32px;box-shadow:0 12px 30px rgba(15,20,25,.18);}
+  .hero h1{margin:0 0 6px;font-size:28px;font-weight:760;letter-spacing:-.4px;}
+  .hero p{margin:0;color:#aebbcd;font-size:14.5px;max-width:820px;line-height:1.5;}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin:16px 4px 0;font-size:12.5px;color:var(--slate);}
+  .legend span{display:inline-flex;align-items:center;gap:7px;font-weight:600;}
+  .pill{font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.4px}
+  .p-green{background:var(--green-bg);color:#0c6b34}.p-amber{background:var(--amber-bg);color:#9a5a04}
+  .p-red{background:var(--red-bg);color:#a51b1b}.p-blue{background:var(--blue-bg);color:#13509f}.p-new{background:#0f1729;color:#fff}
+  h2.sec{font-size:12.5px;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted);margin:34px 4px 14px;font-weight:800;}
+  /* flow */
+  .flow{display:flex;flex-direction:column;gap:0;}
+  .stage{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:16px 20px;
+    box-shadow:0 3px 10px rgba(20,30,50,.05);display:grid;grid-template-columns:48px 1fr 200px;gap:18px;align-items:center;border-left:5px solid var(--blue);}
+  .stage .n{width:38px;height:38px;border-radius:11px;background:var(--blue);color:#fff;font-weight:800;font-size:17px;
+    display:flex;align-items:center;justify-content:center;}
+  .stage h3{margin:0 0 3px;font-size:16.5px;font-weight:740;letter-spacing:-.2px;}
+  .stage h3 small{font-weight:600;color:var(--muted);font-size:12.5px;}
+  .stage .desc{font-size:13.5px;color:var(--slate);line-height:1.5;margin:0;}
+  .stage .desc code{background:#f3f5f9;padding:1px 5px;border-radius:5px;font-size:12px;}
+  .creates{font-size:11.5px;color:var(--muted);}
+  .creates b{display:block;text-transform:uppercase;letter-spacing:.5px;font-size:9.5px;color:#94a0b0;margin-bottom:5px}
+  .tbl{display:inline-block;background:#0f1729;color:#dbe6f5;font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;margin:0 4px 4px 0;font-family:ui-monospace,monospace}
+  .tbl.new{background:var(--green);color:#fff}
+  .arrow{display:flex;justify-content:center;align-items:center;height:26px;color:#9aa6b6;font-size:18px;}
+  .arrow small{font-size:11px;color:var(--muted);background:#eef1f6;padding:2px 10px;border-radius:999px;font-weight:600}
+  .stage.gA{border-left-color:var(--green)} .stage.gA .n{background:var(--green)}
+  /* two-col side panels */
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:0 3px 10px rgba(20,30,50,.04);}
+  .card h4{margin:0 0 10px;font-size:14.5px;font-weight:740;display:flex;align-items:center;gap:8px}
+  .tag{font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px}
+  .tag.sg{background:var(--sg-bg);color:var(--sg)} .tag.au{background:var(--au-bg);color:var(--au)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);}
+  th{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700}
+  td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+  .je{font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.7;background:#0f1729;color:#dbe6f5;border-radius:12px;padding:16px 18px;}
+  .je .dr{color:#7fd1a0}.je .cr{color:#f0b8b2}.je .ac{color:#9fc4f5}
+  .je .bal{color:#cbd5e1;border-top:1px solid #2a3a52;margin-top:8px;padding-top:8px;display:block}
+  /* state strip */
+  .state{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  .state .b{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:14px 15px;border-top:4px solid var(--line);}
+  .state .b.ok{border-top-color:var(--green)} .state .b.warn{border-top-color:var(--amber)} .state .b.gap{border-top-color:var(--red)}
+  .state .b h5{margin:0 0 5px;font-size:13px;font-weight:740}
+  .state .b p{margin:0;font-size:12px;color:var(--slate);line-height:1.45}
+  .foot{margin-top:26px;font-size:11.5px;color:var(--muted);text-align:center;line-height:1.6}
+  @media(max-width:900px){.stage{grid-template-columns:40px 1fr}.creates{grid-column:1/-1}.cols,.state{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <h1>HR &amp; Payroll — End-to-End Process</h1>
+    <p>How an employee flows from roster → onboarding → monthly payroll → posted journal entry → bank reconciliation, with region-specific tax (Singapore CPF, Australia Super + PAYG). All payroll runs from finance-api.</p>
+    <div class="legend">
+      <span><span class="pill p-blue">STAGE</span> process step</span>
+      <span><span class="tbl" style="margin:0">table</span> existing data table</span>
+      <span><span class="tbl new" style="margin:0">table</span> created/filled by the new onboarding fix</span>
+    </div>
+  </div>
+
+  <h2 class="sec">The Flow — Roster to Reconciled Payroll</h2>
+  <div class="flow">
+
+    <div class="stage">
+      <div class="n">1</div>
+      <div>
+        <h3>Source of truth <small>— who the employees are</small></h3>
+        <p class="desc">The <code>users</code> table (synced from Google Workspace) holds identity, role, team, region. The HR onboarding roster (<code>HR_ONBOARDING_COMPLETE.csv</code>) adds the payroll inputs: <code>gross_amount</code>, <code>pay_type</code>, <code>default_deductions</code>, bank details.</p>
+      </div>
+      <div class="creates"><b>Data in</b><span class="tbl">users</span><span class="tbl">roster CSV</span></div>
+    </div>
+
+    <div class="arrow"><small>POST /api/hr/onboard</small></div>
+
+    <div class="stage gA">
+      <div class="n">2</div>
+      <div>
+        <h3>Onboarding <small>— hr_onboarding_service</small></h3>
+        <p class="desc">Validates user + entity + COA, then in one transaction: updates <code>users</code> (is_employee, bank), creates the <b>HrEmployee</b> (entity + salary account derived from team), the <b>FinanceCounterparty</b> (type=employee), and now — from the salary inputs — the <b>HrCompensation</b> and <b>HrDeductionRule(s)</b>. No salary given → onboarded but not yet payable.</p>
+      </div>
+      <div class="creates"><b>Creates</b><span class="tbl">hr_employees</span><span class="tbl">finance_counterparties</span><span class="tbl new">hr_compensation</span><span class="tbl new">hr_deduction_rules</span></div>
+    </div>
+
+    <div class="arrow"><small>daily sync keeps hr_employees ↔ users · monthly trigger ↓</small></div>
+
+    <div class="stage">
+      <div class="n">3</div>
+      <div>
+        <h3>Monthly payroll run (DRAFT) <small>— hr_payroll_service.create_run</small></h3>
+        <p class="desc">For each active employee in the entity, reads the active <code>compensation</code> × <code>deduction_rules</code> and computes gross → deductions (employee-borne + employer contributions) → net. Produces one payslip per employee.</p>
+      </div>
+      <div class="creates"><b>Creates</b><span class="tbl">finance_payroll_runs</span><span class="tbl">hr_payroll_items</span></div>
+    </div>
+
+    <div class="arrow"><small>review → submit</small></div>
+
+    <div class="stage gA">
+      <div class="n">4</div>
+      <div>
+        <h3>Submit run → post to ledger <small>— submit_run</small></h3>
+        <p class="desc">Aggregates all payslips into one balanced journal entry and posts it (status POSTED): debit salary expense + employer contributions; credit the bank (net pay) + the statutory payables (CPF / Super / tax).</p>
+      </div>
+      <div class="creates"><b>Creates</b><span class="tbl">finance_journal_entries</span><span class="tbl">finance_journal_lines</span></div>
+    </div>
+
+    <div class="arrow"><small>bank statement import ↓</small></div>
+
+    <div class="stage">
+      <div class="n">5</div>
+      <div>
+        <h3>Bank payment + knock-off <small>— categorization engine, Phase 2.5</small></h3>
+        <p class="desc">When the actual net-salary and CPF/tax payments land in the bank feed, the categorization engine matches them to the posted payroll JE (±2% amount, ±7 days) and marks them <b>Reconciled</b> — closing the loop between accrual and cash.</p>
+      </div>
+      <div class="creates"><b>Matches</b><span class="tbl">finance_transactions</span> → payroll JE</div>
+    </div>
+
+  </div>
+
+  <h2 class="sec">Region Tax Rules &amp; A Worked Journal Entry</h2>
+  <div class="cols">
+    <div class="card">
+      <h4>Statutory deductions by region</h4>
+      <table>
+        <tr><th>Region</th><th>Deduction</th><th>Bearer</th><th class="r">Rate</th></tr>
+        <tr><td rowspan="2"><span class="tag sg">SG</span></td><td>CPF employee</td><td>employee (↓net)</td><td class="r">20% (cap 6000)</td></tr>
+        <tr><td>CPF employer</td><td>employer cost</td><td class="r">17% (cap 6000)</td></tr>
+        <tr><td rowspan="2"><span class="tag au">AU</span></td><td>Superannuation</td><td>employer cost</td><td class="r">11.5%</td></tr>
+        <tr><td>PAYG income tax</td><td>employee (↓net)</td><td class="r">withheld</td></tr>
+      </table>
+      <p style="font-size:11.5px;color:var(--muted);margin:10px 0 0">Mapped to COA: CPF→2300, Super→2310, tax→2320, employer expense→6001, salary→6000, bank→1000. Custom deductions parse from the CSV <code>default_deductions</code> field.</p>
+    </div>
+    <div class="card">
+      <h4>Example posted JE — <span class="tag sg">SG</span> gross 5,000 SGD</h4>
+      <div class="je">
+        <span class="ac">6000</span> Salaries &amp; Wages &nbsp;&nbsp;<span class="dr">Dr 5,000.00</span><br>
+        <span class="ac">6001</span> Employer CPF &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="dr">Dr&nbsp;&nbsp; 850.00</span><br>
+        <span class="ac">1000</span> Bank (net pay) &nbsp;&nbsp;&nbsp;<span class="cr">Cr 4,000.00</span><br>
+        <span class="ac">2300</span> CPF Payable &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cr">Cr 1,850.00</span>
+        <span class="bal">Dr 5,850.00 = Cr 5,850.00 &nbsp; ✓ balanced</span>
+      </div>
+      <p style="font-size:11.5px;color:var(--muted);margin:10px 0 0">Verified end-to-end on a mock run (SG CPF + AU Super/PAYG both balance).</p>
+    </div>
+  </div>
+
+  <h2 class="sec">Where This Actually Stands Today</h2>
+  <div class="state">
+    <div class="b ok"><h5>✅ Engine works</h5><p>Payroll run → balanced JE with correct CPF / Super / PAYG, verified via SG + AU mock.</p></div>
+    <div class="b ok"><h5>✅ Onboarding fixed</h5><p>Onboarding now creates HrCompensation + HrDeductionRule from the payload (just shipped + tested).</p></div>
+    <div class="b warn"><h5>⚠️ Tables empty in prod</h5><p>collections-db: 0 hr_employees / 0 compensation / 0 payroll runs. 81 employees exist only as counterparties.</p></div>
+    <div class="b gap"><h5>❌ Salary data missing</h5><p>The roster CSV has people but blank salary/deduction columns. <b>Sourcing this is the binding blocker</b> before payroll can run for real.</p></div>
+  </div>
+
+  <div class="foot">
+    Flow: <b>users + roster → onboard → monthly run → submit (JE) → bank knock-off.</b>
+    Engine + tax verified; the remaining gap is real employee salary/deduction data, not the system.
+  </div>
+
+</div>
+</body>
+</html>

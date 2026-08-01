@@ -16,16 +16,32 @@ invoices_bp = Blueprint("invoices", __name__, url_prefix="/api/finance/invoices"
 
 @invoices_bp.route("", methods=["GET"])
 def list_invoices():
-    """List invoices with optional filtering by entity_id, status, counterparty_id."""
-    entity_id = request.args.get("entity_id", type=int)
-    status = request.args.get("status", type=str)
-    counterparty_id = request.args.get("counterparty_id", type=int)
+    """List invoices with server-side filtering + pagination (limit/offset, X-Total-Count header)."""
+    filters = dict(
+        entity_id=request.args.get("entity_id", type=int),
+        status=request.args.get("status", type=str),
+        counterparty_id=request.args.get("counterparty_id", type=int),
+        search=request.args.get("search", type=str),
+        vendor_flag=request.args.get("vendor_flag", type=str),
+        coa_flag=request.args.get("coa_flag", type=str),
+        document_gate=request.args.get("document_gate", type=str),
+        currency_flag=request.args.get("currency_flag", type=str),
+        retool_status=request.args.get("retool_status", type=str),
+        sub_category=request.args.get("sub_category", type=str),
+        amount_match=request.args.get("amount_match", type=str),
+        provisional_paid=request.args.get("provisional_paid", type=str),
+        retool_id=request.args.get("retool_id", type=str),
+        is_duplicate=request.args.get("is_duplicate", type=str),
+    )
+    limit = min(request.args.get("limit", default=100, type=int), 500)
+    offset = request.args.get("offset", default=0, type=int)
 
     with db_session() as db:
-        invoices = invoice_service.get_all(
-            db, entity_id=entity_id, status=status, counterparty_id=counterparty_id,
-        )
-        return jsonify([_invoice_dict(inv, db) for inv in invoices]), 200
+        invoices = invoice_service.get_all(db, limit=limit, offset=offset, **filters)
+        total = invoice_service.count_all(db, **filters)
+        resp = jsonify([_invoice_dict(inv, db) for inv in invoices])
+        resp.headers["X-Total-Count"] = str(total)
+        return resp, 200
 
 
 @invoices_bp.route("", methods=["POST"])
@@ -58,6 +74,26 @@ def update_invoice(invoice_id: int):
         return jsonify(_invoice_dict(invoice, db)), 200
 
 
+@invoices_bp.route("/<int:invoice_id>/attach", methods=["POST"])
+def attach_invoice_document(invoice_id: int):
+    """Attach a document to an EXISTING invoice (fills a no-document stub in place).
+    Multipart upload: field 'file'. Extracts + backfills + dedups the same row."""
+    import os
+    file = request.files.get("file")
+    if not file or not file.filename:
+        return jsonify({"error": "No file provided"}), 400
+    ext = os.path.splitext(file.filename.lower())[1]
+    if ext not in {'.pdf', '.jpg', '.jpeg', '.png'}:
+        return jsonify({"error": f"Unsupported file type '{ext}'"}), 400
+    _MAX_BYTES = 20 * 1024 * 1024
+    file_bytes = file.read(_MAX_BYTES + 1)  # one over the cap to detect overflow
+    if len(file_bytes) > _MAX_BYTES:
+        return jsonify({"error": "File too large (max 20 MB)"}), 413
+    with db_session() as db:
+        invoice, verdict = invoice_service.attach_document(db, invoice_id, file_bytes, filename=file.filename)
+        return jsonify({"invoice": _invoice_dict(invoice, db), "duplicate_check": verdict.as_dict()}), 200
+
+
 @invoices_bp.route("/<int:invoice_id>/approve", methods=["POST"])
 def approve_invoice(invoice_id: int):
     """Approve an invoice, creating the AP journal entry.
@@ -86,15 +122,21 @@ def reject_invoice(invoice_id: int):
         return jsonify({"error": "rejection_reason is required"}), 400
 
     with db_session() as db:
-        invoice = invoice_service.reject(db, invoice_id, rejection_reason)
+        invoice = invoice_service.reject(db, invoice_id, rejection_reason,
+                                         rejected_by=data.get("rejected_by"))
         return jsonify(_invoice_dict(invoice, db)), 200
 
 
 @invoices_bp.route("/<int:invoice_id>/void", methods=["POST"])
 def void_invoice(invoice_id: int):
-    """Void an invoice."""
+    """Void an invoice. Body: { void_reason: str (required), voided_by: str (logged-in user) }."""
+    data = request.get_json() or {}
+    void_reason = data.get("void_reason")
+    if not void_reason:
+        return jsonify({"error": "void_reason is required"}), 400
     with db_session() as db:
-        invoice = invoice_service.void(db, invoice_id)
+        invoice = invoice_service.void(db, invoice_id,
+                                       voided_by=data.get("voided_by"), void_reason=void_reason)
         return jsonify(_invoice_dict(invoice, db)), 200
 
 
@@ -121,7 +163,9 @@ def submit_invoice(invoice_id: int):
     data = request.get_json() or {}
 
     with db_session() as db:
-        result = invoice_service.submit(db, invoice_id, confirmed=False)
+        result = invoice_service.submit(db, invoice_id, confirmed=False,
+                                        submitted_by=data.get("submitted_by"),
+                                        override_reason=data.get("override_reason"))
         return jsonify(result), 200
 
 
@@ -159,19 +203,23 @@ def extract_invoice():
         logger.error(f"Invalid extension. ext='{ext}', allowed={ALLOWED_EXTENSIONS}")
         return jsonify({"error": "File must be a PDF or image (JPEG, PNG)"}), 400
 
-    file_bytes = file.read()
+    _MAX_BYTES = 20 * 1024 * 1024
+    file_bytes = file.read(_MAX_BYTES + 1)  # one over the cap to detect overflow
+    if len(file_bytes) > _MAX_BYTES:
+        return jsonify({"error": "File too large (max 20 MB)"}), 413
     logger.info(f"File read successfully. Size: {len(file_bytes)} bytes")
 
-    # --- Duplicate detection: exact file hash check ---
+    # --- Duplicate detection: ADVISORY only (Gaurav 2026-08-01) ---
+    # Duplicates are allowed at draft, flagged, and blocked at promotion — so we no
+    # longer 409 here. The same-file hint is surfaced (result["duplicate_check"] below,
+    # + this exact-file note) so the reviewer can proceed knowingly.
     file_hash = hashlib.sha256(file_bytes).hexdigest()
+    exact_dup = None
     with db_session() as db:
         existing = invoice_service.find_by_pdf_hash(db, file_hash)
         if existing and existing.status != 'void':
-            return jsonify({
-                "error": "Duplicate invoice",
-                "detail": f"This file has already been uploaded (Invoice #{existing.invoice_number or existing.id}, status: {existing.status}).",
-                "existing_invoice_id": existing.id,
-            }), 409
+            exact_dup = {"duplicate_of": existing.id, "level": "hash",
+                         "detail": f"Identical file already on invoice #{existing.invoice_number or existing.id} ({existing.status})."}
 
     from src.services.ai_extraction_service import ai_extraction_service
     from src.services.s3_service import s3_service
@@ -203,6 +251,31 @@ def extract_invoice():
                     "match_confidence": round(confidence, 2),
                 }
     result["vendor_match"] = vendor_match
+
+    # Advisory duplicate check (post-extraction): the identical-file case already 409'd
+    # above; this surfaces the SEMANTIC signal (same vendor + invoice number, or same
+    # vendor + amount + date without a number) so the reviewer sees it before saving.
+    try:
+        from src.services.duplicate_detection_service import duplicate_detection_service
+        from datetime import date as _date
+        raw_dt = result.get("invoice_date")
+        inv_dt = _date.fromisoformat(raw_dt) if isinstance(raw_dt, str) and len(raw_dt) >= 10 else None
+        with db_session() as db:
+            verdict = duplicate_detection_service.detect(
+                db,
+                entity_id=result.get("entity_id"),
+                counterparty_id=vendor_match["counterparty_id"],
+                invoice_number=result.get("invoice_number"),
+                total_amount=result.get("total_amount"),
+                invoice_date=inv_dt,
+                currency=result.get("currency"),
+                pdf_content_hash=file_hash,
+            )
+        result["duplicate_check"] = verdict.as_dict()
+    except Exception as e:
+        logger.warning(f"Duplicate advisory check failed (non-fatal): {e}")
+        result["duplicate_check"] = None
+    result["exact_file_match"] = exact_dup   # identical-file hint (advisory, never blocks)
 
     # Upload to S3 (best-effort)
     logger.info("Starting S3 upload...")

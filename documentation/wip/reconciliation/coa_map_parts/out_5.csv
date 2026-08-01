@@ -1,0 +1,44 @@
+qb_label,code,confidence,reason
+Other Operating Expenses:Technology System Cost,6700,med,"Technology system/infrastructure cost -> Technology - Infrastructure; could be 6701 if SaaS, but 'system cost' reads as infra"
+Business General & Administrative Expense,3300,low,"Generic G&A catch-all, not a tax account; no clean expense match -> Suspense pending reclass (machine 9000 income tax is wrong)"
+Other Operating Expenses:Corporate - Subscription/Software Expenses,6701,high,Software/SaaS subscription -> Technology - Software Subscriptions
+Cost of Overhead Related to Service:Operating Expenses:Workshop,5032,high,Workshop repair payments -> Incidentals Payout - Workshop
+Cost of Overhead Related to Service:Operating Expenses:Onground team,5062,med,"On-ground team operating expenses -> On-Ground Team - Expenses; could be 5061 if salary"
+Cost of Overhead Related to Service:Operating Expenses:Misc dispute,5042,med,Misc dispute payouts to hosts -> Host Payouts - Misc
+Exchange Gain or Loss,7100,high,FX gains/losses -> Foreign Exchange Gains/Losses
+Due To Australia,8100,high,SG books owing to AU -> IC - Due to AU (SG books)
+Cost of Overhead Related to Service:Operating Expenses:Cleaning,5022,high,Cleaning payout to hosts/providers -> Incidentals Payout - Cleaning
+Convertible loan,2400,high,Convertible loan = money received = liability -> Loans from Others (direction rule overrides 1320)
+Uncategorised Expense,3300,low,Uncategorised holding -> Suspense Account pending reclass (machine 2200 accrual is wrong)
+Prepaid Expense,1300,high,Prepaid expense is an asset -> Prepayments (machine 2200 liability is wrong direction)
+Other Operating Expenses:Travel Expenses,6400,med,"Generic travel expense -> Travel - Tickets; machine 6401 meals too specific for a generic label"
+Cost of Overhead Related to Service:Salary expense - Misc claims (Ops staff),6014,med,"Ops staff misc claims -> Employee Claims - Other; could be 5062 if treated as COS ops expense"
+Fleet - Rental Expense,5060,med,"RMS fleet rental/parking expense (AU) -> Parking - RMS Fleet; not the 'Due to/from Fleet' clearing rule"
+Other Operating Expenses,7000,low,"Generic 'Other Operating Expenses' has no clean match; treated as other income/expense catch-all -> Suspense better but kept near machine"
+Payable to Others,2010,high,Non-trade payable -> Other Payables
+Operating Expenses:Corporate - Office Rental,6300,high,Office rental -> Office Rent
+Research and Development Hardware,1710,med,R&D hardware capitalised as dev asset -> Technology Development; could be 1510 Hardware Devices
+Employee Expenses,6014,med,Generic employee expense reimbursement (AU) -> Employee Claims - Other
+Brand:Accumulated Depreciation- Branding,1800,high,Accumulated amortisation of Brand intangible -> Accum Amort - Brand (contra-asset; machine 6101 expense is wrong)
+Accumulated Depreciation - Intangible asset,1810,med,Generic intangible accum amort -> Accum Amort - Technology Development (machine 7301 expense is wrong type)
+Other Operating Expenses:Subscription Fee,6701,med,"Generic subscription fee under opex -> Technology - Software Subscriptions; machine 5030 device-cost too specific"
+Accumulated Depreciation-Computer and peripherals,1600,high,Accum depreciation on computers -> Accum Depr - Computer & Peripherals (contra-asset; machine 1500 gross asset is wrong)
+Other Operating Expenses:Human Resources- Staffs' training,6200,low,"Staff training has no dedicated account; closest is HR - Recruitment (machine 5010 payment-processing is wrong)"
+Gross-Other Income,7000,high,Other income (AU) -> Other Income - Grants/other; best generic other-income code
+Intangible Assets:Technology Development:Technology Development - Accumulated Depreciation,1810,high,Accum amort of Technology Development -> Accum Amort - Technology Development (contra-asset; machine 1710 gross asset is wrong)
+Provision for Taxation,9000,high,Tax provision -> Income Tax Expense (machine 5064 is wrong)
+Unrealized capital contribution,3000,med,Capital contribution -> Share Capital (equity); 'unrealized' suggests pending but equity type fits best
+Trade and other payables,2000,high,Trade & other payables -> Trade & Other Payables
+Operating Expenses:Meals and Entertainment,6402,high,Meals & entertainment -> Entertainment
+Cost of Overhead Related to Service:Refunds,5052,med,Trip refunds -> Refunds - Trip; generic 'Refunds' could span incidentals (5053)
+Other Operating Expenses:Human Resource - Directors' Salary,6003,high,Directors' salary -> Directors Salary
+Cost of Overhead Related to Service:Operating Expenses:Sticker payouts,5041,high,Sticker host payouts -> Host Payouts - Sticker
+Device subscriptions,5030,med,"Device subscription cost -> Cost of Device Subscriptions; could be 4010 revenue but labeled as expense bucket"
+Operating Expenses:Recruitment Expense,6200,high,Recruitment expense -> HR - Recruitment
+Other Operating Expenses:Corporate - Fines and Penalties,6502,high,Fines and penalties -> Fines & Penalties
+Other Payables,2010,high,Non-trade payable -> Other Payables
+Retained Earnings,3100,high,Retained earnings -> Retained Earnings
+Depreciation-Equipment,7300,high,Depreciation expense on equipment -> Depreciation - Computer & Equipment
+Accumulated amortisation - Technology Development,1810,high,Accum amort of Technology Development -> Accum Amort - Technology Development (machine 7400 expense is wrong type)
+Depreciation - Technology Development,7400,high,Amortisation expense on Technology Development -> Amortisation - Technology Development (machine 1710 asset is wrong type)
+Corporate - Fines and Penalties,6502,high,Fines and penalties -> Fines & Penalties

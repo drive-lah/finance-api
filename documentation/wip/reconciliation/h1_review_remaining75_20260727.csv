@@ -1,0 +1,76 @@
+txn_id,bank_account,date,amount,currency,description,counterparty,ai_suggestion,ai_confidence,YOUR_REMARK (code or instruction)
+7118,CBA,27/3/2026,42000,AUD,Direct Credit 507141 Misc Misc_UDT1hoWrJ4Rma,,1220 — Other Receivables,0.5,this is a loan - I need to confirm from whom
+6376,CBA,14/4/2026,-20000,AUD,Transfer to CBA A/c CommBank app Consult work,,6501 — Legal Fees,0.65,director salary - Gaurav Singhal
+6429,CBA,27/4/2026,-14648,AUD,Transfer to CBA A/c CommBank app Consult,,6501 — Legal Fees,0.65,director salary - Gaurav Singhal
+5236,OCBC,18/6/2026,10000,SGD,PAYMENT/TRANSFER OTHR REVIO LABS PTE. LTD 2193987552Refund,,7001 — Other Income - Cash Rebate,0.75,this is a refund of amount paid by another company Revio labs. Where is the payment to revio labs??
+7087,CBA,18/3/2026,1057.41,AUD,Transfer In Admin CF-15245631C,,1220 — Other Receivables,0.45,ok
+6328,CBA,2/4/2026,900,AUD,Direct Credit 421520 FCM Pty Ltd Trus FCM006056,,1220 — Other Receivables,0.5,this is refund of focus assesment etc. they are a vendor
+6598,CBA,2/6/2026,500,AUD,Direct Credit 421520 AUTOROLA AUSTRA 1YJ5AF,Autorola,1220 — Other Receivables,0.65,Again refund to autorola
+6130,OCBC Main account,11/6/2026,500,SGD,FAST TRANSFER OTHR S$ LS E&C PTE. SG3P260611787496 PayNow: SG3P260611787496,,1220 — Other Receivables,0.5,ok
+6527,CBA,19/5/2026,-324.82,AUD,Traveloka3DS*135706475 WWW.TRAVELOKA AU Card xx1999 Value Date 15/05/2026,,6401 — Travel - Meals,0.65,ok
+6187,OCBC Main account,24/6/2026,300,SGD,PAYMENT/TRANSFER LOAR S$ SHAHNAZ H LATIFF PayNow: Shahnaz H Latiff,,2200 — Accrued Expenses,0.5,ok
+9909,Wise AUD,2/2/2026,-203.95,AUD,Card transaction of 203.95 AUD issued by Vistaprint Australia Pty Derrimut,,6103 — Marketing - Asset Creation,0.7,ok
+9883,Wise AUD,28/1/2026,-203.95,AUD,Card transaction of 203.95 AUD issued by Vistaprint Australia Pty Derrimut,,6103 — Marketing - Asset Creation,0.7,ok
+7102,CBA,22/3/2026,-174.81,AUD,METRO PETROLEUMCROW WOLLONGONGAU,,5060 — Parking - RMS Fleet,0.7,ok
+6614,CBA,8/6/2026,-161,AUD,Transfer to xx3529 CommBank app Gurjeet gift,,6014 — Employee Claims - Other,0.55,ok
+6019,OCBC Main account,14/5/2026,-157.4,SGD,DEBIT PURCHASE USD 120.00 12/05/26 xx-5942 TERMIUS CORPORATI SAN,,6700 — Technology - Infrastructure,0.7,ok
+10758,Wise AUD,8/6/2026,-135,AUD,Card transaction of 135.00 AUD issued by Spire Residences By Cllix BRISBANE CITY,,6400 — Travel - Tickets,0.65,ok
+6738,CBA,8/1/2026,131.58,AUD,Direct Credit 507141 DrivematePayout Drivemate_TkJoNVYy,,1220 — Other Receivables,0.55,ok
+10785,Wise AUD,10/6/2026,-115.21,AUD,Card transaction of 115.21 AUD issued by 7-Eleven 4170 BROADBEACH,,5062 — On-Ground Team - Expenses,0.6,ok
+6998,CBA,27/2/2026,-86.78,AUD,BOPP & TONES Sydney AU Card xx1999 Value Date 25/02/2026,,6401 — Travel - Meals,0.72,ok
+10845,Wise AUD,24/6/2026,-83.45,AUD,Card transaction of 83.45 AUD issued by W&l Group Pty Ltd NOTTING HILL,,6400 — Travel - Tickets,0.65,ok
+10783,Wise AUD,10/6/2026,-77.07,AUD,Card transaction of 69.42 SGD issued by Din Tai Fung-Mbs SINGAPORE,,6401 — Travel - Meals,0.65,ok
+7038,CBA,9/3/2026,75.55,AUD,Direct Credit 507141 Drivemate0226Pay Drivemate_U67PZmyW,,4025 — Incidentals Revenue - Other,0.45,ok
+6488,CBA,12/5/2026,-74.1,AUD,Saint & Rogue Melbourne AU Card xx1999 Value Date 08/05/2026,,6402 — Entertainment,0.78,ok
+9789,Wise AUD,21/1/2026,-69.13,AUD,Card transaction of 69.13 AUD issued by Cas*Little Surprise Box MUMBAI,,6400 — Travel - Tickets,0.68,ok
+6597,CBA,2/6/2026,66,AUD,Transfer from CommBank app Refund,,7001 — Other Income - Cash Rebate,0.7,ok
+10737,Wise AUD,1/6/2026,-65.42,AUD,Card transaction of 65.42 AUD issued by Amazon Marketplace Au SYDNEY,,6310 — Office Equipment,0.65,ok
+10836,Wise AUD,22/6/2026,-60.72,AUD,Card transaction of 60.72 AUD issued by Adina Pentridge COBURG,,6400 — Travel - Tickets,0.7,ok
+5454,OCBC Main account,4/2/2026,60,SGD,TT IN SGD OC260204003244000 KEVIN HOON TT-SGD60.00,,1220 — Other Receivables,0.65,ok
+6899,CBA,9/2/2026,58.38,AUD,Direct Credit 507141 Drivemate0126Pay Drivemate_TvZxytm2,,4025 — Incidentals Revenue - Other,0.45,ok
+10018,Wise AUD,26/2/2026,-56.3,AUD,Card transaction of 40.00 USD issued by Unprompted 501(c)(3) UNPROMPTEDCON,,6400 — Travel - Tickets,0.75,ok
+10331,Wise AUD,13/4/2026,-55.24,AUD,Card transaction of 49.46 SGD issued by Mercimarcelgroup.com SINGAPORE,,6400 — Travel - Tickets,0.55,ok
+6575,CBA,29/5/2026,-50.05,AUD,SPEEDW AY KENT ROAD NORTH RYDE AU Card xx1999 Value Date 26/05/2026,,6400 — Travel - Tickets,0.78,ok
+6580,CBA,30/5/2026,-46.2,AUD,SPEEDW AY KENT ROAD NORTH RYDE AU Card xx1999 Value Date 27/05/2026,,6400 — Travel - Tickets,0.78,ok
+6426,CBA,25/4/2026,-42,AUD,Transfer to CBA A/c CommBank app Parking,,5060 — Parking - RMS Fleet,0.75,ok
+6552,CBA,23/5/2026,-41.6,AUD,POST LINDFIELD WEST LP LINDFIELD AU Card xx1999 Value Date 20/05/2026,,6400 — Travel - Tickets,0.6,ok
+10334,Wise AUD,13/4/2026,-40.88,AUD,Card transaction of 36.60 SGD issued by Marche Singapore,,6400 — Travel - Tickets,0.6,ok
+10815,Wise AUD,15/6/2026,-40.38,AUD,Card transaction of 40.38 AUD issued by Otr Rouse Hill ROUSE HILL,,6013 — Employee Claims - Office Supplies,0.55,ok
+6977,CBA,20/2/2026,-40.15,AUD,Dunkirk Hotel Pyrmont AU Card xx1999 Value Date 18/02/2026,,6401 — Travel - Meals,0.7,ok
+5800,OCBC Main account,26/3/2026,-39.86,SGD,DEBIT PURCHASE USD 30.00 23/03/26 xx-3433 CODERABBIT* CODERABBIT WAL,,6701 — Technology - Software Subscriptions,0.75,ok
+5380,OCBC Main account,26/1/2026,-39.73,SGD,DEBIT PURCHASE USD 30.00 23/01/26 xx-2128 CODERABBIT* CODERABBIT WAL,,6701 — Technology - Software Subscriptions,0.75,ok
+5656,OCBC Main account,26/2/2026,-39.27,SGD,DEBIT PURCHASE USD 30.00 23/02/26 xx-2128 CODERABBIT* CODERABBIT WAL,,6701 — Technology - Software Subscriptions,0.75,ok
+10341,Wise AUD,14/4/2026,-37.67,AUD,Card transaction of 34.00 SGD issued by Five Guys SINGAPORE,,6401 — Travel - Meals,0.7,ok
+9691,Wise AUD,13/1/2026,-34.44,AUD,Card transaction of 23.00 USD issued by Exportcomments.com BUCHAREST,,6701 — Technology - Software Subscriptions,0.7,ok
+10425,Wise AUD,16/4/2026,-30.01,AUD,Card transaction of 30.01 AUD issued by Ampol Randwick 22221f RANDWICK,,6400 — Travel - Tickets,0.65,ok
+6994,CBA,25/2/2026,-27.75,AUD,Transfer to xx6947 CommBank app Aus post,,6013 — Employee Claims - Office Supplies,0.65,ok
+10356,Wise AUD,15/4/2026,-26.48,AUD,Card transaction of 23.98 SGD issued by Chimichanga Paya Lebar Singapore,,6401 — Travel - Meals,0.65,ok
+6535,CBA,19/5/2026,-25.61,AUD,=X0>_6) 73.00.60VO.461D.100S.3R.LS30303R852ZZ01.6.6153.7441 20 May SALSAS M/AIR/DEPARTURE DR MELB AIRPORT Card xx1999 Va,,6400 — Travel - Tickets,0.75,ok
+10822,Wise AUD,16/6/2026,-25.26,AUD,Card transaction of 25.26 AUD issued by Otr Rouse Hill ROUSE HILL,,6013 — Employee Claims - Office Supplies,0.55,ok
+10421,Wise AUD,16/4/2026,-22.84,AUD,Card transaction of 20.80 SGD issued by Marche Singapore,,6401 — Travel - Meals,0.7,ok
+10642,Wise AUD,18/5/2026,-21.5,AUD,Card transaction of 21.50 AUD issued by Poacher And Hound MOUNT WAVERLE,,6401 — Travel - Meals,0.65,ok
+10766,Wise AUD,9/6/2026,-19.78,AUD,Card transaction of 17.90 SGD issued by Superstaple Pte. Ltd. Singapore,,6013 — Employee Claims - Office Supplies,0.6,ok
+6494,CBA,13/5/2026,-14.2,AUD,GYG MARTIN PLACE Sydney AU Card xx1999 Value Date 11/05/2026,,6402 — Entertainment,0.75,ok
+10417,Wise AUD,16/4/2026,-13.76,AUD,Card transaction of 12.50 SGD issued by Hchain Pte Ltd N/A,,6400 — Travel - Tickets,0.75,ok
+7088,CBA,18/3/2026,-13.19,AUD,Transfer to xx6947 CommBank app Aus post,,6012 — Employee Claims - Transport,0.55,ok
+10407,Wise AUD,15/4/2026,-12.59,AUD,Card transaction of 11.40 SGD issued by Takashimaya (s) Ltd Singapore,,6013 — Employee Claims - Office Supplies,0.55,ok
+10760,Wise AUD,8/6/2026,-12.29,AUD,Card transaction of 7.50 EUR issued by Internationale Tennisclub Amsterdam,,6400 — Travel - Tickets,0.5,ok
+6379,CBA,15/4/2026,-12.14,AUD,FINEST PAYA LEBAR QUARTER SINGAPORE SG Card xx1999 SGD 10.90 Value Date 13/04/2026,,6401 — Travel - Meals,0.65,ok
+6599,CBA,2/6/2026,-11.79,AUD,73.00.60VO.461D.100S.3R.LS30303R852ZZ01.8.8153.7441 03 Jun SQ *SPACES Sydney AU Card xx1999 Value Date 01/06/2026,,6300 — Office Rent,0.6,ok
+6320,CBA,31/3/2026,-11.67,AUD,Pure Brew Co. GORDON AU Card xx1999 Value Date 27/03/2026,,6402 — Entertainment,0.65,ok
+7019,CBA,3/3/2026,-11.47,AUD,73.00.60VO.980D.100S.3R.LS30303R852ZZ21.9.3113.0911 03 Mar Pure Brew Co. GORDON AU Card xx1999 Value Date 27/02/2026,,6401 — Travel - Meals,0.72,ok
+10218,Wise AUD,23/3/2026,-10,AUD,Card transaction of 10.00 AUD issued by Chemist Warehouse KNOXFIELD,,6014 — Employee Claims - Other,0.5,ok
+10705,Wise AUD,25/5/2026,-9.99,AUD,Card transaction of 9.99 AUD issued by Uberdirectau_pass SYDNEY,,5060 — Parking - RMS Fleet,0.7,ok
+10712,Wise AUD,27/5/2026,-9.5,AUD,Card transaction of 9.50 AUD issued by Waverley Council BONDI JUNCTIO,,5060 — Parking - RMS Fleet,0.75,ok
+6368,CBA,14/4/2026,-7.74,AUD,Atrium Cafe Sydney Pty MASCOT AU Card xx1999 Value Date 12/04/2026,,6402 — Entertainment,0.65,ok
+6532,CBA,19/5/2026,-6.4,AUD,CITYOFSYDNEY PARKING SYDNEY AU Card xx1999 Value Date 15/05/2026,,6400 — Travel - Tickets,0.72,ok
+6476,CBA,8/5/2026,-6.1,AUD,PINKIE PROMISE & CO PTYPICAULFIELD NORAU,,5060 — Parking - RMS Fleet,0.62,ok
+10765,Wise AUD,9/6/2026,-5.97,AUD,Card transaction of 5.40 SGD issued by 7-Eleven-16 Collyer Quay Singapore,,6013 — Employee Claims - Office Supplies,0.55,ok
+6391,CBA,16/4/2026,-5.9,AUD,7-ELEVEN-700 GEYLANG RD Singapore SG Card xx1999 SGD 5.30 Value Date 12/04/2026,,6402 — Entertainment,0.75,ok
+7124,CBA,28/3/2026,-5.89,AUD,=è0;è;) 73.00.60VO.980D.100S.3R.LS30303R852ZZ21.11.5113.0911 28 Mar SQ *SPACES Sydney AU Card xx1999 Value Date 26/03/20,,6402 — Entertainment,0.65,ok
+10714,Wise AUD,27/5/2026,-4.5,AUD,Card transaction of 4.50 AUD issued by Waverley Council BONDI JUNCTIO,,5060 — Parking - RMS Fleet,0.75,ok
+6377,CBA,15/4/2026,-3.26,AUD,FLIGHT CLUB CP SEPANG MY Card xx1999 MYR 9.10 Value Date 12/04/2026,,6402 — Entertainment,0.7,ok
+10082,Wise AUD,1/3/2026,-2.99,AUD,Card transaction of 2.12 USD issued by Shenduqrwea 18658850911,,6701 — Technology - Software Subscriptions,0.6,ok
+10408,Wise AUD,15/4/2026,-2.43,AUD,Card transaction of 2.20 SGD issued by Takashimaya (s) Ltd Singapore,,6013 — Employee Claims - Office Supplies,0.55,ok
+9820,Wise AUD,27/1/2026,1.45,AUD,Card transaction of 1.00 USD issued by Www.brave.com +16502003351,,7002 — Other Income - Interest,0.5,ok
+9819,Wise AUD,27/1/2026,-1.45,AUD,Card transaction of 1.00 USD issued by Www.brave.com +16502003351,,6701 — Technology - Software Subscriptions,0.65,ok

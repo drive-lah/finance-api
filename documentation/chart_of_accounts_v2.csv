@@ -132,6 +132,7 @@ Code,Name,Category,Sub-Category,Account Type,Normal Balance,Description
 6001,Employer CPF (SG),Operating Expenses,Payroll,Expense,Debit,"Singapore employer's Central Provident Fund contribution (currently 17% for employees under 55). Statutory cost on top of gross salary, paid to CPF Board monthly."
 6002,Employer Superannuation (AU),Operating Expenses,Payroll,Expense,Debit,"Australian employer superannuation guarantee contribution (currently 11.5%). Statutory cost on top of gross salary, paid to employee's super fund quarterly."
 6003,Directors Salary,Operating Expenses,Payroll,Expense,Debit,"Remuneration paid to company directors. Tracked separately from staff salaries for disclosure requirements and corporate governance reporting."
+6004,Staff Health Insurance,Operating Expenses,Payroll,Expense,Debit,"Health insurance premiums for the team (e.g. PH remote staff via Care Corporation). Employment benefit cost, distinct from product/trip insurance (5031/5035) and employee claims (6010-6014)."
 6010,Employee Claims - Travel,Operating Expenses,Employee Claims,Expense,Debit,"Reimbursements for employee travel expenses (flights, accommodation, transport) incurred for business purposes. Claimed via expense report, held in 2303 until paid."
 6011,Employee Claims - Meals,Operating Expenses,Employee Claims,Expense,Debit,Reimbursements for employee meal expenses incurred during business travel or client meetings. Subject to company expense policy limits.
 6012,Employee Claims - Transport,Operating Expenses,Employee Claims,Expense,Debit,"Reimbursements for local transport expenses (taxi, ride-share, public transport) incurred for business purposes."
@@ -154,6 +155,7 @@ Code,Name,Category,Sub-Category,Account Type,Normal Balance,Description
 6600,Bank Fees,Operating Expenses,Banking,Expense,Debit,"Bank account maintenance fees, transaction fees, wire transfer charges, and other banking service costs."
 6700,Technology - Infrastructure,Operating Expenses,Technology,Expense,Debit,"Cloud hosting costs (AWS, GCP, etc.), server infrastructure, CDN, database hosting, and DevOps tooling."
 6701,Technology - Software Subscriptions,Operating Expenses,Technology,Expense,Debit,"SaaS subscriptions for business tools (e.g. Slack, Jira, GitHub, analytics platforms, CRM). Monthly or annual licence fees."
+6702,Technology - Platform Testing,Operating Expenses,Technology,Expense,Debit,"Test charges on our own platforms (Drive lah / Drive mate test bookings on company cards). Own trading name is never a counterparty (ENT-3/ENT-5)."
 ,,,,,,
 ,DEPRECIATION & AMORTISATION,,,,,,
 ,,,,,,

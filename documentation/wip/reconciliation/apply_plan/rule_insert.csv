@@ -1,0 +1,2 @@
+name,pattern,category,direction
+Stripe settlement variant - internal transfer (Fleet decision),payment transferpayment transfer csdb stripe,INTERNAL_TRANSFER,INCOMING

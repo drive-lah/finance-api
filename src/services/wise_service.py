@@ -146,7 +146,11 @@ class WiseService:
         rows: list[NormalizedRow] = []
         errors: list[dict] = []
 
-        for i, txn in enumerate(statement.get("transactions", []), start=1):
+        # Wise returns transactions NEWEST-FIRST. Reverse to chronological so
+        # insertion order (and thus id order) matches real sequence — the
+        # 2026-07-26 recon checkpoint caught intraday id-order running backwards,
+        # which broke balance-chain checks and first/last-row-of-day selection.
+        for i, txn in enumerate(reversed(statement.get("transactions", [])), start=1):
             try:
                 row = self._normalize_txn(txn, expected_currency)
                 if row is not None:

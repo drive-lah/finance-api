@@ -28,6 +28,42 @@ from src.models.categorization_rule import (
 )
 
 
+@pytest.fixture(scope="session", autouse=True)
+def _sweep_test_residue():
+    """These tests write to the REAL database. Sweep any [TEST]-marked residue
+    left by previously crashed teardowns — before AND after the session — so
+    leaks never accumulate (87 leaked accounts found on 2026-07-25).
+    Durable fix (dedicated test DB) tracked in STATUS."""
+    from sqlalchemy import text
+    def _purge():
+        with db_session() as s:
+            s.execute(text("""DELETE FROM finance_sync_runs WHERE bank_account_id IN
+                (SELECT id FROM finance_bank_accounts WHERE bank_name LIKE '[TEST]%')"""))
+            s.execute(text("""DELETE FROM finance_journal_lines WHERE entry_id IN (
+                SELECT DISTINCT t.reconciled_journal_entry_id FROM finance_transactions t
+                JOIN finance_bank_accounts ba ON ba.id=t.bank_account_id
+                WHERE ba.bank_name LIKE '[TEST]%' AND t.reconciled_journal_entry_id IS NOT NULL)"""))
+            s.execute(text("""DELETE FROM finance_journal_entries WHERE id IN (
+                SELECT DISTINCT t.reconciled_journal_entry_id FROM finance_transactions t
+                JOIN finance_bank_accounts ba ON ba.id=t.bank_account_id
+                WHERE ba.bank_name LIKE '[TEST]%' AND t.reconciled_journal_entry_id IS NOT NULL)"""))
+            s.execute(text("""DELETE FROM finance_transactions WHERE bank_account_id IN
+                (SELECT id FROM finance_bank_accounts WHERE bank_name LIKE '[TEST]%')"""))
+            s.execute(text("DELETE FROM finance_bank_accounts WHERE bank_name LIKE '[TEST]%'"))
+            s.execute(text("""DELETE FROM finance_journal_lines WHERE entry_id IN
+                (SELECT id FROM finance_journal_entries WHERE entity_id IN
+                 (SELECT id FROM finance_entities WHERE name LIKE '[TEST]%'))"""))
+            s.execute(text("""DELETE FROM finance_journal_entries WHERE entity_id IN
+                (SELECT id FROM finance_entities WHERE name LIKE '[TEST]%')"""))
+            s.execute(text("DELETE FROM finance_categorization_rules WHERE name LIKE '[TEST]%'"))
+            s.execute(text("DELETE FROM finance_counterparties WHERE name LIKE '[TEST]%'"))
+            s.execute(text("DELETE FROM finance_entities WHERE name LIKE '[TEST]%'"))
+            s.commit()
+    _purge()
+    yield
+    _purge()
+
+
 @pytest.fixture(scope="function")
 def db_session_fixture() -> Session:
     """

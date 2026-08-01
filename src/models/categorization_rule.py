@@ -39,11 +39,15 @@ class TransactionCategory(enum.Enum):
       DEPOSIT                   → incoming only
       INTERNAL_TRANSFER         → either direction
       CROSS_ENTITY_ALLOCATION   → outgoing only (bank entity pays, allocation_entity_id bears cost)
+      INTERCOMPANY_TRANSFER     → either direction (POL-27: cash crossing entity lines;
+                                  contra = the book's NET IC account (82xx),
+                                  allocation_entity_id = the counterpart entity)
     """
     EXPENSE = "expense"
     DEPOSIT = "deposit"
     INTERNAL_TRANSFER = "internal_transfer"
     CROSS_ENTITY_ALLOCATION = "cross_entity_allocation"
+    INTERCOMPANY_TRANSFER = "intercompany_transfer"
 
 
 class MatchOperator(enum.Enum):

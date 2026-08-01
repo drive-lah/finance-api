@@ -31,8 +31,8 @@ logger = logging.getLogger(__name__)
 
 # Standard AP liability account
 AP_ACCOUNT_CODE = "2000"
-# Prepaid asset account for amortization
-PREPAID_ACCOUNT_CODE = "1200"
+# Prepaid asset account for amortization (COA: 1300 Prepayments; 1200 is Trade Receivables)
+PREPAID_ACCOUNT_CODE = "1300"
 # GST / VAT input tax credit (recoverable on purchases)
 GST_INPUT_ACCOUNT_CODE = "1350"
 
@@ -57,9 +57,53 @@ _IC_PAYABLE_CODES: dict[tuple[str, str], str] = {
 }
 
 
+def _coerce_amount(raw: object) -> float | None:
+    """Parse an extractor amount to float, locale-aware. Returns None (never a
+    silently-wrong value) when it cannot parse — the caller surfaces that.
+
+    Handles: native numbers; US `1,234.56`; EU `1.234,56`; parenthesised
+    negatives `(500.00)`; currency symbols/spaces. Ambiguity rule: when both
+    separators appear, the LAST one is the decimal point; a lone comma with a
+    2-digit tail is decimal, otherwise a thousands separator.
+    """
+    if raw is None:
+        return None
+    if isinstance(raw, (int, float)):
+        return float(raw)
+    import re as _re
+    s = str(raw).strip()
+    neg = s.startswith("(") and s.endswith(")")
+    s = _re.sub(r"[^0-9.,-]", "", s)  # drop currency symbols, spaces, letters
+    if not s or s in {"-", ".", ","}:
+        return None
+    if "," in s and "." in s:
+        if s.rfind(",") > s.rfind("."):
+            s = s.replace(".", "").replace(",", ".")   # EU: 1.234,56 -> 1234.56
+        else:
+            s = s.replace(",", "")                       # US: 1,234.56 -> 1234.56
+    elif "," in s:
+        s = s.replace(",", ".") if len(s.rsplit(",", 1)[1]) == 2 else s.replace(",", "")
+    try:
+        val = float(s)
+    except ValueError:
+        return None
+    return -val if neg else val
+
+
 def _entity_short(name: str) -> str:
-    """Extract the short entity identifier from a full name: 'DL SG' → 'SG'."""
-    return name.strip().rsplit(" ", 1)[-1]
+    """Resolve an entity name to its IC-map key: SG / AU / Ventures.
+
+    Handles both seed-style names ('DL SG') and the live DB's full legal names
+    ('Drive lah Ventures Holding Pte Ltd', 'Drive lah Australia Pty Ltd') —
+    a plain last-word split returns 'Ltd' for every live entity, so no IC
+    pair would ever match.
+    """
+    n = name.strip().lower()
+    if "ventures" in n:
+        return "Ventures"
+    if "australia" in n or n.endswith(" au"):
+        return "AU"
+    return "SG"
 
 
 def _invoice_dict(invoice: "FinanceInvoice", db: Optional[Session] = None) -> dict:
@@ -83,6 +127,37 @@ def _invoice_dict(invoice: "FinanceInvoice", db: Optional[Session] = None) -> di
                 "default_account_code": counterparty.default_account_code,
             }
 
+    # Transitional "Retool tags" for the review UI — derived from ai_extraction_raw,
+    # NO DB columns (Retool is a temporary migration source). Render as badges
+    # (Retool #id · DUP→#orig · Paid/Unpaid · stub-reason). (Gaurav 2026-07-31)
+    raw = invoice.ai_extraction_raw or {}
+    recon = raw.get("recon") or {}
+    dup = recon.get("duplicate") or {}
+    result["tags"] = {
+        "retool_id": (raw.get("retool_ref") or {}).get("finance_db_id"),
+        "provisional_paid": (raw.get("provisional_paid") or {}).get("is_provisional_paid"),
+        "is_duplicate": bool(dup.get("is_duplicate", False)),
+        "duplicate_of": dup.get("duplicate_of"),
+        "ingest_outcome": recon.get("ingest_outcome"),  # not_invoice/no_attachment/no_file/duplicate
+        "stub": bool(recon.get("stub", False)),
+        # matched/quarantine derived from LIVE counterparty, not the frozen flag
+        "matched": invoice.counterparty_id is not None,
+    }
+
+    # Full action-audit trail — who/when/why for every transition (migration 047).
+    def _iso(dt):
+        return dt.isoformat() if dt else None
+    result["audit"] = {
+        "uploaded_by": invoice.uploaded_by,
+        "submitted_by": invoice.submitted_by, "submitted_at": _iso(invoice.submitted_at),
+        "submit_override_reason": invoice.submit_override_reason,
+        "approved_by": invoice.approved_by, "approved_at": _iso(invoice.approved_at),
+        "rejected_by": invoice.rejected_by, "rejected_at": _iso(invoice.rejected_at),
+        "rejection_reason": invoice.rejection_reason,
+        "voided_by": invoice.voided_by, "voided_at": _iso(invoice.voided_at),
+        "void_reason": invoice.void_reason,
+    }
+
     return result
 
 
@@ -102,22 +177,60 @@ class InvoiceService:
             .first()
         )
 
-    def get_all(
-        self,
-        db: Session,
-        entity_id: Optional[int] = None,
-        status: Optional[str] = None,
-        counterparty_id: Optional[int] = None,
-    ) -> list[FinanceInvoice]:
-        """Retrieve invoices with optional filtering."""
-        query = db.query(FinanceInvoice)
+    def _apply_filters(self, query, *, entity_id=None, status=None, counterparty_id=None,
+                       search=None, vendor_flag=None, coa_flag=None, document_gate=None,
+                       currency_flag=None, retool_status=None, sub_category=None, amount_match=None,
+                       provisional_paid=None, retool_id=None, is_duplicate=None):
+        """Shared filter builder for get_all + count_all (server-side, incl. ai_extraction_raw JSON)."""
+        from sqlalchemy import or_, func
+
+        def jtext(*path):  # column is JSONB in the DB -> use jsonb_extract_path_text
+            return func.jsonb_extract_path_text(FinanceInvoice.ai_extraction_raw, *path)
+
         if entity_id is not None:
             query = query.filter(FinanceInvoice.entity_id == entity_id)
         if status is not None:
             query = query.filter(FinanceInvoice.status == status)
         if counterparty_id is not None:
             query = query.filter(FinanceInvoice.counterparty_id == counterparty_id)
-        return query.order_by(FinanceInvoice.invoice_date.desc(), FinanceInvoice.id.desc()).all()
+        if vendor_flag:
+            query = query.filter(jtext("recon", "vendor_flag") == vendor_flag)
+        if coa_flag:
+            query = query.filter(jtext("recon", "coa_flag") == coa_flag)
+        if document_gate:  # 'ok' (real invoice, incl. legacy null) or 'not_invoice'
+            query = query.filter(func.coalesce(jtext("recon", "document_gate"), "ok") == document_gate)
+        if currency_flag is not None:
+            query = query.filter(jtext("recon", "currency_entity_flag") == str(currency_flag).lower())
+        if amount_match is not None:
+            query = query.filter(jtext("recon", "amount_match") == str(amount_match).lower())
+        if provisional_paid is not None:
+            query = query.filter(jtext("provisional_paid", "is_provisional_paid") == str(provisional_paid).lower())
+        if retool_status:
+            query = query.filter(jtext("retool_ref", "status") == retool_status)
+        if sub_category:
+            query = query.filter(jtext("retool_ref", "sub_category") == sub_category)
+        if retool_id:
+            query = query.filter(jtext("retool_ref", "finance_db_id") == str(retool_id))
+        if is_duplicate is not None:
+            query = query.filter(jtext("recon", "duplicate", "is_duplicate") == str(is_duplicate).lower())
+        if search:
+            like = f"%{search}%"
+            query = query.filter(or_(
+                FinanceInvoice.invoice_number.ilike(like),
+                jtext("extraction", "vendor_name").ilike(like),
+                jtext("retool_ref", "payee").ilike(like),
+            ))
+        return query
+
+    def get_all(self, db: Session, *, limit: int = 100, offset: int = 0, **filters) -> list[FinanceInvoice]:
+        """Retrieve invoices with optional server-side filtering + pagination."""
+        query = self._apply_filters(db.query(FinanceInvoice), **filters)
+        return (query.order_by(FinanceInvoice.invoice_date.desc(), FinanceInvoice.id.desc())
+                .limit(limit).offset(offset).all())
+
+    def count_all(self, db: Session, **filters) -> int:
+        """Count invoices matching the same filters (for pagination total)."""
+        return self._apply_filters(db.query(FinanceInvoice), **filters).count()
 
     def get_by_id(self, db: Session, invoice_id: int) -> FinanceInvoice:
         """Retrieve an invoice by ID. Raises NotFoundError if missing."""
@@ -133,26 +246,9 @@ class InvoiceService:
         Checks for semantic duplicates (same entity+counterparty+invoice_number+date+currency)
         before inserting. Auto-matches against contracts if counterparty is set.
         """
-        # Semantic duplicate check
-        if data.counterparty_id and data.invoice_number:
-            existing = (
-                db.query(FinanceInvoice)
-                .filter(
-                    FinanceInvoice.entity_id == data.entity_id,
-                    FinanceInvoice.counterparty_id == data.counterparty_id,
-                    FinanceInvoice.invoice_number == data.invoice_number,
-                    FinanceInvoice.invoice_date == data.invoice_date,
-                    FinanceInvoice.currency == data.currency,
-                )
-                .first()
-            )
-            if existing:
-                from src.utils.errors import ConflictError
-                raise ConflictError(
-                    f"Invoice {data.invoice_number} from this vendor on {data.invoice_date} "
-                    f"already exists (ID {existing.id}, status: {existing.status})."
-                )
-
+        # Duplicates are ALLOWED at draft (Gaurav 2026-08-01): we create the invoice and
+        # FLAG it if it duplicates an earlier one; promotion is blocked later (submit gate).
+        # No hard reject here — the dedup verdict is applied after insert.
         invoice = FinanceInvoice(
             entity_id=data.entity_id,
             counterparty_id=data.counterparty_id,
@@ -233,10 +329,33 @@ class InvoiceService:
         try:
             db.commit()
         except IntegrityError:
+            # active-only indexes let drafts duplicate; a violation here means a clash
+            # with a LIVE (non-draft) invoice — that genuinely can't be created.
             db.rollback()
             from src.utils.errors import ConflictError
-            raise ConflictError("Duplicate invoice detected (unique constraint violation).")
+            raise ConflictError("This invoice already exists as a posted/approved record.")
         db.refresh(invoice)
+
+        # Flag (don't reject) if this duplicates an EARLIER invoice — hash or vendor+number+amount.
+        from src.services.duplicate_detection_service import duplicate_detection_service
+        from sqlalchemy.orm.attributes import flag_modified
+        verdict = duplicate_detection_service.detect(
+            db, entity_id=invoice.entity_id, counterparty_id=invoice.counterparty_id,
+            invoice_number=invoice.invoice_number, total_amount=invoice.total_amount,
+            invoice_date=invoice.invoice_date, currency=invoice.currency,
+            pdf_content_hash=invoice.pdf_content_hash, exclude_id=invoice.id,
+        )
+        if verdict.duplicate_of and verdict.duplicate_of < invoice.id:
+            raw = dict(invoice.ai_extraction_raw or {})
+            recon = dict(raw.get("recon") or {})
+            recon["duplicate"] = {"is_duplicate": bool(verdict.is_duplicate),
+                                  "duplicate_of": f"inv#{verdict.duplicate_of}",
+                                  "dup_reason": verdict.level}
+            raw["recon"] = recon
+            invoice.ai_extraction_raw = raw
+            flag_modified(invoice, "ai_extraction_raw")
+            db.commit()
+            db.refresh(invoice)
         return invoice
 
     def update(self, db: Session, invoice_id: int, data: InvoiceUpdate) -> FinanceInvoice:
@@ -258,9 +377,163 @@ class InvoiceService:
         for field, value in update_data.items():
             setattr(invoice, field, value)
 
+        # Refresh the recon flags to reflect the edit — the review UI reads these
+        # (Gaurav 2026-07-31: after assigning counterparty / COA the flags must update).
+        raw = dict(invoice.ai_extraction_raw or {})
+        recon = dict(raw.get("recon") or {})
+        recon["vendor_flag"] = "MATCHED" if invoice.counterparty_id else "QUARANTINE"
+        recon["coa_flag"] = "OK" if invoice.contra_account_code else "NEEDS-COA"
+        raw["recon"] = recon
+        invoice.ai_extraction_raw = raw
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(invoice, "ai_extraction_raw")
+
         db.commit()
         db.refresh(invoice)
         return invoice
+
+    def attach_document(self, db: Session, invoice_id: int, file_bytes: bytes,
+                        filename: str = "invoice.pdf") -> tuple:
+        """Attach a real document to an EXISTING invoice (typically a no-document stub),
+        backfilling its fields IN PLACE — never creating a new row. (Gaurav 2026-08-01)
+
+        Runs the same pipeline as fresh ingestion: hash → extract → vendor-match → S3 →
+        backfill → clear stub markers → duplicate detect. Returns (invoice, DuplicateVerdict).
+        """
+        import hashlib
+        from datetime import date as _date
+        from sqlalchemy.orm.attributes import flag_modified
+        from src.services.ai_extraction_service import ai_extraction_service
+        from src.services.vendor_matching_service import vendor_matching_service
+        from src.services.s3_service import s3_service
+        from src.services.duplicate_detection_service import duplicate_detection_service
+        from src.models.entity import FinanceEntity
+
+        invoice = self.get_by_id(db, invoice_id)
+        if invoice.status not in (InvoiceStatus.DRAFT.value, InvoiceStatus.PENDING_APPROVAL.value):
+            from src.utils.errors import ConflictError
+            raise ConflictError(
+                f"Cannot attach a document to an invoice in '{invoice.status}' status "
+                f"(only draft / pending_approval)."
+            )
+
+        h = hashlib.sha256(file_bytes).hexdigest()
+        ext = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ".pdf"
+        entity_names = [e.name for e in db.query(FinanceEntity).filter(FinanceEntity.status == "active").all()]
+        ex = ai_extraction_service.extract_invoice_data(file_bytes, entity_names=entity_names, file_extension=ext)
+
+        def _dpart(s):
+            try:
+                return _date.fromisoformat(str(s)[:10]) if s else None
+            except ValueError:
+                return None
+
+        # Vendor match if the stub has no counterparty yet
+        cp_id = invoice.counterparty_id
+        if not cp_id and (ex.get("vendor_name") or None):
+            cp, _is_new, _conf = vendor_matching_service.match_or_create(db, ex.get("vendor_name"), ex.get("vendor_tax_id"))
+            cp_id = cp.id if cp else None
+
+        # Backfill from the document (extracted values are authoritative for a real doc)
+        if ex.get("invoice_number"):
+            invoice.invoice_number = ex.get("invoice_number")
+        d = _dpart(ex.get("invoice_date"))
+        if d:
+            invoice.invoice_date = d
+        # Coerce extracted amounts locale-aware (US/EU/parenthesised/currency).
+        # A raw assignment stores garbage in a financial column that drives
+        # dedup, amortization and the AP JE. On a genuine parse failure we do
+        # NOT silently skip — we SURFACE it so the review UI flags the row.
+        _amount_warnings: list[str] = []
+        for _fld, _key in (("total_amount", "total_amount"),
+                           ("net_amount", "subtotal_amount"),
+                           ("tax_amount", "tax_amount")):
+            _raw = ex.get(_key)
+            if _raw is not None:
+                _val = _coerce_amount(_raw)
+                if _val is not None:
+                    setattr(invoice, _fld, _val)
+                else:
+                    _amount_warnings.append(f"{_key}={_raw!r}")
+                    logger.warning("attach_document: unparseable %s %r for invoice %s — left unchanged",
+                                   _key, _raw, invoice.id)
+        if ex.get("currency"):
+            invoice.currency = (ex.get("currency") or invoice.currency)[:3]
+        dd = _dpart(ex.get("due_date"))
+        if dd:
+            invoice.due_date = dd
+        invoice.counterparty_id = cp_id
+        if cp_id and not invoice.contra_account_code:
+            from src.models.counterparty import FinanceCounterparty
+            cp = db.get(FinanceCounterparty, cp_id)
+            if cp and cp.default_account_code:
+                invoice.contra_account_code = cp.default_account_code
+                invoice.coa_source = "db"
+
+        invoice.pdf_s3_key = s3_service.upload_invoice_pdf(file_bytes, filename=filename, entity_id=invoice.entity_id)
+        invoice.pdf_content_hash = h
+
+        # Refresh recon: clear the stub markers, record the extraction, refresh flags
+        raw = dict(invoice.ai_extraction_raw or {})
+        recon = dict(raw.get("recon") or {})
+        recon.pop("document_status", None)
+        recon["stub"] = False
+        recon["ingest_outcome"] = "attached"
+        is_inv = ex.get("is_invoice")
+        recon["document_gate"] = "not_invoice" if (is_inv is False or ex.get("document_type") in
+                                                   ("statement", "letter", "report", "spreadsheet_screenshot")) else "ok"
+        recon["vendor_flag"] = "MATCHED" if cp_id else "QUARANTINE"
+        recon["coa_flag"] = "OK" if invoice.contra_account_code else ("NEEDS-COA" if cp_id else "NO-COUNTERPARTY")
+        if _amount_warnings:
+            recon["amount_flag"] = "UNPARSEABLE"
+            recon["extraction_warnings"] = _amount_warnings
+        else:
+            recon.pop("amount_flag", None)
+            recon.pop("extraction_warnings", None)
+        raw["extraction"] = {k: ex.get(k) for k in (
+            "vendor_name", "vendor_tax_id", "invoice_number", "invoice_date", "due_date",
+            "total_amount", "subtotal_amount", "tax_amount", "currency", "description",
+            "suggested_coa_account", "is_invoice", "document_type", "confidence")}
+
+        # Duplicate detection on the now-populated row
+        verdict = duplicate_detection_service.detect(
+            db, entity_id=invoice.entity_id, counterparty_id=cp_id,
+            invoice_number=invoice.invoice_number, total_amount=invoice.total_amount,
+            invoice_date=invoice.invoice_date, currency=invoice.currency,
+            pdf_content_hash=h, exclude_id=invoice.id,
+        )
+        # Flag as duplicate only if an EARLIER invoice matches (first one wins)
+        if verdict.duplicate_of and verdict.duplicate_of < invoice.id:
+            recon["duplicate"] = {"is_duplicate": bool(verdict.is_duplicate),
+                                  "duplicate_of": f"inv#{verdict.duplicate_of}",
+                                  "dup_reason": verdict.level}
+        raw["recon"] = recon
+        invoice.ai_extraction_raw = raw
+        flag_modified(invoice, "ai_extraction_raw")
+
+        invoice.ai_confidence_score = ex.get("confidence")
+        db.commit()
+        db.refresh(invoice)
+        return invoice, verdict
+
+    def _payable_account_for(self, db: Session, contra_code: Optional[str]) -> str:
+        """Resolve the credit (offset) leg for a given debit (expense/COS/asset) account.
+
+        The offset is PURELY a function of the COA: every account carries an explicit
+        offset_account_code (NOT NULL DEFAULT '2000'). The chart already segregates
+        employee-facing accounts (6010-6014, 5062 -> 2303 Employee Claims Payable) and
+        statutory ones (6002 -> 2302 super, 6001 -> 2300 CPF, 9000 -> 2305 income tax)
+        from vendor accounts (-> 2000), so no counterparty logic is needed. (POL-77/78)
+        """
+        if not contra_code:
+            return AP_ACCOUNT_CODE
+        from src.models.account import FinanceAccount
+        acct = (
+            db.query(FinanceAccount)
+            .filter(FinanceAccount.code == contra_code)
+            .first()
+        )
+        return acct.offset_account_code if acct and acct.offset_account_code else AP_ACCOUNT_CODE
 
     def approve(self, db: Session, invoice_id: int, approved_by: str, contra_account_code: Optional[str] = None) -> FinanceInvoice:
         """
@@ -271,11 +544,13 @@ class InvoiceService:
         """
         invoice = self.get_by_id(db, invoice_id)
 
-        if invoice.status not in (InvoiceStatus.DRAFT.value, InvoiceStatus.PENDING_APPROVAL.value):
+        # POL (Gaurav 2026-07-31): NO direct-to-approved. Every invoice must pass
+        # through pending_approval first — a draft cannot be approved directly.
+        if invoice.status != InvoiceStatus.PENDING_APPROVAL.value:
             from src.utils.errors import ConflictError
             raise ConflictError(
                 f"Cannot approve invoice in '{invoice.status}' status. "
-                f"Only draft or pending_approval invoices can be approved."
+                f"Only pending_approval invoices can be approved (submit it first)."
             )
 
         # COA priority at approval time:
@@ -335,6 +610,11 @@ class InvoiceService:
         else:
             debit_code = invoice.contra_account_code
 
+        # Credit leg: dedicated liability if the chosen expense account declares one
+        # (e.g. 6002 super -> 2302 payable), else generic 2000 AP. Resolve from the
+        # real expense (invoice.contra_account_code), not the prepaid substitute.
+        credit_code = self._payable_account_for(db, invoice.contra_account_code)
+
         inv_ref = f"Invoice {invoice.invoice_number or invoice.id}"
 
         if tax > 0:
@@ -353,14 +633,14 @@ class InvoiceService:
                     "description": f"GST Input Tax - {inv_ref}",
                 },
                 {
-                    "account_code": AP_ACCOUNT_CODE,
+                    "account_code": credit_code,
                     "debit_amount": 0.0,
                     "credit_amount": round(total, 2),
                     "description": inv_ref,
                 },
             ]
         else:
-            # Standard 2-line JE: Dr expense / Cr AP
+            # Standard 2-line JE: Dr expense / Cr payable (dedicated liability or 2000 AP)
             lines = [
                 {
                     "account_code": debit_code,
@@ -369,7 +649,7 @@ class InvoiceService:
                     "description": inv_ref,
                 },
                 {
-                    "account_code": AP_ACCOUNT_CODE,
+                    "account_code": credit_code,
                     "debit_amount": 0.0,
                     "credit_amount": total,
                     "description": inv_ref,
@@ -423,8 +703,9 @@ class InvoiceService:
         db.refresh(invoice)
         return invoice
 
-    def reject(self, db: Session, invoice_id: int, rejection_reason: str) -> FinanceInvoice:
-        """Reject an invoice with a reason."""
+    def reject(self, db: Session, invoice_id: int, rejection_reason: str,
+               rejected_by: Optional[str] = None) -> FinanceInvoice:
+        """Reject an invoice with a reason. Captures who/when (rejected_by = logged-in user)."""
         invoice = self.get_by_id(db, invoice_id)
 
         if invoice.status not in (InvoiceStatus.DRAFT.value, InvoiceStatus.PENDING_APPROVAL.value):
@@ -435,12 +716,16 @@ class InvoiceService:
 
         invoice.status = InvoiceStatus.REJECTED.value
         invoice.rejection_reason = rejection_reason
+        invoice.rejected_by = rejected_by
+        invoice.rejected_at = datetime.now(UTC)
         db.commit()
         db.refresh(invoice)
         return invoice
 
-    def void(self, db: Session, invoice_id: int) -> FinanceInvoice:
-        """Void an invoice. Only draft, pending_approval, or rejected invoices can be voided."""
+    def void(self, db: Session, invoice_id: int, voided_by: Optional[str] = None,
+             void_reason: Optional[str] = None) -> FinanceInvoice:
+        """Void an invoice. Only draft, pending_approval, or rejected invoices can be voided.
+        Captures who/when/why for traceability (voided_by = logged-in user)."""
         invoice = self.get_by_id(db, invoice_id)
 
         allowed = (
@@ -456,6 +741,9 @@ class InvoiceService:
             )
 
         invoice.status = InvoiceStatus.VOID.value
+        invoice.voided_by = voided_by
+        invoice.voided_at = datetime.now(UTC)
+        invoice.void_reason = void_reason
         db.commit()
         db.refresh(invoice)
         return invoice
@@ -920,6 +1208,10 @@ class InvoiceService:
         bank_coa = bank_account.coa_account_code
         inv_ref = f"Invoice {invoice.invoice_number or invoice.id}"
 
+        # Clear the SAME liability the approval JE credited — dedicated (e.g. 2302
+        # Superannuation Payable) or generic 2000 AP — else the sub-payable never closes.
+        ap_code = self._payable_account_for(db, invoice.contra_account_code)
+
         if bank_entity_id == invoice_entity_id:
             # ── Same-entity: single 2-line JE ──────────────────────────────
             entry = journal_service.create(
@@ -929,7 +1221,7 @@ class InvoiceService:
                 description=description,
                 lines=[
                     {
-                        "account_code": AP_ACCOUNT_CODE,
+                        "account_code": ap_code,
                         "debit_amount": abs_amount,
                         "credit_amount": 0.0,
                         "description": inv_ref,
@@ -980,7 +1272,7 @@ class InvoiceService:
         bank_entry.source = source
         bank_entry.intercompany_group_id = ic_group_id
 
-        # Invoice entity: Dr 2000 AP / Cr IC Payable
+        # Invoice entity: Dr AP (dedicated liability or 2000) / Cr IC Payable
         inv_entry = journal_service.create(
             db=db,
             entity_id=invoice_entity_id,
@@ -988,7 +1280,7 @@ class InvoiceService:
             description=description,
             lines=[
                 {
-                    "account_code": AP_ACCOUNT_CODE,
+                    "account_code": ap_code,
                     "debit_amount": abs_amount,
                     "credit_amount": 0.0,
                     "description": inv_ref,
@@ -1006,6 +1298,210 @@ class InvoiceService:
 
         db.flush()
         return bank_entry
+
+    def statement_for_counterparty(
+        self,
+        db: Session,
+        counterparty_id: int,
+        entity_id: Optional[int] = None,
+    ) -> dict:
+        """
+        Build a vendor-level Statement of Account for a counterparty.
+
+        Queried straight off finance_invoices + finance_counterparties.
+
+        Money totals EXCLUDE rows gated as `not_invoice`
+        (ai_extraction_raw->recon->>document_gate == 'not_invoice').
+
+        Paid-date signal (current state): all ingested invoices are draft /
+        amount_paid=0, so the paid-date comes from Retool's provisional close:
+          ai_extraction_raw->provisional_paid->>provisional_paid_at  (timestamp str)
+          ai_extraction_raw->provisional_paid->>is_provisional_paid  ('true'/'false')
+        A future bank-confirmed paid_date (from reconciliation) supersedes this —
+        see `_line_paid_date` where the precedence lives.
+        """
+        from sqlalchemy import func
+
+        counterparty = db.get(FinanceCounterparty, counterparty_id)
+        if not counterparty:
+            raise NotFoundError(f"Counterparty {counterparty_id} not found")
+
+        def jtext(*path):  # JSONB column -> text extraction
+            return func.jsonb_extract_path_text(FinanceInvoice.ai_extraction_raw, *path)
+
+        query = db.query(FinanceInvoice).filter(
+            FinanceInvoice.counterparty_id == counterparty_id
+        )
+        if entity_id is not None:
+            query = query.filter(FinanceInvoice.entity_id == entity_id)
+
+        invoices = query.order_by(
+            FinanceInvoice.invoice_date.asc(), FinanceInvoice.id.asc()
+        ).all()
+
+        today = date.today()
+
+        def _gate(inv: FinanceInvoice) -> str:
+            raw = inv.ai_extraction_raw or {}
+            recon = raw.get("recon") or {}
+            return (recon.get("document_gate") or "ok")
+
+        def _is_not_invoice(inv: FinanceInvoice) -> bool:
+            return _gate(inv) == "not_invoice"
+
+        def _prov(inv: FinanceInvoice) -> dict:
+            raw = inv.ai_extraction_raw or {}
+            return raw.get("provisional_paid") or {}
+
+        def _is_provisionally_paid(inv: FinanceInvoice) -> bool:
+            return str(_prov(inv).get("is_provisional_paid")).lower() == "true"
+
+        def _provisional_paid_at(inv: FinanceInvoice):
+            return _prov(inv).get("provisional_paid_at") or None
+
+        def _line_paid_date(inv: FinanceInvoice):
+            """Bank-confirmed paid date supersedes the provisional one.
+
+            Real reconciliation isn't wired yet (all invoices amount_paid=0),
+            so for now this resolves to the provisional close date. When
+            reconciliation lands, prefer the matched transaction date here.
+            """
+            # Future: if inv.amount_paid > 0 -> derive from matched transaction.
+            return _provisional_paid_at(inv)
+
+        # ── Aggregates (real, non-not_invoice rows only) ──────────────────
+        outstanding = 0.0
+        provisionally_paid_total = 0.0
+        invoice_count = 0
+        not_invoice_count = 0
+        oldest_unpaid_date = None
+        currency_breakdown: dict[str, float] = {}
+        aging = {"current": 0.0, "d1_30": 0.0, "d31_60": 0.0, "d61_90": 0.0, "d90_plus": 0.0}
+
+        for inv in invoices:
+            if _is_not_invoice(inv):
+                not_invoice_count += 1
+                continue
+
+            invoice_count += 1
+            total = float(inv.total_amount or 0)
+            paid = float(inv.amount_paid or 0)
+            remaining = total - paid
+            prov_paid = _is_provisionally_paid(inv)
+
+            if prov_paid:
+                provisionally_paid_total += total
+
+            # Outstanding = balance on real invoices NOT provisionally-paid.
+            if not prov_paid and remaining > 0:
+                outstanding += remaining
+                cur = inv.currency or "?"
+                currency_breakdown[cur] = round(currency_breakdown.get(cur, 0.0) + remaining, 2)
+
+                if oldest_unpaid_date is None or inv.invoice_date < oldest_unpaid_date:
+                    oldest_unpaid_date = inv.invoice_date
+
+                # Aging bucket by due_date (fall back to invoice_date) vs today.
+                ref_date = inv.due_date or inv.invoice_date
+                days_overdue = (today - ref_date).days
+                if days_overdue <= 0:
+                    aging["current"] += remaining
+                elif days_overdue <= 30:
+                    aging["d1_30"] += remaining
+                elif days_overdue <= 60:
+                    aging["d31_60"] += remaining
+                elif days_overdue <= 90:
+                    aging["d61_90"] += remaining
+                else:
+                    aging["d90_plus"] += remaining
+
+        aging = {k: round(v, 2) for k, v in aging.items()}
+
+        # ── Statement lines (chronological; running balance) ──────────────
+        # One "invoice" (billed) row per invoice; a "payment" row when a
+        # provisional paid date exists. Sort all events by date, then compute
+        # a running balance. not_invoice rows are shown but do not move money.
+        events = []
+        for inv in invoices:
+            not_inv = _is_not_invoice(inv)
+            total = float(inv.total_amount or 0)
+            events.append({
+                "sort_date": inv.invoice_date,
+                "seq": 0,  # billed before payment on same date
+                "line": {
+                    "date": inv.invoice_date.isoformat() if inv.invoice_date else None,
+                    "type": "invoice",
+                    "invoice_id": inv.id,
+                    "invoice_number": inv.invoice_number,
+                    "entity_id": inv.entity_id,
+                    "billed": total if not not_inv else 0.0,
+                    "paid": 0.0,
+                    "status": inv.status,
+                    "currency": inv.currency,
+                    "document_gate": _gate(inv),
+                    "is_not_invoice": not_inv,
+                },
+            })
+
+            paid_at = _line_paid_date(inv)
+            if paid_at and not not_inv:
+                # Parse the timestamp string just for sorting; keep raw value in output.
+                sort_dt = inv.invoice_date
+                try:
+                    sort_dt = datetime.fromisoformat(str(paid_at).replace("Z", "+00:00")).date()
+                except (ValueError, TypeError):
+                    pass
+                events.append({
+                    "sort_date": sort_dt,
+                    "seq": 1,
+                    "line": {
+                        "date": paid_at,
+                        "type": "payment",
+                        "invoice_id": inv.id,
+                        "invoice_number": inv.invoice_number,
+                        "entity_id": inv.entity_id,
+                        "billed": 0.0,
+                        "paid": total,
+                        "status": inv.status,
+                        "currency": inv.currency,
+                        "provisional": True,
+                        "note": "Retool provisional",
+                    },
+                })
+
+        events.sort(key=lambda e: (e["sort_date"] or date.min, e["seq"]))
+
+        running = 0.0
+        lines = []
+        for ev in events:
+            line = ev["line"]
+            running += float(line.get("billed", 0.0)) - float(line.get("paid", 0.0))
+            line["balance"] = round(running, 2)
+            lines.append(line)
+
+        return {
+            "counterparty": {
+                "id": counterparty.id,
+                "name": counterparty.name,
+                "type": counterparty.type,
+                "tax_registration_number": counterparty.tax_registration_number,
+                "default_account_code": counterparty.default_account_code,
+                "entity_id": counterparty.entity_id,
+                "is_verified": counterparty.is_verified,
+                "currency": counterparty.currency,
+                "payment_terms_days": counterparty.payment_terms_days,
+            },
+            "summary": {
+                "outstanding": round(outstanding, 2),
+                "provisionally_paid_total": round(provisionally_paid_total, 2),
+                "invoice_count": invoice_count,
+                "not_invoice_count": not_invoice_count,
+                "oldest_unpaid_date": oldest_unpaid_date.isoformat() if oldest_unpaid_date else None,
+                "currency_breakdown": currency_breakdown,
+            },
+            "aging": aging,
+            "lines": lines,
+        }
 
     def record_payment(self, db: Session, invoice_id: int, amount_paid: float) -> FinanceInvoice:
         """
@@ -1029,7 +1525,8 @@ class InvoiceService:
         return invoice
 
 
-    def submit(self, db: Session, invoice_id: int, confirmed: bool = False) -> dict:
+    def submit(self, db: Session, invoice_id: int, confirmed: bool = False,
+               submitted_by: Optional[str] = None, override_reason: Optional[str] = None) -> dict:
         """
         Submit a draft invoice for approval.
 
@@ -1060,11 +1557,59 @@ class InvoiceService:
             missing.append("counterparty_id")
         if not invoice.contra_account_code:
             missing.append("contra_account_code (expense account)")
+        # Posting is dated on invoice_date — block the 1900 unknown-date sentinel (backfill
+        # stubs). A real invoice_date is required before an invoice can post. (Gaurav 2026-07-31)
+        from datetime import date as _date
+        if not invoice.invoice_date or invoice.invoice_date <= _date(1901, 1, 1):
+            missing.append("invoice_date (a real date — this stub carries the 1900 unknown-date sentinel)")
         if missing:
             from src.utils.errors import BadRequestError
             raise BadRequestError(
                 f"Cannot submit invoice — missing required fields: {', '.join(missing)}"
             )
+
+        # --- HARD BLOCK (Gaurav 2026-08-01): a duplicate cannot be promoted past draft —
+        # "first one wins". The deterministic layers (identical file, or same vendor +
+        # invoice number + amount) block; same-number-different-amount or numberless
+        # same-amount only warns (surfaced elsewhere as review, not blocked here). ---
+        from src.services.duplicate_detection_service import duplicate_detection_service
+        dup = duplicate_detection_service.detect(
+            db,
+            entity_id=invoice.entity_id,
+            counterparty_id=invoice.counterparty_id,
+            invoice_number=invoice.invoice_number,
+            total_amount=invoice.total_amount,
+            invoice_date=invoice.invoice_date,
+            currency=invoice.currency,
+            pdf_content_hash=invoice.pdf_content_hash,
+            exclude_id=invoice.id,
+        )
+        # "first one wins": block only if the matched original was ingested BEFORE this
+        # one (lower id). If THIS is the earliest, it is the original and may proceed.
+        if dup.is_duplicate and dup.duplicate_of and dup.duplicate_of < invoice.id:
+            from src.utils.errors import ConflictError
+            raise ConflictError(
+                f"Duplicate of invoice #{dup.duplicate_of} ({dup.level}). {dup.reason} "
+                f"A duplicate cannot be promoted past draft (first one wins)."
+            )
+
+        # --- SOFT BLOCK (Gaurav 2026-07-31): submitting a doc flagged NOT-an-invoice
+        # requires an explicit reason. Not a hard stop — they may proceed WITH a reason. ---
+        recon = (invoice.ai_extraction_raw or {}).get("recon") or {}
+        is_not_invoice = (recon.get("document_gate") == "not_invoice"
+                          or recon.get("ingest_outcome") == "not_invoice")
+        if is_not_invoice and not (override_reason and override_reason.strip()):
+            from src.utils.errors import BadRequestError
+            raise BadRequestError(
+                "This document is flagged as NOT an invoice. Provide a reason to submit it "
+                "for approval anyway."
+            )
+
+        # Traceability: who submitted + when (+ the not-invoice override reason, if any)
+        invoice.submitted_by = submitted_by
+        invoice.submitted_at = datetime.now(UTC)
+        if override_reason and override_reason.strip():
+            invoice.submit_override_reason = override_reason.strip()
 
         # --- Phase 2: approval rules ---
         # Hard overrides — always require human even if rule says auto_approve
@@ -1087,18 +1632,14 @@ class InvoiceService:
                 "invoice": _invoice_dict(invoice, db),
             }
 
-        new_status, auto_approved_by = self._evaluate_approval_rules(db, invoice)
-
-        if new_status == InvoiceStatus.APPROVED.value:
-            db.commit()  # flush before approve()
-            updated = self.approve(db, invoice_id, approved_by=auto_approved_by or "auto")
-            message = "Invoice auto-approved via approval rule"
-        else:
-            invoice.status = new_status
-            db.commit()
-            db.refresh(invoice)
-            updated = invoice
-            message = "Invoice marked for approval (no matching auto-approve rule)"
+        # POL (Gaurav 2026-07-31): NO auto-approve. Every submitted invoice lands in
+        # pending_approval for human sign-off — approval rules are not evaluated here.
+        new_status = InvoiceStatus.PENDING_APPROVAL.value
+        invoice.status = new_status
+        db.commit()
+        db.refresh(invoice)
+        updated = invoice
+        message = "Invoice marked for approval"
 
         from src.models.schemas import InvoiceResponse
         return {

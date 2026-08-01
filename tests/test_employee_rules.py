@@ -238,7 +238,6 @@ class TestEmployeeSalaryRules:
             category=TransactionCategory.EXPENSE,
             contra_account_code="6000",
             match_counterparty_type="employee",
-            counterparty_type="employee",
         ))
 
         txn = _make_txn(

@@ -1,0 +1,71 @@
+entity,event_type,je_num,debit_code,credit_code,description,is_transfer,is_active,notes
+Drive lah Australia Pty Ltd.,trip_charges,1,1019,2100,Trip charges (cash),False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,trip_revenue_accrual,2,2100,4000,Trip revenue accrual,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,fuel_charges,3,1019,4023,Fuel auto-charges,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,incidentals_invoiced,4,1200,4025,Incidentals invoiced,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,incidentals_paid,5,1019,1200,Incidentals cash received,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,subscriptions_invoiced,6,1200,4010,Subscriptions invoiced,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,subscriptions_paid,7,1019,1200,Subscriptions cash received,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,host_trip_earnings,8,5000,2120,Host trip earnings accrual,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,host_damage_payout,9,5021,2120,Host damage payouts,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,host_excess_mileage_payout,10,5024,2120,Host excess mileage,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,host_fuel_payout,11,5023,2120,Host fuel reimbursement,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,host_tolls_payout,12,5025,2120,Host toll reimbursement,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,host_cleanliness_payout,13,5022,2120,Host cleanliness payout,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,host_flexplus_payout,14,5002,2120,Host FlexPlus bonus,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,host_superhost_payout,15,5040,2120,Host superhost bonus,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,stripe_fees,16,5010,1019,Stripe platform fees,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,disputes,17,5051,1019,Chargeback disputes,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,deposits_received,18,1019,2110,Customer deposits received,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,deposit_refunds,19,2110,1019,Deposit refunds,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,trip_refunds,20,5052,1019,Trip refunds,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,subscription_refunds,21,5054,1019,Subscription refunds,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,invoice_refunds,22,5053,1019,Invoice refunds,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,host_transfers_cash,23,2120,1019,Host transfer payouts,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,stripe_payouts,24,1019,1016,Stripe payouts (aggregate),True,False,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,incidentals_direct_revenue,25,1019,4021,Direct incidentals (no AR),False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,fuel_refunds,,5053,1019,Fuel refunds to guests,False,True,Gaurav-approved 2026-07-25
+Drive lah Australia Pty Ltd.,host_fuel_charges_collected,,2120,4023,Host fuel charges collected (payout deduction),False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,host_fuel_inclusion,,5023,2120,Fuel-inclusion payouts to hosts,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,host_misc_charge_collected,,2120,4025,Misc charges collected from hosts,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,host_misc_payout,,5042,2120,Host misc payouts (was template-less in the old sync),False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,host_referral_payout,,5042,2120,"Host referral bonuses (Gaurav: host misc, not marketing)",False,True,Gaurav-approved 2026-07-25
+Drive lah Australia Pty Ltd.,host_subscription_collected,,2120,4010,Device-subscription fees collected from hosts,False,True,"AU catalog seed 2026-07-25 (mirrors SG, Stripe accounts swapped)"
+Drive lah Australia Pty Ltd.,trip_distance_cash_collected,,1019,4024,Excess-distance cash collected,False,True,Gaurav-approved 2026-07-25
+Drive lah Australia Pty Ltd.,trip_distance_invoiced,,1200,4024,Excess-distance invoiced (code=2 family),False,True,Gaurav-approved 2026-07-25
+Drive lah Australia Pty Ltd.,trip_distance_invoice_paid,,1019,1200,Excess-distance invoices paid,False,True,Gaurav-approved 2026-07-25
+Drive lah Australia Pty Ltd.,verification_charge_received,,1019,4025,Verification fees received,False,True,Gaurav-approved 2026-07-25
+Drive lah Australia Pty Ltd.,verification_refunds,,5053,1019,Verification fee refunds,False,True,Gaurav-approved 2026-07-25
+Drive lah Singapore Pte Ltd.,trip_charges,1,1017,2100,Trip charges (cash),False,True,
+Drive lah Singapore Pte Ltd.,trip_revenue_accrual,2,2100,4000,Trip revenue accrual,False,True,
+Drive lah Singapore Pte Ltd.,fuel_charges,3,1017,4023,Fuel auto-charges,False,True,"REWIRE 2026-07-25: feed from view_SG_c_trip_fuel_cash_collected (guest fuel cash, S$63k H1) — the old code read host fuel charges (S$2k) by mistake; those now book via host_fuel_charges_collected."
+Drive lah Singapore Pte Ltd.,incidentals_invoiced,4,1200,4025,Incidentals invoiced,False,True,
+Drive lah Singapore Pte Ltd.,incidentals_paid,5,1017,1200,Incidentals cash received,False,True,
+Drive lah Singapore Pte Ltd.,subscriptions_invoiced,6,1200,4010,Subscriptions invoiced,False,True,
+Drive lah Singapore Pte Ltd.,subscriptions_paid,7,1017,1200,Subscriptions cash received,False,True,
+Drive lah Singapore Pte Ltd.,host_trip_earnings,8,5000,2120,Host trip earnings accrual,False,True,
+Drive lah Singapore Pte Ltd.,host_damage_payout,9,5021,2120,Host damage payouts,False,True,
+Drive lah Singapore Pte Ltd.,host_excess_mileage_payout,10,5024,2120,Host excess mileage,False,True,
+Drive lah Singapore Pte Ltd.,host_fuel_payout,11,5023,2120,Host fuel reimbursement,False,True,
+Drive lah Singapore Pte Ltd.,host_tolls_payout,12,5025,2120,Host toll reimbursement,False,True,
+Drive lah Singapore Pte Ltd.,host_cleanliness_payout,13,5022,2120,Host cleanliness payout,False,True,
+Drive lah Singapore Pte Ltd.,host_flexplus_payout,14,5002,2120,Host FlexPlus bonus,False,True,
+Drive lah Singapore Pte Ltd.,host_superhost_payout,15,5040,2120,Host superhost bonus,False,True,
+Drive lah Singapore Pte Ltd.,stripe_fees,16,5010,1017,Stripe platform fees,False,True,
+Drive lah Singapore Pte Ltd.,disputes,17,5051,1017,Chargeback disputes,False,True,
+Drive lah Singapore Pte Ltd.,deposits_received,18,1017,2110,Customer deposits received,False,True,
+Drive lah Singapore Pte Ltd.,deposit_refunds,19,2110,1017,Deposit refunds,False,True,
+Drive lah Singapore Pte Ltd.,trip_refunds,20,5052,1017,Trip refunds,False,True,
+Drive lah Singapore Pte Ltd.,subscription_refunds,21,5054,1017,Subscription refunds,False,True,
+Drive lah Singapore Pte Ltd.,invoice_refunds,22,5053,1017,Invoice refunds,False,True,
+Drive lah Singapore Pte Ltd.,host_transfers_cash,23,2120,1017,Host transfer payouts,False,True,
+Drive lah Singapore Pte Ltd.,stripe_payouts,24,1017,1016,Stripe payouts (aggregate),True,False,DROPPED per corridor-3 ruling 2026-07-25: payouts come as line-level transactions via the payout importer + bank pairing; aggregate template would double-book.
+Drive lah Singapore Pte Ltd.,incidentals_direct_revenue,25,1017,4021,Direct incidentals (no AR),False,True,
+Drive lah Singapore Pte Ltd.,host_delivery_payout,,5042,2120,Host delivery payouts,False,True,Gaurav-approved 2026-07-25 (SG catalog completion)
+Drive lah Singapore Pte Ltd.,host_fuel_charges_collected,,2120,4023,Host fuel charges collected (payout deduction),False,True,Gaurav-approved 2026-07-25 (SG catalog completion)
+Drive lah Singapore Pte Ltd.,host_fuel_inclusion,,5023,2120,Fuel-inclusion payouts to hosts,False,True,Gaurav-approved 2026-07-25 (SG catalog completion)
+Drive lah Singapore Pte Ltd.,host_long_term_discount,,5050,2120,Long-term rental discounts (amounts arrive negative),False,True,Gaurav-approved 2026-07-25 (SG catalog completion)
+Drive lah Singapore Pte Ltd.,host_misc_charge_collected,,2120,4025,Misc charges collected from hosts,False,True,Gaurav-approved 2026-07-25 (SG catalog completion)
+Drive lah Singapore Pte Ltd.,host_misc_payout,,5042,2120,Host misc payouts (was template-less in the old sync),False,True,Gaurav-approved 2026-07-25 (SG catalog completion)
+Drive lah Singapore Pte Ltd.,host_rms_payout,,5001,2120,RMS host payouts,False,True,Gaurav-approved 2026-07-25 (SG catalog completion)
+Drive lah Singapore Pte Ltd.,host_subscription_collected,,2120,4010,Device-subscription fees collected from hosts,False,True,Gaurav-approved 2026-07-25 (SG catalog completion)

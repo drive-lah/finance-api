@@ -1,0 +1,173 @@
+View,Used in new system?,Debit account,Credit account,Note
+v_AU_a_cost_fuel_payout,YES,5023 Incidentals Payout - Fuel,2120 Host Payables,
+v_AU_a_cost_fuel_refund_to_guest,YES,5037 Cost of Fuel Refund to Guest,1019 Bank - Stripe (Stripe Platform),Cr 1019 also takes manual bank txns
+v_AU_a_cost_late_return,YES,5044 Host Payouts - Late Return,2120 Host Payables,
+v_AU_a_fuel_charged_to_host,YES,2120 Host Payables,4032 Incidentals Revenue - Fuel Charged to Host,
+v_AU_a_host_discounts,YES,2120 Host Payables,5050 Host Discounts,
+v_AU_a_host_flexplus_payout,YES,5002 Host Trip Earnings - Flex+,2120 Host Payables,
+v_AU_a_host_incidentals_cleanliness,YES,5022 Incidentals Payout - Cleaning,2120 Host Payables,Dr 5022 also takes manual bank txns
+v_AU_a_host_incidentals_damage,YES,5021 Incidentals Payout - Damage (Host),2120 Host Payables,
+v_AU_a_host_incidentals_excess_mileage,YES,5024 Incidentals Payout - Excess Mileage,2120 Host Payables,
+v_AU_a_host_incidentals_tolls,YES,5020 Incidentals Payout - Tolls,2120 Host Payables,Dr 5020 also takes manual bank txns
+v_AU_a_host_misc_charge_collected,YES,2120 Host Payables,5042 Host Payouts - Misc,
+v_AU_a_host_payout_regular_p2p,YES,5000 Host Trip Earnings - P2P,2120 Host Payables,
+v_AU_a_host_referral_payout,YES,5042 Host Payouts - Misc,2120 Host Payables,
+v_AU_a_host_subscription_collected,YES,2120 Host Payables,4010 Subscription Revenue - Device,
+v_AU_a_host_trip_earnings_rms,YES,5001 Host Trip Earnings - RMS,2120 Host Payables,Dr 5001 also takes manual bank txns
+v_AU_a_incidentals_classified,YES (feeder),,,feeds v_AU_a_incidentals_cleaning_invoiced — no direct posting
+v_AU_a_incidentals_cleaning_invoiced,YES,1200 Trade Receivables,4022 Incidentals Revenue - Cleaning,
+v_AU_a_incidentals_damage_invoiced,YES,1200 Trade Receivables,4021 Incidentals Revenue - Damage,
+v_AU_a_incidentals_excess_mileage_invoiced,YES,1200 Trade Receivables,4024 Incidentals Revenue - Excess Mileage,
+v_AU_a_incidentals_fines_invoiced,YES,1200 Trade Receivables,4028 Incidentals Revenue - Infringement / Fines,
+v_AU_a_incidentals_flexplus_leak_invoiced,YES,1200 Trade Receivables,4002 GBV - Flex+,
+v_AU_a_incidentals_fuel_charge_invoiced,YES,1200 Trade Receivables,4023 Incidentals Revenue - Fuel Charge,
+v_AU_a_incidentals_insurance_leak_invoiced,YES,1200 Trade Receivables,4011 Subscription Revenue - Insurance,
+v_AU_a_incidentals_late_return_invoiced,YES,1200 Trade Receivables,4031 Incidentals Revenue - Late Return,
+v_AU_a_incidentals_other_invoiced,YES,1200 Trade Receivables,4025 Incidentals Revenue - Other,Cr 4025 also takes manual bank txns
+v_AU_a_incidentals_paginated_hold,YES,1200 Trade Receivables,4025 Incidentals Revenue - Other,Cr 4025 also takes manual bank txns
+v_AU_a_incidentals_penalty_invoiced,YES,1200 Trade Receivables,4027 Incidentals Revenue - Penalty / Late Fee,
+v_AU_a_incidentals_platform_fees_invoiced,YES,1200 Trade Receivables,4026 Incidentals Revenue - Platform Fees,
+v_AU_a_incidentals_tolls_invoiced,YES,1200 Trade Receivables,4020 Incidentals Revenue - Tolls,
+v_AU_a_incidentals_trip_to_base_invoiced,YES,1200 Trade Receivables,4000 GBV - P2P,Cr 4000 also takes manual bank txns
+v_AU_a_misc_corrections,YES,5000 Host Trip Earnings - P2P,2120 Host Payables,
+v_AU_a_misc_damage,YES,5021 Incidentals Payout - Damage (Host),2120 Host Payables,
+v_AU_a_misc_downtime,YES,5043 Host Payouts - Downtime,2120 Host Payables,
+v_AU_a_misc_parking,YES,5060 Parking - RMS Fleet,2120 Host Payables,Dr 5060 also takes manual bank txns
+v_AU_a_misc_payout_classified,YES (feeder),,,feeds v_AU_a_misc_corrections — no direct posting
+v_AU_a_misc_residual,YES,5042 Host Payouts - Misc,2120 Host Payables,
+v_AU_a_misc_sticker,YES,5041 Host Payouts - Sticker,2120 Host Payables,
+v_AU_a_misc_superhost,YES,5040 Host Payouts - Superhost,2120 Host Payables,
+v_AU_a_misc_tolls,YES,5020 Incidentals Payout - Tolls,2120 Host Payables,Dr 5020 also takes manual bank txns
+v_AU_a_misc_towing,YES,5033 Incidentals Payout - Towing,2120 Host Payables,Dr 5033 also takes manual bank txns
+v_AU_a_subscription_device_invoiced,YES,1200 Trade Receivables,4010 Subscription Revenue - Device,
+v_AU_a_subscription_flexplus_invoiced,YES,1200 Trade Receivables,4002 GBV - Flex+,
+v_AU_a_subscription_insurance_invoiced,YES,1200 Trade Receivables,4011 Subscription Revenue - Insurance,
+v_AU_a_subscription_other_invoiced,YES,1200 Trade Receivables,4025 Incidentals Revenue - Other,Cr 4025 also takes manual bank txns
+v_AU_a_trip_distance_invoiced,YES,1200 Trade Receivables,4000 GBV - P2P,Cr 4000 also takes manual bank txns
+v_AU_a_trip_revenue_p2p,YES,2100 Deferred Trip Revenue,4000 GBV - P2P,Cr 4000 also takes manual bank txns
+v_AU_a_trip_revenue_rms,YES,2100 Deferred Trip Revenue,4001 GBV - P2P RMS,
+v_AU_c_customer_deposits_received,YES,1022 Bank - Stripe (Customer Held Funds),2110 Customer Deposits Held,Dr 1022 also takes manual bank txns
+v_AU_c_deposit_refunds,YES,2110 Customer Deposits Held,1022 Bank - Stripe (Customer Held Funds),Cr 1022 also takes manual bank txns
+v_AU_c_disputes,YES,5051 Chargebacks,1019 Bank - Stripe (Stripe Platform),Cr 1019 also takes manual bank txns
+v_AU_c_fuel_refunds,YES (feeder),,,feeds v_AU_a_cost_fuel_refund_to_guest — no direct posting
+v_AU_c_host_rms_internal_clearing,YES,1020 Bank - Stripe (Stripe Connect),1019 Bank - Stripe (Stripe Platform),Cr 1019 also takes manual bank txns; Dr 1020 also takes manual bank txns
+v_AU_c_host_transfers,YES,2120 Host Payables,1019 Bank - Stripe (Stripe Platform),Cr 1019 also takes manual bank txns
+v_AU_c_incidentals_invoice_paid,YES,1019 Bank - Stripe (Stripe Platform),1200 Trade Receivables,Dr 1019 also takes manual bank txns
+v_AU_c_invoice_payment_refunds,YES,5053 Refunds - Incidentals,1019 Bank - Stripe (Stripe Platform),Cr 1019 also takes manual bank txns
+v_AU_c_stripe_fees_paid,YES,5010 Payment Processing Fees,1019 Bank - Stripe (Stripe Platform),Cr 1019 also takes manual bank txns
+v_AU_c_stripe_payouts,YES (payout lane),1017/1019 Bank - Stripe (Platform),,Stripe payout importer (/import-payouts) — lands as bank txns on the Stripe Platform account; not a template JE
+v_AU_c_subscription_invoice_paid,YES,1019 Bank - Stripe (Stripe Platform),1200 Trade Receivables,Dr 1019 also takes manual bank txns
+v_AU_c_subscription_refunds_device,YES,5054 Refunds - Device Subscription,1019 Bank - Stripe (Stripe Platform),Cr 1019 also takes manual bank txns
+v_AU_c_subscription_refunds_insurance,YES,5055 Refunds - Insurance Subscription,1019 Bank - Stripe (Stripe Platform),Cr 1019 also takes manual bank txns
+v_AU_c_trip_cash_collected,YES,1019 Bank - Stripe (Stripe Platform),2100 Deferred Trip Revenue,Dr 1019 also takes manual bank txns
+v_AU_c_trip_distance_cash_collected,YES,1019 Bank - Stripe (Stripe Platform),4000 GBV - P2P,Cr 4000 also takes manual bank txns; Dr 1019 also takes manual bank txns
+v_AU_c_trip_distance_invoice_paid,YES,1019 Bank - Stripe (Stripe Platform),1200 Trade Receivables,Dr 1019 also takes manual bank txns
+v_AU_c_trip_refunds,YES,5052 Refunds - Trip,1019 Bank - Stripe (Stripe Platform),Cr 1019 also takes manual bank txns
+v_AU_c_verification_charge_received,YES,1022 Bank - Stripe (Customer Held Funds),2110 Customer Deposits Held,Dr 1022 also takes manual bank txns
+v_AU_c_verification_refunds,YES,2110 Customer Deposits Held,1022 Bank - Stripe (Customer Held Funds),Cr 1022 also takes manual bank txns
+v_SG_a_cost_fuel_net,YES,5023 Incidentals Payout - Fuel,2120 Host Payables,
+v_SG_a_cost_late_return,YES,5044 Host Payouts - Late Return,2120 Host Payables,
+v_SG_a_host_delivery_payout,YES,5042 Host Payouts - Misc,2120 Host Payables,
+v_SG_a_host_discounts,YES,2120 Host Payables,5050 Host Discounts,
+v_SG_a_host_flexplus_payout,YES,5002 Host Trip Earnings - Flex+,2120 Host Payables,
+v_SG_a_host_incidentals_cleanliness,YES,5022 Incidentals Payout - Cleaning,2120 Host Payables,Dr 5022 also takes manual bank txns
+v_SG_a_host_incidentals_damage,YES,5021 Incidentals Payout - Damage (Host),2120 Host Payables,
+v_SG_a_host_incidentals_excess_mileage,YES,5024 Incidentals Payout - Excess Mileage,2120 Host Payables,
+v_SG_a_host_incidentals_tolls,YES,5020 Incidentals Payout - Tolls,2120 Host Payables,Dr 5020 also takes manual bank txns
+v_SG_a_host_misc_charge_collected,YES,2120 Host Payables,4025 Incidentals Revenue - Other,Cr 4025 also takes manual bank txns
+v_SG_a_host_payout_regular_p2p,YES,5000 Host Trip Earnings - P2P,2120 Host Payables,
+v_SG_a_host_subscription_collected,YES,2120 Host Payables,4010 Subscription Revenue - Device,
+v_SG_a_host_superhost_payout,YES,5040 Host Payouts - Superhost,2120 Host Payables,
+v_SG_a_host_trip_earnings_rms,YES,5001 Host Trip Earnings - RMS,2120 Host Payables,Dr 5001 also takes manual bank txns
+v_SG_a_incidentals_classified,YES (feeder),,,feeds v_SG_a_incidentals_cleaning_invoiced — no direct posting
+v_SG_a_incidentals_cleaning_invoiced,YES,1200 Trade Receivables,4022 Incidentals Revenue - Cleaning,
+v_SG_a_incidentals_damage_invoiced,YES,1200 Trade Receivables,4021 Incidentals Revenue - Damage,
+v_SG_a_incidentals_excess_mileage_invoiced,YES,1200 Trade Receivables,4024 Incidentals Revenue - Excess Mileage,
+v_SG_a_incidentals_fines_invoiced,YES,1200 Trade Receivables,4028 Incidentals Revenue - Infringement / Fines,
+v_SG_a_incidentals_flexplus_leak_invoiced,YES,1200 Trade Receivables,4002 GBV - Flex+,
+v_SG_a_incidentals_fuel_charge_invoiced,YES,1200 Trade Receivables,4023 Incidentals Revenue - Fuel Charge,
+v_SG_a_incidentals_insurance_leak_invoiced,YES,1200 Trade Receivables,4011 Subscription Revenue - Insurance,
+v_SG_a_incidentals_late_return_invoiced,YES,1200 Trade Receivables,4031 Incidentals Revenue - Late Return,
+v_SG_a_incidentals_other_invoiced,YES,1200 Trade Receivables,4025 Incidentals Revenue - Other,Cr 4025 also takes manual bank txns
+v_SG_a_incidentals_penalty_invoiced,YES,1200 Trade Receivables,4027 Incidentals Revenue - Penalty / Late Fee,
+v_SG_a_incidentals_platform_fees_invoiced,YES,1200 Trade Receivables,4026 Incidentals Revenue - Platform Fees,
+v_SG_a_incidentals_tolls_invoiced,YES,1200 Trade Receivables,4020 Incidentals Revenue - Tolls,
+v_SG_a_incidentals_trip_to_base_invoiced,YES,1200 Trade Receivables,4000 GBV - P2P,Cr 4000 also takes manual bank txns
+v_SG_a_misc_damage,YES,5021 Incidentals Payout - Damage (Host),2120 Host Payables,
+v_SG_a_misc_downtime,YES,5043 Host Payouts - Downtime,2120 Host Payables,
+v_SG_a_misc_parking,YES,5060 Parking - RMS Fleet,2120 Host Payables,Dr 5060 also takes manual bank txns
+v_SG_a_misc_payout_classified,YES (feeder),,,feeds v_SG_a_misc_damage — no direct posting
+v_SG_a_misc_residual,YES,5042 Host Payouts - Misc,2120 Host Payables,
+v_SG_a_misc_sticker,YES,5041 Host Payouts - Sticker,2120 Host Payables,
+v_SG_a_misc_superhost,YES,5040 Host Payouts - Superhost,2120 Host Payables,
+v_SG_a_misc_tolls,YES,5020 Incidentals Payout - Tolls,2120 Host Payables,Dr 5020 also takes manual bank txns
+v_SG_a_misc_towing,YES,5033 Incidentals Payout - Towing,2120 Host Payables,Dr 5033 also takes manual bank txns
+v_SG_a_subscription_device_invoiced,YES,1200 Trade Receivables,4010 Subscription Revenue - Device,
+v_SG_a_subscription_flexplus_invoiced,YES,1200 Trade Receivables,4002 GBV - Flex+,
+v_SG_a_subscription_insurance_invoiced,YES,1200 Trade Receivables,4011 Subscription Revenue - Insurance,
+v_SG_a_subscription_other_invoiced,YES,1200 Trade Receivables,4025 Incidentals Revenue - Other,Cr 4025 also takes manual bank txns
+v_SG_a_trip_revenue_p2p,YES,2100 Deferred Trip Revenue,4000 GBV - P2P,Cr 4000 also takes manual bank txns
+v_SG_a_trip_revenue_rms,YES,2100 Deferred Trip Revenue,4001 GBV - P2P RMS,
+v_SG_c_customer_deposits_received,YES,1021 Bank - Stripe (Customer Held Funds),2110 Customer Deposits Held,Dr 1021 also takes manual bank txns
+v_SG_c_deposit_refunds,YES,2110 Customer Deposits Held,1021 Bank - Stripe (Customer Held Funds),Cr 1021 also takes manual bank txns
+v_SG_c_disputes,YES,5051 Chargebacks,1017 Bank - Stripe (Stripe Platform ),Cr 1017 also takes manual bank txns
+v_SG_c_host_rms_internal_clearing,YES,1018 Bank - Stripe (Stripe Connect),1017 Bank - Stripe (Stripe Platform ),Cr 1017 also takes manual bank txns; Dr 1018 also takes manual bank txns
+v_SG_c_host_transfers,YES,2120 Host Payables,1017 Bank - Stripe (Stripe Platform ),Cr 1017 also takes manual bank txns
+v_SG_c_incidentals_invoice_paid,YES,1017 Bank - Stripe (Stripe Platform ),1200 Trade Receivables,Dr 1017 also takes manual bank txns
+v_SG_c_invoice_payment_refunds,YES,5053 Refunds - Incidentals,1017 Bank - Stripe (Stripe Platform ),Cr 1017 also takes manual bank txns
+v_SG_c_stripe_fees_paid,YES,5010 Payment Processing Fees,1017 Bank - Stripe (Stripe Platform ),Cr 1017 also takes manual bank txns
+v_SG_c_stripe_payouts,YES (payout lane),1017/1019 Bank - Stripe (Platform),,Stripe payout importer (/import-payouts) — lands as bank txns on the Stripe Platform account; not a template JE
+v_SG_c_subscription_invoice_paid,YES,1017 Bank - Stripe (Stripe Platform ),1200 Trade Receivables,Dr 1017 also takes manual bank txns
+v_SG_c_subscription_refunds_device,YES,5054 Refunds - Device Subscription,1017 Bank - Stripe (Stripe Platform ),Cr 1017 also takes manual bank txns
+v_SG_c_subscription_refunds_insurance,YES,5055 Refunds - Insurance Subscription,1017 Bank - Stripe (Stripe Platform ),Cr 1017 also takes manual bank txns
+v_SG_c_trip_cash_collected,YES,1017 Bank - Stripe (Stripe Platform ),2100 Deferred Trip Revenue,Dr 1017 also takes manual bank txns
+v_SG_c_trip_fuel_cash_collected,YES,1017 Bank - Stripe (Stripe Platform ),4023 Incidentals Revenue - Fuel Charge,Dr 1017 also takes manual bank txns
+v_SG_c_trip_refunds,YES,5052 Refunds - Trip,1017 Bank - Stripe (Stripe Platform ),Cr 1017 also takes manual bank txns
+v_host_mechanism_map,YES (feeder),,,feeds v_AU_a_host_payout_regular_p2p — no direct posting
+view_AU_a_cost_discounts,NO,,,
+view_AU_a_host_fuel_charge_collected,NO,,,
+view_AU_a_host_incidentals_fuel,NO,,,
+view_AU_a_host_misc_payout,NO,,,
+view_AU_a_host_payout_flexplus_p2p,NO,,,
+view_AU_a_host_payout_flexplus_rms,NO,,,
+view_AU_a_host_payout_regular_rms,NO,,,
+view_AU_a_host_trip_earnings_accrual,NO,,,
+view_AU_a_incidentals_direct_revenue,NO,,,
+view_AU_a_incidentals_direct_revenue_new,NO,,,
+view_AU_a_incidentals_invoiced,NO,,,
+view_AU_a_misc_,NO,,,
+view_AU_a_misc_payout_classified,NO,,,
+view_AU_a_subscription_invoiced,NO,,,
+view_AU_a_subscription_payment_plan,NO,,,
+view_AU_a_trip_revenue_earned,NO,,,
+view_AU_c_connect_balance_recon,NO,,,
+view_AU_c_subscription_refunds,NO,,,
+view_AU_intermediate_payout_transactions,NO,,,
+view_AU_transactions_flat,NO,,,
+view_AU_v_stripe_with_transaction_details,NO,,,
+view_SG_a_cost_discounts,NO,,,
+view_SG_a_host_fuel_charge_collected_new,NO,,,
+view_SG_a_host_fuel_inclusion_new,NO,,,
+view_SG_a_host_incidentals_fuel_new,NO,,,
+view_SG_a_host_long_term_discount_new,NO,,,
+view_SG_a_host_misc_payout_new,NO,,,
+view_SG_a_host_payout_flexplus_p2p,NO,,,
+view_SG_a_host_payout_flexplus_rms,NO,,,
+view_SG_a_host_payout_regular_rms,NO,,,
+view_SG_a_host_referral_payout_new,NO,,,
+view_SG_a_host_rms_payout_new,NO,,,
+view_SG_a_host_trip_earnings_accrual,NO,,,
+view_SG_a_host_trip_earnings_accrual_new,NO,,,
+view_SG_a_incidentals_direct_revenue_new,NO,,,
+view_SG_a_incidentals_invoiced,NO,,,
+view_SG_a_misc_,NO,,,
+view_SG_a_misc_payout_classified,NO,,,
+view_SG_a_subscription_invoiced,NO,,,
+view_SG_a_subscription_payment_plan,NO,,,
+view_SG_a_trip_revenue_earned,NO,,,
+view_SG_c_connect_balance_recon,NO,,,
+view_SG_c_stripe_with_transaction_details,NO,,,
+view_SG_c_subscription_refunds,NO,,,
+view_SG_intermediate_non_trip_refunds,NO,,,
+view_core_team_weekly_score,NO,,,
+view_host_mechanism_map,NO,,,

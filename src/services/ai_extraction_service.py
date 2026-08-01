@@ -25,6 +25,8 @@ Our company entities are:
 
 Return ONLY a JSON object with these exact fields (use null for missing fields):
 {{
+  "is_invoice": "boolean - true ONLY if this document is a genuine vendor invoice, tax invoice, or bill requesting payment. false for statements of account, receipts, recovery/demand letters, bank statements, spreadsheet/Excel screenshots, or reports",
+  "document_type": "one of: invoice, tax_invoice, statement, receipt, letter, report, spreadsheet_screenshot, other",
   "vendor_name": "string - company name on invoice (the seller/from party)",
   "vendor_tax_id": "string or null - vendor ABN, UEN, GST reg, VAT number if present",
   "invoice_number": "string or null",
@@ -43,6 +45,7 @@ Return ONLY a JSON object with these exact fields (use null for missing fields):
 }}
 
 Rules:
+- is_invoice / document_type: classify the document FIRST. Set is_invoice=false (and the matching document_type) for anything that is NOT a genuine invoice/bill — statements of account, receipts, recovery/demand letters, bank statements, Excel/spreadsheet screenshots, reports. Still extract whatever other fields you can, but be honest about the type.
 - vendor_name: the company SENDING the invoice (not us)
 - bill_to_entity_hint: look for our entity names in the Bill To section AND apply these rules:
   * If invoice mentions "Drive mate" or similar variant spellings, return "Drive lah Australia Pty Ltd"

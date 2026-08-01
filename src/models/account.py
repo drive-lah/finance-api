@@ -85,6 +85,10 @@ class FinanceAccount(Base):
     sub_category: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     is_bank_account: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # When this (expense/asset) account is the debit leg of an AP invoice, the credit
+    # leg posts to THIS liability instead of the generic 2000 AP. E.g. 6002 Employer
+    # Superannuation → 2302 Superannuation Payable. NULL → default 2000. (POL-75/76)
+    offset_account_code: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     gst_applicable: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=False,
         comment="Whether this account is subject to GST"

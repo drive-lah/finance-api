@@ -113,6 +113,11 @@ class DBSPDFAdapter(BankCSVAdapter):
 
     def __init__(self) -> None:
         self.errors: list[dict[str, Any]] = []
+        # Per-section statement facts (2026-07-27): carried-forward balances
+        # exist even for ZERO-transaction sections — a dormant currency's
+        # standing balance must still surface on the bank accounts view.
+        self.section_balances: dict[str, dict] = {}   # ccy -> {brought_forward, carried_forward}
+        self.statement_period_end = None               # date
 
     @property
     def bank_name(self) -> str:
@@ -174,6 +179,8 @@ class DBSPDFAdapter(BankCSVAdapter):
             )
 
         self.errors = []
+        self.section_balances = {}
+        self.statement_period_end = None
         results: dict[str, list[NormalizedRow]] = {}
         current_currency: Optional[str] = None
         prev_balance: Optional[Decimal] = None
@@ -196,11 +203,28 @@ class DBSPDFAdapter(BankCSVAdapter):
                                 results[current_currency] = []
                             continue
 
+                        # ── statement period end (as-of for section balances) ──
+                        if self.statement_period_end is None:
+                            pm = re.search(r'\d{2}-[A-Za-z]{3}-\d{4}\s+to\s+(\d{2}-[A-Za-z]{3}-\d{4})', line)
+                            if pm:
+                                try:
+                                    from datetime import datetime as _dt
+                                    self.statement_period_end = _dt.strptime(pm.group(1), "%d-%b-%Y").date()
+                                except ValueError:
+                                    pass
+
                         # ── Balance Brought Forward (seeds prev_balance) ───
                         if line.lower().startswith('balance brought forward'):
                             nums = re.findall(r'-?\d[\d,]*\.\d+', line)
                             if nums:
                                 prev_balance = _parse_decimal(nums[-1])
+                                if current_currency:
+                                    self.section_balances.setdefault(current_currency, {})["brought_forward"] = prev_balance
+                            continue
+                        if line.lower().startswith('balance carried forward'):
+                            nums = re.findall(r'-?\d[\d,]*\.\d+', line)
+                            if nums and current_currency:
+                                self.section_balances.setdefault(current_currency, {})["carried_forward"] = _parse_decimal(nums[-1])
                             continue
 
                         # ── Skip non-transaction lines ─────────────────────

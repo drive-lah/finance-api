@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drive Lah — Journal Entry Creation Flows</title>
+<style>
+  :root{
+    --ink:#0f1729; --muted:#5b6677; --line:#e6e9ef; --panel:#fff;
+    --green:#16a34a; --green-bg:#e9f8ef; --amber:#d97706; --amber-bg:#fdf3e3;
+    --red:#dc2626; --blue:#1e6fd9; --blue-bg:#eaf2fd; --slate:#334155; --gray:#94a0b0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#eef1f6;color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1280px;margin:0 auto;padding:30px 26px 56px;}
+  .hero{background:linear-gradient(135deg,#10243f 0%,#0f1419 60%,#15243a 100%);color:#fff;
+    border-radius:18px;padding:28px 32px;box-shadow:0 12px 30px rgba(15,20,25,.18);}
+  .hero h1{margin:0 0 6px;font-size:28px;font-weight:760;letter-spacing:-.4px;}
+  .hero p{margin:0;color:#aebbcd;font-size:14.5px;max-width:840px;line-height:1.5;}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin:16px 4px 0;font-size:12.5px;color:var(--slate);}
+  .legend span{display:inline-flex;align-items:center;gap:7px;font-weight:600;}
+  .dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .d-green{background:var(--green)}.d-amber{background:var(--amber)}.d-blue{background:var(--blue)}.d-gray{background:var(--gray)}
+  h2.sec{font-size:12.5px;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted);margin:32px 4px 14px;font-weight:800;}
+  /* lanes */
+  .lane{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin-bottom:11px;
+    box-shadow:0 3px 10px rgba(20,30,50,.05);border-left:5px solid var(--gray);}
+  .lane.live{border-left-color:var(--green)} .lane.built{border-left-color:var(--amber)} .lane.prog{border-left-color:var(--blue)}
+  .lane .head{display:flex;align-items:center;gap:10px;margin-bottom:9px;flex-wrap:wrap;}
+  .lane .src{font-weight:760;font-size:15.5px;letter-spacing:-.2px;}
+  .lane .pill{font-size:10px;font-weight:800;padding:3px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.4px}
+  .pl-green{background:var(--green-bg);color:#0c6b34}.pl-amber{background:var(--amber-bg);color:#9a5a04}
+  .pl-blue{background:var(--blue-bg);color:#13509f}
+  .lane .note{font-size:11.5px;color:var(--muted);margin-left:auto}
+  .pipe{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12.5px;}
+  .step{background:#f3f5f9;border:1px solid #e3e8ef;border-radius:7px;padding:4px 10px;color:var(--slate);font-weight:600;white-space:nowrap}
+  .step.alt{background:#fff;border-style:dashed;font-weight:500;color:var(--muted);font-size:11.5px}
+  .ar{color:#9aa6b6;font-weight:700}
+  .je{background:#0f1729;color:#fff;border-radius:7px;padding:4px 11px;font-weight:800;font-size:12px;letter-spacing:.3px;white-space:nowrap}
+  .subnote{font-size:11.5px;color:var(--muted);margin:7px 0 0;padding-left:2px}
+  .subnote b{color:var(--slate)}
+  /* converge + GL + reports */
+  .converge{text-align:center;color:var(--muted);font-size:13px;font-weight:700;margin:6px 0;letter-spacing:.5px}
+  .gl{background:linear-gradient(135deg,#0f1729,#1c2b44);color:#fff;border-radius:16px;padding:20px 24px;text-align:center;box-shadow:0 8px 22px rgba(15,23,41,.25)}
+  .gl h3{margin:0 0 4px;font-size:20px;font-weight:780;letter-spacing:-.3px}
+  .gl p{margin:0;color:#aebbcd;font-size:13px}
+  .gl code{background:rgba(255,255,255,.1);padding:2px 7px;border-radius:6px;color:#dbe6f5;font-size:12px}
+  .reports{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:6px}
+  .rep{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 14px;border-top:4px solid var(--line);text-align:center}
+  .rep.live{border-top-color:var(--green)} .rep.later{border-top-color:var(--gray);opacity:.85}
+  .rep h4{margin:0 0 3px;font-size:13.5px;font-weight:740}
+  .rep p{margin:0;font-size:11px;color:var(--muted)}
+  .arrow-down{text-align:center;color:#9aa6b6;font-size:20px;margin:4px 0}
+  .foot{margin-top:26px;font-size:11.5px;color:var(--muted);text-align:center;line-height:1.6}
+  /* tabs + views */
+  .tabs{display:flex;gap:8px;margin:18px 4px 0;flex-wrap:wrap}
+  .tab{font-family:inherit;font-size:13px;font-weight:700;padding:9px 16px;border-radius:10px;border:1px solid var(--line);background:#e4e9f1;color:var(--slate);cursor:pointer}
+  .tab.active{background:#0f1729;color:#fff;border-color:#0f1729}
+  .view{display:none}
+  .view.active{display:block}
+  .clickable{cursor:pointer}
+  .clickable .expand{margin-left:auto;font-size:10.5px;font-weight:800;color:#0c6b34;background:var(--green-bg);padding:3px 10px;border-radius:999px;white-space:nowrap}
+  .clickable:hover{box-shadow:0 0 0 2px var(--green) inset}
+  /* phase cards (categorization detail) */
+  .phase{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:14px 18px;margin-bottom:10px;box-shadow:0 3px 10px rgba(20,30,50,.05);display:grid;grid-template-columns:56px 1fr;gap:16px;align-items:start;border-left:5px solid var(--blue)}
+  .phase.inv{border-left-color:var(--amber);background:#fffdf6}
+  .phase .pn{width:46px;height:30px;border-radius:8px;background:var(--blue);color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center}
+  .phase.inv .pn{background:var(--amber)}
+  .phase h4{margin:0 0 5px;font-size:15px;font-weight:740}
+  .phase p{margin:0;font-size:13px;color:var(--slate);line-height:1.5}
+  .phase .out{font-size:11.5px;color:var(--muted);margin-top:7px}
+  .phase code{background:#f3f5f9;padding:1px 5px;border-radius:5px;font-size:11.5px}
+  .lifecycle{background:#0f1729;color:#dbe6f5;border-radius:12px;padding:14px 18px;font-size:13px;text-align:center;margin-top:10px}
+  .lifecycle b{color:#fff}
+  @media(max-width:900px){.reports{grid-template-columns:repeat(2,1fr)}.lane .note{margin-left:0;width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <h1>How Journal Entries Get Created — Every Flow</h1>
+    <p>Six independent flows post double-entry journal entries into the general ledger, which then feeds the financial reports. This maps what exists today and how heavily each is actually used.</p>
+    <div class="legend">
+      <span><span class="dot d-green"></span> Live (real data)</span>
+      <span><span class="dot d-amber"></span> Built, barely/not used</span>
+      <span><span class="dot d-blue"></span> In progress</span>
+      <span><span class="dot d-gray"></span> Later</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-view="flows">All JE flows</button>
+    <button class="tab" data-view="cat">⚙ Categorization engine — how it works</button>
+  </div>
+
+  <div id="view-flows" class="view active">
+
+  <h2 class="sec">6 Sources of Journal Entries</h2>
+
+  <div class="lane live clickable" ondblclick="showView('cat')" title="Double-click to see how the categorization engine works">
+    <div class="head"><span class="src">1 · Bank transactions → Categorization engine</span><span class="pill pl-green">Live</span><span class="expand">⤢ double-click for detail</span><span class="note">730 txns · 244 rules · 245 JEs</span></div>
+    <div class="pipe">
+      <span class="step">Import (CSV / PDF / Wise)</span><span class="ar">→</span>
+      <span class="step">Pending txn</span><span class="ar">→</span>
+      <span class="step">Categorization run (5-phase)</span><span class="ar">→</span>
+      <span class="je">posts JE</span><span class="ar">→</span>
+      <span class="step">Review / approve → Reconciled</span>
+    </div>
+    <p class="subnote"><b>Inside the engine, the JE comes from one of:</b>
+      <span class="step alt">rule match</span> <span class="step alt">counterparty default</span> <span class="step alt">AI fallback</span>
+      <span class="step alt">internal transfer (paired, cross-entity)</span> <span class="step alt">cross-entity allocation</span>
+      <span class="step alt">AP knock-off</span> <span class="step alt">payroll knock-off</span> <span class="step alt">asset-parking → 1300</span></p>
+  </div>
+
+  <div class="lane built">
+    <div class="head"><span class="src">2 · Invoices / Accounts Payable</span><span class="pill pl-amber">Built · light use</span><span class="note">6 invoices</span></div>
+    <div class="pipe">
+      <span class="step">Upload PDF/image</span><span class="ar">→</span>
+      <span class="step">AI extract + vendor match</span><span class="ar">→</span>
+      <span class="step">Approve</span><span class="ar">→</span>
+      <span class="je">accrual JE</span>
+      <span class="ar">·</span><span class="step">Bank payment → knock-off</span><span class="ar">→</span><span class="je">cash JE</span>
+    </div>
+    <p class="subnote">Approval: <b>Dr expense (+ Dr 1350 GST) / Cr 2000 AP</b>. Knock-off: <b>Dr 2000 AP / Cr Bank</b> (cross-entity → paired IC JEs).</p>
+  </div>
+
+  <div class="lane built">
+    <div class="head"><span class="src">3 · Payroll (HR)</span><span class="pill pl-amber">Built · 0 runs</span><span class="note">engine verified via mock</span></div>
+    <div class="pipe">
+      <span class="step">Onboard (comp + deductions)</span><span class="ar">→</span>
+      <span class="step">Payroll run (DRAFT)</span><span class="ar">→</span>
+      <span class="step">Submit</span><span class="ar">→</span>
+      <span class="je">posts JE</span><span class="ar">→</span>
+      <span class="step">Bank payment → Phase-2.5 knock-off</span>
+    </div>
+    <p class="subnote"><b>Dr salary + employer CPF/Super / Cr bank (net) + CPF/Super/tax payable.</b> Cross-entity pay → paired IC JEs.</p>
+  </div>
+
+  <div class="lane built">
+    <div class="head"><span class="src">4 · Depreciation / Amortization</span><span class="pill pl-amber">Built · 0 schedules</span></div>
+    <div class="pipe">
+      <span class="step">Capitalisation event (asset txn approved)</span><span class="ar">→</span>
+      <span class="step">Schedule created</span><span class="ar">→</span>
+      <span class="step">Monthly scheduler run</span><span class="ar">→</span>
+      <span class="je">posts JE</span>
+    </div>
+    <p class="subnote">COA-policy-driven. <b>Dr 7400 expense / Cr 1810 accumulated</b>, idempotent per month.</p>
+  </div>
+
+  <div class="lane prog">
+    <div class="head"><span class="src">5 · Stripe sync (provider economic events)</span><span class="pill pl-blue">In progress</span><span class="note">views-based; not E2E-verified</span></div>
+    <div class="pipe">
+      <span class="step">ClickHouse views</span><span class="ar">→</span>
+      <span class="step">Monthly sync (per region)</span><span class="ar">→</span>
+      <span class="je">~25 JEs / month</span><span class="ar">·</span>
+      <span class="step">transfers → AWAITING_MATCH txn</span>
+    </div>
+    <p class="subnote">Revenue, host payouts, Stripe fees, disputes, deposits, refunds, settlements. Future source = TMS PGW ledger (same seam).</p>
+  </div>
+
+  <div class="lane live">
+    <div class="head"><span class="src">6 · Manual journal entry</span><span class="pill pl-green">Live</span></div>
+    <div class="pipe">
+      <span class="step">User / accountant</span><span class="ar">→</span>
+      <span class="step">POST /journal-entries (or manual categorization)</span><span class="ar">→</span>
+      <span class="je">posts JE</span>
+    </div>
+    <p class="subnote">Direct double-entry creation + manual categorization of an unmatched transaction.</p>
+  </div>
+
+  <div class="converge">▼ &nbsp; all six converge on &nbsp; ▼</div>
+
+  <div class="gl">
+    <h3>GENERAL LEDGER</h3>
+    <p><code>finance_journal_entries</code> → <code>finance_journal_lines</code> · double-entry, every entry must balance (ΣDr = ΣCr) · status DRAFT → POSTED → VOID</p>
+  </div>
+
+  <div class="arrow-down">↓</div>
+
+  <h2 class="sec" style="margin-top:6px">Which then feeds the Reports</h2>
+  <div class="reports">
+    <div class="rep live"><h4>Trial Balance</h4><p>✅ built</p></div>
+    <div class="rep later"><h4>P&amp;L</h4><p>later</p></div>
+    <div class="rep later"><h4>Balance Sheet</h4><p>later</p></div>
+    <div class="rep later"><h4>Business-Line Margin</h4><p>later</p></div>
+  </div>
+
+  <div class="foot">
+    Maturity reflects verified live data in <b>collections-db</b> (2026-05-21). Bank categorization + manual JE are the only flows running on real data today;
+    payroll &amp; depreciation are built but unused; Stripe sync is mid-build; reports beyond Trial Balance come later.
+  </div>
+
+  </div><!-- /view-flows -->
+
+  <div id="view-cat" class="view">
+    <h2 class="sec">Categorization Engine — How It Works <span style="text-transform:none;letter-spacing:0;font-weight:600;color:var(--muted)">(flow #1, expanded) · input = a Pending bank transaction → output = a posted JE</span></h2>
+
+    <div class="phase">
+      <div class="pn">Phase 0</div>
+      <div>
+        <h4>Internal-transfer pairing</h4>
+        <p>If this transaction is the counterpart of an <code>AWAITING_MATCH</code> internal transfer (e.g. OCBC → Wise), pair the two sides (±2% amount, ±5 days).</p>
+        <p class="out">→ both sides become <b>Matched</b>, sharing one JE. Otherwise continue.</p>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="pn">Phase 1</div>
+      <div>
+        <h4>Counterparty enrichment</h4>
+        <p><b>L1</b> deterministic (exact/substring on name + aliases) → <b>L2</b> fuzzy (rapidfuzz ≥ 88) → <b>L3</b> LLM (one batched Claude call for the rest). Links a <code>counterparty_id</code>.</p>
+        <p class="out">→ needed so the next phases (invoices, payroll, rules) can act on the counterparty.</p>
+      </div>
+    </div>
+
+    <div class="phase inv">
+      <div class="pn">Phase 1.5</div>
+      <div>
+        <h4>AP invoice knock-off &nbsp;<span style="font-size:11px;color:var(--amber);font-weight:800">← this is where existing invoices come in</span></h4>
+        <p>If the counterparty has <b>open AP invoices</b>, run 3-case matching:</p>
+        <p class="out">
+          <b>Case 1</b> — invoice ref in description + amount ≈ remaining (±2%) + date OK → match (invoice's COA wins) → <code>Dr 2000 AP / Cr Bank</code><br>
+          <b>Case 2</b> — no ref but amount ≈ remaining → match the <b>oldest</b> invoice (FIFO) → <code>Dr 2000 AP / Cr Bank</code><br>
+          <b>Case 3</b> — amount matches no invoice → skip → Phase 4 asset-parks to <code>1300</code><br>
+          <b>No invoices</b> → skip to Phase 4. &nbsp;(Cross-entity invoice → paired IC JEs.)
+        </p>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="pn">Phase 2.5</div>
+      <div>
+        <h4>Payroll knock-off</h4>
+        <p>For outgoing payments, match a <b>POSTED payroll run</b> (net salary or CPF, ±2% amount, ±7 days, any entity).</p>
+        <p class="out">→ same-entity: links the existing payroll JE. Cross-entity: creates paired intercompany JEs.</p>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="pn">Phase 4</div>
+      <div>
+        <h4>Accounting classification (the fallback ladder)</h4>
+        <p>
+          <b>4A — Rules engine:</b> first matching rule by priority (AND logic on counterparty type / text / amount / currency) → JE.<br>
+          <b>4B — Counterparty default:</b> use <code>default_account_code</code> if set → JE.<br>
+          <b>4C — Asset parking:</b> the Case-3 amount-mismatches → <code>Dr 1300 / Cr Bank</code>.<br>
+          <b>4D — AI classification:</b> Claude Haiku suggests a COA + confidence — <b>≥ 0.80</b> → JE; <b>&lt; 0.80</b> → <b>Needs Review</b>.
+        </p>
+        <p class="out">→ if none of these fire, the transaction stays <b>Pending</b> in the manual queue.</p>
+      </div>
+    </div>
+
+    <div class="lifecycle">
+      <b>Status lifecycle:</b> &nbsp; Pending &nbsp;→&nbsp; { Awaiting Match · Matched · Needs Review } &nbsp;→&nbsp; <b>Reconciled</b> (human-confirmed). &nbsp; On approval, the engine also learns the bank description as a counterparty alias (better L1 matching next time).
+    </div>
+
+    <div class="foot">Every path above ends by posting a balanced JE into the general ledger (or parking the txn for manual review). Live: 244 active rules across 730 transactions → 245 JEs.</div>
+  </div><!-- /view-cat -->
+
+</div>
+<script>
+  function showView(v){
+    document.querySelectorAll('.view').forEach(el=>el.classList.toggle('active', el.id==='view-'+v));
+    document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.view===v));
+    window.scrollTo(0,0);
+  }
+  document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>showView(t.dataset.view)));
+</script>
+</body>
+</html>

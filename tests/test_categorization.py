@@ -12,7 +12,7 @@ from src.database import Base
 from src.models.entity import FinanceEntity, EntityStatus
 from src.models.account import FinanceAccount, AccountType, NormalBalance, AccountStatus
 from src.models.bank_account import FinanceBankAccount, BankAccountStatus
-from src.models.transaction import FinanceTransaction, TransactionStatus
+from src.models.transaction import CategorizationType, FinanceTransaction, TransactionStatus
 from src.models.journal_entry import FinanceJournalEntry, JournalEntryStatus
 from src.models.journal_line import FinanceJournalLine
 from src.models.tag import FinanceTag, FinanceTransactionTag
@@ -304,8 +304,6 @@ class TestRuleService:
             name="Office Supplies",
             description_operator=MatchOperator.CONTAINS,
             description_value="OFFICE DEPOT",
-            counterparty_name="Office Depot",
-            counterparty_type="vendor",
         ))
         assert rule.id is not None
         assert rule.name == "Office Supplies"
@@ -351,13 +349,17 @@ class TestRuleService:
                 name="Bad Account", contra_account_code="9999",
             ))
 
-    def test_internal_transfer_missing_target_bank_account(self, db_session, test_accounts):
-        with pytest.raises(ValueError, match="requires target_bank_account_id"):
-            rule_service.create(db_session, RuleCreate(
-                name="Transfer",
-                direction=TransactionDirection.OUTGOING,
-                category=TransactionCategory.INTERNAL_TRANSFER,
-            ))
+    def test_internal_transfer_without_target_is_claim_only(self, db_session, test_accounts):
+        """Two-rules-per-corridor law: a transfer rule WITHOUT a target is valid —
+        it's the claim-only side of a corridor (e.g. Wise can't know which bank
+        topped it up)."""
+        rule = rule_service.create(db_session, RuleCreate(
+            name="Transfer claim-only",
+            direction=TransactionDirection.INCOMING,
+            category=TransactionCategory.INTERNAL_TRANSFER,
+            description_operator=MatchOperator.CONTAINS, description_value="MONEY ADDED",
+        ))
+        assert rule.target_bank_account_id is None
 
     def test_internal_transfer_invalid_target_bank_account(self, db_session, test_accounts):
         with pytest.raises(ValueError, match="does not exist"):
@@ -503,8 +505,6 @@ class TestCategorizationEngine:
             name="Grab Match",
             description_operator=MatchOperator.CONTAINS,
             description_value="GRAB",
-            counterparty_name="Grab",
-            counterparty_type="vendor",
         ))
         txn = _make_transaction(db_session, test_bank_account, description="GRAB RIDE SG-123", amount=-25.50)
         result = categorization_service.run(db_session)
@@ -514,8 +514,60 @@ class TestCategorizationEngine:
 
         db_session.refresh(txn)
         assert txn.status == TransactionStatus.MATCHED    # engine → MATCHED, not RECONCILED
-        assert txn.counterparty_name == "Grab"
+        # POL-12: the rule categorizes but never assigns a counterparty
+        assert txn.counterparty_id is None
         assert txn.reconciled_journal_entry_id is not None
+
+    def test_default_direction_guard_blocks_wrong_way_money(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """POL-34: a vendor's expense default must NOT fire on INCOMING money
+        (that's a refund); it goes to AI/review instead. Outgoing money to the
+        same vendor books normally."""
+        cp = _make_counterparty(db_session, "ACME TRAVEL", type_="vendor")
+        cp.default_account_code = "5000"   # an expense account
+        db_session.commit()
+
+        # incoming from a vendor = refund → default must be skipped
+        refund = _make_transaction(db_session, test_bank_account,
+                                   description="ACME TRAVEL", amount=250.0, fingerprint="dg-in")
+        refund.counterparty_id = cp.id
+        # outgoing to the vendor = normal spend → default fires
+        spend = _make_transaction(db_session, test_bank_account,
+                                  description="ACME TRAVEL", amount=-80.0, fingerprint="dg-out")
+        spend.counterparty_id = cp.id
+        db_session.commit()
+
+        categorization_service.run(db_session)
+        db_session.refresh(refund); db_session.refresh(spend)
+        # outgoing booked via the default
+        assert spend.categorized_by_logic == 'counterparty_default'
+        assert spend.coa_account_code == "5000"
+        # incoming did NOT auto-book to the expense default
+        assert refund.categorized_by_logic != 'counterparty_default'
+        assert refund.coa_account_code != "5000"
+
+    def test_pre_books_open_rows_are_never_categorized(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """POL-33: a transaction dated before 2026-01-01 is untouchable by the
+        engine (it lives in the opening balances) — even a matching rule and an
+        explicit txn_ids selection must leave it IMPORTED for Phase B."""
+        from datetime import date as _date
+        rule_service.create(db_session, _expense_rule(
+            name="Grab Match", description_operator=MatchOperator.CONTAINS,
+            description_value="GRAB"))
+        txn = _make_transaction(db_session, test_bank_account,
+                                description="GRAB RIDE 2019", amount=-25.0, fingerprint="pre1")
+        txn.transaction_date = _date(2025, 12, 31)
+        txn.status = TransactionStatus.IMPORTED
+        db_session.commit()
+
+        result = categorization_service.run(db_session, txn_ids=[txn.id])
+        db_session.refresh(txn)
+        assert result["categorized"] == 0
+        assert txn.status == TransactionStatus.IMPORTED     # untouched
+        assert txn.reconciled_journal_entry_id is None
 
     def test_description_not_contains(self, db_session, test_accounts, test_bank_account):
         """NOT_CONTAINS: transaction whose description lacks the pattern is matched."""
@@ -669,6 +721,11 @@ class TestCategorizationEngine:
         assert txn_transfer.status == TransactionStatus.PENDING
 
     def test_currency_matching(self, db_session, test_accounts, test_bank_account, test_bank_account_usd):
+        # POL-25: booking a foreign-currency txn requires a monthly rate on file
+        from decimal import Decimal as _D
+        from src.models.fx_rate import FinanceFxRate
+        db_session.add(FinanceFxRate(year_month="2026-02", from_currency="USD",
+                                     to_currency="SGD", rate=_D("1.35"), source="test"))
         rule_service.create(db_session, _deposit_rule(name="USD Revenue", match_currency="USD"))
         _make_transaction(db_session, test_bank_account,     description="SGD deposit", amount=100.0, fingerprint="cur1")
         txn_usd = _make_transaction(db_session, test_bank_account_usd, description="USD deposit", amount=200.0, currency="USD", fingerprint="cur2")
@@ -810,6 +867,108 @@ class TestCategorizationEngine:
         assert incoming.reconciled_journal_entry_id == outgoing.reconciled_journal_entry_id
         assert outgoing.expected_counterpart_ba_id is None  # cleared after pairing
         assert result2["categorized"] >= 1
+
+    def test_internal_transfer_claimed_before_enrichment(self, db_session, test_accounts, test_bank_account, test_bank_account_wise):
+        """Cascade tier-1: a transfer is classified BEFORE enrichment, so no (wrong)
+        counterparty is written — even though a counterparty whose name matches the
+        description exists (L1 enrichment WOULD have linked it)."""
+        # This counterparty name is a substring of the description → L1 would match it.
+        _make_counterparty(db_session, "WISE TRANSFER")
+        rule_service.create(db_session, RuleCreate(
+            name="OCBC to Wise",
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.INTERNAL_TRANSFER,
+            target_bank_account_id=test_bank_account_wise.id,
+            description_operator=MatchOperator.CONTAINS, description_value="WISE TRANSFER",
+        ))
+        txn = _make_transaction(db_session, test_bank_account, description="WISE TRANSFER", amount=-1000.0)
+        categorization_service.run(db_session)
+        db_session.refresh(txn)
+        # Claimed as an internal transfer in the pre-enrichment pass ...
+        assert txn.status == TransactionStatus.AWAITING_MATCH
+        assert txn.expected_counterpart_ba_id == test_bank_account_wise.id
+        # ... and NOT enriched: counterparty stays clear despite the matching counterparty.
+        assert txn.counterparty_id is None
+
+    def test_claim_only_rule_claims_without_je(
+        self, db_session, test_accounts, test_bank_account_wise
+    ):
+        """A target-less transfer rule claims the txn as AWAITING_MATCH with NO JE
+        — protecting it from enrichment/AI — and waits for the knowing side."""
+        rule_service.create(db_session, RuleCreate(
+            name="Wise money-added claim-only",
+            direction=TransactionDirection.INCOMING,
+            category=TransactionCategory.INTERNAL_TRANSFER,
+            description_operator=MatchOperator.CONTAINS, description_value="Money added",
+        ))
+        txn = _make_transaction(db_session, test_bank_account_wise,
+                                description="FROM: Drive Lah Pte. Ltd. Money added",
+                                amount=5000.0)
+        categorization_service.run(db_session)
+        db_session.refresh(txn)
+        assert txn.status == TransactionStatus.AWAITING_MATCH
+        assert txn.reconciled_journal_entry_id is None      # no JE — claim only
+        assert txn.categorization_type == CategorizationType.INTERNAL_TRANSFER
+        assert txn.counterparty_id is None                  # enrichment never saw it
+
+    def test_knowing_side_attaches_claim_only_waiter(
+        self, db_session, test_accounts, test_bank_account, test_bank_account_wise
+    ):
+        """The knowing side's JE adopts a claim-only waiter: both legs end MATCHED
+        sharing ONE journal entry (no double-booking)."""
+        rule_service.create(db_session, RuleCreate(
+            name="Wise money-added claim-only",
+            direction=TransactionDirection.INCOMING,
+            category=TransactionCategory.INTERNAL_TRANSFER,
+            description_operator=MatchOperator.CONTAINS, description_value="Money added",
+        ))
+        rule_service.create(db_session, RuleCreate(
+            name="OCBC to Wise (knowing side)",
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.INTERNAL_TRANSFER,
+            target_bank_account_id=test_bank_account_wise.id,
+            description_operator=MatchOperator.CONTAINS, description_value="OTHR WISE",
+        ))
+        wise_leg = _make_transaction(db_session, test_bank_account_wise,
+                                     description="FROM: Drive Lah Pte. Ltd. Money added",
+                                     amount=5000.0, fingerprint="wise-leg")
+        bank_leg = _make_transaction(db_session, test_bank_account,
+                                     description="FAST PAYMENT OTHR WISE REF123",
+                                     amount=-5000.0, fingerprint="bank-leg")
+        categorization_service.run(db_session)
+        db_session.refresh(wise_leg); db_session.refresh(bank_leg)
+        assert bank_leg.status == TransactionStatus.MATCHED
+        assert wise_leg.status == TransactionStatus.MATCHED
+        assert bank_leg.reconciled_journal_entry_id is not None
+        assert wise_leg.reconciled_journal_entry_id == bank_leg.reconciled_journal_entry_id
+
+    def test_transfer_to_no_feed_target_matches_standalone(
+        self, db_session, test_accounts, test_bank_account, test_entity
+    ):
+        """Transfers into Stripe CONNECT targets (no statement feed by design)
+        complete as MATCHED immediately — no eternal AWAITING_MATCH for a
+        counterpart statement line that will never be imported."""
+        connect_ba = FinanceBankAccount(
+            entity_id=test_entity.id, bank_name="Stripe",
+            account_number="acct_connect", account_name="Stripe Connect",
+            currency="SGD", coa_account_code="1001", status=BankAccountStatus.ACTIVE,
+        )
+        db_session.add(connect_ba)
+        db_session.commit()
+        rule_service.create(db_session, RuleCreate(
+            name="Fleet micro-settlement",
+            direction=TransactionDirection.INCOMING,
+            category=TransactionCategory.INTERNAL_TRANSFER,
+            target_bank_account_id=connect_ba.id,
+            description_operator=MatchOperator.CONTAINS, description_value="CSDB STRIPE",
+        ))
+        txn = _make_transaction(db_session, test_bank_account,
+                                description="CSDB STRIPE PAYMENTS SIN", amount=43.50)
+        categorization_service.run(db_session)
+        db_session.refresh(txn)
+        assert txn.status == TransactionStatus.MATCHED     # standalone, not AWAITING
+        assert txn.reconciled_journal_entry_id is not None  # JE fully books it
+        assert txn.expected_counterpart_ba_id is None
 
     def test_inactive_rules_skipped(self, db_session, test_accounts, test_bank_account):
         rule_service.create(db_session, _expense_rule(
@@ -962,6 +1121,43 @@ class TestCounterpartyAliasEnrichment:
         db_session.refresh(txn)
         assert txn.counterparty_id == cp.id
 
+    def test_l1_short_name_requires_word_boundary(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """Party 'URA' must not match 'InsURAnce'/'BuenaventURA' — short names
+        (<6 chars) match on word boundaries only (2026-07-25 bug)."""
+        ura = _make_counterparty(db_session, "URA")
+        txn_bad = _make_transaction(
+            db_session, test_bank_account,
+            description="Sent money to The Hollard Insurance Company", amount=-100.0,
+            fingerprint="ura-bad")
+        txn_good = _make_transaction(
+            db_session, test_bank_account,
+            description="PAYMENT TO URA PARKING", amount=-50.0,
+            fingerprint="ura-good")
+        categorization_service._enrich_counterparties(db_session, [txn_bad, txn_good])
+        db_session.refresh(txn_bad); db_session.refresh(txn_good)
+        assert txn_bad.counterparty_id != ura.id     # no substring hijack
+        assert txn_good.counterparty_id == ura.id    # word-boundary still matches
+
+    def test_l1_matches_inactive_dormant_counterparty(
+        self, db_session, test_accounts, test_bank_account
+    ):
+        """POL-22: inactive = dormant-but-real — historical transactions must
+        still enrich against ex-vendors. (Wrong records are DELETED, not
+        deactivated, so including inactive parties is safe.)"""
+        cp = _make_counterparty(db_session, "Old Vendor Pte Ltd")
+        cp.status = "inactive"
+        db_session.commit()
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="PAYMENT TO Old Vendor Pte Ltd", amount=-75.0,
+            fingerprint="dormant-01"
+        )
+        categorization_service._enrich_counterparties(db_session, [txn])
+        db_session.refresh(txn)
+        assert txn.counterparty_id == cp.id
+
     def test_l1_matches_alias_in_description(
         self, db_session, test_accounts, test_bank_account
     ):
@@ -1089,8 +1285,8 @@ class TestL2FuzzyEnrichment:
             description="SINGAPORE GRAB CO", amount=-20.0,
             counterparty_name="SINGAPORE GRAB CO", fingerprint="grab-e2e-01"
         )
-        l1_result = categorization_service._match_l1(txn, [cp])
-        assert l1_result is None   # verify L1 misses
+        l1_matched, l1_ambiguous = categorization_service._match_l1(txn, [cp])
+        assert l1_matched is None and not l1_ambiguous   # verify L1 misses
         # Full enrichment pipeline resolves via L2
         categorization_service._enrich_counterparties(db_session, [txn])
         db_session.refresh(txn)
@@ -2206,3 +2402,401 @@ class TestAiClassificationFallback:
 
         db_session.refresh(txn)
         assert txn.status == TransactionStatus.MATCHED
+
+
+# ============================================================================
+# POL-12: identity belongs to enrichment — rules never assign counterparties
+# ============================================================================
+
+class TestPol12IdentitySeparation:
+    def test_legacy_rule_counterparty_action_is_ignored(self, db_session, test_accounts, test_bank_account):
+        """A legacy rule row carrying a counterparty_name ACTION still categorizes,
+        but must NOT write the counterparty onto the transaction (POL-12)."""
+        rule_service.create(db_session, _expense_rule(
+            name="Legacy identity rule",
+            description_operator=MatchOperator.CONTAINS, description_value="MYSTERY CHARGE",
+        ))
+        legacy = db_session.query(FinanceCategorizationRule).filter_by(name="Legacy identity rule").one()
+        legacy.counterparty_name = "Legacy Vendor"   # simulate a pre-POL-12 migrated row
+        db_session.commit()
+
+        txn = _make_transaction(db_session, test_bank_account, description="MYSTERY CHARGE 123", amount=-42.0)
+        result = categorization_service.run(db_session)
+        db_session.refresh(txn)
+
+        assert result["categorized"] == 1
+        assert txn.coa_account_code == "5000"          # accounting action applied
+        assert txn.counterparty_name != "Legacy Vendor"  # identity action ignored
+        assert txn.counterparty_id is None
+
+    def test_rule_create_and_update_reject_counterparty_assignment(self):
+        from pydantic import ValidationError
+        from src.models.schemas import RuleUpdate
+        with pytest.raises(ValidationError, match="POL-12"):
+            _expense_rule(counterparty_name="Twilio")
+        with pytest.raises(ValidationError, match="POL-12"):
+            RuleUpdate(counterparty_type="vendor")
+
+    def test_text_matches_pipe_patterns_are_alternatives(self):
+        """' | '-packed patterns (QB-migration convention) act as OR alternatives."""
+        C, N, E = MatchOperator.CONTAINS, MatchOperator.NOT_CONTAINS, MatchOperator.IS_EXACTLY
+        assert _text_matches("paid DOCSEND monthly", C, "Hotjar | docsend")
+        assert _text_matches("HOTJAR renewal", C, "Hotjar | docsend")
+        assert not _text_matches("something else", C, "Hotjar | docsend")
+        assert not _text_matches("paid docsend", N, "Hotjar | docsend")
+        assert _text_matches("something else", N, "Hotjar | docsend")
+        assert _text_matches("hotjar", E, "Hotjar | docsend")
+        # single patterns unchanged
+        assert _text_matches("ANTHROPIC SAN", C, "anthropic")
+
+
+class TestRejectCascadeAndSelfJeGuard:
+    """2026-07-26: (1) rejecting one leg of a transfer pair must reset BOTH legs
+    (they share one JE — voiding it while the partner stays MATCHED leaves the
+    partner pointing at a VOID entry); (2) the engine must refuse a JE whose
+    contra IS the bank's own COA (the AI booked Dr X / Cr X twice in prod)."""
+
+    def _paired(self, db_session, test_bank_account, test_bank_account_wise):
+        from src.models.journal_entry import FinanceJournalEntry, JournalEntryStatus
+        from src.models.transaction import CategorizationType
+        je = FinanceJournalEntry(
+            entity_id=test_bank_account.entity_id, entry_date=date(2026, 2, 15),
+            description="Transfer pair JE", status=JournalEntryStatus.DRAFT,
+        )
+        db_session.add(je)
+        db_session.flush()
+        out_leg = _make_transaction(db_session, test_bank_account,
+                                    description="FAST PAYMENT WISE", amount=-500.0)
+        in_leg = _make_transaction(db_session, test_bank_account_wise,
+                                   description="Topped up account", amount=500.0)
+        for t in (out_leg, in_leg):
+            t.status = TransactionStatus.MATCHED
+            t.reconciled_journal_entry_id = je.id
+            t.categorization_type = CategorizationType.INTERNAL_TRANSFER
+            t.categorized_by_logic = 'transfer_rule'
+        db_session.commit()
+        return je, out_leg, in_leg
+
+    def test_reject_cascades_to_the_partner_leg(
+        self, db_session, test_entity, test_accounts, test_bank_account, test_bank_account_wise
+    ):
+        from src.models.journal_entry import JournalEntryStatus
+        from src.services.transaction_service import transaction_service
+
+        je, out_leg, in_leg = self._paired(db_session, test_bank_account, test_bank_account_wise)
+        transaction_service.reject(db_session, out_leg.id)
+
+        db_session.refresh(je); db_session.refresh(in_leg); db_session.refresh(out_leg)
+        assert je.status == JournalEntryStatus.VOID
+        for t in (out_leg, in_leg):
+            assert t.status == TransactionStatus.PENDING
+            assert t.reconciled_journal_entry_id is None
+            assert t.categorized_by_logic is None
+            assert t.categorization_type is None
+
+    def test_reject_never_cascades_into_a_reconciled_partner(
+        self, db_session, test_entity, test_accounts, test_bank_account, test_bank_account_wise
+    ):
+        """A RECONCILED partner was human-approved — reject must not touch it
+        (and the JE of an approved pair is POSTED, so nothing is voided)."""
+        from src.models.journal_entry import JournalEntryStatus
+        from src.services.transaction_service import transaction_service
+
+        je, out_leg, in_leg = self._paired(db_session, test_bank_account, test_bank_account_wise)
+        je.status = JournalEntryStatus.POSTED
+        in_leg.status = TransactionStatus.RECONCILED
+        db_session.commit()
+
+        transaction_service.reject(db_session, out_leg.id)
+        db_session.refresh(je); db_session.refresh(in_leg)
+        assert je.status == JournalEntryStatus.POSTED      # not voided
+        assert in_leg.status == TransactionStatus.RECONCILED  # untouched
+
+    def test_engine_refuses_self_referencing_je(
+        self, db_session, test_entity, test_accounts, test_bank_account
+    ):
+        from src.services.categorization_service import categorization_service
+
+        txn = _make_transaction(db_session, test_bank_account,
+                                description="Stripe payout txn_x", amount=-100.0)
+        with pytest.raises(ValueError, match="self-referencing"):
+            categorization_service._create_simple_entry(
+                db=db_session, transaction=txn,
+                entity_id=test_bank_account.entity_id,
+                bank_coa_code="1000", contra_code="1000",
+                amount=-100.0, abs_amount=100.0,
+            )
+
+    def test_approve_reconciles_both_legs_of_a_pair(
+        self, db_session, test_entity, test_accounts, test_bank_account, test_bank_account_wise
+    ):
+        """One JE, one approval: approving either leg posts the shared JE and
+        reconciles the partner too (was: partner errored 'already posted')."""
+        from src.models.journal_entry import JournalEntryStatus
+        from src.services.transaction_service import transaction_service
+
+        je, out_leg, in_leg = self._paired(db_session, test_bank_account, test_bank_account_wise)
+        transaction_service.approve(db_session, out_leg.id)
+
+        db_session.refresh(je); db_session.refresh(in_leg)
+        assert je.status == JournalEntryStatus.POSTED
+        assert in_leg.status == TransactionStatus.RECONCILED
+
+    def test_approve_of_second_leg_is_a_quiet_completion(
+        self, db_session, test_entity, test_accounts, test_bank_account, test_bank_account_wise
+    ):
+        """A MATCHED leg whose shared JE is already POSTED (partner approved in
+        an earlier session) reconciles without error."""
+        from src.models.journal_entry import JournalEntryStatus
+        from src.services.transaction_service import transaction_service
+
+        je, out_leg, in_leg = self._paired(db_session, test_bank_account, test_bank_account_wise)
+        je.status = JournalEntryStatus.POSTED
+        db_session.commit()
+
+        result = transaction_service.approve(db_session, in_leg.id)
+        assert result.status == TransactionStatus.RECONCILED
+
+
+class TestIntercompanyRules:
+    """POL-27 IC lane (2026-07-26): INTERCOMPANY_TRANSFER rules ride Phase 0.5,
+    book contra = the net IC account, stamp route 'ic_rule'."""
+
+    def test_ic_rule_claims_and_books_net_ic_account(
+        self, db_session, test_entity, test_accounts, test_bank_account
+    ):
+        import json
+        from src.models.categorization_rule import (
+            FinanceCategorizationRule, RuleStatus, TransactionDirection,
+            MatchOperator, TransactionCategory)
+        from src.models.transaction import CategorizationType
+        from src.services.categorization_service import categorization_service
+
+        rule = FinanceCategorizationRule(
+            name="IC test: receives from Australia",
+            bank_account_ids=json.dumps([test_bank_account.id]),
+            direction=TransactionDirection.INCOMING,
+            description_operator=MatchOperator.CONTAINS,
+            description_value="Received money from Drive lah Australia Pty Ltd",
+            category=TransactionCategory.INTERCOMPANY_TRANSFER,
+            contra_account_code="1500",   # fixture IC account (category Intercompany)
+            allocation_entity_id=test_entity.id,
+            priority=4, status=RuleStatus.ACTIVE)
+        db_session.add(rule)
+        txn = _make_transaction(
+            db_session, test_bank_account,
+            description="Received money from Drive lah Australia Pty Ltd with reference X",
+            amount=500.0)
+        db_session.commit()
+
+        categorization_service.run(db_session, bank_account_id=test_bank_account.id)
+        db_session.refresh(txn)
+
+        assert txn.status == TransactionStatus.MATCHED
+        assert txn.categorized_by_logic == 'ic_rule'
+        assert txn.categorized_by_rule_id == rule.id
+        assert txn.categorization_type == CategorizationType.INTERCOMPANY
+        assert txn.coa_account_code == "1500"
+        from src.models.journal_line import FinanceJournalLine
+        lines = db_session.query(FinanceJournalLine).filter(
+            FinanceJournalLine.entry_id == txn.reconciled_journal_entry_id).all()
+        codes = {l.account_code for l in lines}
+        assert codes == {"1000", "1500"}   # bank + net IC account
+
+
+class TestPairingGuards:
+    """2026-07-27 mispair postmortem: same-account 'pairs', ambiguous identical
+    candidates picked arbitrarily, and both-sides-know corridors booking two
+    JEs for one movement."""
+
+    def test_ambiguous_identical_candidates_refuse_to_guess(
+        self, db_session, test_accounts, test_bank_account, test_bank_account_wise
+    ):
+        """Two identical-amount same-day candidates with no shared reference
+        token: the engine must leave the waiter alone, not pick one."""
+        rule_service.create(db_session, RuleCreate(
+            name="OCBC to Wise (knowing)",
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.INTERNAL_TRANSFER,
+            target_bank_account_id=test_bank_account_wise.id,
+            description_operator=MatchOperator.CONTAINS, description_value="OTHR WISE",
+        ))
+        # two indistinguishable candidates on the target account
+        _make_transaction(db_session, test_bank_account_wise,
+                          description="Topped up account", amount=10000.0, fingerprint="amb1")
+        _make_transaction(db_session, test_bank_account_wise,
+                          description="Topped up account", amount=10000.0, fingerprint="amb2")
+        txn = _make_transaction(db_session, test_bank_account,
+                                description="FAST PAYMENT OTHR WISE", amount=-10000.0)
+        categorization_service.run(db_session)
+        db_session.refresh(txn)
+        assert txn.status == TransactionStatus.AWAITING_MATCH  # refused to guess
+
+    def test_shared_reference_token_breaks_the_tie(
+        self, db_session, test_accounts, test_bank_account, test_bank_account_wise
+    ):
+        """Same ambiguity, but ONE candidate shares the bank reference — that
+        evidence selects it (DQ-14: the CT ref rides both legs)."""
+        rule_service.create(db_session, RuleCreate(
+            name="OCBC to Wise (knowing)",
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.INTERNAL_TRANSFER,
+            target_bank_account_id=test_bank_account_wise.id,
+            description_operator=MatchOperator.CONTAINS, description_value="OTHR WISE",
+        ))
+        _make_transaction(db_session, test_bank_account_wise,
+                          description="Topped up account", amount=10000.0, fingerprint="tok1")
+        right = _make_transaction(db_session, test_bank_account_wise,
+                                  description="Incoming SM3P260411787294", amount=10000.0,
+                                  fingerprint="tok2")
+        txn = _make_transaction(db_session, test_bank_account,
+                                description="FAST PAYMENT OTHR WISE SM3P260411787294",
+                                amount=-10000.0)
+        categorization_service.run(db_session)
+        db_session.refresh(txn); db_session.refresh(right)
+        assert txn.status == TransactionStatus.MATCHED
+        assert right.status == TransactionStatus.MATCHED
+        assert right.reconciled_journal_entry_id == txn.reconciled_journal_entry_id
+
+    def test_both_sides_know_corridor_books_one_je(
+        self, db_session, test_accounts, test_bank_account, test_bank_account_wise
+    ):
+        """Corridors with a knowing rule on EACH side (C1 #2/#26): the second
+        side must attach to the first side's JE, never write its own (the
+        Apr-11 JE 2480 duplicate class)."""
+        from src.models.journal_entry import FinanceJournalEntry
+        rule_service.create(db_session, RuleCreate(
+            name="OCBC out (knowing)",
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.INTERNAL_TRANSFER,
+            target_bank_account_id=test_bank_account_wise.id,
+            description_operator=MatchOperator.CONTAINS, description_value="FUND TRANSFER CT",
+        ))
+        # source leg first: books the JE, waits for the wise side
+        out_leg = _make_transaction(db_session, test_bank_account,
+                                    description="FUND TRANSFER CT0038530178", amount=-10000.0)
+        categorization_service.run(db_session)
+        db_session.refresh(out_leg)
+        assert out_leg.status == TransactionStatus.AWAITING_MATCH
+        je_id = out_leg.reconciled_journal_entry_id
+        assert je_id is not None
+        # now the receiving side arrives, claimed by its OWN knowing rule
+        rule_service.create(db_session, RuleCreate(
+            name="Wise in (knowing, opposite side)",
+            direction=TransactionDirection.INCOMING,
+            category=TransactionCategory.INTERNAL_TRANSFER,
+            target_bank_account_id=test_bank_account.id,
+            description_operator=MatchOperator.CONTAINS, description_value="RECEIVED CT",
+        ))
+        in_leg = _make_transaction(db_session, test_bank_account_wise,
+                                   description="RECEIVED CT0038530178", amount=10000.0)
+        categorization_service.run(db_session)
+        db_session.refresh(in_leg); db_session.refresh(out_leg)
+        assert in_leg.status == TransactionStatus.MATCHED
+        assert out_leg.status == TransactionStatus.MATCHED
+        assert in_leg.reconciled_journal_entry_id == je_id  # SHARED, not a second JE
+        je_count = db_session.query(FinanceJournalEntry).filter(
+            FinanceJournalEntry.status != "VOID").count()
+        transfer_jes = [t.reconciled_journal_entry_id
+                        for t in (in_leg, out_leg)]
+        assert len(set(transfer_jes)) == 1
+
+
+class TestCurrencyLayer:
+    """POL-25/POL-26 (A-17): ledger books functional currency converted at the
+    monthly standard rate; native amount + rate survive on every line; a
+    missing rate REFUSES the booking rather than corrupting the ledger."""
+
+    def _seed_rate(self, db_session, ym="2026-02", frm="USD", to="SGD", rate="1.35"):
+        from decimal import Decimal
+        from src.models.fx_rate import FinanceFxRate
+        db_session.add(FinanceFxRate(year_month=ym, from_currency=frm,
+                                     to_currency=to, rate=Decimal(rate), source="test"))
+        db_session.commit()
+
+    def test_foreign_txn_books_functional_with_native_preserved(
+        self, db_session, test_entity, test_accounts, test_bank_account
+    ):
+        from decimal import Decimal
+        from src.models.journal_line import FinanceJournalLine
+        from src.services.categorization_service import categorization_service
+
+        self._seed_rate(db_session)  # USD->SGD 1.35 for 2026-02
+        txn = _make_transaction(db_session, test_bank_account,
+                                description="AWS usage", amount=-100.0, currency="USD")
+        db_session.commit()
+
+        entry = categorization_service._create_simple_entry(
+            db=db_session, transaction=txn, entity_id=test_entity.id,
+            bank_coa_code="1000", contra_code="5000",
+            amount=-100.0, abs_amount=100.0)
+
+        lines = db_session.query(FinanceJournalLine).filter(
+            FinanceJournalLine.entry_id == entry.id).all()
+        assert {float(l.debit_amount or 0) + float(l.credit_amount or 0) for l in lines} == {135.0}
+        for l in lines:
+            assert l.currency == "USD"
+            assert l.native_amount == Decimal("100.00")
+            assert l.fx_rate == Decimal("1.35")
+
+    def test_same_currency_passes_through_at_rate_one(
+        self, db_session, test_entity, test_accounts, test_bank_account
+    ):
+        from decimal import Decimal
+        from src.models.journal_line import FinanceJournalLine
+        from src.services.categorization_service import categorization_service
+
+        txn = _make_transaction(db_session, test_bank_account,
+                                description="Local expense", amount=-50.0)  # SGD
+        db_session.commit()
+        entry = categorization_service._create_simple_entry(
+            db=db_session, transaction=txn, entity_id=test_entity.id,
+            bank_coa_code="1000", contra_code="5000",
+            amount=-50.0, abs_amount=50.0)
+        lines = db_session.query(FinanceJournalLine).filter(
+            FinanceJournalLine.entry_id == entry.id).all()
+        for l in lines:
+            assert l.currency == "SGD" and l.fx_rate == Decimal("1")
+            assert l.native_amount == Decimal("50.00")
+
+    def test_missing_rate_refuses_booking(
+        self, db_session, test_entity, test_accounts, test_bank_account
+    ):
+        from src.services.categorization_service import categorization_service
+        txn = _make_transaction(db_session, test_bank_account,
+                                description="PKR payment", amount=-500.0, currency="PKR")
+        db_session.commit()
+        with pytest.raises(ValueError, match="No FX rate on file"):
+            categorization_service._create_simple_entry(
+                db=db_session, transaction=txn, entity_id=test_entity.id,
+                bank_coa_code="1000", contra_code="5000",
+                amount=-500.0, abs_amount=500.0)
+
+    def test_needs_review_resolution_converts_foreign_currency(
+        self, db_session, test_entity, test_accounts, test_bank_account
+    ):
+        # Found live 2026-07-27: resolve_needs_review built JE lines straight
+        # from the native amount (USD 71,000 booked as SGD 71,000 @ 1.0).
+        from decimal import Decimal
+        from src.models.journal_line import FinanceJournalLine
+        from src.models.transaction import TransactionStatus
+        from src.services.transaction_service import transaction_service
+
+        self._seed_rate(db_session)  # USD->SGD 1.35 for 2026-02
+        txn = _make_transaction(db_session, test_bank_account,
+                                description="OUTWARD TELEGRAPHIC TRANSFER",
+                                amount=-200.0, currency="USD")
+        txn.status = TransactionStatus.NEEDS_REVIEW
+        db_session.commit()
+
+        resolved = transaction_service.resolve_needs_review(
+            db_session, txn.id, "5000", resolved_by="test")
+        assert resolved.status == TransactionStatus.MATCHED
+
+        lines = db_session.query(FinanceJournalLine).filter(
+            FinanceJournalLine.entry_id == resolved.reconciled_journal_entry_id).all()
+        assert {float(l.debit_amount or 0) + float(l.credit_amount or 0) for l in lines} == {270.0}
+        for l in lines:
+            assert l.currency == "USD"
+            assert l.native_amount == Decimal("200.00")
+            assert l.fx_rate == Decimal("1.35")

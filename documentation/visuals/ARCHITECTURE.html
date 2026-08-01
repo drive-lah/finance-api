@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finance API — Architecture & Function Map</title>
+<style>
+  :root{
+    --ink:#0f1729; --muted:#5b6677; --line:#e6e9ef; --panel:#fff;
+    --green:#16a34a; --green-bg:#e9f8ef; --amber:#d97706; --amber-bg:#fdf3e3;
+    --red:#dc2626; --red-bg:#fdeceb; --blue:#1e6fd9; --blue-bg:#eaf2fd;
+    --purple:#7c3aed; --purple-bg:#f1eafe; --teal:#0e7490; --teal-bg:#e7f6fa; --slate:#334155;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#eef1f6;color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1340px;margin:0 auto;padding:28px 24px 56px;}
+  .hero{background:linear-gradient(135deg,#10243f 0%,#0f1419 60%,#15243a 100%);color:#fff;
+    border-radius:16px;padding:24px 30px;box-shadow:0 12px 30px rgba(15,20,25,.18);}
+  .hero h1{margin:0 0 5px;font-size:25px;font-weight:760;letter-spacing:-.4px;}
+  .hero p{margin:0;color:#aebbcd;font-size:14px;max-width:920px;line-height:1.5;}
+  .layer{margin-top:16px;border-radius:14px;padding:14px 18px 16px;border:1px solid var(--line);background:var(--panel);box-shadow:0 3px 10px rgba(20,30,50,.05)}
+  .layer > h2{margin:0 0 2px;font-size:12px;text-transform:uppercase;letter-spacing:1.2px;font-weight:800;color:var(--slate)}
+  .layer > .sub{margin:0 0 12px;font-size:11.5px;color:var(--muted)}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .grid{display:grid;gap:10px;grid-template-columns:repeat(3,1fr)}
+  .svc{border:1px solid var(--line);border-radius:11px;padding:11px 13px;background:#fafbfd;border-left:4px solid var(--blue)}
+  .svc.core{border-left-color:var(--green);background:var(--green-bg)}
+  .svc.warn{border-left-color:var(--amber);background:#fffdf6}
+  .svc h3{margin:0 0 3px;font-size:13.5px;font-weight:740;letter-spacing:-.1px}
+  .svc h3 .file{font-weight:500;color:var(--muted);font-size:10.5px}
+  .svc .fns{margin:5px 0 0;font-size:11.5px;color:var(--slate);line-height:1.55;font-family:ui-monospace,monospace}
+  .svc .note{margin:6px 0 0;font-size:10.5px;color:var(--muted);font-style:italic}
+  .svc .tag{display:inline-block;font-size:9px;font-weight:800;padding:2px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.3px;vertical-align:middle;margin-left:6px}
+  .t-core{background:var(--green-bg);color:#0c6b34}.t-canon{background:var(--blue-bg);color:#13509f}
+  .t-dupe{background:var(--amber-bg);color:#9a5a04}.t-empty{background:#eef1f6;color:#64748b}
+  .band{text-align:center;font-size:11px;color:#9aa6b6;margin:9px 0;font-weight:700;letter-spacing:.5px}
+  .domain{font-size:10px;text-transform:uppercase;letter-spacing:.8px;font-weight:800;color:#94a0b0;margin:12px 2px 6px;grid-column:1/-1}
+  .ledger{background:linear-gradient(135deg,#0f1729,#1c2b44);color:#fff;border-radius:13px;padding:16px 20px;text-align:center;box-shadow:0 8px 22px rgba(15,23,41,.25)}
+  .ledger h3{margin:0 0 3px;font-size:17px;font-weight:780}
+  .ledger p{margin:0;color:#aebbcd;font-size:12px}
+  .ledger code{background:rgba(255,255,255,.1);padding:2px 6px;border-radius:5px;color:#dbe6f5;font-size:11.5px}
+  .audit{margin-top:16px;border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:16px 20px;box-shadow:0 3px 10px rgba(20,30,50,.05)}
+  .audit h2{margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:1px;font-weight:800;color:var(--slate)}
+  .audit h4{margin:12px 0 5px;font-size:13px;font-weight:740}
+  .audit ul{margin:0;padding-left:18px;font-size:12.5px;color:var(--slate);line-height:1.6}
+  .audit code{background:#f3f5f9;padding:1px 5px;border-radius:5px;font-size:11.5px}
+  .warnbox{background:var(--amber-bg);border:1px solid #f0d9a8;border-radius:9px;padding:9px 12px;font-size:12px;color:#7a4d05;margin-top:8px}
+  @media(max-width:980px){.grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:680px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <h1>Finance API — Architecture &amp; Function Map</h1>
+    <p>The service layer and the key functions each owns, so we reuse what exists instead of rebuilding it. Everything that writes to the books flows through one place: <code style="color:#fff">journal_service.create</code>. Verified against the codebase 2026-05-22.</p>
+  </div>
+
+  <!-- LAYER 1 -->
+  <div class="layer">
+    <h2>Layer 1 · Inbound</h2>
+    <p class="sub">How work arrives — Flask blueprints (admin-bff proxies these) + scheduled/manual jobs.</p>
+    <div class="row">
+      <div class="svc" style="flex:1;min-width:240px"><h3>REST blueprints</h3><div class="fns">transactions · invoices · categorization · journal_entries · hr · hr_onboarding · reports · reconciliation · entities/accounts/bank_accounts/counterparties/tags/contracts/approval_rules/amortization</div></div>
+      <div class="svc" style="flex:1;min-width:240px"><h3>Jobs / scheduler</h3><div class="fns">jobs.sync-employees · amortization run (monthly) · stripe_sync month (manual/cron)</div></div>
+    </div>
+  </div>
+
+  <div class="band">▼ controllers route to services (no business logic in routes) ▼</div>
+
+  <!-- LAYER 2 -->
+  <div class="layer">
+    <h2>Layer 2 · Services (business logic)</h2>
+    <p class="sub">Grouped by domain. Each box lists the key public functions it owns. <span class="tag t-core">core</span> writes JEs · <span class="tag t-canon">canonical</span> · <span class="tag t-dupe">superseded/partial</span> · <span class="tag t-empty">unused in prod</span></p>
+
+    <div class="grid">
+
+      <div class="domain">Bank ingest → categorization (the live path)</div>
+      <div class="svc"><h3>transaction_service <span class="file">.py</span></h3>
+        <div class="fns">import_file · import_from_rows · create_from_stripe · approve · reject · resolve_needs_review</div>
+        <div class="note">approve() posts the draft JE → Reconciled. import_csv looks superseded (verify).</div></div>
+      <div class="svc"><h3>categorization_service <span class="tag t-canon">engine</span></h3>
+        <div class="fns">run (5-phase) · _pair_awaiting_matches · _try_ap_knockoff · _try_payroll_knockoff · _enrich_counterparties (_match_l1/l2/l3) · _apply_rule · _create_simple_entry · _create_internal_transfer_entries · _create_cross_entity_allocation_entries · manual_categorize · _run_ai_classification</div>
+        <div class="note">2,022 lines. Proposes DRAFT JEs. AP knock-off now calls invoice_service.get_open_for_counterparty (BUG-1 fixed).</div></div>
+      <div class="svc"><h3>reconciliation_service <span class="file">.py</span></h3>
+        <div class="fns">get_suggestions · confirm · get_score</div>
+        <div class="note">get_score: refs=1 — verify usage.</div></div>
+      <div class="svc"><h3>rule_service · vendor_matching_service</h3>
+        <div class="fns">rule: CRUD (categorization rules) · vendor: fuzzy_match_vendor · match_or_create</div></div>
+      <div class="svc"><h3>wise_service · s3_service</h3>
+        <div class="fns">wise: get_business_profiles · get_balances · get_statement · normalize_statement · s3: upload_invoice_pdf · get_presigned_url</div>
+        <div class="note">wise.get_business_profile (singular) refs=1 — verify vs plural.</div></div>
+
+      <div class="domain">AP / Invoices</div>
+      <div class="svc"><h3>invoice_service <span class="tag t-canon">canonical AP</span></h3>
+        <div class="fns">create · approve · void · get_open_for_counterparty (auto 3-case) · get_open_for_match (manual list) · match_transaction · create_ap_payment_entries · record_payment · run_retroactive_knockoff · _get_ic_codes</div>
+        <div class="note">get_open_for_counterparty = auto-match; get_open_for_match = manual-match route. Both used (not dupes).</div></div>
+      <div class="svc"><h3>ai_extraction_service <span class="file">.py</span></h3>
+        <div class="fns">extract_invoice_data · extract_invoice_data_from_image · extract_text_from_pdf</div>
+        <div class="note">Claude vision/PDF → invoice fields. Upstream of invoice approval.</div></div>
+
+      <div class="domain">Payroll / HR</div>
+      <div class="svc core"><h3>hr_payroll_service <span class="tag t-canon">canonical payroll</span></h3>
+        <div class="fns">create_employee · add_compensation · add_deduction_rule · create_run (dup-guarded) · submit_run · get_run_items · _calculate_deduction · _active_compensation/_active_deduction_rules</div></div>
+      <div class="svc"><h3>hr_onboarding_service <span class="file">.py</span></h3>
+        <div class="fns">bulk_onboard · single_onboard · offboard_employee · _create_compensation_and_deductions · _parse_deductions</div></div>
+      <div class="svc warn"><h3>payroll_service <span class="tag t-dupe">knock-off only</span></h3>
+        <div class="fns">create_payroll_payment_entries (← used by categorization Phase 2.5) · create_run / get_all / get_by_id (superseded; /api/payroll removed)</div>
+        <div class="note">Kept only for the categorization payroll knock-off helper.</div></div>
+
+      <div class="domain">Revenue (Stripe) → future TMS ledger</div>
+      <div class="svc warn"><h3>stripe_sync/ <span class="tag t-dupe">in progress</span></h3>
+        <div class="fns">query_builder (25 view queries) → data_processor (16 compute_*) → journal_entry_builder (build_je/build_payout_je) → sync_service (sync_month · _generate_all_je_specs · _create_journal_entries · _create_transfer_transactions) · config (is_company_account)</div>
+        <div class="note">compute_*/query methods are dispatched dynamically — low grep-refs are FALSE dead-positives. sync_month/_persist_journal_entries/_reconcile: verify which are live.</div></div>
+
+      <div class="domain">Depreciation · Reporting</div>
+      <div class="svc"><h3>amortization_service <span class="file">.py</span></h3>
+        <div class="fns">run (monthly) · check_and_create_schedule · _find_policy</div></div>
+      <div class="svc warn"><h3>report_service <span class="tag t-empty">only 1 method</span></h3>
+        <div class="fns">get_trial_balance</div>
+        <div class="note">P&amp;L / Balance Sheet / margin not built yet — the big reporting gap.</div></div>
+
+      <div class="domain">Reference data (CRUD)</div>
+      <div class="svc"><h3>entity / account / bank_account</h3>
+        <div class="fns">get_all · get_by_id · create · update (+ get_by_code, validate_parent, _next_bank_coa_code)</div></div>
+      <div class="svc"><h3>counterparty_service <span class="file">.py</span></h3>
+        <div class="fns">CRUD · get_by_name_type · get_by_external · <b>sync_employees</b> (users → counterparties)</div></div>
+      <div class="svc"><h3>contract / tag</h3>
+        <div class="fns">CRUD · contract.find_for_invoice · tag.get_by_name</div></div>
+
+    </div>
+  </div>
+
+  <div class="band">▼ every JE-creating service posts through one writer ▼</div>
+
+  <!-- LAYER 3 -->
+  <div class="ledger">
+    <h3>journal_service — the only ledger writer</h3>
+    <p><code>create</code> (validate_balanced_entry + validate_accounts_exist, defaults DRAFT, commits) · <code>post_entry</code> · <code>void_entry</code> → <code>finance_journal_entries</code> + <code>finance_journal_lines</code></p>
+  </div>
+
+  <!-- AUDIT -->
+  <div class="audit">
+    <h2>Audit notes — reuse, canonical choices &amp; dead-code candidates</h2>
+
+    <h4>Reuse / don't rebuild (already exists)</h4>
+    <ul>
+      <li><b>AP matching</b> — <code>invoice_service.get_open_for_counterparty</code> (auto 3-case, tested) and <code>get_open_for_match</code> (manual list). Don't re-implement selection logic (the BUG-1 trap).</li>
+      <li><b>Cross-entity IC JEs</b> — <code>invoice_service._get_ic_codes</code> + <code>create_ap_payment_entries</code> do the receivable/payable pair. Reuse for any cross-entity posting.</li>
+      <li><b>JE writing</b> — always via <code>journal_service.create</code>; never hand-build journal lines elsewhere.</li>
+      <li><b>Vendor identity</b> — <code>vendor_matching_service</code> + <code>counterparty_service.sync_employees</code>.</li>
+    </ul>
+
+    <h4>Canonical vs superseded</h4>
+    <ul>
+      <li><b>Payroll:</b> <code>hr_payroll_service</code> is canonical. <code>payroll_service</code> retained <i>only</i> for <code>create_payroll_payment_entries</code> (the categorization knock-off); its <code>create_run</code> is superseded (the <code>/api/payroll</code> route was deleted).</li>
+    </ul>
+
+    <h4>Dead-code candidates — VERIFY before deleting (do not delete blind)</h4>
+    <div class="warnbox">grep-based ref counts are noisy: <b>dynamic dispatch hides real calls</b> (all stripe_sync compute_*/query methods show refs=1 but are live). So treat the list below as "investigate," not "confirmed dead." Each needs a real check + sign-off before removal.</div>
+    <ul>
+      <li><code>reconciliation_service.get_score</code> — refs=1</li>
+      <li><code>transaction_service.import_csv</code> — refs=1 (import_file / import_from_rows are the live ones)</li>
+      <li><code>wise_service.get_business_profile</code> (singular) — refs=1 vs <code>get_business_profiles</code> (used)</li>
+      <li><code>stripe_sync/sync_service</code>: <code>sync_month</code> / <code>_persist_journal_entries</code> / <code>_reconcile</code> — confirm which is the live entry path vs leftover</li>
+      <li><b>Confirmed NOT dead</b> (verified): <code>_find_counter_transaction</code> (called at categorization:1289), all stripe_sync compute_*/query_* (dynamic dispatch).</li>
+    </ul>
+  </div>
+
+</div>
+</body>
+</html>

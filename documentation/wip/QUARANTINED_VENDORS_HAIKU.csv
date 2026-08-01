@@ -1,0 +1,75 @@
+vendor,My remarks,count,amt,match_id,match_name,confidence,reason
+Global Transport & Automotive Insurance Solutions,This is GT Insurance,43,98300,,,0,New vendor - no matching counterparty found
+Fixed lah,,37,65300,70,Fixedlah,0.95,Abbreviation/spacing variant of Fixedlah
+URDrive,,17,77050,149,U R Drive,0.95,Abbreviation variant - U R Drive formatted as URDrive
+Income Insurance Limited,This is NTUC Income,13,67872.17,,,0,New vendor - insurance company not in counterparty list
+Drive Lah,Not a vendor. Flag invoices,12,54318.35,,,0.9,own_entity - likely internal/own company based on 'Lah' branding pattern with Fixedlah
+National Collection & Investigation Services Pty Ltd,,11,16433,109,NCIS,0.85,NCIS likely stands for National Collection & Investigation Services
+VentureHaven Pte Ltd,,8,13564.1,153,Venture Haven,0.9,Legal entity format variant - spacing and PTE Ltd added
+Bytchenkov Pty Ltd,there is a coutnerparty already exists,5,8975,,,0,New vendor - no matching counterparty found
+Sydney Transport Provider Pty Ltd,already exists,4,2079.66,,,0,New vendor - generic transport company name not in list
+Drive mate,Not a vendor. Flag invoices,4,9910.25,,,0.9,own_entity - likely internal/own company based on 'Drive' branding pattern
+ABWIN SERVICE PTE LTD,,3,9810,27,Abwin Leasing,0.8,ABWIN matches - likely same entity with additional service/legal descriptors
+Harvey's Towing (Qld) Pty Ltd,,3,4335.55,79,Harveys Towing Service,0.9,State descriptor and legal format added to base name
+Six6Films,,3,1386,621,Six6 Films,0.95,Spacing variant only
+CDG,,3,1596,59,ComfortDelGro Rent-A-Car Pte Ltd,0.95,CDG is standard abbreviation for ComfortDelGro
+Craig Letters,already exists,2,539.53,,,0,New vendor - no matching counterparty found
+AFCA,,2,175.52,650,Australian Financial Complaints Authority,0.95,AFCA is standard abbreviation for Australian Financial Complaints Authority
+The Royal Automobile Club of Queensland Limited,,2,43002,123,RACQ,0.95,Full legal name of RACQ
+General Insurance Association of Singapore,already exists,2,235.44,,,0,New vendor - industry association not in counterparty list
+Fenoru Pty Ltd,already exists,2,1210,,,0,New vendor - no matching counterparty found
+Cavalo Service Department,,2,6790.6,,,0,New vendor - no matching counterparty found
+Abdul Saaqib,Employee not a vendor,2,6000,,,0,New vendor - individual name not in counterparty list
+Anas Ashfaq,Employee not a vendor,2,2451,,,0,New vendor - individual name not in counterparty list
+Home and Away Towing Services,,1,165,,,0,New vendor - no matching counterparty found
+Ban Choon Motor Works,,1,3270,,,0,New vendor - no matching counterparty found
+Gold Coast Tow Trucks Light & Heavy P/L,,1,1316.2,,,0,New vendor - no matching counterparty found
+ICONIC Auto,,1,1650,,,0,NEW_VENDOR
+Zhibing He,,1,2970,,,0,NEW_VENDOR - Individual name
+Mack Tow Pty Ltd,,1,1153.1,670,MACKTOW PTY LTD,0.95,"Matching towing company, abbreviation variant"
+Prestige Panel Beaters Pty Ltd,,1,5204.35,,,0,NEW_VENDOR
+Ken Morley Smash Repairs,,1,338.8,,,0,NEW_VENDOR
+Spark New Zealand Trading Ltd,,1,212.02,,,0,NEW_VENDOR - New Zealand entity
+Auto & General Insurance Services PTY LTD,,1,3097.18,659,AUTO & GENERAL SERVICES PTY LTD,0.98,Exact match with word order variant
+Jonkers Smash Repairs P/L,,1,3149.01,,,0,NEW_VENDOR
+Bridgestone Select Tyre & Auto Bondi,,1,170.44,,,0,NEW_VENDOR
+Willy Tay's Chambers,,1,1836.26,,,0,NEW_VENDOR - Individual/legal services
+Jay Balan,Employee not a vendor,1,1221,,,0,NEW_VENDOR - Individual name
+A1 Smash Repairs,,1,1452,,,0,NEW_VENDOR
+Actual host Mike Hill,,1,830,,,0,NEW_VENDOR - Individual name
+North East Crash Repairs PTY LTD,,1,5000,,,0,NEW_VENDOR
+Cheng Auto Bodyworks,,1,3270,511,Cheng Auto Body works,0.92,Minor word variant (Bodyworks vs Body works)
+AUTOBODIES GOLD COAST P/L,,1,4183,,,0,NEW_VENDOR
+Inland Revenue Authority of Singapore,,1,2783.88,,,0,NEW_VENDOR - Government agency
+ Yarra Trams,,1,1292.51,,,,
+SIVAPRAKASAM GOKULA KRISHNAN,,1,840,,,0,NEW_VENDOR - Individual name
+PSC Connect Western Pty Ltd,,1,82274.34,,,0,NEW_VENDOR
+Mobile Tyre Legends,,1,600,,,0,NEW_VENDOR
+NSD Corp Pte Ltd,,1,1800,,,0,NEW_VENDOR
+Jim's Car detailing Notting Hill,,1,2841,90,Jims car detailing,0.85,Matching company with location descriptor added
+SHANMUGAN S/O KASEE,,1,1000,,,0,NEW_VENDOR - Individual name
+Ur Drive,,1,2750,149,U R Drive,0.98,Abbreviation variant match
+VIGNESH RMS,,1,101,,,0,NEW_VENDOR - No matching counterparty found
+KleanAir Decontamination Services,,1,2200,97,Klean Air Aus Decontamination,0.95,"Name variant - KleanAir matches Klean Air Aus, same service type"
+Sheen South Melbourne,,1,5000,133,SHEENGROUP TOWING PTY LTD,0.85,"Legal name variant - Sheen matches SHEENGROUP, location descriptor added"
+Hikaranandas Associates,,1,40000,,,0,NEW_VENDOR - No matching counterparty found
+Oakleigh Car Service Centre,,1,297,115,Oakleigh Garage,0.8,"Location match - Oakleigh, similar automotive service business"
+Springfield Lakes Towing and Transport Trust,,1,440,,,0,NEW_VENDOR - No matching counterparty found
+NA/ For Drivelah Ops,Not a vendor. Flag invoices,1,150,,,0,own_entity - Drivelah appears to be own company operation
+Christopher Scott Acosta,Employee not a vendor,1,0,,,0,"NEW_VENDOR - Individual name, no matching counterparty found"
+Testing,,1,1,,,0,"NEW_VENDOR - Generic test entry, not a real vendor"
+Focussed Loss Assessing,,1,330,72,Focussed Assessing Pty Ltd,0.9,Name variant - Focussed Loss Assessing matches Focussed Assessing
+Clayton's Towing Service Pty Ltd,,1,2625.96,57,Clayton Towing,0.95,Name variant - Clayton's matches Clayton with service descriptor added
+Muhammad Hunzla Badar,,1,1225.14,,,0,"NEW_VENDOR - Individual name, no matching counterparty found"
+King and the Pawn Pte. Ltd.,,1,2457.95,,,0,NEW_VENDOR - No matching counterparty found
+Biz Tow Pty Ltd ATF Biz Tow Trust,,1,3521.05,,,0,NEW_VENDOR - No matching counterparty found
+Christopher J Malan,Employee not a vendor,1,2750,,,0,"NEW_VENDOR - Individual name, no matching counterparty found"
+Simmos road service and Towing T/as Tweed Byron,,1,521.4,147,Tweed Byron Towing,0.75,"Partial match - Tweed Byron component matches, trading as variant"
+Alphine,,1,648,31,Alpine Car Rental,0.7,Likely spelling variant of Alpine
+Jay,Employee not a vendor,1,39.88,,,0,"NEW_VENDOR - Too generic, no matching counterparty found"
+HelloTravelPteLtd,,1,4000,81,Hello Travel Pte Ltd,0.98,Exact match - Formatting variant only
+Confidant Partners Pty Ltd,,1,27500,,,0,NEW_VENDOR - No matching counterparty found
+Radaro Australia Pty Ltd,,1,1529,,,0,NEW_VENDOR - No matching counterparty found
+MisterMinit Mobile Services Indooroopilly and Kenmore,,1,91.66,590,Mister Minit,0.85,Name match with location descriptor added
+Australian Securities and Investments Commission (ASIC),,1,20,,,0,"NEW_VENDOR - Government regulatory body, not a vendor counterparty"
+AuraTowing,,1,154,,,0,NEW_VENDOR - No matching counterparty found

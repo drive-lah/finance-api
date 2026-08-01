@@ -1,0 +1,58 @@
+# Render Blueprint for finance-api (Drive lah finance/ledger service).
+# Deploy: Render Dashboard → New → Blueprint → point at this repo. Render reads
+# this file, creates the service, and prompts for every `sync: false` secret.
+#
+# Backs the admin console's Accounting surface (invoices, ledger, journal
+# entries, reports, counterparties, HR/expenses). The BFF reaches it via its
+# FINANCE_API_URL env — after this deploys, set that on the admin-bff service to
+# this service's URL (https://finance-api-XXXX.onrender.com), replacing the
+# localhost:8081 default. Collections/Revenue live on new-monitor-api, not here.
+services:
+  - type: web
+    name: finance-api
+    runtime: python
+    plan: starter            # adjust to your Render plan; free tier spins down on idle
+    region: singapore        # closest to the ap-southeast-2 RDS + ClickHouse
+    branch: main             # deploy branch — change if you merge to a different base
+    buildCommand: pip install -r requirements.txt
+    # Gunicorn loads the Flask app factory directly; Render injects $PORT.
+    startCommand: gunicorn "src.app:create_app()" --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # --- Runtime / non-secret ---
+      - key: PYTHON_VERSION
+        value: "3.13.1"       # Render-supported; local dev is 3.14 but the code is 3.12+ safe
+      - key: DEBUG
+        value: "false"
+      - key: AWS_REGION
+        value: "ap-southeast-2"
+      # --- Secrets: set in the Render dashboard (never committed) ---
+      # DB is the SHARED collections-db RDS — use the SAME value as admin-bff.
+      - key: DATABASE_URL
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_S3_BUCKET
+        sync: false
+      - key: CLICKHOUSE_HOST
+        sync: false
+      - key: CLICKHOUSE_PORT
+        sync: false
+      - key: CLICKHOUSE_USER
+        sync: false
+      - key: CLICKHOUSE_PASSWORD
+        sync: false
+      - key: CLICKHOUSE_DATABASE
+        sync: false
+      - key: WISE_API_KEY
+        sync: false
+      # RAG file paths — in-repo defaults usually suffice; set only if relocated.
+      - key: RAG_CORPUS_PATH
+        sync: false
+      - key: RAG_KNOWLEDGE_PATH
+        sync: false

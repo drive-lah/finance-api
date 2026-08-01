@@ -107,12 +107,29 @@ class FinanceInvoice(Base):
     )
     approved_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     rejection_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # Full action-audit trail (migration 047) — who/when/why for every transition.
+    submitted_by: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    submitted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    submit_override_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    voided_by: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    voided_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    void_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    rejected_by: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    rejected_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Upload metadata
     uploaded_by: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     pdf_s3_key: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     pdf_content_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Ingestion provenance — set for bulk-ingested invoices; NULL = manual one-by-one upload
+    sync_run_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("finance_sync_runs.id", ondelete="SET NULL"),
+        nullable=True,
+        comment="FK finance_sync_runs; NULL means manually uploaded (not part of a batch)",
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, server_default="now()", nullable=False,
@@ -127,6 +144,10 @@ class FinanceInvoice(Base):
         Index("ix_finance_invoices_status", "status"),
         Index("ix_finance_invoices_contract_id", "contract_id"),
         Index("ix_finance_invoices_due_date", "due_date"),
+        Index("ix_finance_invoices_sync_run_id", "sync_run_id"),
+        # Dedup is already enforced by migration 017:
+        #   ix_finance_invoices_pdf_content_hash (unique — exact file)
+        #   uq_finance_invoices_semantic (unique — entity+counterparty+invoice#+date+currency)
     )
 
     def __repr__(self) -> str:

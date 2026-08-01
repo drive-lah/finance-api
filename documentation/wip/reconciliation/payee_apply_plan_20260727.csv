@@ -1,0 +1,68 @@
+payee,your_remark,books_to,txns,total,counterparty_action,type,default_set,future_behavior
+CAR-TREK AUSTRALIA PTY LTD,ok,5032 — Incidentals Payout - Workshop,4,-34368.54,UPDATE #656 (activate+alias),vendor,5032,auto-books via party default
+Philhealthcare Inc,ok,6004 — Staff Health Insurance,2,-11261.72,UPDATE #657 (activate+alias),vendor,6004,auto-books via party default
+The Hollard Insurance Company,trip premium,5035 — Cost of Insurance - Trip Premium,3,-10956,UPDATE #658 (activate+alias),vendor,5035,auto-books via party default
+Riezel Basilio Villanueva,customer support,5063 — Customer Support - Salary,12,-8903.95,UPDATE #175 (activate+alias),employee,5063,auto-books via party default
+AUTO & GENERAL SERVICES PTY LTD,ok,5032 — Incidentals Payout - Workshop,2,-8872.69,CREATE,vendor,5032,auto-books via party default
+PRECISION CLEARING HOUSE,this is purchase of asset,1520 — Motor Vehicles,1,-8857.76,CREATE,vendor,no (one-off),stays manual
+Vehicle Heroes Pty Ltd,ok,5032 — Incidentals Payout - Workshop,1,-6762.11,CREATE,vendor,5032,auto-books via party default
+MPDG Services Pty Ltd,ok,5032 — Incidentals Payout - Workshop,1,-6600,CREATE,vendor,5032,auto-books via party default
+PORT MOTOR TRADERS PTY LIMITED,ok,5032 — Incidentals Payout - Workshop,2,-6170.9,CREATE,vendor,5032,auto-books via party default
+Simon Lye,incidental payout,5025 — Incidentals Payout - Other,5,-5721.13,CREATE,customer,5025,auto-books via party default
+SIANG CHYE K,incidental payout,5025 — Incidentals Payout - Other,5,-4988.57,CREATE,customer,5025,auto-books via party default
+CJ Chong,incidental payout,5025 — Incidentals Payout - Other,5,-4554.2,CREATE,customer,5025,auto-books via party default
+Rohde Smash Repair,ok,5032 — Incidentals Payout - Workshop,1,-3909.3,UPDATE #126 (activate+alias),vendor,5032,auto-books via party default
+Rachel Dave,incidental payout,5025 — Incidentals Payout - Other,4,-3854.63,CREATE,customer,5025,auto-books via party default
+Pang Liang Low,incidental payout,5025 — Incidentals Payout - Other,4,-3568.03,CREATE,customer,5025,auto-books via party default
+ELITE AM PTE. LTD,workshop,5032 — Incidentals Payout - Workshop,1,-3270,CREATE,vendor,5032,auto-books via party default
+Autorola,workshop,5032 — Incidentals Payout - Workshop,4,-2530.15,UPDATE #41 (activate+alias),vendor,5032,auto-books via party default
+Anthony Austin Sellars,workshop,5032 — Incidentals Payout - Workshop,1,-2431.61,CREATE,customer,5032,auto-books via party default
+Accord AutoCare Pte. Ltd,workshop,5032 — Incidentals Payout - Workshop,1,-2372.34,CREATE,vendor,5032,auto-books via party default
+2020 Spray Painting Pte Ltd,workshop,5032 — Incidentals Payout - Workshop,1,-2350,CREATE,vendor,5032,auto-books via party default
+Harley Curran,incidental payout,5025 — Incidentals Payout - Other,1,-1933.53,CREATE,customer,5025,auto-books via party default
+Christine Koh,incidental payout,5025 — Incidentals Payout - Other,2,-1548.34,CREATE,customer,5025,auto-books via party default
+Godray PTY LTD,incidental payout,5025 — Incidentals Payout - Other,1,-1469.6,CREATE,vendor,5025,auto-books via party default
+Yarra Journey Makers Pty Ltd,incidental payout,5025 — Incidentals Payout - Other,1,-1292.51,CREATE,vendor,5025,auto-books via party default
+Mehul Kumar,Salaries and wages,6000 — Salaries & Wages,1,-1280.99,CREATE,customer,6000,auto-books via party default
+MACKTOW PTY LTD,Towing,5033 — Incidentals Payout - Towing,1,-1153.1,CREATE,vendor,5033,auto-books via party default
+FOCUSSED CLAIMS MANAGEMENT PTY LTD,workshop,5032 — Incidentals Payout - Workshop,3,-1120,CREATE,vendor,5032,auto-books via party default
+Sivaprakasam GokulaKrishnan,incidental payout,5025 — Incidentals Payout - Other,1,-840,CREATE,customer,5025,auto-books via party default
+SELECTE PTE LTD,travel meals,6401 — Travel - Meals,2,-800,UPDATE #128 (activate+alias),vendor,6401,auto-books via party default
+POH AI CHENG,incidental payout,5025 — Incidentals Payout - Other,1,-800,CREATE,customer,5025,auto-books via party default
+Delaina Abdul Karim,incidental payout,5025 — Incidentals Payout - Other,1,-700,CREATE,customer,5025,auto-books via party default
+Tania Rock,incidental payout,5025 — Incidentals Payout - Other,1,-568.77,CREATE,customer,5025,auto-books via party default
+SHARPS,incidental payout,5025 — Incidentals Payout - Other,1,-514.05,UPDATE #132 (activate+alias),vendor,5025,auto-books via party default
+Marvin Chua Sheng Li,incidental payout,5025 — Incidentals Payout - Other,2,-475.86,CREATE,customer,5025,auto-books via party default
+Rachel De Silva,incidental payout,5025 — Incidentals Payout - Other,1,-350,CREATE,customer,5025,auto-books via party default
+Arvind Khangura,incidental payout,5025 — Incidentals Payout - Other,1,-296,CREATE,customer,5025,auto-books via party default
+Mohammad Raimie,incidental payout,5025 — Incidentals Payout - Other,1,-264.06,CREATE,customer,5025,auto-books via party default
+Muhammad Iszuan Kamis,incidental payout,5025 — Incidentals Payout - Other,1,-250,CREATE,customer,5025,auto-books via party default
+Edward Clarke,incidental payout,5025 — Incidentals Payout - Other,1,-208.14,CREATE,customer,5025,auto-books via party default
+Kumar Loganathan,incidental payout,5025 — Incidentals Payout - Other,1,-200,CREATE,customer,5025,auto-books via party default
+Vishvesh Suriyanarayanan,incidental payout,5025 — Incidentals Payout - Other,1,-191.5,CREATE,customer,5025,auto-books via party default
+ZHEN YE TAI,incidental payout,5025 — Incidentals Payout - Other,1,-168.17,CREATE,customer,5025,auto-books via party default
+Yennie Lam,incidental payout,5025 — Incidentals Payout - Other,1,-163.34,CREATE,customer,5025,auto-books via party default
+Matthew Biel,incidental payout,5025 — Incidentals Payout - Other,1,-126.28,CREATE,customer,5025,auto-books via party default
+Irfan Ismail,incidental payout,5025 — Incidentals Payout - Other,1,-103.9,CREATE,customer,5025,auto-books via party default
+Fiona Burnes,incidental payout,5025 — Incidentals Payout - Other,1,-102,CREATE,customer,5025,auto-books via party default
+Vickie Locke,incidental payout,5025 — Incidentals Payout - Other,2,-96,CREATE,customer,5025,auto-books via party default
+Wong Jianrong,incidental payout,5025 — Incidentals Payout - Other,1,-90,CREATE,customer,5025,auto-books via party default
+Antonio Marconato Neto,incidental payout,5025 — Incidentals Payout - Other,1,-84.97,CREATE,customer,5025,auto-books via party default
+Jason O Connor,incidental payout,5025 — Incidentals Payout - Other,1,-74.9,CREATE,customer,5025,auto-books via party default
+Dagmar Jindrova,incidental payout,5025 — Incidentals Payout - Other,1,-60.21,CREATE,customer,5025,auto-books via party default
+Shara-Lee M Morgan,incidental payout,5025 — Incidentals Payout - Other,1,-56.63,CREATE,customer,5025,auto-books via party default
+Holly Corbett,incidental payout,5025 — Incidentals Payout - Other,1,-56.14,CREATE,customer,5025,auto-books via party default
+Rajapakse Wasala Ranawarana,incidental payout,5025 — Incidentals Payout - Other,1,-54.2,CREATE,customer,5025,auto-books via party default
+Jiranan Kanyathong,incidental payout,5025 — Incidentals Payout - Other,1,-52.2,CREATE,customer,5025,auto-books via party default
+Koh Kai Yee,incidental payout,5025 — Incidentals Payout - Other,1,-47.1,CREATE,customer,5025,auto-books via party default
+Lee Boon Wei,incidental payout,5025 — Incidentals Payout - Other,1,-44.16,CREATE,customer,5025,auto-books via party default
+Jeremy Colgan,incidental payout,5025 — Incidentals Payout - Other,1,-41.8,CREATE,customer,5025,auto-books via party default
+Chew Ren Ta Jonathan,incidental payout,5025 — Incidentals Payout - Other,1,-38.28,CREATE,customer,5025,auto-books via party default
+Jeffrey Halliday,incidental payout,5025 — Incidentals Payout - Other,1,-33.27,CREATE,customer,5025,auto-books via party default
+Helena Oosterweghel,incidental payout,5025 — Incidentals Payout - Other,1,-33.13,CREATE,customer,5025,auto-books via party default
+CHOON HUAT TYRE & BATTERY CO.,incidental payout,5025 — Incidentals Payout - Other,1,-30,CREATE,vendor,5025,auto-books via party default
+Thallula Segura,incidental payout,5025 — Incidentals Payout - Other,1,-26.54,CREATE,customer,5025,auto-books via party default
+Tan Bing Hua,incidental payout,5025 — Incidentals Payout - Other,1,-23.5,CREATE,customer,5025,auto-books via party default
+Mark Willingham,incidental payout,5025 — Incidentals Payout - Other,1,-21.97,CREATE,customer,5025,auto-books via party default
+Mingun Kim,incidental payout,5025 — Incidentals Payout - Other,1,-19.14,CREATE,customer,5025,auto-books via party default
+Lucy Robertson-Bell,incidental payout,5025 — Incidentals Payout - Other,1,-18.67,CREATE,customer,5025,auto-books via party default

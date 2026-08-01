@@ -1,0 +1,63 @@
+match_key,contra_account,hits,purity_pct,is_new_vs_live_rules
+transportfornsw tap sydney au card xx value date,Operating Expenses:Travel Expense,269,100.0,yes
+didimobility sydney au card xx value date,Operating Expenses:Travel Expense,135,100.0,yes
+card transaction of usd issued by anthropic anth,"Operating Expenses:AI, Internet & Website maintenance fees",104,100.0,yes
+card transaction of aud issued by drive mate pym,Cost of Overhead Related to Service:Operating Expenses,82,100.0,yes
+intuit quickbooks sydney au card xx value date,Accounting and bookkeeping,63,100.0,yes
+drive lah pte ltd singapore sg card xx sgd value,Operating Expenses:General Expense,59,96.6,yes
+didichuxing didi mobility sydney au card xx valu,Operating Expenses:Travel Expense,44,100.0,yes
+sq spaces sydney au card xx value date,Operating Expenses:Travel Expense,31,100.0,yes
+direct debit aussie broadband cn,"Operating Expenses:AI, Internet & Website maintenance fees",31,100.0,yes
+transfer to xx commbank app superblog payment,Operating Expenses:Technology System Costs,24,95.8,yes
+uber trip sydney au card xx value date,Operating Expenses:Travel Expense,23,100.0,yes
+omnitas dev stockholm se card xx usd value date,"Operating Expenses:AI, Internet & Website maintenance fees",22,95.5,yes
+sq spaces sydney au,Operating Expenses:Travel Expense,19,100.0,yes
+claude ai subscription anthropic com ca us card ,Subscriptions/ Software expenses,18,94.4,yes
+rightworks www rightwork nh us card xx usd value,"Operating Expenses:AI, Internet & Website maintenance fees",17,100.0,yes
+sourcegraph com sourcegraph c ca us card xx aud ,"Operating Expenses:AI, Internet & Website maintenance fees",15,100.0,yes
+card transaction of usd issued by cursor usage m,Subscriptions/ Software expenses,15,93.3,yes
+notion labs inc notion so ca us card xx usd valu,"Operating Expenses:AI, Internet & Website maintenance fees",14,100.0,yes
+card transaction of aud issued by drive mate mel,Cost of Overhead Related to Service:Operating Expenses,14,100.0,yes
+angel investment twickenham gb card xx aud value,"Operating Expenses:AI, Internet & Website maintenance fees",13,100.0,yes
+circleci com circleci com ca us card xx usd valu,"Operating Expenses:AI, Internet & Website maintenance fees",13,100.0,yes
+stripe customer,11111 Receivable from Guests,12,100.0,yes
+microsoft g msbill info sg card xx usd value dat,Subscriptions/ Software expenses,12,100.0,yes
+edreams prime m sydney au card xx value date,Operating Expenses:Travel Expense,12,100.0,yes
+direct debit veda advantage,Operating Expenses:Technology System Costs,12,100.0,yes
+stonly com rue chapt fr card xx usd value date,Operating Expenses:Technology System Costs,11,100.0,yes
+lovable lovable dev de us card xx usd value date,"Operating Expenses:AI, Internet & Website maintenance fees",10,100.0,yes
+bus mrt singapore sg card xx sgd value date,Operating Expenses:Travel Expense,10,100.0,yes
+mycar tyre auto sydney au card xx value date,Operating Expenses:Travel Expense,10,100.0,yes
+stonly com stonly com ny us card xx usd value da,Operating Expenses:Technology System Costs,10,100.0,yes
+infotracer com ma us card xx usd value date,Operating Expenses:Technology System Costs,10,90.0,yes
+post gordon ps gordon au card xx value date,Cost of Overhead Related to Service:Operating Expenses,8,100.0,yes
+direct credit global transport,Other Income,8,100.0,yes
+drive mate value date,Cost of Overhead Related to Service:Operating Expenses,8,100.0,yes
+uber trip,Operating Expenses:Travel Expense,8,100.0,yes
+transfer to jetstar airways pty ltd payid email ,Operating Expenses:Travel Expense,8,100.0,yes
+card transaction of aud issued by didimobility s,Operating Expenses:Travel Expense,8,100.0,yes
+vercel inc vercel com ca us card xx usd value da,"Operating Expenses:AI, Internet & Website maintenance fees",7,100.0,yes
+creditline netbank bpay xxxxxxxxxxxx laptop,Computer at Cost,7,100.0,yes
+render com render com ca us card xx usd value da,"Operating Expenses:AI, Internet & Website maintenance fees",7,100.0,yes
+transportfornsw tap sydney au card xx,Operating Expenses:Travel Expense,7,100.0,yes
+hotel at booking com amsterdam nl card xx sgd va,Operating Expenses:Travel Expense,7,100.0,yes
+racq netbank bpay inv fti,Cost of Overhead Related to Service:Operating Expenses,7,100.0,yes
+transfer to the fleet dr netbank inv dated,Cost of Overhead Related to Service:Operating Expenses,7,100.0,yes
+transfer to abc debt services pty ltd netbank in,Cost of Overhead Related to Service:Operating Expenses,7,100.0,yes
+didichuxing didiau pendin sydney au card xx valu,Operating Expenses:Travel Expense,7,100.0,yes
+voided transfer to abc debt services pty ltd net,Cost of Overhead Related to Service:Operating Expenses,7,100.0,yes
+voided stonly com rue chapt fr card xx usd value,Operating Expenses:Technology System Costs,7,100.0,yes
+vl,Cost of Service:Insurance,7,100.0,yes
+wispr wisprflow ai ca us card xx usd value date,"Operating Expenses:AI, Internet & Website maintenance fees",6,100.0,yes
+supabase singapore sg card xx usd value date,Subscriptions/ Software expenses,6,100.0,yes
+direct credit ato ato,Other Income,6,100.0,yes
+transfer to benjamin gotto smith commbank app dm,Operating Expenses:Corporate - Legal and professional fees,6,100.0,yes
+voided transfer to ted commbank app installation,Cost of Overhead Related to Service:Operating Expenses,6,100.0,yes
+transfer to ted commbank app installation,Cost of Overhead Related to Service:Operating Expenses,6,100.0,yes
+humax,Cost of Overhead Related to Service:In-car Running Costs,6,100.0,yes
+apify inv prague cz card xx usd value date,"Operating Expenses:AI, Internet & Website maintenance fees",5,100.0,yes
+fast transfer from fin nor holdings limi credit ,Loan,5,100.0,yes
+uber australia pty ltd,Operating Expenses:Travel Expense,5,100.0,yes
+drive mate melbourne au card xx value date auto ,Cost of Overhead Related to Service:Operating Expenses,5,100.0,yes
+claude ai subscription httpswww anth ca us card ,"Operating Expenses:AI, Internet & Website maintenance fees",5,100.0,yes
+transfer to granville collision centre netbank i,Cost of Overhead Related to Service:Operating Expenses,5,100.0,yes

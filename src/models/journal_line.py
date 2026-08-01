@@ -59,6 +59,17 @@ class FinanceJournalLine(Base):
         ForeignKey("finance_entities.id", ondelete="CASCADE"),
         nullable=False
     )
+    # POL-25 currency layer: debit/credit are ALWAYS the entity's functional
+    # currency (converted at booking time); the native statement fact survives.
+    currency: Mapped[Optional[str]] = mapped_column(
+        String(3), nullable=True,
+        comment="Native currency of the underlying transaction (ISO 4217)")
+    native_amount: Mapped[Optional[Decimal]] = mapped_column(
+        Numeric(15, 2), nullable=True,
+        comment="Absolute amount in the native currency (the statement fact)")
+    fx_rate: Mapped[Optional[Decimal]] = mapped_column(
+        Numeric(12, 6), nullable=True,
+        comment="native → functional rate used at booking (1.0 when same currency)")
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,
@@ -103,6 +114,9 @@ class FinanceJournalLine(Base):
             "credit_amount": float(self.credit_amount) if self.credit_amount else 0.0,
             "description": self.description,
             "entity_id": self.entity_id,
+            "currency": self.currency,
+            "native_amount": float(self.native_amount) if self.native_amount is not None else None,
+            "fx_rate": float(self.fx_rate) if self.fx_rate is not None else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

@@ -463,3 +463,31 @@ class TestInvoiceCreateCOAPriority:
 
         assert invoice.coa_source == "rule"
         assert invoice.contra_account_code == "5100"
+
+
+# ============================================================================
+# Duplicates allowed at draft (Gaurav 2026-08-01): create flags, never rejects
+# ============================================================================
+
+class TestDuplicatesAllowedAtDraft:
+    def test_create_allows_and_flags_semantic_duplicate(self, db_session, entity, accounts, counterparty_with_default):
+        from src.models.schemas import InvoiceCreate
+        base = dict(entity_id=entity.id, counterparty_id=counterparty_with_default.id,
+                    invoice_number="INV-DUP-1", invoice_date=date(2026, 3, 1),
+                    total_amount=100.0, currency="SGD")
+        a = invoice_service.create(db_session, InvoiceCreate(**base))
+        b = invoice_service.create(db_session, InvoiceCreate(**base))  # duplicate — must NOT raise
+        assert b.id != a.id
+        dup = ((b.ai_extraction_raw or {}).get("recon") or {}).get("duplicate") or {}
+        assert dup.get("is_duplicate") is True
+        assert dup.get("duplicate_of") == f"inv#{a.id}"
+        assert dup.get("dup_reason") == "semantic"
+
+    def test_create_different_number_not_flagged(self, db_session, entity, accounts, counterparty_with_default):
+        from src.models.schemas import InvoiceCreate
+        base = dict(entity_id=entity.id, counterparty_id=counterparty_with_default.id,
+                    invoice_date=date(2026, 3, 1), total_amount=100.0, currency="SGD")
+        invoice_service.create(db_session, InvoiceCreate(invoice_number="A-1", **base))
+        b = invoice_service.create(db_session, InvoiceCreate(invoice_number="A-2", **base))  # different number
+        dup = ((b.ai_extraction_raw or {}).get("recon") or {}).get("duplicate") or {}
+        assert not dup.get("is_duplicate")

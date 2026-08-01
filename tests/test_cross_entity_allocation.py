@@ -121,12 +121,17 @@ def _make_allocation_rule(db, bank_account_sg, entity_au, expense_code="5100", p
 # ── Unit tests for IC code lookup ──────────────────────────────────────────
 
 class TestICCodeLookup:
-    def test_entity_short_extracts_last_word(self):
+    def test_entity_short_resolves_seed_and_legal_names(self):
         from src.services.invoice_service import _entity_short
+        # seed-style names
         assert _entity_short("DL SG") == "SG"
         assert _entity_short("DL AU") == "AU"
         assert _entity_short("DL Ventures") == "Ventures"
-        assert _entity_short("SingleWord") == "SingleWord"
+        # live DB legal names (last-word split used to return 'Ltd' for all of
+        # these, so no IC pair ever matched on live data)
+        assert _entity_short("Drive lah Singapore Pte Ltd.") == "SG"
+        assert _entity_short("Drive lah Australia Pty Ltd") == "AU"
+        assert _entity_short("Drive lah Ventures Holding Pte Ltd") == "Ventures"
 
     def test_ic_codes_defined_for_sg_au(self):
         from src.services.invoice_service import _IC_RECEIVABLE_CODES, _IC_PAYABLE_CODES
@@ -337,3 +342,58 @@ class TestCrossEntityAllocationJEs:
         # Linked JE must belong to the bank entity (SG), not the alloc entity
         je = db_session.get(FinanceJournalEntry, txn.reconciled_journal_entry_id)
         assert je.entity_id == entity_sg.id
+
+
+class TestCrossEntityInternalTransfer:
+    """A cross-entity internal transfer must post a receivable/payable IC PAIR
+    (one code per entity), not a single shared code — same convention as allocation/AP."""
+
+    def test_uses_ic_receivable_payable_pair(self, db_session, entity_sg, entity_au, accounts, bank_account_sg):
+        from src.services.categorization_service import CategorizationService
+
+        au_bank = FinanceBankAccount(
+            entity_id=entity_au.id, bank_name="CBA AU", account_number="222",
+            account_name="AU Main", currency="SGD", coa_account_code="1001",
+            status=BankAccountStatus.ACTIVE,
+        )
+        db_session.add(au_bank)
+        db_session.commit()
+        rule = FinanceCategorizationRule(
+            name="SG OCBC → AU CBA", priority=5, status=RuleStatus.ACTIVE,
+            direction=TransactionDirection.OUTGOING,
+            category=TransactionCategory.INTERNAL_TRANSFER,
+            target_bank_account_id=au_bank.id,
+        )
+        db_session.add(rule)
+        db_session.commit()
+        txn = _make_txn(db_session, bank_account_sg, amount=-5000.0)
+
+        CategorizationService()._create_internal_transfer_entries(
+            db_session, txn, rule, bank_account_sg, -5000.0, 5000.0
+        )
+        db_session.commit()
+
+        paired = db_session.query(FinanceJournalEntry).filter(
+            FinanceJournalEntry.intercompany_group_id.isnot(None)
+        ).all()
+        assert len(paired) == 2
+        by_entity = {j.entity_id: j for j in paired}
+        sg_je, au_je = by_entity[entity_sg.id], by_entity[entity_au.id]
+        assert sg_je.intercompany_group_id == au_je.intercompany_group_id  # paired
+
+        def codes(je):
+            ls = db_session.query(FinanceJournalLine).filter_by(entry_id=je.id).all()
+            return (
+                {l.account_code for l in ls if float(l.debit_amount) > 0},
+                {l.account_code for l in ls if float(l.credit_amount) > 0},
+            )
+
+        sg_dr, sg_cr = codes(sg_je)
+        au_dr, au_cr = codes(au_je)
+        # SG (source pays out): Dr 8000 IC Receivable / Cr 1000 bank
+        assert sg_dr == {"8000"} and sg_cr == {"1000"}
+        # AU (target receives): Dr 1001 bank / Cr 8110 IC Payable
+        assert au_dr == {"1001"} and au_cr == {"8110"}
+        # It's a PAIR: neither entity's IC code appears in the other's books
+        assert "8000" not in (au_dr | au_cr)
+        assert "8110" not in (sg_dr | sg_cr)

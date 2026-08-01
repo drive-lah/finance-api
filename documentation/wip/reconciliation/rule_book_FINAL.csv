@@ -1,0 +1,88 @@
+source,name,priority,direction,currency,bank_accounts,description_operator,description_value,amount_operator,amount_value,amount_value_max,counterparty_condition_operator,counterparty_condition_value,category,contra_account_code,target_bank_account_id,allocation_entity_id,gst_override,counterparty_action,fate_class
+live#155,Drive Lah Pte Ltd - Money received from Australia,0,INCOMING,,,CONTAINS,Drive lah Australia Pty Ltd,,,,,,DEPOSIT,8100,,,,STRIPPED (POL-12),KEEP-pure-text
+live#214,Drive Lah Pte Ltd - Fleet earnings,0,INCOMING,,,CONTAINS,CSDB STRIPE PAYMENTS,,,,,,INTERNAL_TRANSFER,,20,,,STRIPPED (POL-12),KEEP-transfer
+live#26,Drive Lah Pte Ltd - 1001 Incoming from 3001 Transfer,1,INCOMING,,,CONTAINS,TRANSFER Fund Transfer from DRIVE LAH PTE. LTD.,,,,,,INTERNAL_TRANSFER,,18,,,STRIPPED (POL-12),KEEP-transfer
+live#242,Drive Lah Australia Pty Ltd - Deposit transfer from stripe to bank,1,INCOMING,,,CONTAINS,Direct Credit 158824 Drivemate,,,,,,INTERNAL_TRANSFER,,21,,,STRIPPED (POL-12),KEEP-transfer
+live#31,Drive Lah Pte Ltd - 3001 Outgoing to 1001 Transfer,2,OUTGOING,,,CONTAINS,FUND TRANSFER Fund Transfer to account 713147601001,,,,,,INTERNAL_TRANSFER,,1,,,STRIPPED (POL-12),KEEP-transfer
+live#29,Drive Lah Pte Ltd - 3001 Incoming from 1001 Transfer,3,INCOMING,,,CONTAINS,TRANSFER Fund Transfer from DRIVE LAH PTE. LTD.,,,,,,INTERNAL_TRANSFER,,1,,,STRIPPED (POL-12),KEEP-transfer
+live#27,Drive Lah Pte Ltd - 1001 Outgoing to 3001 Transfer,4,OUTGOING,,,CONTAINS,FUND TRANSFER Fund Transfer to account 713147603001,,,,,,INTERNAL_TRANSFER,,18,,,STRIPPED (POL-12),KEEP-transfer
+live#117,Drive Lah Pte Ltd - Google Storage as Tech operations,4,OUTGOING,,,CONTAINS,Google Storage,,,,CONTAINS,Google,EXPENSE,6701,,,,STRIPPED (POL-12),KEEP-exception-strip-identity
+live#2,Internal Transfer: OCBC 3001 → OCBC 1001,5,OUTGOING,,[18],CONTAINS,713147601001,,,,,,INTERNAL_TRANSFER,,1,,,STRIPPED (POL-12),KEEP-transfer
+live#3,Internal Transfer: Stripe → OCBC 3001,5,INCOMING,,[18],,,,,,CONTAINS,STRIPE PAYMENTS SIN,INTERNAL_TRANSFER,,19,,,STRIPPED (POL-12),KEEP-transfer
+live#4,Internal Transfer: OCBC 3001 → Wise SGD,5,OUTGOING,,"[1, 2, 3, 4, 5, 6, 7, 18, 19, 20]",CONTAINS,WISE,,,,,,INTERNAL_TRANSFER,,2,,,STRIPPED (POL-12),KEEP-transfer
+live#34.1,Drive Lah Pte Ltd - Wise Incoming from 3001 Transfer [split 1/2],5,INCOMING,,,CONTAINS,FROM: Drive Lah Pte. Ltd.,,,,,,INTERNAL_TRANSFER,,18,,,STRIPPED (POL-12),KEEP-transfer-splitfix
+live#34.2,Drive Lah Pte Ltd - Wise Incoming from 3001 Transfer [split 2/2],5,INCOMING,,,CONTAINS,Money added,,,,,,INTERNAL_TRANSFER,,18,,,STRIPPED (POL-12),KEEP-transfer-splitfix
+live#70,Drive Lah Ventures Holding Pte Ltd - DBS USD Outgoing to DBS SGD Transfer,5,OUTGOING,,,CONTAINS,Drive lah Ventures,,,,,,INTERNAL_TRANSFER,,15,,,STRIPPED (POL-12),KEEP-transfer
+live#32,Drive Lah Pte Ltd - 3001 Outgoing to Wise Transfer,6,OUTGOING,,,CONTAINS,FAST PAYMENT OTHR WISE,,,,,,INTERNAL_TRANSFER,,2,,,STRIPPED (POL-12),KEEP-transfer
+live#71,Drive Lah Ventures Holding Pte Ltd - DBS SGD Incoming from DBS USD Transfer,6,INCOMING,,,CONTAINS,Drive lah Ventures,,,,,,INTERNAL_TRANSFER,,13,,,STRIPPED (POL-12),KEEP-transfer
+live#33.1,Drive Lah Pte Ltd - Wise Incoming from 1001 Transfer [split 1/2],7,INCOMING,,,CONTAINS,FROM: Drive Lah Pte. Ltd.,,,,,,INTERNAL_TRANSFER,,1,,,STRIPPED (POL-12),KEEP-transfer-splitfix
+live#33.2,Drive Lah Pte Ltd - Wise Incoming from 1001 Transfer [split 2/2],7,INCOMING,,,CONTAINS,Money added,,,,,,INTERNAL_TRANSFER,,1,,,STRIPPED (POL-12),KEEP-transfer-splitfix
+live#28,Drive Lah Pte Ltd - 1001 Outgoing to Wise Transfer,8,OUTGOING,,,CONTAINS,FAST PAYMENT OTHR WISE,,,,,,INTERNAL_TRANSFER,,2,,,STRIPPED (POL-12),KEEP-transfer
+live#30,Drive Lah Pte Ltd - 3001 Incoming from Stripe Transfer,9,INCOMING,,,CONTAINS,CSDB STRIPE PAYMENTS,,,,,,INTERNAL_TRANSFER,,19,,,STRIPPED (POL-12),KEEP-transfer
+live#35,Drive Lah Pte Ltd - Stripe Outgoing to 3001 Transfer,10,OUTGOING,,,CONTAINS,Stripe Payout,,,,,,INTERNAL_TRANSFER,,18,,,STRIPPED (POL-12),KEEP-transfer
+live#54.1,Drive Lah Pte Ltd - Wise HR Salary Payments - Padsala Naitik Babubhai [split 1/2],10,INCOMING,,,CONTAINS,TO: Padsala Naitik Babubhai,,,,,,EXPENSE,6000,,,,STRIPPED (POL-12),KEEP-pure-text-splitfix
+live#54.2,Drive Lah Pte Ltd - Wise HR Salary Payments - Padsala Naitik Babubhai [split 2/2],10,INCOMING,,,CONTAINS,General,,,,,,EXPENSE,6000,,,,STRIPPED (POL-12),KEEP-pure-text-splitfix
+live#57.1,Drive Lah Pte Ltd - Wise HR Salary Payments - Pankaj M Patidar [split 1/2],10,INCOMING,,,CONTAINS,TO: Pankaj M Patidar,,,,,,EXPENSE,6000,,,,STRIPPED (POL-12),KEEP-pure-text-splitfix
+live#57.2,Drive Lah Pte Ltd - Wise HR Salary Payments - Pankaj M Patidar [split 2/2],10,INCOMING,,,CONTAINS,General,,,,,,EXPENSE,6000,,,,STRIPPED (POL-12),KEEP-pure-text-splitfix
+live#60.1,Drive Lah Pte Ltd - Wise HR Salary Payments - Joel Michael Wecker [split 1/2],10,INCOMING,,,CONTAINS,TO: Joel Michael Wecker,,,,,,EXPENSE,6000,,,,STRIPPED (POL-12),KEEP-pure-text-splitfix
+live#60.2,Drive Lah Pte Ltd - Wise HR Salary Payments - Joel Michael Wecker [split 2/2],10,INCOMING,,,CONTAINS,General,,,,,,EXPENSE,6000,,,,STRIPPED (POL-12),KEEP-pure-text-splitfix
+live#66,Drive Lah Pte Ltd - Tech Vendor - Paddle,10,INCOMING,,,CONTAINS,PADDLE.NET,,,,,,EXPENSE,6701,,,,STRIPPED (POL-12),KEEP-pure-text
+live#238.1,Drive Lah Ventures Holding Pte Ltd - Transfer Agent Charges [split 1/2],20,INCOMING,,,CONTAINS,TRANSFER AGENT CHARGES,,,,,,INTERNAL_TRANSFER,6600,,,,STRIPPED (POL-12),KEEP-transfer-splitfix
+live#238.2,Drive Lah Ventures Holding Pte Ltd - Transfer Agent Charges [split 2/2],20,INCOMING,,,CONTAINS,ADVICE,,,,,,INTERNAL_TRANSFER,6600,,,,STRIPPED (POL-12),KEEP-transfer-splitfix
+live#239.1,Drive Lah Ventures Holding Pte Ltd - OCBC Bank Charges [split 1/2],21,OUTGOING,,,CONTAINS,DRIVE LAH PTE LTD,,,,,,EXPENSE,6600,,,,STRIPPED (POL-12),KEEP-pure-text-splitfix
+live#239.2,Drive Lah Ventures Holding Pte Ltd - OCBC Bank Charges [split 2/2],21,OUTGOING,,,CONTAINS,charges,,,,,,EXPENSE,6600,,,,STRIPPED (POL-12),KEEP-pure-text-splitfix
+live#240.1,Drive Lah Ventures Holding Pte Ltd - Australia Bank Charges [split 1/2],22,OUTGOING,,,CONTAINS,DRIVE LAH AUSTRALIA PTY LTD,,,,,,EXPENSE,6600,,,,STRIPPED (POL-12),KEEP-pure-text-splitfix
+live#240.2,Drive Lah Ventures Holding Pte Ltd - Australia Bank Charges [split 2/2],22,OUTGOING,,,CONTAINS,charges,,,,,,EXPENSE,6600,,,,STRIPPED (POL-12),KEEP-pure-text-splitfix
+live#116,Drive Lah Pte Ltd - Google play as Tech operations,38,OUTGOING,,,CONTAINS,Google Play,,,,CONTAINS,Google,EXPENSE,6701,,,,STRIPPED (POL-12),KEEP-exception-strip-identity
+live#206,Drive Lah Pte Ltd - Wise transfer,41,OUTGOING,,,CONTAINS,Wise,,,,,,INTERNAL_TRANSFER,,2,,,STRIPPED (POL-12),KEEP-transfer
+live#176,Drive Lah Pte Ltd - RMS LOK NGEE,42,OUTGOING,,,CONTAINS,LOK NGEE,,,,CONTAINS,LoK,EXPENSE,5001,,,,STRIPPED (POL-12),KEEP-party-no-default
+live#42,Drive Lah Pte Ltd - Alpine RMS,46,OUTGOING,,,CONTAINS,ALPINE,,,,,,EXPENSE,5001,,,,STRIPPED (POL-12),KEEP-pure-text
+live#164.1,Drive Lah Pte Ltd - Photographer [split 1/2],48,OUTGOING,,,CONTAINS,PHOTOGRAPHER,,,,,,EXPENSE,6103,,,,STRIPPED (POL-12),KEEP-pure-text-splitfix
+live#164.2,Drive Lah Pte Ltd - Photographer [split 2/2],48,OUTGOING,,,CONTAINS,PHOTOGRAPHY,,,,,,EXPENSE,6103,,,,STRIPPED (POL-12),KEEP-pure-text-splitfix
+live#90,Drive Lah Pte Ltd - Other payouts by customers,50,INCOMING,,,CONTAINS,PAYMENT/TRANSFER OTHR S$,,,,,,DEPOSIT,4000,,,,STRIPPED (POL-12),KEEP-pure-text
+live#235,Drive Lah Ventures Holding Pte Ltd - OCBC transfer,50,OUTGOING,,,CONTAINS,DRIVE LAH PTE LTD,,,,,,EXPENSE,8020,,,,STRIPPED (POL-12),KEEP-pure-text
+live#202.1,Drive Lah Pte Ltd - Ventures payments [split 1/2],51,INCOMING,,,CONTAINS,PAYMENT/TRANSFER BEXP DRIVE LAH VENTURES,,,,,,DEPOSIT,8101,,,,STRIPPED (POL-12),KEEP-transfer-splitfix
+live#202.2,Drive Lah Pte Ltd - Ventures payments [split 2/2],51,INCOMING,,,CONTAINS,RECEIPTS DRIVE LAH VENTURES HOLDING,,,,,,DEPOSIT,8101,,,,STRIPPED (POL-12),KEEP-transfer-splitfix
+live#236,Drive Lah Ventures Holding Pte Ltd - Australia transfer,51,OUTGOING,,,CONTAINS,DRIVE LAH AUSTRALIA PTY LTD,,,,,,EXPENSE,8021,,,,STRIPPED (POL-12),KEEP-pure-text
+live#171,Drive Lah Pte Ltd - RMS,54,OUTGOING,,,CONTAINS,RMS,,,,,,EXPENSE,5001,,,,STRIPPED (POL-12),KEEP-pure-text
+live#22,Drive Lah Australia Pty Ltd - (Suggested) Tax Payments Netbank Bpay as Tax Paid,60,OUTGOING,,,CONTAINS,Tax Payments Netbank Bpay,,,,CONTAINS,ATO,EXPENSE,9000,,,,STRIPPED (POL-12),KEEP-party-no-default
+live#49,Drive Lah Australia Pty Ltd - ATO,60,INCOMING,,,CONTAINS,Direct Ato,,,,,,DEPOSIT,9000,,,,STRIPPED (POL-12),KEEP-pure-text
+live#191,Drive Lah Pte Ltd - TECHCRUNCH,60,OUTGOING,,,CONTAINS,TECHCRUNCH,,,,,,EXPENSE,6701,,,,STRIPPED (POL-12),KEEP-pure-text
+live#228,Drive Lah Australia Pty Ltd - Bank fees international,60,OUTGOING,,,CONTAINS,International Fee,,,,,,EXPENSE,6600,,,,STRIPPED (POL-12),KEEP-pure-text
+live#230,Drive Lah Australia Pty Ltd - International transaction fee,60,OUTGOING,,,CONTAINS,International Transaction Fee,,,,,,EXPENSE,6600,,,,STRIPPED (POL-12),KEEP-pure-text
+live#195,Drive Lah Pte Ltd - Towing,67,OUTGOING,,,CONTAINS,Towing,,,,,,EXPENSE,5033,,,,STRIPPED (POL-12),KEEP-pure-text
+live#23,Drive Lah Australia Pty Ltd - (Suggested) Drive Lah Ventures Holding Pte as Due to Ventures,70,INCOMING,,,CONTAINS,Drive Lah Ventures Holding Pte,,,,,,DEPOSIT,8111,,,,STRIPPED (POL-12),KEEP-pure-text
+live#224,Drive Lah Australia Pty Ltd - Wise Australia,70,OUTGOING,,,CONTAINS,Transfer Wise,,,,,,INTERNAL_TRANSFER,,11,,,STRIPPED (POL-12),KEEP-transfer
+live#234,Drive Lah Australia Pty Ltd - Techcrunch,75,OUTGOING,,,CONTAINS,TECHCRUNCH,,,,CONTAINS,TECHCRUNCH EVELEIGH,EXPENSE,6701,,,,STRIPPED (POL-12),KEEP-pure-text
+live#85,Drive Lah Pte Ltd - Google suite,80,OUTGOING,,,CONTAINS,GOOGLE*GSUITE,,,,CONTAINS,Google,EXPENSE,6701,,,,STRIPPED (POL-12),KEEP-exception-strip-identity
+live#77,Drive Lah Pte Ltd - Cash rebate,83,INCOMING,,,CONTAINS,Cash Rebate,,,,,,DEPOSIT,7001,,,,STRIPPED (POL-12),KEEP-pure-text
+live#69,Drive Lah Pte Ltd - Vendor - Paddle,85,OUTGOING,,,CONTAINS,Paddle,,,,,,EXPENSE,6701,,,,STRIPPED (POL-12),KEEP-pure-text
+live#124,Drive Lah Pte Ltd - IBG GIRO,85,INCOMING,,,CONTAINS,IBG GIRO,,,,,,DEPOSIT,7000,,,,STRIPPED (POL-12),KEEP-pure-text
+live#38,Drive Lah Australia Pty Ltd - apple.com,90,OUTGOING,,,CONTAINS,Apple,,,,CONTAINS,Apple.com,EXPENSE,6701,,,,STRIPPED (POL-12),KEEP-exception-strip-identity
+live#162,Drive Lah Pte Ltd - PHOTO,91,OUTGOING,,,CONTAINS,PHOTO,,,,,,EXPENSE,6103,,,,STRIPPED (POL-12),KEEP-pure-text
+live#75,Drive Lah Pte Ltd - Apex debt recovery,92,OUTGOING,,,CONTAINS,APEX CREDIT,,,,CONTAINS,Apex Credit,EXPENSE,6501,,,,STRIPPED (POL-12),KEEP-pure-text
+live#138,Drive Lah Pte Ltd - LIBERTY WIRELE,95,OUTGOING,,,CONTAINS,LIBERTY WIRELE,,,,,,EXPENSE,5030,,,,STRIPPED (POL-12),KEEP-pure-text
+live#19.1,Drive Lah Pte Ltd - Wise Transfer fee [split 1/2],102,OUTGOING,,,CONTAINS,TransferWise Fee,,,,,,EXPENSE,6600,,,,STRIPPED (POL-12),KEEP-pure-text-splitfix
+live#19.2,Drive Lah Pte Ltd - Wise Transfer fee [split 2/2],102,OUTGOING,,,CONTAINS,Wise Payments Fee,,,,,,EXPENSE,6600,,,,STRIPPED (POL-12),KEEP-pure-text-splitfix
+live#142,Drive Lah Pte Ltd - Metabase,112,OUTGOING,,,CONTAINS,Metabase,,,,,,EXPENSE,6701,,,,STRIPPED (POL-12),KEEP-pure-text
+live#179,Drive Lah Pte Ltd - Semrush,113,OUTGOING,,,CONTAINS,Semrush,,,,,,EXPENSE,6701,,,,STRIPPED (POL-12),KEEP-pure-text
+live#16.1,Drive Lah Pte Ltd - Wise Corporate Salary 7 [split 1/2],115,OUTGOING,,,CONTAINS,Sarala,,,,,,EXPENSE,6000,,,,STRIPPED (POL-12),KEEP-pure-text-splitfix
+live#16.2,Drive Lah Pte Ltd - Wise Corporate Salary 7 [split 2/2],115,OUTGOING,,,CONTAINS,Salary,,,,,,EXPENSE,6000,,,,STRIPPED (POL-12),KEEP-pure-text-splitfix
+live#17.1,Drive Lah Pte Ltd - Wise Corporate Salary 8 [split 1/2],116,OUTGOING,,,CONTAINS,Jay,,,,,,EXPENSE,5061,,,,STRIPPED (POL-12),KEEP-pure-text-splitfix
+live#17.2,Drive Lah Pte Ltd - Wise Corporate Salary 8 [split 2/2],116,OUTGOING,,,CONTAINS,Salary,,,,,,EXPENSE,5061,,,,STRIPPED (POL-12),KEEP-pure-text-splitfix
+live#18.1,Drive Lah Pte Ltd - Wise Corporate Salary 9 [split 1/2],117,OUTGOING,,,CONTAINS,Rahul,,,,,,EXPENSE,6000,,,,STRIPPED (POL-12),KEEP-pure-text-splitfix
+live#18.2,Drive Lah Pte Ltd - Wise Corporate Salary 9 [split 2/2],117,OUTGOING,,,CONTAINS,Salary,,,,,,EXPENSE,6000,,,,STRIPPED (POL-12),KEEP-pure-text-splitfix
+live#125,Drive Lah Pte Ltd - Illion,128,OUTGOING,,,CONTAINS,AUSTRALIAN R,,,,,,EXPENSE,6701,,,,STRIPPED (POL-12),KEEP-pure-text
+live#169,Drive Lah Pte Ltd - Randolf,136,OUTGOING,,,CONTAINS,Randolf,,,,,,EXPENSE,5063,,,,STRIPPED (POL-12),KEEP-pure-text
+live#96,Drive Lah Pte Ltd - Caretaker,158,OUTGOING,,,CONTAINS,Quang Vu Nguyen,,,,,,EXPENSE,5001,,,,STRIPPED (POL-12),KEEP-pure-text
+live#98,Drive Lah Pte Ltd - Caretaker2,160,OUTGOING,,,CONTAINS,Shannon Yeo,,,,,,EXPENSE,5001,,,,STRIPPED (POL-12),KEEP-pure-text
+live#99,Drive Lah Pte Ltd - caretaker3,161,OUTGOING,,,CONTAINS,Tan Lay Suan Judy,,,,,,EXPENSE,5001,,,,STRIPPED (POL-12),KEEP-pure-text
+live#111,Drive Lah Pte Ltd - Fleet Dr,164,OUTGOING,,,CONTAINS,THE FLEET DR,,,,,,EXPENSE,5064,,,,STRIPPED (POL-12),KEEP-pure-text
+live#205,Drive Lah Pte Ltd - Whale,168,OUTGOING,,,CONTAINS,Whale,,,,,,EXPENSE,6701,,,,STRIPPED (POL-12),KEEP-pure-text
+mined-new,Stripe settlement variant - internal transfer (Fleet decision),1,INCOMING,,,CONTAINS,payment transferpayment transfer csdb stripe,,,,,,INTERNAL_TRANSFER,,,,,n/a,NEW-mined
+live#283,Own-platform test charges (Drive Mate) - outgoing,5,outgoing,,,CONTAINS,issued by Drive Mate | DRIVE MATE MEL,,,,,,expense,6702,,,,,kept-new
+live#284,Own-platform test charges (Drive Mate) - incoming,5,incoming,,,CONTAINS,issued by Drive Mate | DRIVE MATE MEL,,,,,,expense,6702,,,,,kept-new
+live#285,Wise top-up (own money in),1,incoming,,"[11, 12]",IS_EXACTLY,Topped up account,,,,,,internal_transfer,,17,,,,kept-new
+live#290,SG Wise funding received (claim-only),1,incoming,,"[2, 3, 4, 5, 6, 7]",CONTAINS,FROM: Drive Lah Pte. Ltd. | Money added,,,,,,internal_transfer,,,,,,kept-new
+live#71,Drive Lah Ventures Holding Pte Ltd - DBS SGD Incoming (claim-only reinstated),,incoming,,"[15]",CONTAINS,Drive lah Ventures,,,,,,internal_transfer,,,,,,reinstated-claim-only
+live#292,Bus/MRT fares,5,outgoing,,,CONTAINS,Bus/mrt,,,,,,expense,6400,,,,,kept-new

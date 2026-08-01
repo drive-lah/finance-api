@@ -21,6 +21,10 @@ from src.models.categorization_rule import (
 from src.models.counterparty import FinanceCounterparty, CounterpartyType, CounterpartyStatus
 from src.models.payroll import FinancePayrollRun
 from src.models.depreciation import FinanceAssetSchedule, FinanceCOAAmortizationPolicy
+# Registered so the finance_invoices.sync_run_id FK resolves at flush time (was lazily
+# imported only inside economic-events funcs -> invoice UPDATE failed NoReferencedTableError).
+from src.models.sync_run import FinanceSyncRun
+from src.models.invoice import FinanceInvoice, InvoiceStatus
 from src.models.schemas import (
     EntityCreate,
     EntityUpdate,

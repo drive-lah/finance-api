@@ -39,7 +39,37 @@ def list_bank_accounts():
 
     with db_session() as db:
         bank_accounts = bank_account_service.get_all(db, entity_id=entity_id)
-        response_data = [BankAccountResponse.model_validate(ba).model_dump() for ba in bank_accounts]
+        # Latest KNOWN balance per account, derived from the newest transaction
+        # line carrying a running balance (Gaurav 2026-07-25): works identically
+        # for out-of-order statements, CSVs, PDFs and API syncs — the data's own
+        # most recent truth, no stored column to drift.
+        from sqlalchemy import text as _text
+        latest = {r[0]: (r[1], r[2]) for r in db.execute(_text("""
+            SELECT bank_account_id, running_balance, transaction_date FROM (
+                SELECT bank_account_id, running_balance, transaction_date,
+                       ROW_NUMBER() OVER (PARTITION BY bank_account_id
+                                          ORDER BY transaction_date DESC, id DESC) AS rn
+                FROM finance_transactions WHERE running_balance IS NOT NULL
+            ) ranked WHERE rn = 1"""))}
+        response_data = []
+        for ba in bank_accounts:
+            d = BankAccountResponse.model_validate(ba).model_dump()
+            bal = latest.get(ba.id)
+            d["latest_balance"] = str(bal[0]) if bal else None
+            d["latest_balance_date"] = bal[1].isoformat() if bal else None
+            # provider-reported balance wins when the sync stamped one
+            # (Stripe: payout lines alone can't express the true balance)
+            state = ba.api_sync_state or {}
+            if state.get("latest_balance") is not None:
+                d["latest_balance"] = str(state["latest_balance"])
+                d["latest_balance_date"] = state.get("balance_as_of") or d["latest_balance_date"]
+            response_data.append(d)
+
+        # A-10 recon checkpoint: as-at-watermark identity per account
+        from src.services.report_service import report_service
+        recon = report_service.get_bank_recon(db)
+        for d in response_data:
+            d["recon"] = recon.get(d["id"])
         return jsonify(response_data), 200
 
 
@@ -329,31 +359,58 @@ def sync_bank_account(bank_account_id: int):
             statement, bank_account.currency
         )
 
-        result = transaction_service.import_from_rows(
-            db=db,
-            bank_account=bank_account,
-            normalized_rows=normalized_rows,
-            fingerprint_fn=lambda row: [row.source_id or ""],
-            source="wise_api_sync",
-            extra_errors=parse_errors,
-        )
+        from src.models.sync_run import start_run, finish_run
+        run = start_run(db, "wise", entity_id=bank_account.entity_id,
+                        bank_account_id=bank_account.id,
+                        window_from=date_from, window_to=date_to)
+        try:
+            result = transaction_service.import_from_rows(
+                db=db,
+                bank_account=bank_account,
+                normalized_rows=normalized_rows,
+                fingerprint_fn=lambda row: [
+                    # Statement-grade fingerprint (2026-07-26): Wise reference ids
+                    # are NOT unique per row (related entries share one) — the
+                    # reference-only fingerprint silently dropped 36 real txns as
+                    # "duplicates". date+amount+balance+ref is collision-proof.
+                    row.transaction_date.isoformat(),
+                    f"{row.amount:.2f}",
+                    f"{row.running_balance:.2f}" if row.running_balance is not None else "",
+                    row.source_id or "",
+                ],
+                source="wise_api_sync",
+                extra_errors=parse_errors,
+            )
+        except Exception as sync_err:
+            finish_run(db, run, error=sync_err)
+            raise
+        finish_run(db, run, fetched=len(normalized_rows),
+                   created=result.get("transactions_created"),
+                   duplicates=result.get("duplicates_skipped"))
 
-        # ── Update last_synced_at in sync state ───────────────────────────────
-        bank_account.api_sync_state = {"last_synced_at": date_to.isoformat()}
+        # ── Update sync state ─────────────────────────────────────────────────
+        # Balance is stamped AS OF THE COVERAGE DATE (Gaurav 2026-07-27): the
+        # sync ran to date_to, so the balance is current through date_to even
+        # when the newest TRANSACTION is months older — a dormant account's
+        # balance must not display as "as of last txn". One coverage date:
+        # synced_through == balance_as_of, always.
+        state = dict(bank_account.api_sync_state or {})
+        state["last_synced_at"] = date_to.isoformat()
+        state["synced_through"] = date_to.isoformat()
+        try:
+            balances = wise_service.get_balances(profile_id)
+            match = next((b for b in balances if b.get("id") == balance_id), None)
+            if match and match.get("amount", {}).get("value") is not None:
+                state["latest_balance"] = str(match["amount"]["value"])
+                state["balance_as_of"] = date_to.isoformat()
+        except Exception:
+            pass  # balance stamp is best-effort; the sync itself succeeded
+        bank_account.api_sync_state = state
         db.commit()
 
-        # ── Auto-categorize new transactions ──────────────────────────────────
-        if result.get("transactions_created", 0) > 0:
-            try:
-                cat = categorization_service.run(db, bank_account_id=bank_account_id)
-                result["categorization"] = {
-                    "categorized": cat["categorized"],
-                    "uncategorized": cat["uncategorized"],
-                    "errors": cat["errors"],
-                }
-            except Exception as e:
-                logger.warning(f"Auto-categorization failed after Wise sync: {e}", exc_info=True)
-                result["categorization"] = {"error": str(e)}
+        # Categorization is ALWAYS an explicit act (Gaurav 2026-07-25) — synced
+        # lines stay IMPORTED; the engine runs only when deliberately triggered.
+        result["categorization"] = "skipped — imports stage as IMPORTED; run the engine explicitly"
 
         result["date_from"] = date_from.isoformat()
         result["date_to"] = date_to.isoformat()
@@ -403,76 +460,9 @@ def dbs_import():
 
     pdf_bytes = file.read()
 
-    # ── Parse PDF via registry adapter ────────────────────────────────────────
-    try:
-        dbs_adapter = get_adapter("dbs")
-        sections = dbs_adapter.parse_pdf(pdf_bytes)
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
-
-    parse_warnings = list(dbs_adapter.errors)
-    currencies_found = list(sections.keys())
-
-    # ── Route each currency section to the matching bank account ──────────────
-    import_results: dict = {}
-
     with db_session() as db:
-        for currency, rows in sections.items():
-            if not rows:
-                import_results[currency] = {"skipped": "No transactions in statement"}
-                continue
-
-            # Find matching DBS bank account for this entity + currency
-            bank_account = (
-                db.query(FinanceBankAccount)
-                .filter(
-                    FinanceBankAccount.entity_id == entity_id,
-                    FinanceBankAccount.bank_name.ilike('dbs'),
-                    FinanceBankAccount.currency == currency,
-                )
-                .first()
-            )
-
-            if not bank_account:
-                import_results[currency] = {
-                    "skipped": (
-                        f"No DBS {currency} bank account found for this entity. "
-                        f"Create one first in Bank Accounts."
-                    )
-                }
-                continue
-
-            result = transaction_service.import_from_rows(
-                db=db,
-                bank_account=bank_account,
-                normalized_rows=rows,
-                fingerprint_fn=dbs_adapter.fingerprint_fields,
-                source="dbs_pdf_import",
-            )
-
-            # Auto-categorize new transactions
-            if result.get("transactions_created", 0) > 0:
-                try:
-                    cat = categorization_service.run(
-                        db, bank_account_id=bank_account.id
-                    )
-                    result["categorization"] = {
-                        "categorized": cat["categorized"],
-                        "uncategorized": cat["uncategorized"],
-                        "errors": cat["errors"],
-                    }
-                except Exception as e:
-                    logger.warning(
-                        f"Auto-categorization failed after DBS import ({currency}): {e}",
-                        exc_info=True,
-                    )
-                    result["categorization"] = {"error": str(e)}
-
-            result["bank_account_id"] = bank_account.id
-            import_results[currency] = result
-
-    return jsonify({
-        "currencies_found": currencies_found,
-        "results": import_results,
-        "parse_warnings": parse_warnings,
-    }), 200
+        try:
+            payload = transaction_service.import_dbs_statement(db, entity_id, pdf_bytes)
+        except ValueError as e:
+            return jsonify({"error": str(e)}), 400
+    return jsonify(payload), 200
