@@ -18,7 +18,6 @@ invoices_bp = Blueprint("invoices", __name__, url_prefix="/api/finance/invoices"
 def list_invoices():
     """List invoices with server-side filtering + pagination (limit/offset, X-Total-Count header)."""
     filters = dict(
-        invoice_id=request.args.get("invoice_id", type=int),
         entity_id=request.args.get("entity_id", type=int),
         status=request.args.get("status", type=str),
         counterparty_id=request.args.get("counterparty_id", type=int),
