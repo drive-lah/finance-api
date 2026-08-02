@@ -491,3 +491,22 @@ class TestDuplicatesAllowedAtDraft:
         b = invoice_service.create(db_session, InvoiceCreate(invoice_number="A-2", **base))  # different number
         dup = ((b.ai_extraction_raw or {}).get("recon") or {}).get("duplicate") or {}
         assert not dup.get("is_duplicate")
+
+
+class TestInvoiceIdFilter:
+    """The list endpoint's generic `search` matches invoice_number/vendor/payee, NOT the
+    primary key. This locks the dedicated `invoice_id` filter (front-end invoice-id search)."""
+
+    def test_invoice_id_filter_isolates_one(self, db_session, entity, counterparty_no_default):
+        base = dict(entity_id=entity.id, counterparty_id=counterparty_no_default.id,
+                    invoice_date=date(2026, 3, 1), total_amount=100.0, currency="SGD")
+        a = invoice_service.create(db_session, InvoiceCreate(invoice_number="X-1", **base))
+        b = invoice_service.create(db_session, InvoiceCreate(invoice_number="X-2", **base))
+
+        got = invoice_service.get_all(db_session, invoice_id=b.id)
+        assert [i.id for i in got] == [b.id]
+        assert invoice_service.count_all(db_session, invoice_id=b.id) == 1
+        assert invoice_service.count_all(db_session, invoice_id=a.id) == 1
+        assert invoice_service.count_all(db_session, invoice_id=999999) == 0
+        # no filter -> both returned (additive, no regression)
+        assert invoice_service.count_all(db_session) == 2

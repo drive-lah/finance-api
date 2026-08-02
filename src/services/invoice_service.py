@@ -177,7 +177,7 @@ class InvoiceService:
             .first()
         )
 
-    def _apply_filters(self, query, *, entity_id=None, status=None, counterparty_id=None,
+    def _apply_filters(self, query, *, invoice_id=None, entity_id=None, status=None, counterparty_id=None,
                        search=None, vendor_flag=None, coa_flag=None, document_gate=None,
                        currency_flag=None, retool_status=None, sub_category=None, amount_match=None,
                        provisional_paid=None, retool_id=None, is_duplicate=None):
@@ -187,6 +187,8 @@ class InvoiceService:
         def jtext(*path):  # column is JSONB in the DB -> use jsonb_extract_path_text
             return func.jsonb_extract_path_text(FinanceInvoice.ai_extraction_raw, *path)
 
+        if invoice_id is not None:  # dedicated PK filter — the generic `search` does NOT match id
+            query = query.filter(FinanceInvoice.id == invoice_id)
         if entity_id is not None:
             query = query.filter(FinanceInvoice.entity_id == entity_id)
         if status is not None:
