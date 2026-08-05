@@ -204,10 +204,10 @@ class HrOnboardingService:
             return [{"user_id": user_id, "message": f"User {user_id} not found"}]
 
         user_name = user_row[1]
-        is_employee = user_row[2]
 
-        # 3. Check not already onboarded
-        if is_employee:
+        # 3. Already onboarded = an hr_employees ROW exists — NOT is_employee, which is
+        #    true for every staff member (POL-102). Checking is_employee rejected everyone.
+        if db.query(HrEmployee).filter(HrEmployee.user_id == user_id).first() is not None:
             return [{"user_id": user_id, "message": f"User {user_id} already onboarded"}]
 
         # 4. Validate payroll_entity_id
