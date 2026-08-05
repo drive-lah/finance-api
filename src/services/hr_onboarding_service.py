@@ -196,7 +196,8 @@ class HrOnboardingService:
 
         # 2. Fetch user record
         user_row = db.execute(
-            text("SELECT id, name, is_employee, onboarding_status FROM users WHERE id = :id"),
+            text("SELECT id, name, is_employee, onboarding_status, date_of_joining "
+                 "FROM users WHERE id = :id"),
             {"id": user_id},
         ).fetchone()
 
@@ -209,6 +210,27 @@ class HrOnboardingService:
         #    true for every staff member (POL-102). Checking is_employee rejected everyone.
         if db.query(HrEmployee).filter(HrEmployee.user_id == user_id).first() is not None:
             return [{"user_id": user_id, "message": f"User {user_id} already onboarded"}]
+
+        # 3b. Start date (date of joining) is MANDATORY — no onboarding without it
+        #     (Gaurav directive 2026-08-06). Take it from the payload, else fall back to
+        #     an already-set users.date_of_joining; if neither exists, refuse to onboard.
+        #     It becomes the employment start that offboarding later bookends.
+        raw_start = item.get("start_date") or item.get("date_of_joining")
+        existing_doj = user_row[4]
+        if raw_start:
+            try:
+                start_date_val = (
+                    date.fromisoformat(raw_start) if isinstance(raw_start, str) else raw_start
+                )
+            except (ValueError, TypeError):
+                return [{"user_id": user_id,
+                         "message": f"Invalid start_date '{raw_start}' — expected YYYY-MM-DD"}]
+        elif existing_doj:
+            start_date_val = existing_doj
+        else:
+            return [{"user_id": user_id,
+                     "message": "Missing required field: start_date (date of joining) — "
+                                "required to onboard"}]
 
         # 4. Validate payroll_entity_id
         payroll_entity_id = item.get("payroll_entity_id")
@@ -256,7 +278,8 @@ class HrOnboardingService:
                 "employee_type = :employee_type, "
                 "bank_account_number = :bank_account_number, "
                 "bank_code = :bank_code, "
-                "teams = :teams "
+                "teams = :teams, "
+                "date_of_joining = :date_of_joining "
                 "WHERE id = :id"
             ),
             {
@@ -266,6 +289,7 @@ class HrOnboardingService:
                 "bank_account_number": bank_account_number,
                 "bank_code": bank_code,
                 "teams": teams_str,
+                "date_of_joining": start_date_val,
                 "id": user_id,
             },
         )
@@ -432,7 +456,7 @@ class HrOnboardingService:
         # --- Fetch user ---
         user_row = db.execute(
             text(
-                "SELECT id, name, is_employee, employment_end_date "
+                "SELECT id, name, is_employee, employment_end_date, date_of_joining "
                 "FROM users WHERE id = :id"
             ),
             {"id": user_id},
@@ -447,6 +471,16 @@ class HrOnboardingService:
 
         is_employee = user_row[2]
         employment_end_date = user_row[3]
+        date_of_joining = user_row[4]
+
+        # --- Validate: can't leave before you joined (temporal integrity) ---
+        if date_of_joining is not None and offboard_date < date_of_joining:
+            return {
+                "success": False,
+                "error_type": "validation",
+                "message": f"offboard_date {offboard_date} precedes the start date "
+                           f"(date of joining {date_of_joining})",
+            }
 
         # --- Validate: not already offboarded (check first — more specific) ---
         if employment_end_date is not None:
