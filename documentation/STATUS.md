@@ -408,6 +408,7 @@ Employee claims are a SEPARATE track from vendor invoices: employee self-submits
 | EC-3 | Add **compensation capture** (gross + currency + effective_from → `hr_compensation`) — for payroll (not claims) | ☐ |
 | EC-4 | Employee Claims module: self-submit surface (own-scoped) + receipt upload + manager-approval route off `users.manager_id` + reimbursement via payout rails | ☐ |
 | EC-5 | Remove employee-claim/payroll COAs (6010-6014, 6000-6003, 9000, 5061-5063) from the vendor approval sheet — they route through Claims/Payroll | ☐ |
+| EC-6 | ✅ DONE 2026-08-06 — **Onboarding governance (POL-104).** Start date now MANDATORY to onboard (`hr_onboarding_service._validate_and_onboard_one` rejects missing/invalid before any write; persists `users.date_of_joining`; onboard modal adds a required date field). Onboard-before-offboard enforced (POL-102) + new guard: offboard_date can't precede date_of_joining. Payee-bank routes gated behind `finance.payouts` (GET read / POST-PUT write / DELETE admin). Super-admin NOT exempt from HR (bypass stands). Verified: 4 behavioural gate tests pass (stubbed-db reject paths, no writes), finance-api imports OK, admin-bff + admincontrols tsc 0 errors. | ✅ |
 
 **HR-team fill-list (per employee, via existing HR module):** payroll entity · salary expense COA (6000 corp / 6003 director / 5061 on-ground / 5063 support) · employee type · bank account number + code · **manager** (add) · gross comp + currency + effective date (add, for payroll).
 
