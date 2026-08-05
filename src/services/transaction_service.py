@@ -23,21 +23,34 @@ class TransactionService:
         db: Session,
         bank_account_id: Optional[int] = None,
         entity_id: Optional[int] = None,
+        counterparty_id: Optional[int] = None,
         status: Optional[TransactionStatus] = None,
         date_from: Optional[date] = None,
         date_to: Optional[date] = None,
         search: Optional[str] = None,
         journal_entry_id: Optional[int] = None,
+        amount_min: Optional[float] = None,
+        amount_max: Optional[float] = None,
         sort_by: str = "date",
         sort_dir: str = "desc",
         limit: int = 100,
         offset: int = 0,
     ) -> List[FinanceTransaction]:
         """Get transactions with optional filters."""
+        from sqlalchemy import func
         query = db.query(FinanceTransaction)
+
+        # Amount filter is on MAGNITUDE (abs) so a range catches both in/out flows.
+        if amount_min is not None:
+            query = query.filter(func.abs(FinanceTransaction.amount) >= amount_min)
+        if amount_max is not None:
+            query = query.filter(func.abs(FinanceTransaction.amount) <= amount_max)
 
         if bank_account_id is not None:
             query = query.filter(FinanceTransaction.bank_account_id == bank_account_id)
+
+        if counterparty_id is not None:
+            query = query.filter(FinanceTransaction.counterparty_id == counterparty_id)
 
         # All legs of one journal entry — how the FE shows "paired with" for transfers
         if journal_entry_id is not None:
@@ -87,16 +100,26 @@ class TransactionService:
         db: Session,
         bank_account_id: Optional[int] = None,
         entity_id: Optional[int] = None,
+        counterparty_id: Optional[int] = None,
         status: Optional[TransactionStatus] = None,
         date_from: Optional[date] = None,
         date_to: Optional[date] = None,
         search: Optional[str] = None,
         journal_entry_id: Optional[int] = None,
+        amount_min: Optional[float] = None,
+        amount_max: Optional[float] = None,
     ) -> int:
         """Total rows matching the same filters as get_all (for the pagination header)."""
+        from sqlalchemy import func
         query = db.query(FinanceTransaction)
+        if amount_min is not None:
+            query = query.filter(func.abs(FinanceTransaction.amount) >= amount_min)
+        if amount_max is not None:
+            query = query.filter(func.abs(FinanceTransaction.amount) <= amount_max)
         if bank_account_id is not None:
             query = query.filter(FinanceTransaction.bank_account_id == bank_account_id)
+        if counterparty_id is not None:
+            query = query.filter(FinanceTransaction.counterparty_id == counterparty_id)
         if journal_entry_id is not None:
             query = query.filter(FinanceTransaction.reconciled_journal_entry_id == journal_entry_id)
         if entity_id is not None:
@@ -538,6 +561,11 @@ class TransactionService:
                     import_batch_id=import_batch_id,
                     original_csv_row=json.dumps(normalized.to_dict(), default=str),
                 )
+                # Vendor-payout link key: Wise transfer id (strip the "TRANSFER-" prefix the
+                # statement carries) so the payout register can be matched deterministically.
+                sid = getattr(normalized, "source_id", None)
+                if sid:
+                    transaction.wise_transfer_id = str(sid).replace("TRANSFER-", "")
 
                 db.add(transaction)
                 transactions_created += 1
@@ -551,6 +579,27 @@ class TransactionService:
         except IntegrityError as e:
             db.rollback()
             raise ValueError(f"Database error during import: {str(e)}")
+
+        # Deterministic vendor-payout auto-pair (§7): for each newly-imported outbound row
+        # whose transfer id matches an awaiting_import payout, pair the txn to the invoice and
+        # post the knock-off. Defensive — never breaks the import if pairing errors.
+        try:
+            from src.services.payout_service import payout_service
+            newly = (db.query(FinanceTransaction)
+                     .filter(FinanceTransaction.import_batch_id == import_batch_id,
+                             FinanceTransaction.wise_transfer_id.isnot(None)).all())
+            paired = 0
+            for t in newly:
+                try:
+                    if payout_service.pair_on_import(db, t):
+                        paired += 1
+                except Exception as pe:
+                    logging.getLogger(__name__).warning(
+                        f"payout pair_on_import failed for txn {t.id}: {pe}")
+            if paired:
+                db.commit()
+        except Exception as e:
+            logging.getLogger(__name__).warning(f"payout auto-pair sweep skipped: {e}")
 
         return {
             "transactions_created": transactions_created,

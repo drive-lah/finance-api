@@ -1,0 +1,32 @@
+{
+ "1934": {
+  "case": "A",
+  "txn": 97424,
+  "inv_status": "draft",
+  "inv_journal_entry_id": null,
+  "inv_amount_paid": 0.0,
+  "txn_status": "Imported",
+  "txn_reconciled_je": null,
+  "voided_direct_expense_je": null,
+  "voided_je_prior_status": null,
+  "bill_je": 10645,
+  "pay_je": 10646,
+  "voided_je": null,
+  "ok": true
+ },
+ "444": {
+  "case": "B",
+  "txn": 11095,
+  "inv_status": "draft",
+  "inv_journal_entry_id": null,
+  "inv_amount_paid": 0.0,
+  "txn_status": "Reconciled",
+  "txn_reconciled_je": 5464,
+  "voided_direct_expense_je": 5464,
+  "voided_je_prior_status": "Posted",
+  "bill_je": 10647,
+  "pay_je": 10648,
+  "voided_je": 5464,
+  "ok": true
+ }
+}

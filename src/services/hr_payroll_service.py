@@ -88,6 +88,15 @@ class HrPayrollService:
         for k, v in data.items():
             if k in allowed:
                 setattr(emp, k, v)
+        # HR-managed fields that live on the shared users row (bank, manager, is_employee).
+        from sqlalchemy import text
+        user_fields = {k: data[k] for k in
+                       ("is_employee", "bank_account_number", "bank_code", "manager_id")
+                       if k in data}
+        if user_fields:
+            sets = ", ".join(f"{k} = :{k}" for k in user_fields)
+            params = {**user_fields, "uid": emp.user_id}
+            db.execute(text(f"UPDATE users SET {sets}, updated_at = NOW() WHERE id = :uid"), params)
         db.commit()
         db.refresh(emp)
         return emp

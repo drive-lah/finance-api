@@ -14,6 +14,7 @@ from sqlalchemy import (
     Boolean, Date, DateTime, ForeignKey, Index, Integer,
     Numeric, String, UniqueConstraint,
 )
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.database import Base
@@ -64,6 +65,14 @@ class HrEmployee(Base):
         Date, nullable=True,
         comment="Set on termination. Start date comes from users.date_of_joining",
     )
+    # Personal + employment detail — HR-owned (POL-103), moved off the users table.
+    address: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    country: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    phone_number: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    designation: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # = old org_role
+    manager_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # reporting line
+    teams: Mapped[Optional[list]] = mapped_column(ARRAY(String), nullable=True)
+    region: Mapped[Optional[list]] = mapped_column(ARRAY(String), nullable=True)  # SG/AU markets
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, server_default="now()", nullable=False,
     )

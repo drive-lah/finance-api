@@ -64,3 +64,4 @@ documentation/wip/reconciliation/backups/
 
 # Claude Code local worktrees/agent state
 .claude/
+documentation/wip/FINAL.csv

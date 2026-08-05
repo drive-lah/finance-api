@@ -29,6 +29,7 @@ def list_transactions():
     with db_session() as db:
         bank_account_id = request.args.get('bank_account_id', type=int)
         entity_id = request.args.get('entity_id', type=int)
+        counterparty_id = request.args.get('counterparty_id', type=int)
         status_str = request.args.get('status')
         date_from_str = request.args.get('date_from')
         date_to_str = request.args.get('date_to')
@@ -58,6 +59,8 @@ def list_transactions():
                 raise BadRequestError("date_to must be YYYY-MM-DD")
 
         journal_entry_id = request.args.get('journal_entry_id', type=int)
+        amount_min = request.args.get('amount_min', type=float)
+        amount_max = request.args.get('amount_max', type=float)
 
         sort_by = request.args.get('sort_by', default='date')
         sort_dir = request.args.get('sort_dir', default='desc')
@@ -70,11 +73,14 @@ def list_transactions():
             db,
             bank_account_id=bank_account_id,
             entity_id=entity_id,
+            counterparty_id=counterparty_id,
             status=status,
             date_from=date_from,
             date_to=date_to,
             search=search,
             journal_entry_id=journal_entry_id,
+            amount_min=amount_min,
+            amount_max=amount_max,
             sort_by=sort_by,
             sort_dir=sort_dir,
             limit=min(limit, 500),
@@ -82,9 +88,9 @@ def list_transactions():
         )
 
         total = transaction_service.count_all(
-            db, bank_account_id=bank_account_id, entity_id=entity_id, status=status,
+            db, bank_account_id=bank_account_id, entity_id=entity_id, counterparty_id=counterparty_id, status=status,
             date_from=date_from, date_to=date_to, search=search,
-            journal_entry_id=journal_entry_id)
+            journal_entry_id=journal_entry_id, amount_min=amount_min, amount_max=amount_max)
         resp = jsonify([TransactionResponse.model_validate(t).model_dump() for t in transactions])
         resp.headers["X-Total-Count"] = str(total)
         resp.headers["Access-Control-Expose-Headers"] = "X-Total-Count"

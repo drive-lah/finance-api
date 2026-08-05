@@ -1,0 +1,12 @@
+{
+ "255": {
+  "case": "A",
+  "txn": 9635,
+  "inv_status": "draft",
+  "inv_journal_entry_id": null,
+  "inv_amount_paid": 0.0,
+  "txn_status": "Matched",
+  "txn_reconciled_je": 3881,
+  "voided_direct_expense_je": null
+ }
+}

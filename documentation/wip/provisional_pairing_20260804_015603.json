@@ -1,0 +1,518 @@
+[
+ {
+  "match_id": 929,
+  "invoice_id": 253,
+  "transaction_id": 11325,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 930,
+  "invoice_id": 342,
+  "transaction_id": 9442,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 931,
+  "invoice_id": 343,
+  "transaction_id": 10680,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 932,
+  "invoice_id": 345,
+  "transaction_id": 10682,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 933,
+  "invoice_id": 387,
+  "transaction_id": 9467,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 934,
+  "invoice_id": 398,
+  "transaction_id": 9466,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 935,
+  "invoice_id": 427,
+  "transaction_id": 10596,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 936,
+  "invoice_id": 466,
+  "transaction_id": 10100,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 937,
+  "invoice_id": 491,
+  "transaction_id": 9229,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 938,
+  "invoice_id": 566,
+  "transaction_id": 9272,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 939,
+  "invoice_id": 567,
+  "transaction_id": 9273,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 940,
+  "invoice_id": 573,
+  "transaction_id": 9271,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 941,
+  "invoice_id": 576,
+  "transaction_id": 103418,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 942,
+  "invoice_id": 593,
+  "transaction_id": 95224,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 943,
+  "invoice_id": 595,
+  "transaction_id": 95225,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 944,
+  "invoice_id": 597,
+  "transaction_id": 97423,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 945,
+  "invoice_id": 629,
+  "transaction_id": 97326,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 946,
+  "invoice_id": 631,
+  "transaction_id": 94860,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 947,
+  "invoice_id": 644,
+  "transaction_id": 95223,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 948,
+  "invoice_id": 659,
+  "transaction_id": 95214,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 949,
+  "invoice_id": 661,
+  "transaction_id": 95213,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 950,
+  "invoice_id": 693,
+  "transaction_id": 95212,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 951,
+  "invoice_id": 695,
+  "transaction_id": 95211,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 952,
+  "invoice_id": 729,
+  "transaction_id": 94966,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 953,
+  "invoice_id": 748,
+  "transaction_id": 95210,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 954,
+  "invoice_id": 758,
+  "transaction_id": 95209,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 955,
+  "invoice_id": 763,
+  "transaction_id": 94967,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 956,
+  "invoice_id": 766,
+  "transaction_id": 94968,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 957,
+  "invoice_id": 295,
+  "transaction_id": 10864,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 958,
+  "invoice_id": 845,
+  "transaction_id": 94672,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 959,
+  "invoice_id": 852,
+  "transaction_id": 94671,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 960,
+  "invoice_id": 305,
+  "transaction_id": 9554,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 961,
+  "invoice_id": 860,
+  "transaction_id": 95222,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 962,
+  "invoice_id": 861,
+  "transaction_id": 94670,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 963,
+  "invoice_id": 878,
+  "transaction_id": 94965,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 964,
+  "invoice_id": 306,
+  "transaction_id": 10860,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 965,
+  "invoice_id": 899,
+  "transaction_id": 95207,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 966,
+  "invoice_id": 947,
+  "transaction_id": 94506,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 967,
+  "invoice_id": 948,
+  "transaction_id": 94415,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 968,
+  "invoice_id": 949,
+  "transaction_id": 94505,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 969,
+  "invoice_id": 950,
+  "transaction_id": 94504,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 970,
+  "invoice_id": 951,
+  "transaction_id": 94503,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 971,
+  "invoice_id": 1106,
+  "transaction_id": 94042,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 972,
+  "invoice_id": 1111,
+  "transaction_id": 9616,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 973,
+  "invoice_id": 1192,
+  "transaction_id": 93954,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 974,
+  "invoice_id": 1367,
+  "transaction_id": 93247,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 975,
+  "invoice_id": 1547,
+  "transaction_id": 91776,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 976,
+  "invoice_id": 995,
+  "transaction_id": 96855,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 977,
+  "invoice_id": 971,
+  "transaction_id": 96928,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 978,
+  "invoice_id": 839,
+  "transaction_id": 97156,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 979,
+  "invoice_id": 674,
+  "transaction_id": 97288,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 980,
+  "invoice_id": 672,
+  "transaction_id": 97292,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 981,
+  "invoice_id": 673,
+  "transaction_id": 97289,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 982,
+  "invoice_id": 1071,
+  "transaction_id": 96738,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 983,
+  "invoice_id": 265,
+  "transaction_id": 9605,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 984,
+  "invoice_id": 1084,
+  "transaction_id": 96723,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 985,
+  "invoice_id": 1553,
+  "transaction_id": 91691,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 986,
+  "invoice_id": 1334,
+  "transaction_id": 93679,
+  "tier": "REF_EXACT"
+ },
+ {
+  "match_id": 987,
+  "invoice_id": 1008,
+  "transaction_id": 94243,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 988,
+  "invoice_id": 2425,
+  "transaction_id": 9419,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 989,
+  "invoice_id": 1960,
+  "transaction_id": 94133,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 990,
+  "invoice_id": 2480,
+  "transaction_id": 97797,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 991,
+  "invoice_id": 2275,
+  "transaction_id": 97854,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 992,
+  "invoice_id": 759,
+  "transaction_id": 97640,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 993,
+  "invoice_id": 760,
+  "transaction_id": 97800,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 994,
+  "invoice_id": 2235,
+  "transaction_id": 97855,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 995,
+  "invoice_id": 959,
+  "transaction_id": 97497,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 996,
+  "invoice_id": 2450,
+  "transaction_id": 95102,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 997,
+  "invoice_id": 2265,
+  "transaction_id": 97852,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 998,
+  "invoice_id": 2454,
+  "transaction_id": 97850,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 999,
+  "invoice_id": 1439,
+  "transaction_id": 94410,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 1000,
+  "invoice_id": 1958,
+  "transaction_id": 92039,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 1001,
+  "invoice_id": 1997,
+  "transaction_id": 93437,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 1002,
+  "invoice_id": 2002,
+  "transaction_id": 93017,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 1003,
+  "invoice_id": 1848,
+  "transaction_id": 9409,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 1004,
+  "invoice_id": 2283,
+  "transaction_id": 97853,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 1005,
+  "invoice_id": 2299,
+  "transaction_id": 97851,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 1006,
+  "invoice_id": 2306,
+  "transaction_id": 97866,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 1007,
+  "invoice_id": 2322,
+  "transaction_id": 95103,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 1008,
+  "invoice_id": 2331,
+  "transaction_id": 97867,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 1009,
+  "invoice_id": 1959,
+  "transaction_id": 95903,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 1010,
+  "invoice_id": 1092,
+  "transaction_id": 96685,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 1011,
+  "invoice_id": 803,
+  "transaction_id": 97135,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 1012,
+  "invoice_id": 1171,
+  "transaction_id": 96623,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 1013,
+  "invoice_id": 1078,
+  "transaction_id": 96760,
+  "tier": "EXACT"
+ },
+ {
+  "match_id": 1014,
+  "invoice_id": 731,
+  "transaction_id": 97280,
+  "tier": "EXACT"
+ }
+]

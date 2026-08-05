@@ -1,0 +1,58 @@
+{
+ "270": {
+  "case": "B",
+  "txn": 11029,
+  "inv_status": "draft",
+  "inv_journal_entry_id": null,
+  "inv_amount_paid": 0.0,
+  "txn_status": "Matched",
+  "txn_reconciled_je": 4359,
+  "voided_direct_expense_je": 4359,
+  "voided_je_prior_status": "Draft",
+  "bill_je": 8803,
+  "pay_je": 8804,
+  "voided_je": 4359,
+  "ok": true
+ },
+ "275": {
+  "case": "B",
+  "txn": 9601,
+  "inv_status": "draft",
+  "inv_journal_entry_id": null,
+  "inv_amount_paid": 0.0,
+  "txn_status": "Reconciled",
+  "txn_reconciled_je": 4173,
+  "voided_direct_expense_je": 4173,
+  "voided_je_prior_status": "Posted",
+  "bill_je": 8805,
+  "pay_je": 8806,
+  "voided_je": 4173,
+  "ok": true
+ },
+ "282": {
+  "case": "B",
+  "txn": 10953,
+  "inv_status": "draft",
+  "inv_journal_entry_id": null,
+  "inv_amount_paid": 0.0,
+  "txn_status": "Matched",
+  "txn_reconciled_je": 4298,
+  "voided_direct_expense_je": 4298,
+  "voided_je_prior_status": "Draft",
+  "bill_je": 8807,
+  "pay_je": 8808,
+  "voided_je": 4298,
+  "ok": true
+ },
+ "286": {
+  "case": "B",
+  "txn": 11033,
+  "inv_status": "draft",
+  "inv_journal_entry_id": null,
+  "inv_amount_paid": 0.0,
+  "txn_status": "Matched",
+  "txn_reconciled_je": 4363,
+  "voided_direct_expense_je": 4363,
+  "voided_je_prior_status": "Draft"
+ }
+}

@@ -1,0 +1,4 @@
+txn_id,date,amount,currency,description,matched_counterparty,counterparty_id,match_tier,counterparty_default_coa
+95510,2022-05-31,1300.00,MYR,Topped up account,,,none,
+95511,2023-07-09,-487.10,MYR,Sent money to MUHAMAD HAZIQ BIN MUSTAFFA,MUHAMAD HAZIQ BIN MUSTAFFA,593,L1/L2,5062
+95512,2024-06-04,-695.34,MYR,Sent money to MUHAMAD HAZIQ BIN MUSTAFFA,MUHAMAD HAZIQ BIN MUSTAFFA,593,L1/L2,5062

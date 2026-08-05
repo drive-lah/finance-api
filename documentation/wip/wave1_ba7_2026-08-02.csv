@@ -1,0 +1,216 @@
+txn_id,date,amount,currency,description,matched_counterparty,counterparty_id,match_tier,counterparty_default_coa
+95513,2020-05-02,703.39,USD,"Converted 1,000.00 SGD to 703.39 USD",,,none,
+95514,2020-05-02,-270.00,USD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95515,2020-05-02,-380.00,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95516,2020-05-18,2000.00,USD,Topped up account,,,none,
+95517,2020-05-18,-640.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95518,2020-05-18,-290.00,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95519,2020-05-18,-80.00,USD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95520,2020-05-18,-384.00,USD,Sent money to Maria Fonseca B. Dimaandal,Maria Fonseca Dimaandal,586,L1/L2,5063
+95521,2020-05-18,-520.00,USD,Sent money to Mary Del Rosario,,,none,
+95522,2020-06-02,2131.26,USD,"Converted 3,000.00 SGD to 2,131.26 USD",,,none,
+95523,2020-06-02,-640.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95524,2020-06-02,-555.00,USD,Sent money to Mary Del Rosario,,,none,
+95525,2020-06-03,-265.00,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95526,2020-06-03,-210.00,USD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95527,2020-06-17,2142.73,USD,"Converted 3,000.00 SGD to 2,142.73 USD",,,none,
+95528,2020-06-17,-640.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95529,2020-06-17,-555.00,USD,Sent money to Mary Del Rosario,,,none,
+95530,2020-06-17,-640.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95531,2020-06-19,-240.00,USD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95532,2020-06-19,-220.00,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95533,2020-06-20,-180.00,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95534,2020-06-20,-70.00,USD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95535,2020-07-02,2145.04,USD,"Converted 3,000.00 SGD to 2,145.04 USD",,,none,
+95536,2020-07-02,-640.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95537,2020-07-02,-640.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95538,2020-07-02,-555.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95539,2020-07-02,-200.00,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95540,2020-07-02,-200.00,USD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95541,2020-07-16,2143.58,USD,"Converted 3,000.00 SGD to 2,143.58 USD",,,none,
+95542,2020-07-16,-640.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95543,2020-07-16,-555.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95544,2020-07-16,-640.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95545,2020-07-16,-200.00,USD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95546,2020-07-17,-200.00,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95547,2020-08-01,2172.97,USD,"Converted 3,000.00 SGD to 2,172.97 USD",,,none,
+95548,2020-08-01,-285.00,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95549,2020-08-01,-640.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95550,2020-08-01,-640.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95551,2020-08-01,-555.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95552,2020-08-18,2184.74,USD,"Converted 3,000.00 SGD to 2,184.74 USD",,,none,
+95553,2020-08-18,-640.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95554,2020-08-18,-200.00,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95555,2020-08-18,-640.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95556,2020-08-18,-555.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95557,2020-08-18,-200.00,USD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95558,2020-08-27,2185.61,USD,"Converted 3,000.00 SGD to 2,185.61 USD",,,none,
+95559,2020-08-27,-640.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95560,2020-08-27,-200.00,USD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95561,2020-08-27,-555.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95562,2020-08-27,-200.00,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95563,2020-08-28,146.09,USD,Converted 200.00 SGD to 146.09 USD,,,none,
+95564,2020-08-28,-640.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95565,2020-09-15,2197.27,USD,"Converted 3,000.00 SGD to 2,197.27 USD",,,none,
+95566,2020-09-15,-704.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95567,2020-09-15,-555.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95568,2020-09-15,-640.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95569,2020-09-15,-200.00,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95570,2020-10-03,2006.85,USD,"Converted 2,750.00 SGD to 2,006.85 USD",,,none,
+95571,2020-10-03,-555.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95572,2020-10-03,-640.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95573,2020-10-03,-704.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95574,2020-10-06,1098.39,USD,"Converted 1,500.00 SGD to 1,098.39 USD",,,none,
+95575,2020-10-06,-717.50,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95576,2020-10-06,-145.00,USD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95577,2020-10-06,-64.00,USD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95578,2020-10-16,1832.20,USD,"Converted 2,500.00 SGD to 1,832.20 USD",,,none,
+95579,2020-10-16,-704.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95580,2020-10-16,-640.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95581,2020-10-16,-555.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95582,2020-10-27,2197.19,USD,"Converted 3,000.00 SGD to 2,197.19 USD",,,none,
+95583,2020-10-27,-555.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95584,2020-10-27,-640.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95585,2020-10-27,-704.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95586,2020-11-09,370.70,USD,Converted 500.00 SGD to 370.70 USD,,,none,
+95587,2020-11-09,-230.00,USD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95588,2020-11-09,-780.00,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95589,2020-11-18,2225.84,USD,"Converted 3,000.00 SGD to 2,225.84 USD",,,none,
+95590,2020-11-18,-640.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95591,2020-11-18,-704.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95592,2020-11-18,-555.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95593,2020-12-01,2601.76,USD,"Converted 3,500.00 SGD to 2,601.76 USD",,,none,
+95594,2020-12-01,-640.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95595,2020-12-01,-704.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95596,2020-12-01,-444.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95597,2020-12-04,-780.50,USD,Sent money to Rogelio T. Alforte Jr,,,none,
+95598,2020-12-06,-213.50,USD,Sent money to Plutonic Services Pvt Ltd,,,none,
+95599,2020-12-09,1669.74,USD,"Converted 2,240.00 SGD to 1,669.74 USD",,,none,
+95600,2020-12-09,-150.00,USD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95601,2020-12-09,-975.00,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95602,2020-12-10,-607.00,USD,Sent money to Josephine Ann Amaba,,,none,
+95603,2020-12-18,2251.09,USD,"Converted 3,000.00 SGD to 2,251.09 USD",,,none,
+95604,2020-12-18,-704.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95605,2020-12-18,-640.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95606,2020-12-18,-555.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95607,2020-12-18,150.00,USD,Converted 200.00 SGD to 150.00 USD,,,none,
+95608,2020-12-18,-557.50,USD,Sent money to Rogelio T. Alforte Jr,,,none,
+95609,2021-01-04,7540.00,USD,"Converted 10,000.00 SGD to 7,540.00 USD",,,none,
+95610,2021-01-04,-704.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95611,2021-01-04,-640.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95612,2021-01-04,-555.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95613,2021-01-04,-557.50,USD,Sent money to Rogelio T. Alforte Jr,,,none,
+95614,2021-01-12,-268.00,USD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95615,2021-01-12,-558.00,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95616,2021-01-12,-300.00,USD,Sent money to Josephine Ann Amaba,,,none,
+95617,2021-01-18,-640.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95618,2021-01-18,-557.50,USD,Sent money to Rogelio T. Alforte Jr,,,none,
+95619,2021-01-18,-704.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95620,2021-01-18,-555.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95621,2021-01-31,-704.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95622,2021-01-31,-640.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95623,2021-01-31,2245.84,USD,"Converted 3,000.00 SGD to 2,245.84 USD",,,none,
+95624,2021-01-31,-555.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95625,2021-01-31,-557.50,USD,Sent money to Rogelio T. Alforte Jr,,,none,
+95626,2021-02-14,-500.00,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95627,2021-02-14,-200.00,USD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95628,2021-02-14,-310.00,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95629,2021-02-17,1496.89,USD,"Converted 2,000.00 SGD to 1,496.89 USD",,,none,
+95630,2021-02-17,-640.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95631,2021-02-17,-704.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95632,2021-02-17,1496.72,USD,"Converted 2,000.00 SGD to 1,496.72 USD",,,none,
+95633,2021-02-17,-600.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95634,2021-03-05,-704.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95635,2021-03-05,-555.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95636,2021-03-05,2232.58,USD,"Converted 3,000.00 SGD to 2,232.58 USD",,,none,
+95637,2021-03-05,-640.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95638,2021-03-14,-700.00,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95639,2021-03-14,-200.00,USD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95640,2021-03-20,-704.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95641,2021-03-24,2218.40,USD,"Converted 3,000.00 SGD to 2,218.40 USD",,,none,
+95642,2021-03-24,-640.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95643,2021-03-24,-555.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95644,2021-04-04,-704.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95645,2021-04-04,2959.08,USD,"Converted 4,000.00 SGD to 2,959.08 USD",,,none,
+95646,2021-04-04,-640.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95647,2021-04-04,-555.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95648,2021-04-04,-276.00,USD,Sent money to Lai Mei Regina Teh,Lai Mei T,247,L1/L2,6000
+95649,2021-04-09,-660.00,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95650,2021-04-09,-200.00,USD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95651,2021-04-19,2240.45,USD,"Converted 3,000.00 SGD to 2,240.45 USD",,,none,
+95652,2021-04-19,-704.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95653,2021-04-19,-624.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95654,2021-04-19,-648.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95655,2021-04-19,-552.00,USD,Sent money to Lai Mei Regina Teh,Lai Mei T,247,L1/L2,6000
+95656,2021-05-04,2985.03,USD,"Converted 4,000.00 SGD to 2,985.03 USD",,,none,
+95657,2021-05-04,-704.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95658,2021-05-04,-648.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95659,2021-05-04,-552.00,USD,Sent money to Lai Mei Regina Teh,Lai Mei T,247,L1/L2,6000
+95660,2021-05-04,-624.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95661,2021-05-13,-825.00,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95662,2021-05-13,-200.00,USD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95663,2021-05-17,2608.38,USD,"Converted 3,500.00 SGD to 2,608.38 USD",,,none,
+95664,2021-05-17,-624.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95665,2021-05-17,-552.00,USD,Sent money to Lai Mei Regina Teh,Lai Mei T,247,L1/L2,6000
+95666,2021-05-17,-704.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95667,2021-05-17,-648.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95668,2021-05-17,1043.35,USD,"Converted 1,400.00 SGD to 1,043.35 USD",,,none,
+95669,2021-05-17,-597.60,USD,Sent money to Rubi Marie Z. Tonogbanua,,,none,
+95670,2021-05-17,-540.00,USD,Sent money to Joseph Roldan,,,none,
+95671,2021-05-27,5265.24,USD,"Converted 7,000.00 SGD to 5,265.24 USD",,,none,
+95672,2021-05-27,-704.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95673,2021-05-27,-624.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95674,2021-05-27,-648.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95675,2021-05-27,-648.00,USD,Sent money to Lai Mei Regina Teh,Lai Mei T,247,L1/L2,6000
+95676,2021-05-27,-552.00,USD,Sent money to Rubi Marie Z. Tonogbanua,,,none,
+95677,2021-05-27,-648.00,USD,Sent money to Joseph Roldan,,,none,
+95678,2021-05-28,-441.00,USD,Sent money to Roseanne Dimaranan,,,none,
+95679,2021-06-11,-660.00,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95680,2021-06-11,-200.00,USD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95681,2021-06-17,2970.78,USD,"Converted 4,000.00 SGD to 2,970.78 USD",,,none,
+95682,2021-06-17,-704.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95683,2021-06-17,-648.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95684,2021-06-17,-624.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95685,2021-06-17,-648.00,USD,Sent money to Lai Mei Regina Teh,Lai Mei T,247,L1/L2,6000
+95686,2021-06-17,-552.00,USD,Sent money to Rubi Marie Z. Tonogbanua,,,none,
+95687,2021-06-17,2966.68,USD,"Converted 4,000.00 SGD to 2,966.68 USD",,,none,
+95688,2021-06-17,-648.00,USD,Sent money to Joseph Roldan,,,none,
+95689,2021-06-17,-588.00,USD,Sent money to Roseanne Dimaranan,,,none,
+95690,2021-06-27,3485.46,USD,"Converted 4,700.00 SGD to 3,485.46 USD",,,none,
+95691,2021-06-27,-704.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95692,2021-06-27,-624.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95693,2021-06-27,-648.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95694,2021-06-27,-648.00,USD,Sent money to Lai Mei Regina Teh,Lai Mei T,247,L1/L2,6000
+95695,2021-06-27,-552.00,USD,Sent money to Rubi Marie Z. Tonogbanua,,,none,
+95696,2021-06-27,-648.00,USD,Sent money to Joseph Roldan,,,none,
+95697,2021-06-27,-588.00,USD,Sent money to Roseanne Dimaranan,,,none,
+95698,2021-07-11,-545.00,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95699,2021-07-12,-190.00,USD,Sent money to Janina Paola Catuncan,,,none,
+95700,2021-07-12,-200.00,USD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95701,2021-07-12,1473.19,USD,"Converted 2,000.00 SGD to 1,473.19 USD",,,none,
+95702,2021-07-12,-702.00,USD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95703,2021-07-17,5135.27,USD,"Converted 7,000.00 SGD to 5,135.27 USD",,,none,
+95704,2021-07-17,-704.00,USD,Sent money to Yehlen P. Alforte,,,none,
+95705,2021-07-17,-624.00,USD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95706,2021-07-17,-648.00,USD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95707,2021-07-17,-648.00,USD,Sent money to Lai Mei Regina Teh,Lai Mei T,247,L1/L2,6000
+95708,2021-07-17,-552.00,USD,Sent money to Rubi Marie Z. Tonogbanua,,,none,
+95709,2021-07-17,-648.00,USD,Sent money to Joseph Roldan,,,none,
+95710,2021-07-17,-588.00,USD,Sent money to Roseanne Dimaranan,,,none,
+95711,2021-07-17,-954.00,USD,Sent money to Maricon R. Eviza,Maricon Viza,246,L1/L2,5063
+95712,2021-07-18,-96.00,USD,Sent money to Rubi Marie Z. Tonogbanua,,,none,
+95713,2021-07-29,-156.42,USD,Sent money to JENNELYN DACQUIADO,,,none,
+95714,2021-07-29,-156.48,USD,Sent money to Joseph Roldan,,,none,
+95715,2021-07-30,735.78,USD,"Converted 1,000.00 SGD to 735.78 USD",,,none,
+95716,2021-07-30,-648.00,USD,Sent money to Joseph Roldan,,,none,
+95717,2021-07-30,-96.00,USD,Sent money to Rubi Marie Z. Tonogbanua,,,none,
+95718,2021-08-12,2932.93,USD,"Converted 4,000.00 SGD to 2,932.93 USD",,,none,
+95719,2021-08-12,-2764.74,USD,Sent money to Roobykon Software OÜ,Roobykon,127,L1/L2,1710
+95720,2021-09-07,4223.81,USD,"Converted 5,707.92 SGD to 4,223.81 USD",,,none,
+95721,2021-09-07,-4223.81,USD,Sent money to Roobykon Software OÜ,Roobykon,127,L1/L2,1710
+95722,2021-11-07,12577.00,USD,"Converted 17,053.03 SGD to 12,577.00 USD",,,none,
+95723,2021-11-07,-12577.84,USD,Sent money to Roobykon Software OÜ,Roobykon,127,L1/L2,1710
+95724,2022-07-18,142.51,USD,Converted 200.00 SGD to 142.51 USD,,,none,
+95725,2022-07-18,-417.00,USD,Sent money to Ahmed Nasr Hammam Nasr,Ahmed Nasr Hammam Nasr,481,L1/L2,5063
+95726,2025-02-11,12725.00,USD,"Converted 17,307.16 SGD to 12,725.00 USD",,,none,
+95727,2025-02-11,-12737.23,USD,Sent money to Humax Australia PTY LTD,Humax,82,L1/L2,5030

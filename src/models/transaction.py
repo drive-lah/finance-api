@@ -160,6 +160,12 @@ class FinanceTransaction(Base):
         nullable=True,
         comment="External source transaction ID (Stripe, Wise, Xero, etc.) for deduplication"
     )
+    wise_transfer_id: Mapped[Optional[str]] = mapped_column(
+        String(64),
+        nullable=True,
+        comment="Wise transfer id (unique per transfer) — LOOKUP key for vendor-payout "
+                "auto-pair at import time (NOT a dedup key; fingerprint still dedups)",
+    )
     coa_account_code: Mapped[Optional[str]] = mapped_column(
         String(20),
         nullable=True,

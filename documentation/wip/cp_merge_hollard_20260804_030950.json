@@ -1,0 +1,24 @@
+{
+ "op": "Hollard->Insuret",
+ "src": 658,
+ "dst": 86,
+ "invoice_ids": [
+  1934
+ ],
+ "txn_ids": [
+  97381,
+  97418,
+  97424,
+  97637,
+  100193,
+  9899,
+  10100,
+  10106
+ ],
+ "src_name": "The Hollard Insurance Company",
+ "src_aliases": [],
+ "dst_aliases_before": [
+  "INSURET CLAIM",
+  "Insuret Premium"
+ ]
+}

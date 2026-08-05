@@ -1,0 +1,242 @@
+{
+ "captured": "2026-08-04T13:24:50.316733",
+ "ids": [
+  437,
+  984,
+  986,
+  1214,
+  1232,
+  1286,
+  1387,
+  2212,
+  2324,
+  2358,
+  2359,
+  2361,
+  2364,
+  2367,
+  2369,
+  2371,
+  2372,
+  2373,
+  2374,
+  2377,
+  2382,
+  2383,
+  2393,
+  2394,
+  2396,
+  2416
+ ],
+ "total_void_before": 4,
+ "rows": [
+  {
+   "id": 2364,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 437,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 2393,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 2361,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 2371,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 2372,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 2373,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 2382,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 2383,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 2416,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 2377,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 2369,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 2374,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 984,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 986,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 2359,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 2212,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 2358,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 2394,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 1214,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 1232,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 1286,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 2396,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 1387,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 2324,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  },
+  {
+   "id": 2367,
+   "status": "draft",
+   "total_amount": "0.00",
+   "voided_by": null,
+   "voided_at": null,
+   "void_reason": null
+  }
+ ]
+}

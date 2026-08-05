@@ -1,0 +1,24 @@
+{
+ "315": {
+  "case": "B",
+  "txn": 10592,
+  "icfx": true,
+  "inv_status": "draft",
+  "inv_journal_entry_id": null,
+  "inv_amount_paid": 0.0,
+  "txn_status": "Reconciled",
+  "txn_reconciled_je": 5134,
+  "voided_direct_expense_je": 5134,
+  "voided_je_prior_status": "Posted",
+  "orig_total": 10379.34,
+  "func_amount": 10379.34,
+  "cash_amount": 11295.56,
+  "pay_ccy": "AUD",
+  "inv_func": "SGD",
+  "bill_je": 10512,
+  "pay_je": 10513,
+  "inv_leg_je": 10514,
+  "voided_je": 5134,
+  "ok": true
+ }
+}
