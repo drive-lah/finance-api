@@ -273,11 +273,25 @@ class HrOnboardingService:
         # 7. Create HrEmployee record (if not exists)
         emp = db.query(HrEmployee).filter(HrEmployee.user_id == user_id).first()
         if not emp:
+            # Copy personal/employment from the users staging row into HR (POL-103),
+            # applying the SG/AU region-market map (global -> both markets).
+            u = db.execute(text(
+                "SELECT address, country, phone_number, org_role, manager_id, teams, region "
+                "FROM users WHERE id = :id"), {"id": user_id}).mappings().first() or {}
+            _RMAP = {"global": ["SG", "AU"], "singapore": ["SG"], "australia": ["AU"]}
             emp = HrEmployee(
                 user_id=user_id,
                 entity_id=payroll_entity_id,
                 employee_type=employee_type,
+                tax_treatment=item.get("tax_treatment") or "SELF_MANAGED",
                 salary_expense_code=salary_expense_code,
+                address=u.get("address"),
+                country=u.get("country"),
+                phone_number=u.get("phone_number"),
+                designation=u.get("org_role"),
+                manager_id=u.get("manager_id"),
+                teams=u.get("teams"),
+                region=_RMAP.get((u.get("region") or "").lower()),
             )
             db.add(emp)
             db.flush()  # assign emp.id for compensation / deduction FKs
@@ -378,8 +392,9 @@ class HrOnboardingService:
         self, db: Session, user_id: int, payload: dict[str, Any]
     ) -> dict[str, Any]:
         """
-        Offboard an employee: flip is_employee, set employment_end_date,
-        deactivate counterparty. Soft-delete — records kept for audit.
+        Offboard an employee: set employment_end_date (users + hr_employees),
+        deactivate the payee counterparty. is_employee STAYS TRUE — a past
+        employee is still an employee for HR visibility (POL-102). Soft-delete.
 
         Args:
             db: SQLAlchemy session
@@ -441,36 +456,37 @@ class HrOnboardingService:
                 "message": f"User {user_id} is already offboarded (end date: {employment_end_date})",
             }
 
-        # --- Validate: must be currently onboarded ---
-        if not is_employee:
+        # --- Validate: must be ONBOARDED — i.e. have an hr_employees record. is_employee
+        # is NOT the onboarded signal (POL-102): it means "is/was staff" and STAYS TRUE
+        # through offboarding so past employees remain visible in HR. Onboarded = an
+        # hr_employees row exists; offboarded = that row's employment_end_date is set. ---
+        hr_emp = db.query(HrEmployee).filter(HrEmployee.user_id == user_id).first()
+        if hr_emp is None:
             return {
                 "success": False,
                 "error_type": "conflict",
-                "message": f"User {user_id} is not currently onboarded",
+                "message": f"User {user_id} is not onboarded (no employee record)",
             }
 
         # --- Use savepoint for atomicity ---
         savepoint = db.begin_nested()
         try:
-            # 1. Update users table
+            # 1. Set the employment end date. is_employee STAYS TRUE (POL-102): an
+            # offboarded person is a PAST employee, still shown in the HR module. Only
+            # employment_end_date distinguishes offboarded from active.
             db.execute(
                 text(
-                    "UPDATE users SET "
-                    "is_employee = :is_employee, "
-                    "employment_end_date = :end_date "
-                    "WHERE id = :id"
+                    "UPDATE users SET employment_end_date = :end_date WHERE id = :id"
                 ),
                 {
-                    "is_employee": False,
                     "end_date": offboard_date.isoformat(),
                     "id": user_id,
                 },
             )
 
-            # 2. Update HrEmployee record (if exists)
-            hr_emp = db.query(HrEmployee).filter(HrEmployee.user_id == user_id).first()
-            if hr_emp:
-                hr_emp.employment_end_date = offboard_date
+            # 2. Stamp the end date on the HrEmployee record (the authoritative
+            # onboarded-vs-offboarded signal).
+            hr_emp.employment_end_date = offboard_date
 
             # 3. Deactivate FinanceCounterparty (if exists)
             cp = db.query(FinanceCounterparty).filter(
@@ -491,7 +507,7 @@ class HrOnboardingService:
                 "user": {
                     "user_id": user_id,
                     "name": user_name,
-                    "is_employee": False,
+                    "is_employee": True,  # stays true — past employee (POL-102)
                     "employment_end_date": offboard_date.isoformat(),
                     "status": "offboarded",
                 },

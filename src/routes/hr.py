@@ -36,6 +36,20 @@ from src.services.hr_payroll_service import hr_payroll_service
 hr_bp = Blueprint("hr", __name__, url_prefix="/api/hr")
 
 
+def hr_audit(db, action, target_user_id=None, target_employee_id=None, detail=None):
+    """Append an HR change to hr_audit_log (who/what/when). Actor = the BFF-forwarded
+    identity header (falls back to 'unknown'). Call after a successful mutation."""
+    import json as _json
+    from sqlalchemy import text as _text
+    actor = (request.headers.get("X-User-Email") or request.headers.get("X-User-Name")
+             or request.headers.get("X-User-Id") or "unknown")
+    db.execute(_text("""insert into hr_audit_log
+        (actor, action, target_user_id, target_employee_id, detail)
+        values (:actor, :action, :tu, :te, cast(:detail as jsonb))"""),
+        {"actor": actor, "action": action, "tu": target_user_id,
+         "te": target_employee_id, "detail": _json.dumps(detail, default=str) if detail else None})
+
+
 # ── Inline Pydantic schemas (kept here — not in shared schemas.py) ────────────
 
 class EmployeeCreate(BaseModel):
@@ -127,10 +141,85 @@ def create_employee():
 
 @hr_bp.route("/employees", methods=["GET"])
 def list_employees():
+    """List ALL employees — every user with is_employee=true — with their onboarding
+    status (POL-102): not_onboarded (no hr_employees row) / onboarded (row, no end date)
+    / offboarded (row, end date set). Fields prefer the hr_employees record when the
+    person is onboarded, else fall back to the users staging row. region resolves to the
+    SG/AU market array (POL-103): staged single-value users.region is mapped on the fly."""
+    from sqlalchemy import text
     entity_id = request.args.get("entity_id", type=int)
+    REGION_MAP = {"global": ["SG", "AU"], "singapore": ["SG"], "australia": ["AU"]}
     with db_session() as db:
-        emps = hr_payroll_service.get_employees(db, entity_id)
-        return jsonify([_employee_dict(e, db) for e in emps])
+        rows = db.execute(text("""
+            select u.id as user_id, u.name, u.email, u.system_ids,
+                   e.id as employee_id, e.entity_id, e.employment_end_date,
+                   e.tax_treatment, e.salary_expense_code, e.region as hr_region,
+                   coalesce(e.employee_type, u.employee_type) as employee_type,
+                   coalesce(e.designation, u.org_role) as designation,
+                   coalesce(e.manager_id, u.manager_id) as manager_id,
+                   coalesce(e.address, u.address) as address,
+                   coalesce(e.country, u.country) as country,
+                   coalesce(e.phone_number, u.phone_number) as phone_number,
+                   coalesce(e.teams, u.teams) as teams,
+                   u.region as staging_region, u.date_of_joining,
+                   m.name as manager_name
+            from users u
+            left join hr_employees e on e.user_id = u.id
+            left join users m on m.id = coalesce(e.manager_id, u.manager_id)
+            where u.is_employee = true
+            """ + ("and (e.entity_id = :eid or e.id is null)" if entity_id else "") + """
+            order by u.name
+        """), ({"eid": entity_id} if entity_id else {})).mappings().all()
+        # COA code -> human name (nobody reads codes); distinct across entities
+        coa_names = {r["code"]: r["name"] for r in db.execute(
+            text("select distinct code, name from finance_accounts")).mappings().all()}
+        out = []
+        for r in rows:
+            if r["employee_id"] is None:
+                status = "not_onboarded"
+            elif r["employment_end_date"] is not None:
+                status = "offboarded"
+            else:
+                status = "onboarded"
+            region = r["hr_region"] or REGION_MAP.get((r["staging_region"] or "").lower())
+            out.append({
+                "id": r["employee_id"], "employee_id": r["employee_id"],
+                "user_id": r["user_id"], "name": r["name"], "email": r["email"],
+                "onboarding_status": status, "onboarded": status == "onboarded",
+                "entity_id": r["entity_id"], "employee_type": r["employee_type"],
+                "tax_treatment": r["tax_treatment"], "salary_expense_code": r["salary_expense_code"],
+                "salary_expense_name": coa_names.get(r["salary_expense_code"]),
+                "designation": r["designation"], "manager_id": r["manager_id"],
+                "manager_name": r["manager_name"], "address": r["address"],
+                "country": r["country"], "phone_number": r["phone_number"],
+                "teams": r["teams"], "region": region,
+                "date_of_joining": r["date_of_joining"].isoformat() if r["date_of_joining"] else None,
+                "employment_end_date": r["employment_end_date"].isoformat() if r["employment_end_date"] else None,
+                "system_ids": r["system_ids"],
+            })
+        return jsonify(out)
+
+
+@hr_bp.route("/audit", methods=["GET"])
+def list_audit():
+    """HR change audit trail (who/what/when). Optional ?user_id= to filter to one person."""
+    from sqlalchemy import text as _text
+    user_id = request.args.get("user_id", type=int)
+    with db_session() as db:
+        q = ("select id, actor, action, target_user_id, target_employee_id, detail, created_at "
+             "from hr_audit_log")
+        params = {}
+        if user_id:
+            q += " where target_user_id = :uid"
+            params["uid"] = user_id
+        q += " order by created_at desc limit 200"
+        rows = db.execute(_text(q), params).mappings().all()
+        return jsonify([{
+            "id": r["id"], "actor": r["actor"], "action": r["action"],
+            "target_user_id": r["target_user_id"], "target_employee_id": r["target_employee_id"],
+            "detail": r["detail"],
+            "created_at": r["created_at"].isoformat() if r["created_at"] else None,
+        } for r in rows])
 
 
 @hr_bp.route("/employees/<int:employee_id>", methods=["GET"])
@@ -154,6 +243,8 @@ def update_employee(employee_id: int):
             emp = hr_payroll_service.update_employee(
                 db, employee_id, payload.model_dump(exclude_none=True)
             )
+            hr_audit(db, "update_employee", target_user_id=emp.user_id,
+                     target_employee_id=employee_id, detail=payload.model_dump(exclude_none=True))
             return jsonify(_employee_dict(emp, db))
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
@@ -173,6 +264,7 @@ def add_compensation(employee_id: int):
     try:
         with db_session() as db:
             comp = hr_payroll_service.add_compensation(db, employee_id, payload.model_dump())
+            hr_audit(db, "add_compensation", target_employee_id=employee_id, detail=payload.model_dump())
             return jsonify(_compensation_dict(comp)), 201
     except ValueError as e:
         return jsonify({"error": str(e)}), 400

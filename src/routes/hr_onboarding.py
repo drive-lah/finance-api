@@ -66,6 +66,9 @@ def individual_onboard(user_id: int):
 
     with db_mod.db_session() as db:
         result = hr_onboarding_service.single_onboard(db, user_id=user_id, payload=data)
+        if result.get("success"):
+            from src.routes.hr import hr_audit
+            hr_audit(db, "onboard", target_user_id=user_id, detail=data)
 
     if result["success"]:
         return jsonify(result["user"]), 200
@@ -98,6 +101,9 @@ def offboard_employee(user_id: int):
 
     with db_mod.db_session() as db:
         result = hr_onboarding_service.offboard_employee(db, user_id=user_id, payload=data)
+        if result.get("success"):
+            from src.routes.hr import hr_audit
+            hr_audit(db, "offboard", target_user_id=user_id, detail=data)
 
     if result["success"]:
         return jsonify(result["user"]), 200
