@@ -225,3 +225,60 @@ class TestCbaPdf2026Layout:
         a = CBAiPdfAdapter()
         rows = a.parse(open(PDF_2026, "rb").read())
         assert any("Transfer To Wise Australia" in r.description for r in rows)
+
+
+# Monthly "Transaction Summary" interim export (2026). Distinct layout: prose
+# period sentence, no OPENING/CLOSING anchors, typographically-signed '$' amounts,
+# per-row running balances. Fixture lives under CBA/2026 in the main checkout.
+def _cba_find(rel):
+    for root in (
+        FIXDIR,
+        "/Users/gauravsinghal/Documents/Work/G-master/drivelah/finance-api/"
+        "documentation/wip/bank_statements/CBA",
+    ):
+        p = os.path.join(root, rel)
+        if os.path.exists(p):
+            return p
+    return None
+
+
+PDF_INTERIM = _cba_find("2026/CBA_TransactionSummary_2026-07_(monthly-interim).pdf")
+
+
+@pytest.mark.skipif(PDF_INTERIM is None, reason="CBA monthly interim fixture not on disk")
+class TestCbaPdfMonthlyInterim:
+    """The monthly interim layout used to raise 'statement period not found' and
+    parse 0 rows because its period is a prose sentence, not 'Statement Period'.
+    VR-1b added a dedicated branch that derives opening/closing from the
+    running-balance chain."""
+
+    @pytest.fixture(scope="class")
+    def parsed(self):
+        a = CBAiPdfAdapter()
+        rows = a.parse(open(PDF_INTERIM, "rb").read())
+        return a, rows
+
+    def test_parses_rows_and_derives_anchors(self, parsed):
+        a, rows = parsed
+        assert len(rows) == 98            # was 0 before the VR-1b branch
+        assert a.errors == []
+        assert a.statement_opening_balance == Decimal("3172.48")
+        assert a.statement_closing_balance == Decimal("8879.09")
+
+    def test_self_reconciles(self, parsed):
+        a, rows = parsed
+        total = sum((r.amount for r in rows), Decimal("0"))
+        assert a.statement_opening_balance + total == a.statement_closing_balance
+
+    def test_balance_chain_holds(self, parsed):
+        a, rows = parsed
+        prev = a.statement_opening_balance
+        for r in rows:
+            assert prev + r.amount == r.running_balance, (
+                f"chain broke at {r.transaction_date} {r.description[:40]!r}")
+            prev = r.running_balance
+
+    def test_typographic_signs_parsed(self, parsed):
+        _, rows = parsed
+        assert any(r.amount < 0 for r in rows)   # '-$' debits
+        assert any(r.amount > 0 for r in rows)   # '$' credits

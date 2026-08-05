@@ -175,6 +175,27 @@ _PERIOD_RE = re.compile(
     re.DOTALL,
 )
 _ACCOUNT_RE = re.compile(r'Account\s*Number\s+([\d\s]+?)\s*$', re.MULTILINE)
+
+# ── Monthly "Transaction Summary" interim layout (2026) ─────────────────────
+# A different CBA export from the quarterly statement: no OPENING/CLOSING
+# anchors, no debit/credit columns. The period is a prose sentence and each
+# transaction prints DD MMM YYYY, a typographically-signed amount, and the
+# running balance, both '$'-tagged:
+#     "Here's your account information and a list of transactions from 01/07/26-31/07/26."
+#     "01 Jul 2026 NOTION LABS, INC. ... -$374.46 $2,798.02"
+# Opening/closing are DERIVED from the running-balance chain (first row's
+# balance minus its amount = opening; last row's balance = closing).
+_INTERIM_PERIOD_RE = re.compile(
+    r'list of transactions from\s*'
+    r'(\d{1,2})/(\d{1,2})/(\d{2})\s*-\s*(\d{1,2})/(\d{1,2})/(\d{2})',
+    re.IGNORECASE,
+)
+# Transaction row: date, description, signed '$'-amount, '$'-balance.
+_INTERIM_TXN_RE = re.compile(
+    r'^(\d{1,2})\s+([A-Z][a-z]{2})\s+(\d{4})\s+(.*?)\s+'
+    r'(-?\$[\d,]+\.\d{2})\s+(\$[\d,]+\.\d{2})\s*$'
+)
+
 _OPENING_RE = re.compile(r'OPENING\s*BALANCE')
 _CLOSING_RE = re.compile(r'CLOSING\s*BALANCE')
 # A brand-new account opens at zero — this vintage prints the opening as the
@@ -247,6 +268,12 @@ class CBAiPdfAdapter(BankCSVAdapter):
         if m:
             self.statement_account_number = m.group(1).strip()
 
+        # Monthly "Transaction Summary" interim layout — a distinct export with
+        # its own period sentence, its own row grammar, and no printed
+        # opening/closing anchors. Handled by a dedicated walker.
+        if _INTERIM_PERIOD_RE.search(full_text):
+            return self._parse_interim(lines)
+
         period = self._parse_period(full_text)
         if period is None:
             raise ValueError(
@@ -269,6 +296,83 @@ class CBAiPdfAdapter(BankCSVAdapter):
                 "CBA PDF: OPENING/CLOSING BALANCE anchors not both found — "
                 "self-reconciliation skipped")
 
+        return rows
+
+    def _parse_interim(self, lines: list[str]) -> list[NormalizedRow]:
+        """Walk the monthly "Transaction Summary" interim layout.
+
+        Rows carry a typographically-signed '$'-amount and a running '$'-balance;
+        there are NO printed OPENING/CLOSING anchors, so the opening is derived
+        as (first row's balance − first row's amount) and the closing is the last
+        row's balance. Continuation lines (Card xx…, Value Date:, references)
+        carry no trailing amount+balance pair and are appended to the description
+        of the row they follow.
+        """
+        rows: list[NormalizedRow] = []
+        prev_balance: Optional[Decimal] = None
+
+        for raw in lines:
+            line = raw.strip()
+            if not line:
+                continue
+            m = _INTERIM_TXN_RE.match(line)
+            if not m:
+                # continuation / furniture — attach text to the current row's
+                # description if it looks like a detail line (not page furniture).
+                if rows and not any(nre.search(line) for nre in _NOISE_RES) \
+                        and 'Date Transaction details' not in line \
+                        and not line.startswith('Page ') \
+                        and not line.startswith('Created ') \
+                        and 'not responsible for any reliance' not in line \
+                        and 'account information and a list of transactions' not in line:
+                    tail = line.strip()
+                    if tail:
+                        rows[-1].description = f"{rows[-1].description} {tail}".strip()
+                continue
+
+            day, mon, year = int(m.group(1)), MONTH_MAP.get(m.group(2)), int(m.group(3))
+            if mon is None:
+                continue
+            try:
+                txn_date = date(year, mon, day)
+            except ValueError:
+                self.errors.append(f"CBA PDF interim: bad date on {line!r} — row skipped")
+                continue
+
+            description = m.group(4).strip()
+            amount = Decimal(m.group(5).replace('$', '').replace(',', ''))
+            balance = Decimal(m.group(6).replace('$', '').replace(',', ''))
+
+            if prev_balance is None:
+                # Derive the section opening from the first row's own chain.
+                self.statement_opening_balance = balance - amount
+            elif prev_balance + amount != balance:
+                self.errors.append(
+                    f"CBA PDF interim: balance chain broke at {line!r} "
+                    f"(prev {prev_balance} + {amount} != {balance})")
+
+            rows.append(NormalizedRow(
+                transaction_date=txn_date,
+                description=description,
+                amount=amount,
+                currency="AUD",
+                running_balance=balance,
+            ))
+            prev_balance = balance
+
+        if rows:
+            self.statement_closing_balance = rows[-1].running_balance
+
+        # Self-reconcile gate (same law as the quarterly path).
+        if self.statement_opening_balance is not None and self.statement_closing_balance is not None:
+            total = sum((r.amount for r in rows), Decimal("0"))
+            expected = self.statement_closing_balance - self.statement_opening_balance
+            if total != expected:
+                raise ValueError(
+                    f"CBA PDF interim failed self-reconciliation: opening "
+                    f"{self.statement_opening_balance} + movements {total} != closing "
+                    f"{self.statement_closing_balance} (off by {expected - total}). "
+                    f"Import refused — the parse is incomplete or wrong.")
         return rows
 
     @staticmethod
