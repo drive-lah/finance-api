@@ -36,18 +36,26 @@ from src.services.hr_payroll_service import hr_payroll_service
 hr_bp = Blueprint("hr", __name__, url_prefix="/api/hr")
 
 
-def hr_audit(db, action, target_user_id=None, target_employee_id=None, detail=None):
-    """Append an HR change to hr_audit_log (who/what/when). Actor = the BFF-forwarded
-    identity header (falls back to 'unknown'). Call after a successful mutation."""
-    import json as _json
+def hr_audit(db=None, action=None, target_user_id=None, target_employee_id=None, detail=None):
+    """Append an HR change to hr_audit_log (who/what/when). FIRE-AND-FORGET in its OWN
+    session so an audit failure can NEVER roll back or poison the caller's mutation
+    (review finding, 2026-08-05). Actor = BFF-forwarded identity header, else 'unknown'.
+    The `db` arg is accepted for call-site compatibility but intentionally unused."""
+    import json as _json, logging
     from sqlalchemy import text as _text
     actor = (request.headers.get("X-User-Email") or request.headers.get("X-User-Name")
              or request.headers.get("X-User-Id") or "unknown")
-    db.execute(_text("""insert into hr_audit_log
-        (actor, action, target_user_id, target_employee_id, detail)
-        values (:actor, :action, :tu, :te, cast(:detail as jsonb))"""),
-        {"actor": actor, "action": action, "tu": target_user_id,
-         "te": target_employee_id, "detail": _json.dumps(detail, default=str) if detail else None})
+    try:
+        with db_session() as adb:
+            adb.execute(_text("""insert into hr_audit_log
+                (actor, action, target_user_id, target_employee_id, detail)
+                values (:actor, :action, :tu, :te, cast(:detail as jsonb))"""),
+                {"actor": actor, "action": action, "tu": target_user_id,
+                 "te": target_employee_id,
+                 "detail": _json.dumps(detail, default=str) if detail else None})
+    except Exception:
+        logging.getLogger(__name__).warning(
+            "hr_audit write failed (action=%s user=%s)", action, target_user_id, exc_info=True)
 
 
 # ── Inline Pydantic schemas (kept here — not in shared schemas.py) ────────────

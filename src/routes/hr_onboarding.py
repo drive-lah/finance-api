@@ -39,6 +39,12 @@ def bulk_onboard():
     with db_mod.db_session() as db:
         result = hr_onboarding_service.bulk_onboard(db, data)
 
+    if result.get("success"):
+        from src.routes.hr import hr_audit  # fire-and-forget, own session
+        hr_audit(action="bulk_onboard",
+                 detail={"count": result.get("onboarded_count"),
+                         "user_ids": [i.get("user_id") for i in data if isinstance(i, dict)]})
+
     if result["success"]:
         return jsonify(result), 200
     else:
@@ -89,8 +95,9 @@ def offboard_employee(user_id: int):
     Offboard an employee by user ID.
 
     Expects a JSON object with offboard_date (required), reason, notes (optional).
-    Soft-deletes: sets is_employee=false, employment_end_date, deactivates counterparty.
-    Returns 200 with user details on success.
+    Sets employment_end_date on users + hr_employees and deactivates the payee
+    counterparty. is_employee STAYS TRUE — a past employee remains visible in HR
+    (POL-102). Returns 200 with user details on success.
     """
     data = request.get_json(silent=True)
     if data is None:
