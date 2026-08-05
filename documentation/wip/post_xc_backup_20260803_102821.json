@@ -1,0 +1,38 @@
+{
+ "244": {
+  "case": "B",
+  "txn": 9633,
+  "xcurrency": true,
+  "inv_status": "draft",
+  "inv_journal_entry_id": null,
+  "inv_amount_paid": 0.0,
+  "txn_status": "Matched",
+  "txn_reconciled_je": 3880,
+  "voided_direct_expense_je": 3880,
+  "voided_je_prior_status": "Draft",
+  "orig_total": 2198.7,
+  "func_amount": 2857.78,
+  "bill_je": 10218,
+  "pay_je": 10219,
+  "voided_je": 3880,
+  "ok": true
+ },
+ "283": {
+  "case": "B",
+  "txn": 10952,
+  "xcurrency": true,
+  "inv_status": "draft",
+  "inv_journal_entry_id": null,
+  "inv_amount_paid": 0.0,
+  "txn_status": "Matched",
+  "txn_reconciled_je": 4297,
+  "voided_direct_expense_je": 4297,
+  "voided_je_prior_status": "Draft",
+  "orig_total": 808.08,
+  "func_amount": 1169.83,
+  "bill_je": 10220,
+  "pay_je": 10221,
+  "voided_je": 4297,
+  "ok": true
+ }
+}

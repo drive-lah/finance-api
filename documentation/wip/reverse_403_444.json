@@ -1,0 +1,32 @@
+{
+ "403": {
+  "case": "B",
+  "txn": 11120,
+  "inv_status": "draft",
+  "inv_journal_entry_id": null,
+  "inv_amount_paid": 0.0,
+  "txn_status": "Reconciled",
+  "txn_reconciled_je": 5488,
+  "voided_direct_expense_je": 5488,
+  "voided_je_prior_status": "Posted",
+  "bill_je": 8920,
+  "pay_je": 8921,
+  "voided_je": 5488,
+  "ok": true
+ },
+ "444": {
+  "case": "B",
+  "txn": 11095,
+  "inv_status": "draft",
+  "inv_journal_entry_id": null,
+  "inv_amount_paid": 0.0,
+  "txn_status": "Reconciled",
+  "txn_reconciled_je": 5464,
+  "voided_direct_expense_je": 5464,
+  "voided_je_prior_status": "Posted",
+  "bill_je": 8946,
+  "pay_je": 8947,
+  "voided_je": 5464,
+  "ok": true
+ }
+}

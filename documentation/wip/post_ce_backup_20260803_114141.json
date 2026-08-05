@@ -1,0 +1,21 @@
+{
+ "245": {
+  "case": "B",
+  "txn": 9632,
+  "crossentity": true,
+  "inv_status": "draft",
+  "inv_journal_entry_id": null,
+  "inv_amount_paid": 0.0,
+  "txn_status": "Matched",
+  "txn_reconciled_je": 3879,
+  "voided_direct_expense_je": 3879,
+  "voided_je_prior_status": "Draft",
+  "orig_total": 2268.2,
+  "func_amount": 2947.88,
+  "bill_je": 10425,
+  "pay_je": 10426,
+  "inv_leg_je": 10427,
+  "voided_je": 3879,
+  "ok": true
+ }
+}
