@@ -13,7 +13,8 @@ services:
     runtime: python
     plan: starter            # adjust to your Render plan; free tier spins down on idle
     region: singapore        # closest to the ap-southeast-2 RDS + ClickHouse
-    branch: main             # deploy branch — change if you merge to a different base
+    branch: feature/us-018-mypy   # the repo's real trunk + GitHub default (main is a
+                                  # stale Feb snapshot, 81 commits behind). PRs merge here.
     buildCommand: pip install -r requirements.txt
     # Gunicorn loads the Flask app factory directly; Render injects $PORT.
     startCommand: gunicorn "src.app:create_app()" --bind 0.0.0.0:$PORT --workers 2 --timeout 120
