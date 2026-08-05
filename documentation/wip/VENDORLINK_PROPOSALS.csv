@@ -1,0 +1,239 @@
+invoice_id,entity_id,best_vendor_string,source_signal,match_type,proposed_counterparty_id,proposed_counterparty_name,confidence,My remarks
+260,3,Blake Forsyth,retool_payee,NEW,,Blake Forsyth,MED,not a vendor
+364,3,Paolo Villaflores,retool_payee,NEW,,Paolo Villaflores,MED,not a vendor
+381,3,Craig Letters,retool_payee,NEW,,Craig Letters,MED,Employee already exists
+406,3,Rajat Verma,retool_payee,NEW,,Rajat Verma,MED,not a vendor
+437,3,Craig Letters,retool_payee,NEW,,Craig Letters,MED,Employee already exists
+447,3,Northside Autocare Pty Ltd,extraction,NEW,,Northside Autocare Pty Ltd,MED,Create new
+452,3,"Agoda Company Pte, Ltd.",extraction,NEW,,"Agoda Company Pte, Ltd.",MED,Don’t create new
+458,2,Agoda,extraction,NEW,,Agoda,LOW,Don’t create new
+530,2,SCI (Singapore Continuation Institute),extraction,NEW,,SCI (Singapore Continuation Institute),MED,Create new
+535,2,Irene Poh,retool_payee,NEW,,Irene Poh,MED,not a vendor
+641,1,Icy Orense,extraction,NEW,,Icy Orense,MED,not a vendor
+762,2,Car Key Depot Pte Ltd,extraction,NEW,,Car Key Depot Pte Ltd,MED,Create new
+769,2,DL ops fund,retool_payee,NEW,,DL ops fund,MED,not a vendor
+803,3,Abdul Ground Ops,retool_payee,NEW,,Abdul Ground Ops,MED,Abdul is an employee
+816,2,CAIDA,extraction,NEW,,CAIDA,LOW,Create new
+967,2,NA/ For Drivelah Ops,retool_payee,NEW,,NA/ For Drivelah Ops,MED,not a vendor
+1008,2,Kwee Repair Services,pay_to_desc,EXACT,99,Kwee Repair Services,MED,ok
+1027,3,,,NONE,,,LOW,
+1053,3,Third-party name: GT insurance,pay_to_desc,SUBSTR,752,GT Insurance,MED,
+1077,3,,,NONE,,,LOW,
+1078,3,Melbourne Prestige,pay_to_desc,SUBSTR,102,MELBOURNE PRESTIGE CENTRE,MED,
+1079,3,Top Dents,pay_to_desc,EXACT,145,Top Dents,MED,ok
+1087,3,JD Windscreen,pay_to_desc,EXACT,89,JD Windscreen,MED,ok
+1092,3,Melbourne Prestige,pay_to_desc,SUBSTR,102,MELBOURNE PRESTIGE CENTRE,MED,
+1099,3,,,NONE,,,LOW,
+1100,3,Mill Park Towing Service,pay_to_desc,EXACT,103,Mill Park Towing Service,MED,ok
+1115,2,,,NONE,,,LOW,
+1117,2,,,NONE,,,LOW,
+1136,3,Mill Park Towing,pay_to_desc,SUBSTR,103,Mill Park Towing Service,MED,
+1137,3,[Third-party name] AAAC Towing PTY LTD,pay_to_desc,SUBSTR,25,AAAC Towing Pty Ltd,MED,
+1154,3,,,NONE,,,LOW,
+1171,3,Workshop: BM Precision Paint works,pay_to_desc,SUBSTR,46,BM Precision Paint works,MED,
+1187,3,,,NONE,,,LOW,
+1200,3,,,NONE,,,LOW,
+1202,3,,,NONE,,,LOW,
+1203,3,,,NONE,,,LOW,
+1205,3,,,NONE,,,LOW,
+1207,3,,,NONE,,,LOW,
+1213,2,,,NONE,,,LOW,
+1214,3,,,NONE,,,LOW,
+1230,2,,,NONE,,,LOW,
+1231,2,,,NONE,,,LOW,
+1232,3,,,NONE,,,LOW,
+1250,3,,,NONE,,,LOW,
+1258,3,,,NONE,,,LOW,
+1269,3,,,NONE,,,LOW,
+1283,3,,,NONE,,,LOW,
+1284,1,,,NONE,,,LOW,
+1286,3,,,NONE,,,LOW,
+1307,3,,,NONE,,,LOW,
+1309,3,,,NONE,,,LOW,
+1314,2,,,NONE,,,LOW,
+1316,2,,,NONE,,,LOW,
+1317,3,,,NONE,,,LOW,
+1333,2,,,NONE,,,LOW,
+1336,2,,,NONE,,,LOW,
+1339,3,,,NONE,,,LOW,
+1343,2,,,NONE,,,LOW,
+1352,2,,,NONE,,,LOW,
+1357,2,,,NONE,,,LOW,
+1362,3,,,NONE,,,LOW,
+1381,3,,,NONE,,,LOW,
+1385,2,,,NONE,,,LOW,
+1386,2,,,NONE,,,LOW,
+1387,2,,,NONE,,,LOW,
+1399,3,,,NONE,,,LOW,
+1409,2,,,NONE,,,LOW,
+1411,2,,,NONE,,,LOW,
+1412,2,,,NONE,,,LOW,
+1416,2,,,NONE,,,LOW,
+1419,2,,,NONE,,,LOW,
+1434,1,,,NONE,,,LOW,
+1443,3,,,NONE,,,LOW,
+1444,2,,,NONE,,,LOW,
+1445,2,,,NONE,,,LOW,
+1447,2,Drive Lah Pte Ltd,extraction,NEW,,Drive Lah Pte Ltd,MED,Drive lah is not a vendor - its our own company
+1451,2,,,NONE,,,LOW,
+1452,3,,,NONE,,,LOW,
+1455,2,,,NONE,,,LOW,
+1456,3,,,NONE,,,LOW,
+1463,2,,,NONE,,,LOW,
+1464,2,,,NONE,,,LOW,
+1467,3,,,NONE,,,LOW,
+1483,2,,,NONE,,,LOW,
+1488,2,,,NONE,,,LOW,
+1504,3,,,NONE,,,LOW,
+1511,2,,,NONE,,,LOW,
+1514,3,,,NONE,,,LOW,
+1515,2,,,NONE,,,LOW,
+1519,2,,,NONE,,,LOW,
+1522,2,,,NONE,,,LOW,
+1530,2,,,NONE,,,LOW,
+1532,1,,,NONE,,,LOW,
+1534,2,,,NONE,,,LOW,
+1540,2,,,NONE,,,LOW,
+1548,2,,,NONE,,,LOW,
+1551,2,,,NONE,,,LOW,
+1552,2,,,NONE,,,LOW,
+1557,2,,,NONE,,,LOW,
+1564,1,Go Hotel,extraction,NEW,,Go Hotel,MED,Don’t create new
+1570,2,,,NONE,,,LOW,
+1579,2,Management Science Association,extraction,NEW,,Management Science Association,MED,Don’t create new
+1583,1,,,NONE,,,LOW,
+1584,2,,,NONE,,,LOW,
+1587,2,,,NONE,,,LOW,
+1590,2,,,NONE,,,LOW,
+1819,2,Cake for Employees,extraction,EXACT,758,Cake for Employees,MED,ok
+1866,2,Birthday Cake for Employees,extraction,SUBSTR,758,Cake for Employees,MED,
+1898,3,Focussed Loss Management,extraction,NEW,,Focussed Loss Management,MED,Vendor already exists
+1920,2,DHL,extraction,NEW,,DHL,LOW,Don’t create new
+1960,2,Netrust Pte Ltd,rec_ocr,EXACT,597,Netrust Pte Ltd,HIGH,ok
+1962,3,,,NONE,,,LOW,
+1963,3,Aura Towing,rec_ocr,EXACT,737,AuraTowing,MED,ok
+1965,2,Onfido PTE Ltd,rec_ocr,SUBSTR,116,Onfido,MED,
+1966,2,,,NONE,,,LOW,
+1968,2,,,NONE,,,LOW,
+1970,3,,,NONE,,,LOW,
+1971,2,,,NONE,,,LOW,
+1973,2,,,NONE,,,LOW,
+1974,3,GT Insurance-Trust,rec_ocr,SUBSTR,752,GT Insurance,MED,
+1975,2,,,NONE,,,LOW,
+1976,3,Department of State Growth,rec_ocr,NEW,,Department of State Growth,MED,Don’t create new
+1978,3,,,NONE,,,LOW,
+1979,3,Zilla Marie Conido,rec_ocr,SUBSTR,216,Zilla Marie,MED,
+1981,2,Elite Car Ventures Pte Ltd,rec_ocr,SUBSTR,67,Elite Car Ventures,MED,
+1982,2,,,NONE,,,LOW,
+1983,3,,,NONE,,,LOW,
+1984,3,,,NONE,,,LOW,
+1986,3,,,NONE,,,LOW,
+1987,3,,,NONE,,,LOW,
+1988,3,,,NONE,,,LOW,
+1989,2,,,NONE,,,LOW,
+1990,3,,,NONE,,,LOW,
+1991,2,,,NONE,,,LOW,
+1992,2,,,NONE,,,LOW,
+1993,3,,,NONE,,,LOW,
+1994,2,,,NONE,,,LOW,
+1996,2,,,NONE,,,LOW,
+1997,2,Arena Detailing Pte Ltd,rec_ocr,EXACT,36,ARENA DETAILING PTE. LTD,MED,ok
+1999,2,,,NONE,,,LOW,
+2000,2,,,NONE,,,LOW,
+2001,2,,,NONE,,,LOW,
+2003,2,,,NONE,,,LOW,
+2004,2,,,NONE,,,LOW,
+2006,2,CHENG CHUAN MOTOR SERVICES,rec_ocr,EXACT,55,CHENG CHUAN MOTOR SERVICES,MED,ok
+2007,2,,,NONE,,,LOW,
+2009,2,,,NONE,,,LOW,
+2010,2,Wise Asia-Pacific Pte. Ltd.,rec_ocr,NEW,,Wise Asia-Pacific Pte. Ltd.,MED,Wise is our own bank account
+2012,2,,,NONE,,,LOW,
+2013,2,,,NONE,,,LOW,
+2014,2,,,NONE,,,LOW,
+2018,2,,,NONE,,,LOW,
+2019,2,,,NONE,,,LOW,
+2020,2,,,NONE,,,LOW,
+2021,2,,,NONE,,,LOW,
+2023,2,,,NONE,,,LOW,
+2024,2,,,NONE,,,LOW,
+2025,2,,,NONE,,,LOW,
+2027,2,,,NONE,,,LOW,
+2029,2,,,NONE,,,LOW,
+2030,2,,,NONE,,,LOW,
+2031,2,,,NONE,,,LOW,
+2032,2,,,NONE,,,LOW,
+2033,2,,,NONE,,,LOW,
+2034,2,,,NONE,,,LOW,
+2035,2,,,NONE,,,LOW,
+2036,2,,,NONE,,,LOW,
+2037,2,,,NONE,,,LOW,
+2038,2,,,NONE,,,LOW,
+2039,2,,,NONE,,,LOW,
+2040,2,,,NONE,,,LOW,
+2041,2,,,NONE,,,LOW,
+2042,2,,,NONE,,,LOW,
+2043,2,,,NONE,,,LOW,
+2044,2,,,NONE,,,LOW,
+2045,2,,,NONE,,,LOW,
+2259,3,info@petershamprestige.com.au,extraction,NEW,,info@petershamprestige.com.au,MED,Don’t create new
+2311,3,Focussed Loss Management,extraction,NEW,,Focussed Loss Management,MED,Vendor already exists
+2325,3,Focussed Loss Management,extraction,NEW,,Focussed Loss Management,MED,Vendor already exists
+2344,2,,,NONE,,,LOW,
+2356,2,,,NONE,,,LOW,
+2357,2,,,NONE,,,LOW,
+2358,2,,,NONE,,,LOW,
+2359,2,,,NONE,,,LOW,
+2360,3,,,NONE,,,LOW,
+2361,2,TOW LAH SG RECOVERY,rec_ocr,SUBSTR,146,Tow lah,MED,
+2362,2,,,NONE,,,LOW,
+2363,2,,,NONE,,,LOW,
+2364,2,,,NONE,,,LOW,
+2365,2,,,NONE,,,LOW,
+2366,2,,,NONE,,,LOW,
+2367,2,,,NONE,,,LOW,
+2368,2,,,NONE,,,LOW,
+2369,2,,,NONE,,,LOW,
+2370,3,Defiant Ventures Pty Ltd,rec_ocr,SUBSTR,64,Defiant,MED,
+2371,3,Drive Accident Solutions,rec_ocr,EXACT,66,Drive Accident Solutions,MED,ok
+2372,2,Drive Lah Pte Ltd,rec_ocr,NEW,,Drive Lah Pte Ltd,MED,Drive lah is not a vendor - its our own company
+2373,3,Spares Australia Melbourne Pty Ltd,rec_ocr,NEW,,Spares Australia Melbourne Pty Ltd,MED,Create new
+2374,2,,,NONE,,,LOW,
+2375,2,Incrementors Web Solutions Pvt Ltd,rec_ocr,SUBSTR,84,Incrementors,MED,
+2377,3,Sydney Transport Provider Pty Ltd,rec_ocr,EXACT,695,Sydney Transport Provider Pty Ltd,MED,ok
+2378,3,,,NONE,,,LOW,
+2379,3,GT Insurance-Trust,rec_ocr,SUBSTR,752,GT Insurance,MED,
+2382,3,PACK & SEND Marrickville,rec_ocr,SUBSTR,117,Pack & Send,MED,
+2383,3,PACK & SEND Marrickville,rec_ocr,SUBSTR,117,Pack & Send,MED,
+2384,3,,,NONE,,,LOW,
+2385,3,,,NONE,,,LOW,
+2386,3,,,NONE,,,LOW,
+2387,3,,,NONE,,,LOW,
+2388,3,,,NONE,,,LOW,
+2389,3,,,NONE,,,LOW,
+2390,3,,,NONE,,,LOW,
+2391,3,,,NONE,,,LOW,
+2393,3,,,NONE,,,LOW,
+2394,3,Action Towing Pty Ltd,rec_ocr,EXACT,30,Action Towing Pty Ltd,MED,ok
+2395,3,GT Insurance-Trust,rec_ocr,SUBSTR,752,GT Insurance,MED,
+2396,3,Focussed Assessing Pty Ltd,rec_ocr,EXACT,72,Focussed Assessing Pty Ltd,MED,ok
+2397,2,,,NONE,,,LOW,
+2398,3,,,NONE,,,LOW,
+2399,2,Incrementors Web Solutions Pvt.Ltd,rec_ocr,SUBSTR,84,Incrementors,MED,
+2400,3,,,NONE,,,LOW,
+2401,3,GT Insurance-Trust,rec_ocr,SUBSTR,752,GT Insurance,MED,
+2402,3,[GT Insurance,pay_to_desc,EXACT,752,GT Insurance,MED,We need to collapse GT insurance and Global Transport & Automative as one
+2403,3,GT Insurance,pay_to_desc,EXACT,752,GT Insurance,MED,We need to collapse GT insurance and Global Transport & Automative as one
+2404,2,,,NONE,,,LOW,
+2405,3,,,NONE,,,LOW,
+2406,3,Global Transport & Automotive Insurance Solutions,rec_ocr,EXACT,693,Global Transport & Automotive Insurance Solutions,MED,We need to collapse GT insurance and Global Transport & Automative as one
+2407,2,ABWIN LEASING PTE LTD,rec_ocr,SUBSTR,27,Abwin Leasing,MED,
+2408,2,,,NONE,,,LOW,
+2409,3,,,NONE,,,LOW,
+2411,3,GT Insurance-Trust,rec_ocr,SUBSTR,752,GT Insurance,MED,
+2413,3,,,NONE,,,LOW,
+2416,3,Global Transport & Automotive Insurance Solutions,rec_ocr,EXACT,693,Global Transport & Automotive Insurance Solutions,MED,We need to collapse GT insurance and Global Transport & Automative as one
+2437,3,GT Insurance,retool_payee,EXACT,752,GT Insurance,MED,We need to collapse GT insurance and Global Transport & Automative as one
+2439,3,GT Insurance-Trust,retool_payee,SUBSTR,752,GT Insurance,MED,
+2443,3,ACE Administration Services Pty. Ltd,retool_payee,NEW,,ACE Administration Services Pty. Ltd,MED,Vendor already exists
+2457,2,IT Y NET EMPLOYMENT AGENCY PTE LTD,retool_payee,NEW,,IT Y NET EMPLOYMENT AGENCY PTE LTD,MED,Don’t create new
+2464,3,Other's - Mart,retool_payee,NEW,,Other's - Mart,MED,Mart is an employee

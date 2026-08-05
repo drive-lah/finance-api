@@ -14,6 +14,58 @@ logger = logging.getLogger(__name__)
 invoices_bp = Blueprint("invoices", __name__, url_prefix="/api/finance/invoices")
 
 
+@invoices_bp.route("/matches", methods=["GET"])
+def list_matches():
+    """Invoice↔payment matches (provisional/logged). Filter by counterparty_id."""
+    from src.models.invoice_payment_match import FinanceInvoicePaymentMatch
+    from src.models.invoice import FinanceInvoice
+    counterparty_id = request.args.get("counterparty_id", type=int)
+    with db_session() as db:
+        q = db.query(FinanceInvoicePaymentMatch)
+        if counterparty_id is not None:
+            inv_ids = (db.query(FinanceInvoice.id)
+                       .filter(FinanceInvoice.counterparty_id == counterparty_id).subquery())
+            q = q.filter(FinanceInvoicePaymentMatch.invoice_id.in_(inv_ids))
+        return jsonify([m.to_dict() for m in q.all()])
+
+
+@invoices_bp.route("/matches", methods=["POST"])
+def create_match():
+    """Create a PROVISIONAL invoice↔payment match (manual). Enforces 1 active match per txn+invoice."""
+    from src.models.invoice_payment_match import FinanceInvoicePaymentMatch
+    body = request.get_json(force=True) or {}
+    invoice_id = body.get("invoice_id"); transaction_id = body.get("transaction_id")
+    if not invoice_id or not transaction_id:
+        raise ConflictError("invoice_id and transaction_id are required")
+    with db_session() as db:
+        # a payment or an invoice already in a match can't be re-matched provisionally
+        clash = (db.query(FinanceInvoicePaymentMatch)
+                 .filter((FinanceInvoicePaymentMatch.transaction_id == transaction_id) |
+                         (FinanceInvoicePaymentMatch.invoice_id == invoice_id)).first())
+        if clash:
+            raise ConflictError(
+                f"already matched (invoice {clash.invoice_id} ↔ txn {clash.transaction_id}); detach first")
+        m = FinanceInvoicePaymentMatch(
+            invoice_id=int(invoice_id), transaction_id=int(transaction_id),
+            state="provisional", source="manual", created_by=body.get("created_by") or "ui")
+        db.add(m); db.flush()
+        return jsonify(m.to_dict()), 201
+
+
+@invoices_bp.route("/matches/<int:match_id>", methods=["DELETE"])
+def delete_match(match_id):
+    """Detach (break) a match. Provisional → just delete. Logged → blocked (void the JE first)."""
+    from src.models.invoice_payment_match import FinanceInvoicePaymentMatch
+    with db_session() as db:
+        m = db.get(FinanceInvoicePaymentMatch, match_id)
+        if not m:
+            raise NotFoundError(f"match {match_id} not found")
+        if m.state == "logged":
+            raise ConflictError("match is logged — void the journal entry before detaching")
+        db.delete(m)
+        return jsonify({"deleted": match_id})
+
+
 @invoices_bp.route("", methods=["GET"])
 def list_invoices():
     """List invoices with server-side filtering + pagination (limit/offset, X-Total-Count header)."""
@@ -32,6 +84,9 @@ def list_invoices():
         provisional_paid=request.args.get("provisional_paid", type=str),
         retool_id=request.args.get("retool_id", type=str),
         is_duplicate=request.args.get("is_duplicate", type=str),
+        amount_min=request.args.get("amount_min", type=float),
+        amount_max=request.args.get("amount_max", type=float),
+        paired=request.args.get("paired", type=str),
     )
     limit = min(request.args.get("limit", default=100, type=int), 500)
     offset = request.args.get("offset", default=0, type=int)

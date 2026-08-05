@@ -39,21 +39,31 @@ GST_INPUT_ACCOUNT_CODE = "1350"
 # ── Intercompany AP account codes ─────────────────────────────────────────────
 # Keyed by (bank_entity_short_name, invoice_entity_short_name).
 # Short name = last word of FinanceEntity.name (e.g., "DL SG" → "SG").
+# Repointed 2026-08-03 to the ACTIVE 8200 NET series (POL-93/94). The old split
+# 8000/8100 accounts are SUSPENDED (would fail the active-account guard). Net model:
+# ONE account per (books-entity, counterparty-entity) — 8200 IC-Australia(SG books),
+# 8201 IC-Ventures(SG), 8210 IC-Singapore(AU), 8211 IC-Ventures(AU),
+# 8220 IC-Singapore(Ventures), 8221 IC-Australia(Ventures).
+# Receivable = the BANK entity's net account re the invoice entity  = NET[(bank, invoice)].
+# Payable    = the INVOICE entity's net account re the bank entity   = NET[(invoice, bank)].
 _IC_RECEIVABLE_CODES: dict[tuple[str, str], str] = {
-    ("SG", "AU"):       "8000",  # SG books: IC Due from AU
-    ("SG", "Ventures"): "8001",  # SG books: IC Due from Ventures
-    ("AU", "SG"):       "8010",  # AU books: IC Due from SG
-    ("AU", "Ventures"): "8011",  # AU books: IC Due from Ventures
-    ("Ventures", "SG"): "8020",  # Ventures books: IC Due from SG
-    ("Ventures", "AU"): "8021",  # Ventures books: IC Due from AU
+    ("SG", "AU"):       "8200",  # SG books, re AU
+    ("SG", "Ventures"): "8201",  # SG books, re Ventures
+    ("AU", "SG"):       "8210",  # AU books, re SG
+    ("AU", "Ventures"): "8211",  # AU books, re Ventures
+    ("Ventures", "SG"): "8220",  # Ventures books, re SG
+    ("Ventures", "AU"): "8221",  # Ventures books, re AU
 }
+# NOTE: _get_ic_codes looks this up with the FLIPPED key (invoice_short, bank_short),
+# so it holds the SAME net-account values as the receivable map (each = the FIRST
+# entity's net account re the SECOND). Keyed (books-entity, counterparty-entity).
 _IC_PAYABLE_CODES: dict[tuple[str, str], str] = {
-    ("SG", "AU"):       "8100",  # SG books: IC Due to AU
-    ("SG", "Ventures"): "8101",  # SG books: IC Due to Ventures
-    ("AU", "SG"):       "8110",  # AU books: IC Due to SG
-    ("AU", "Ventures"): "8111",  # AU books: IC Due to Ventures
-    ("Ventures", "SG"): "8120",  # Ventures books: IC Due to SG
-    ("Ventures", "AU"): "8121",  # Ventures books: IC Due to AU
+    ("SG", "AU"):       "8200",  # SG books, re AU
+    ("SG", "Ventures"): "8201",  # SG books, re Ventures
+    ("AU", "SG"):       "8210",  # AU books, re SG
+    ("AU", "Ventures"): "8211",  # AU books, re Ventures
+    ("Ventures", "SG"): "8220",  # Ventures books, re SG
+    ("Ventures", "AU"): "8221",  # Ventures books, re AU
 }
 
 
@@ -133,8 +143,11 @@ def _invoice_dict(invoice: "FinanceInvoice", db: Optional[Session] = None) -> di
     raw = invoice.ai_extraction_raw or {}
     recon = raw.get("recon") or {}
     dup = recon.get("duplicate") or {}
+    _rref = raw.get("retool_ref") or {}
     result["tags"] = {
-        "retool_id": (raw.get("retool_ref") or {}).get("finance_db_id"),
+        "retool_id": _rref.get("finance_db_id"),
+        "retool_created_at": _rref.get("created_at"),  # when raised in Retool finance_db
+        "retool_paid_at": _rref.get("closed_at"),       # marked Closed/paid in Retool
         "provisional_paid": (raw.get("provisional_paid") or {}).get("is_provisional_paid"),
         "is_duplicate": bool(dup.get("is_duplicate", False)),
         "duplicate_of": dup.get("duplicate_of"),
@@ -180,15 +193,27 @@ class InvoiceService:
     def _apply_filters(self, query, *, entity_id=None, status=None, counterparty_id=None,
                        search=None, vendor_flag=None, coa_flag=None, document_gate=None,
                        currency_flag=None, retool_status=None, sub_category=None, amount_match=None,
-                       provisional_paid=None, retool_id=None, is_duplicate=None):
+                       provisional_paid=None, retool_id=None, is_duplicate=None,
+                       amount_min=None, amount_max=None, paired=None):
         """Shared filter builder for get_all + count_all (server-side, incl. ai_extraction_raw JSON)."""
-        from sqlalchemy import or_, func
+        from sqlalchemy import or_, func, exists
+        from src.models.invoice_payment_match import FinanceInvoicePaymentMatch
 
         def jtext(*path):  # column is JSONB in the DB -> use jsonb_extract_path_text
             return func.jsonb_extract_path_text(FinanceInvoice.ai_extraction_raw, *path)
 
         if entity_id is not None:
             query = query.filter(FinanceInvoice.entity_id == entity_id)
+        # Amount range — on the invoice's own total (always positive); abs() is belt-and-braces.
+        if amount_min is not None:
+            query = query.filter(func.abs(FinanceInvoice.total_amount) >= float(amount_min))
+        if amount_max is not None:
+            query = query.filter(func.abs(FinanceInvoice.total_amount) <= float(amount_max))
+        # Paired — does the invoice have ANY payment match (provisional OR logged/final)?
+        if paired is not None:
+            has_match = exists().where(FinanceInvoicePaymentMatch.invoice_id == FinanceInvoice.id)
+            query = query.filter(has_match if str(paired).lower() in ("true", "yes", "1")
+                                 else ~has_match)
         if status is not None:
             query = query.filter(FinanceInvoice.status == status)
         if counterparty_id is not None:
@@ -215,11 +240,15 @@ class InvoiceService:
             query = query.filter(jtext("recon", "duplicate", "is_duplicate") == str(is_duplicate).lower())
         if search:
             like = f"%{search}%"
-            query = query.filter(or_(
+            conds = [
                 FinanceInvoice.invoice_number.ilike(like),
                 jtext("extraction", "vendor_name").ilike(like),
                 jtext("retool_ref", "payee").ilike(like),
-            ))
+            ]
+            # A purely-numeric term also matches the invoice's own DB id (search by id).
+            if search.strip().isdigit():
+                conds.append(FinanceInvoice.id == int(search.strip()))
+            query = query.filter(or_(*conds))
         return query
 
     def get_all(self, db: Session, *, limit: int = 100, offset: int = 0, **filters) -> list[FinanceInvoice]:
@@ -597,7 +626,23 @@ class InvoiceService:
 
         total = float(invoice.total_amount)
         tax = float(invoice.tax_amount) if invoice.tax_amount else 0.0
-        net = float(invoice.net_amount) if invoice.net_amount else (total - tax)
+        # POL-87: GST posts ONLY for GST-registered entities (entity.gst_rate set).
+        # For a non-registered entity (e.g. the SG entities) the GST is non-recoverable
+        # and must be expensed as cost — NO 1350 line — even if the invoice carries an
+        # extracted tax amount. This per-entity rule is shared with the categorization
+        # engine (both read finance_entities.gst_rate).
+        from src.models.entity import FinanceEntity
+        _entity = db.get(FinanceEntity, invoice.entity_id)
+        _gst_registered = bool(_entity and _entity.gst_rate and float(_entity.gst_rate) > 0)
+        if not _gst_registered:
+            tax = 0.0
+        # Guard against inconsistent extraction (tax must be a sane fraction of total).
+        if tax < 0 or tax >= total:
+            tax = 0.0
+        # net is DERIVED from total so the bill ALWAYS balances: total is authoritative
+        # (it is what we owe and what the payment settles). A stored net_amount that
+        # disagrees with total-tax is bad extraction and is ignored for the JE. (2026-08-03)
+        net = round(total - tax, 2)
 
         needs_amortization = (
             invoice.service_period_start
@@ -664,6 +709,7 @@ class InvoiceService:
             lines=lines,
         )
         entry.source = "invoice_approval"
+        entry.reference_number = f"INV-{invoice.id}"  # trace JE -> invoice (Gaurav 2026-08-03)
         db.flush()
 
         invoice.journal_entry_id = entry.id
@@ -1235,6 +1281,7 @@ class InvoiceService:
                 ],
             )
             entry.source = source
+            entry.reference_number = f"INV-{invoice.id}"  # trace JE -> invoice
             db.flush()
             return entry
 
@@ -1270,6 +1317,7 @@ class InvoiceService:
             ],
         )
         bank_entry.source = source
+        bank_entry.reference_number = f"INV-{invoice.id}"  # trace JE -> invoice
         bank_entry.intercompany_group_id = ic_group_id
 
         # Invoice entity: Dr AP (dedicated liability or 2000) / Cr IC Payable
@@ -1294,6 +1342,7 @@ class InvoiceService:
             ],
         )
         inv_entry.source = source
+        inv_entry.reference_number = f"INV-{invoice.id}"  # trace JE -> invoice
         inv_entry.intercompany_group_id = ic_group_id
 
         db.flush()

@@ -55,6 +55,10 @@ def create_app(config=None):
     from src.routes.hr_onboarding import hr_onboarding_bp, hr_offboarding_bp
     from src.routes.jobs import jobs_bp
     from src.routes.economic_events import economic_events_bp
+    from src.routes.payouts import payouts_bp
+    from src.routes.payee_bank_accounts import payee_bank_accounts_bp
+    from src.routes.claims import claims_bp
+    from src.routes.tasks import tasks_bp
     app.register_blueprint(entities_bp)
     app.register_blueprint(accounts_bp)
     app.register_blueprint(bank_accounts_bp)
@@ -75,6 +79,10 @@ def create_app(config=None):
     app.register_blueprint(hr_offboarding_bp)
     app.register_blueprint(jobs_bp)
     app.register_blueprint(economic_events_bp)
+    app.register_blueprint(payouts_bp)
+    app.register_blueprint(payee_bank_accounts_bp)
+    app.register_blueprint(claims_bp)
+    app.register_blueprint(tasks_bp)
 
     # Health check endpoint
     @app.route('/health', methods=['GET'])

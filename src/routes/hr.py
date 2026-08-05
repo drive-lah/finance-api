@@ -47,11 +47,17 @@ class EmployeeCreate(BaseModel):
     employment_end_date: Optional[date] = None
 
 class EmployeeUpdate(BaseModel):
+    # hr_employees fields
     entity_id: Optional[int] = None
     employee_type: Optional[str] = None
     tax_treatment: Optional[str] = None
     salary_expense_code: Optional[str] = None
     employment_end_date: Optional[date] = None
+    # users-table fields (HR-managed; written to the shared users row)
+    is_employee: Optional[bool] = None
+    bank_account_number: Optional[str] = None
+    bank_code: Optional[str] = None
+    manager_id: Optional[int] = None
 
 class CompensationCreate(BaseModel):
     pay_type: str  # FIXED_SALARY | HOURLY_RATE
@@ -114,7 +120,7 @@ def create_employee():
     try:
         with db_session() as db:
             emp = hr_payroll_service.create_employee(db, payload.model_dump())
-            return jsonify(_employee_dict(emp)), 201
+            return jsonify(_employee_dict(emp, db)), 201
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
@@ -124,7 +130,7 @@ def list_employees():
     entity_id = request.args.get("entity_id", type=int)
     with db_session() as db:
         emps = hr_payroll_service.get_employees(db, entity_id)
-        return jsonify([_employee_dict(e) for e in emps])
+        return jsonify([_employee_dict(e, db) for e in emps])
 
 
 @hr_bp.route("/employees/<int:employee_id>", methods=["GET"])
@@ -133,7 +139,7 @@ def get_employee(employee_id: int):
         emp = hr_payroll_service.get_employee(db, employee_id)
         if not emp:
             return jsonify({"error": "Employee not found"}), 404
-        return jsonify(_employee_dict(emp))
+        return jsonify(_employee_dict(emp, db))
 
 
 @hr_bp.route("/employees/<int:employee_id>", methods=["PUT"])
@@ -148,7 +154,7 @@ def update_employee(employee_id: int):
             emp = hr_payroll_service.update_employee(
                 db, employee_id, payload.model_dump(exclude_none=True)
             )
-            return jsonify(_employee_dict(emp))
+            return jsonify(_employee_dict(emp, db))
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
 
@@ -266,8 +272,8 @@ def submit_payroll_run(run_id: int):
 
 # ── Serialization helpers ─────────────────────────────────────────────────────
 
-def _employee_dict(emp) -> dict:
-    return {
+def _employee_dict(emp, db=None) -> dict:
+    d = {
         "id": emp.id,
         "user_id": emp.user_id,
         "entity_id": emp.entity_id,
@@ -277,6 +283,25 @@ def _employee_dict(emp) -> dict:
         "employment_end_date": emp.employment_end_date.isoformat() if emp.employment_end_date else None,
         "created_at": emp.created_at.isoformat(),
     }
+    # Join the shared users table (owned by the console, same DB) for identity + the
+    # HR-managed fields that live there: bank, manager, is_employee.
+    if db is not None:
+        from sqlalchemy import text
+        row = db.execute(text("""
+            select u.name, u.email, u.is_employee, u.bank_account_number, u.bank_code,
+                   u.manager_id, u.date_of_joining, m.name as manager_name
+            from users u left join users m on m.id = u.manager_id
+            where u.id = :uid
+        """), {"uid": emp.user_id}).mappings().first()
+        if row:
+            d.update({
+                "name": row["name"], "email": row["email"],
+                "is_employee": row["is_employee"],
+                "bank_account_number": row["bank_account_number"], "bank_code": row["bank_code"],
+                "manager_id": row["manager_id"], "manager_name": row["manager_name"],
+                "date_of_joining": row["date_of_joining"].isoformat() if row["date_of_joining"] else None,
+            })
+    return d
 
 
 def _compensation_dict(comp) -> dict:

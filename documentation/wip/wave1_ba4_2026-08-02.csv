@@ -1,0 +1,13 @@
+txn_id,date,amount,currency,description,matched_counterparty,counterparty_id,match_tier,counterparty_default_coa
+95498,2021-11-15,168000.00,INR,"Converted 3,068.27 SGD to 168,000.00 INR",,,none,
+95499,2021-11-15,54.49,INR,Converted 1.00 SGD to 54.49 INR,,,none,
+95500,2021-11-15,-168030.14,INR,Sent money to Mark and Make Media Pvt. Ltd.,,,none,
+95501,2022-05-31,1128198.91,INR,"Converted 20,000.00 SGD to 1,128,198.91 INR",,,none,
+95502,2022-05-31,-124230.14,INR,Sent money to RUPALBEN ARVINDBHAI PATEL,,,none,
+95503,2022-05-31,-200030.14,INR,Sent money to Bavani Srinu,,,none,
+95504,2022-05-31,-113430.14,INR,Sent money to ANKISH RITEN MODY,Ankish Mody,270,L1/L2,6000
+95505,2022-05-31,-65030.14,INR,Sent money to Milan Harshadkumar Vadgama,,,none,
+95506,2022-05-31,-361363.14,INR,Sent money to jagadish chakravarthi adi,,,none,
+95507,2023-05-29,-227730.03,INR,Sent money to RUPALBEN ARVINDBHAI PATEL,,,none,
+95508,2023-06-14,-9012.83,INR,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95509,2023-07-26,-20030.03,INR,Sent money to VIGHNESH R VIGHNESH,VIGHNESH R VIGHNESH,639,L1/L2,6000

@@ -9,6 +9,14 @@ from src.utils.errors import NotFoundError
 
 counterparties_bp = Blueprint('counterparties', __name__, url_prefix='/api/finance/counterparties')
 
+# Use-case #8: employee + investor counterparty accounts are RESTRICTED — only admins see
+# them. The BFF forwards X-CP-Restricted-Access='1' for admins; otherwise these are hidden.
+RESTRICTED_CP_TYPES = ("employee", "investor")
+
+
+def _can_see_restricted() -> bool:
+    return request.headers.get("X-CP-Restricted-Access", "0") == "1"
+
 
 @counterparties_bp.route('', methods=['GET'])
 def list_counterparties():
@@ -18,7 +26,10 @@ def list_counterparties():
         status = request.args.get('status')
         search = request.args.get('search')
 
-        counterparties = counterparty_service.get_all(db, entity_id=entity_id, type=type_, status=status, search=search)
+        exclude_types = None if _can_see_restricted() else list(RESTRICTED_CP_TYPES)
+        counterparties = counterparty_service.get_all(
+            db, entity_id=entity_id, type=type_, status=status, search=search,
+            exclude_types=exclude_types)
         return jsonify([CounterpartyResponse.model_validate(cp).model_dump() for cp in counterparties]), 200
 
 
@@ -39,6 +50,8 @@ def get_counterparty(counterparty_id: int):
         cp = counterparty_service.get_by_id(db, counterparty_id)
         if not cp:
             raise NotFoundError(f"Counterparty {counterparty_id} not found")
+        if cp.type in RESTRICTED_CP_TYPES and not _can_see_restricted():
+            return jsonify({"error": "This counterparty account is restricted (admin only)."}), 403
         return jsonify(CounterpartyResponse.model_validate(cp).model_dump()), 200
 
 
@@ -66,6 +79,9 @@ def counterparty_statement(counterparty_id: int):
     """
     entity_id = request.args.get('entity_id', type=int)
     with db_session() as db:
+        _cp = counterparty_service.get_by_id(db, counterparty_id)
+        if _cp and _cp.type in RESTRICTED_CP_TYPES and not _can_see_restricted():
+            return jsonify({"error": "This counterparty account is restricted (admin only)."}), 403
         statement = invoice_service.statement_for_counterparty(
             db, counterparty_id, entity_id=entity_id
         )

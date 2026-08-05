@@ -1,0 +1,4 @@
+txn_id,date,amount,currency,description,matched_counterparty,counterparty_id,match_tier,counterparty_default_coa
+98839,2025-06-25,26363.27,EUR,INWARD TELEGRAPHIC TRANSFER,,,none,
+98840,2025-06-25,-6.67,EUR,INWARD TELEGRAPHIC TRANSFER COMM IB,,,none,
+98848,2025-07-02,-26356.60,EUR,OUTWARD TELEGRAPHIC TRANSFER 000000,,,none,

@@ -215,4 +215,81 @@ class WiseService:
         )
 
 
+    # ── Outbound payouts (quote → recipient → transfer → fund) ─────────────────
+    # All money-moving calls; guarded upstream by the payout service's dry-run flag.
+
+    def _post(self, path: str, body: dict, extra_headers: Optional[dict] = None) -> dict:
+        if not self.api_key:
+            raise ValueError("WISE_API_KEY environment variable is not set")
+        headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
+        if extra_headers:
+            headers.update(extra_headers)
+        try:
+            r = requests.post(f"{self.base_url}{path}", json=body, headers=headers, timeout=30)
+            # SCA challenge: Wise replies 403 with x-2fa-approval; caller signs + retries.
+            if r.status_code == 403 and r.headers.get("x-2fa-approval"):
+                return {"__sca_required__": True, "token": r.headers["x-2fa-approval"]}
+            r.raise_for_status()
+            return r.json()
+        except requests.HTTPError as e:
+            body_txt = e.response.text if e.response is not None else ""
+            raise ValueError(f"Wise API {e.response.status_code} on {path}: {body_txt}") from e
+        except requests.RequestException as e:
+            raise ValueError(f"Wise API request failed: {e}") from e
+
+    def create_quote(self, profile_id: int, source_ccy: str, target_ccy: str,
+                     target_amount: float) -> dict:
+        """Create a quote for paying `target_amount` in target_ccy. Same-ccy in v1."""
+        return self._post(f"/v3/profiles/{profile_id}/quotes", {
+            "sourceCurrency": source_ccy, "targetCurrency": target_ccy,
+            "targetAmount": round(float(target_amount), 2), "payOut": "BANK_TRANSFER",
+        })
+
+    def list_recipients(self, profile_id: int, currency: Optional[str] = None) -> list[dict]:
+        params = {"profileId": profile_id}
+        if currency:
+            params["currency"] = currency
+        result = self._get("/v1/accounts", params)
+        if isinstance(result, dict):
+            result = result.get("content", result.get("accounts", []))
+        return result if isinstance(result, list) else []
+
+    def create_transfer(self, target_account_id: str, quote_id: str,
+                        customer_txn_id: str, reference: str) -> dict:
+        """Create a transfer (does NOT move money until funded)."""
+        return self._post("/v1/transfers", {
+            "targetAccount": target_account_id, "quoteUuid": quote_id,
+            "customerTransactionId": customer_txn_id,
+            "details": {"reference": (reference or "")[:35]},
+        })
+
+    def _sign_2fa(self, token: str) -> str:
+        """Sign the Wise x-2fa-approval token with our registered SCA private key (RSA-SHA256,
+        PKCS1v15), base64-encoded — the second factor for API-initiated transfers (POL-87)."""
+        import base64
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import padding
+        key_path = os.environ.get("WISE_SCA_PRIVATE_KEY_PATH", "")
+        if not key_path or not os.path.exists(key_path):
+            raise ValueError("WISE_SCA_PRIVATE_KEY_PATH not set / key missing — register the SCA keypair first")
+        with open(key_path, "rb") as f:
+            private_key = serialization.load_pem_private_key(f.read(), password=None)
+        sig = private_key.sign(token.encode("ascii"), padding.PKCS1v15(), hashes.SHA256())
+        return base64.b64encode(sig).decode("ascii")
+
+    def fund_transfer(self, profile_id: int, transfer_id: str) -> dict:
+        """Fund a transfer from the Wise balance — the SCA-gated money-move step.
+
+        Wise replies 403 + x-2fa-approval on the first call; we sign that token with the
+        registered private key and retry with x-2fa-approval + X-Signature headers. One-time
+        setup = upload the public key to Wise (PRD §5.5 / POL-87)."""
+        path = f"/v3/profiles/{profile_id}/transfers/{transfer_id}/payments"
+        first = self._post(path, {"type": "BALANCE"})
+        if not first.get("__sca_required__"):
+            return first
+        signature = self._sign_2fa(first["token"])
+        return self._post(path, {"type": "BALANCE"},
+                          extra_headers={"x-2fa-approval": first["token"], "X-Signature": signature})
+
+
 wise_service = WiseService()

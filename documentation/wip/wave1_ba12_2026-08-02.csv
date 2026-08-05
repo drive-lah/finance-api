@@ -1,0 +1,5 @@
+txn_id,date,amount,currency,description,matched_counterparty,counterparty_id,match_tier,counterparty_default_coa
+97993,2024-12-27,22483.60,USD,"Converted 36,250.00 AUD to 22,483.60 USD",,,none,
+97994,2024-12-27,-22457.60,USD,Sent money to HUMAX AUSTRALIA PTY LTD,Humax,82,L1/L2,5030
+97995,2025-10-10,-22.00,USD,Card transaction of 22.00 USD issued by Openai OPENAI.COM,OPENAI (ChatGPT Subscription),301,L1/L2,6701
+97996,2025-10-15,-4.00,USD,Card transaction of 49.00 USD issued by Sentry SENTRY.IO,Sentry,443,L1/L2,6701

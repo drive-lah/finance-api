@@ -15,11 +15,13 @@ class CounterpartyService:
         type: Optional[str] = None,
         status: Optional[str] = None,
         search: Optional[str] = None,
+        exclude_types: Optional[list] = None,
     ) -> list[FinanceCounterparty]:
         """
         List counterparties.
 
         entity_id filter returns records scoped to that entity OR global (entity_id IS NULL).
+        exclude_types hides restricted categories (e.g. employee/investor for non-admins).
         """
         query = select(FinanceCounterparty)
 
@@ -32,6 +34,8 @@ class CounterpartyService:
             )
         if type:
             query = query.where(FinanceCounterparty.type == type)
+        if exclude_types:
+            query = query.where(FinanceCounterparty.type.notin_(exclude_types))
         if status:
             query = query.where(FinanceCounterparty.status == status)
         if search:

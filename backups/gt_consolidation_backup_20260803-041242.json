@@ -1,0 +1,1 @@
+{"cp": [{"id": 693, "name": "Global Transport & Automotive Insurance Solutions [MERGED->752]", "type": "vendor", "aliases": ["GLOBAL TRANSPORT", "GT insurance"]}, {"id": 751, "name": "GT", "type": "vendor", "aliases": null}], "inv": [{"id": 2414, "counterparty_id": 751}, {"id": 2415, "counterparty_id": 751}]}

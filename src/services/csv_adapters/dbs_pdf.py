@@ -219,7 +219,18 @@ class DBSPDFAdapter(BankCSVAdapter):
                             if nums:
                                 prev_balance = _parse_decimal(nums[-1])
                                 if current_currency:
-                                    self.section_balances.setdefault(current_currency, {})["brought_forward"] = prev_balance
+                                    # A currency section can span multiple pages;
+                                    # DBS reprints "Currency: XXX" + "Balance Brought
+                                    # Forward" (= the page's opening = the previous
+                                    # page's carried-forward) at the top of every
+                                    # continuation page. Only the FIRST brought-forward
+                                    # is the section's true opening anchor — later ones
+                                    # are page seams. Seed prev_balance from each (for
+                                    # sign recovery) but never overwrite the section
+                                    # opening once set.
+                                    sec = self.section_balances.setdefault(current_currency, {})
+                                    if "brought_forward" not in sec:
+                                        sec["brought_forward"] = prev_balance
                             continue
                         if line.lower().startswith('balance carried forward'):
                             nums = re.findall(r'-?\d[\d,]*\.\d+', line)

@@ -112,6 +112,92 @@ class TestCbaPdfYearSpanningPeriod:
         assert a._year_for(3, period) == 2024
 
 
+# --- older vintages fixed 2026-08-02 ---
+PDF_2021Q1 = os.path.join(FIXDIR, "Statement20210930.pdf")   # 12 Aug - 30 Sep 2021
+PDF_2022Q2 = os.path.join(FIXDIR, "Statement20220630.pdf")   # 31 Mar - 30 Jun 2022
+
+
+@pytest.mark.skipif(not os.path.exists(PDF_2021Q1), reason="2021 statement fixture not on disk")
+class TestCbaPdf2021NilOpening:
+    """Period '12 Aug 2021 - 30 Sep 2021' with a brand-new account whose OPENING
+    BALANCE prints as the word 'Nil' (no $ token). Before the 2026-08-02 fix the
+    OPENING anchor never fired (in_range stayed False) and the statement parsed to
+    ZERO rows. Now it opens at 0 and self-reconciles to the printed closing."""
+
+    @pytest.fixture(scope="class")
+    def parsed(self):
+        a = CBAAdapter()
+        rows = a.parse(open(PDF_2021Q1, "rb").read())
+        return a, rows
+
+    def test_parses_the_transactions(self, parsed):
+        a, rows = parsed
+        assert len(rows) == 6            # was 0 before the Nil-opening fix
+        assert a.errors == []
+
+    def test_nil_opening_is_zero_and_derived_open_matches(self, parsed):
+        a, rows = parsed
+        assert a.statement_opening_balance == Decimal("0")
+        # derived opening = first row's balance minus its own amount ≈ Nil
+        derived_open = rows[0].running_balance - rows[0].amount
+        assert derived_open == Decimal("0")
+
+    def test_self_reconciles_to_printed_closing(self, parsed):
+        a, rows = parsed
+        total = sum((r.amount for r in rows), Decimal("0"))
+        assert a.statement_closing_balance == Decimal("8491.49")
+        assert a.statement_opening_balance + total == a.statement_closing_balance
+
+    def test_dates_span_aug_and_sep_2021(self, parsed):
+        _, rows = parsed
+        months = {(r.transaction_date.year, r.transaction_date.month) for r in rows}
+        assert months == {(2021, 8), (2021, 9)}
+
+    def test_balance_chain_holds(self, parsed):
+        _, rows = parsed
+        for i in range(1, len(rows)):
+            assert rows[i - 1].running_balance + rows[i].amount == rows[i].running_balance
+
+
+@pytest.mark.skipif(not os.path.exists(PDF_2022Q2), reason="2022 Q2 statement fixture not on disk")
+class TestCbaPdf2022MayDateAttribution:
+    """Period '31 Mar 2022 - 30 Jun 2022'. This vintage glues the 3-letter month
+    to the description with no space ('02 MayDirect Credit ...'). Before the
+    2026-08-02 fix `_TXN_START_RE` needed a word boundary after the month, so
+    glued-month lines matched nothing and their date silently fell back to the
+    previous (April) transaction — every May-dated row was mis-attributed to
+    April. This pins the real May dates."""
+
+    @pytest.fixture(scope="class")
+    def parsed(self):
+        a = CBAAdapter()
+        rows = a.parse(open(PDF_2022Q2, "rb").read())
+        return a, rows
+
+    def test_still_parses_and_reconciles(self, parsed):
+        a, rows = parsed
+        assert len(rows) == 268
+        assert a.errors == []
+        total = sum((r.amount for r in rows), Decimal("0"))
+        assert a.statement_opening_balance + total == a.statement_closing_balance
+
+    def test_may_rows_are_dated_may_not_april(self, parsed):
+        _, rows = parsed
+        from collections import Counter
+        c = Counter(r.transaction_date.month for r in rows)
+        # May genuinely has ~74 rows; before the fix it was 0 (folded into April).
+        assert c[5] > 50, f"expected many May rows, got {c[5]}"
+        # And April must no longer be inflated by the mis-attributed May rows.
+        assert c[4] < c[5]
+        assert set(c) == {3, 4, 5, 6}   # full Mar-Jun quarter, all four months present
+
+    def test_first_may_row_lands_on_02_may(self, parsed):
+        _, rows = parsed
+        may = sorted(r.transaction_date for r in rows if r.transaction_date.month == 5)
+        assert may[0] == date(2022, 5, 2)
+        assert may[-1] == date(2022, 5, 31)
+
+
 PDF_2026 = os.path.join(FIXDIR, "Statement20260630.pdf")
 
 

@@ -1,0 +1,100 @@
+txn_id,date,amount,currency,description,matched_counterparty,counterparty_id,match_tier,counterparty_default_coa
+95399,2021-07-30,13235.20,AUD,"Converted 13,300.00 SGD to 13,235.20 AUD",,,none,
+95400,2021-07-30,-13235.20,AUD,Sent money to RR Ventures Pty Ltd,Gaurav Singhal,260,L1/L2,6003
+95401,2021-08-27,13510.68,AUD,"Converted 13,300.00 SGD to 13,510.68 AUD",,,none,
+95402,2021-08-27,-13510.68,AUD,Sent money to RR Ventures Pty Ltd,Gaurav Singhal,260,L1/L2,6003
+95403,2021-09-28,13446.46,AUD,"Converted 13,300.00 SGD to 13,446.46 AUD",,,none,
+95404,2021-09-28,-13446.46,AUD,Sent money to RR Ventures Pty Ltd,Gaurav Singhal,260,L1/L2,6003
+95405,2021-10-06,10.12,AUD,Converted 10.00 SGD to 10.12 AUD,,,none,
+95406,2021-10-06,-10.12,AUD,Sent money to DRIVE LAH AUSTRALIA PTY LTD,,,none,
+95407,2022-10-28,16000.00,AUD,Topped up account,,,none,
+95408,2022-10-29,14000.00,AUD,Topped up account,,,none,
+95409,2022-10-29,-30000.00,AUD,Sent money to Drive Lah Malaysia Sdn Bhd,,,none,
+95410,2022-11-21,3200.00,AUD,Topped up account,,,none,
+95411,2022-11-21,-848.00,AUD,Sent money to Noraisa Domado,Noraisa Domado,599,L1/L2,5063
+95412,2022-11-21,-233.00,AUD,Sent money to Edgardo Buenaventura,Edgardo Buenaventura,528,L1/L2,5063
+95413,2022-11-21,-1007.89,AUD,Sent money to Ahmed Nasr Hammam Nasr,Ahmed Nasr Hammam Nasr,481,L1/L2,5063
+95414,2022-11-21,-518.00,AUD,Sent money to Ralph Efrenson S. Eronga,Ralph E. Seronga,609,L1/L2,5063
+95415,2022-11-21,-420.00,AUD,Sent money to Lai Mei Regina Teh,Lai Mei T,247,L1/L2,6000
+95416,2022-11-27,600.00,AUD,Topped up account,,,none,
+95417,2022-11-27,-223.83,AUD,Sent money to Bavani Srinu,,,none,
+95418,2022-11-27,-137.04,AUD,Sent money to Kishan Kumar,Kishan Kumar,574,L1/L2,6000
+95419,2022-11-27,-22.65,AUD,Sent money to MUHAMAD HAZIQ BIN MUSTAFFA,MUHAMAD HAZIQ BIN MUSTAFFA,593,L1/L2,5062
+95420,2022-11-27,-117.87,AUD,Sent money to Shreya Srivastava,,,none,
+95421,2022-11-28,6500.00,AUD,Topped up account,,,none,
+95422,2022-11-28,-1089.07,AUD,Sent money to Mats ter Horst,,,none,
+95423,2022-11-28,-5218.36,AUD,Sent money to Jared Chan Yee Mun,Ho Sze Yie,544,L1/L2,5063
+95424,2022-11-29,4600.00,AUD,Topped up account,,,none,
+95425,2022-11-29,-2142.25,AUD,Sent money to Pankaj M Patidar,Pankaj Patidar,241,L1/L2,
+95426,2022-11-29,-2447.75,AUD,Sent money to Kishan Kumar,Kishan Kumar,574,L1/L2,6000
+95427,2022-12-03,20000.00,AUD,Topped up account,,,none,
+95428,2022-12-03,-1070.00,AUD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95429,2022-12-03,-1000.00,AUD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95430,2022-12-03,-1176.00,AUD,Sent money to Lai Mei Regina Teh,Lai Mei T,247,L1/L2,6000
+95431,2022-12-03,-982.00,AUD,Sent money to Roseanne Dimaranan,,,none,
+95432,2022-12-03,-935.00,AUD,Sent money to Maricon R. Eviza,Maricon Viza,246,L1/L2,5063
+95433,2022-12-03,-882.00,AUD,Sent money to Llanes Aaron Insorio,Aaron,474,L1/L2,5063
+95434,2022-12-03,-735.00,AUD,Sent money to Maria Fonseca B. Dimaandal,Maria Fonseca Dimaandal,586,L1/L2,5063
+95435,2022-12-03,-735.00,AUD,Sent money to Kamille Kassandra Esperanzate Abeleda,Kamille Kassandra E. Abeleda,248,L1/L2,
+95436,2022-12-03,-735.00,AUD,Sent money to Jennilyn Reyes,Jen Reyes,197,L1/L2,5063
+95437,2022-12-03,-735.00,AUD,Sent money to Edgardo Buenaventura,Edgardo Buenaventura,528,L1/L2,5063
+95438,2022-12-03,-1411.00,AUD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95439,2022-12-03,-863.00,AUD,Sent money to Noraisa Domado,Noraisa Domado,599,L1/L2,5063
+95440,2022-12-03,-735.00,AUD,Sent money to Joya Mae Noynay,,,none,
+95441,2022-12-03,-845.00,AUD,Sent money to Vicson H. Cuarteros,Vicson H. Cuarteros,638,L1/L2,5063
+95442,2022-12-03,-735.00,AUD,Sent money to Roxanne Reyes,Roxanne Reyes,234,L1/L2,
+95443,2022-12-03,-735.00,AUD,Sent money to Jenalyn Fan,Jenalyn Fan,554,L1/L2,5063
+95444,2022-12-03,-662.00,AUD,Sent money to Sandra L. Capanang,,,none,
+95445,2022-12-03,-739.37,AUD,Sent money to Ahmed Nasr Hammam Nasr,Ahmed Nasr Hammam Nasr,481,L1/L2,5063
+95446,2022-12-03,-735.00,AUD,Sent money to Ralph Efrenson S. Eronga,Ralph E. Seronga,609,L1/L2,5063
+95447,2022-12-03,-882.00,AUD,Sent money to Trixie M Coronel,Trixie trixie,220,L1/L2,5063
+95448,2022-12-03,-882.00,AUD,Sent money to Patricia Rosale S. Lontoc,Patricia Rosale S. Lontoc,603,L1/L2,5063
+95449,2022-12-03,-735.00,AUD,Sent money to Aaron Jasper A. Miranda,Aaron Jasper A. Miranda,475,L1/L2,5061
+95450,2022-12-16,14000.00,AUD,Topped up account,,,none,
+95451,2022-12-16,-1077.00,AUD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95452,2022-12-16,-1007.00,AUD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95453,2022-12-16,-1184.00,AUD,Sent money to Lai Mei Regina Teh,Lai Mei T,247,L1/L2,6000
+95454,2022-12-16,-988.00,AUD,Sent money to Roseanne Dimaranan,,,none,
+95455,2022-12-16,-822.89,AUD,Sent money to Maricon R. Eviza,Maricon Viza,246,L1/L2,5063
+95456,2022-12-16,-888.00,AUD,Sent money to Llanes Aaron Insorio,Aaron,474,L1/L2,5063
+95457,2022-12-16,-619.30,AUD,Sent money to Maria Fonseca B. Dimaandal,Maria Fonseca Dimaandal,586,L1/L2,5063
+95458,2022-12-16,-740.00,AUD,Sent money to Kamille Kassandra Esperanzate Abeleda,Kamille Kassandra E. Abeleda,248,L1/L2,
+95459,2022-12-16,-592.47,AUD,Sent money to Jennilyn Reyes,Jen Reyes,197,L1/L2,5063
+95460,2022-12-16,-740.00,AUD,Sent money to Edgardo Buenaventura,Edgardo Buenaventura,528,L1/L2,5063
+95461,2022-12-16,-1421.00,AUD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95462,2022-12-16,-727.85,AUD,Sent money to Noraisa Domado,Noraisa Domado,599,L1/L2,5063
+95463,2022-12-16,-592.74,AUD,Sent money to Joya Mae Noynay,,,none,
+95464,2022-12-16,-851.00,AUD,Sent money to Vicson H. Cuarteros,Vicson H. Cuarteros,638,L1/L2,5063
+95465,2022-12-16,-740.00,AUD,Sent money to Roxanne Reyes,Roxanne Reyes,234,L1/L2,
+95466,2022-12-16,-740.00,AUD,Sent money to Jenalyn Fan,Jenalyn Fan,554,L1/L2,5063
+95467,2022-12-16,-666.00,AUD,Sent money to Sandra L. Capanang,,,none,
+95468,2022-12-16,-750.86,AUD,Sent money to Ahmed Nasr Hammam Nasr,Ahmed Nasr Hammam Nasr,481,L1/L2,5063
+95469,2022-12-16,2500.00,AUD,Topped up account,,,none,
+95470,2022-12-16,-740.00,AUD,Sent money to Ralph Efrenson S. Eronga,Ralph E. Seronga,609,L1/L2,5063
+95471,2022-12-16,-888.00,AUD,Sent money to Patricia Rosale S. Lontoc,Patricia Rosale S. Lontoc,603,L1/L2,5063
+95472,2022-12-16,-740.00,AUD,Sent money to Aaron Jasper A. Miranda,Aaron Jasper A. Miranda,475,L1/L2,5061
+95473,2022-12-19,-125.70,AUD,Sent money to Maria Fonseca B. Dimaandal,Maria Fonseca Dimaandal,586,L1/L2,5063
+95474,2023-01-02,19500.00,AUD,Topped up account,,,none,
+95475,2023-01-02,-1070.00,AUD,Sent money to Margarette Del Rosario,Margarette Del Rosario,585,L1/L2,5063
+95476,2023-01-02,-1000.00,AUD,Sent money to Zilla Marie Cenido,Zilla Marie,216,L1/L2,5063
+95477,2023-01-02,-1176.00,AUD,Sent money to Lai Mei Regina Teh,Lai Mei T,247,L1/L2,6000
+95478,2023-01-02,-982.00,AUD,Sent money to Roseanne Dimaranan,,,none,
+95479,2023-01-02,-935.00,AUD,Sent money to Maricon R. Eviza,Maricon Viza,246,L1/L2,5063
+95480,2023-01-02,-882.00,AUD,Sent money to Llanes Aaron Insorio,Aaron,474,L1/L2,5063
+95481,2023-01-02,-735.00,AUD,Sent money to Maria Fonseca B. Dimaandal,Maria Fonseca Dimaandal,586,L1/L2,5063
+95482,2023-01-02,-735.00,AUD,Sent money to Kamille Kassandra Esperanzate Abeleda,Kamille Kassandra E. Abeleda,248,L1/L2,
+95483,2023-01-02,-735.00,AUD,Sent money to Jennilyn Reyes,Jen Reyes,197,L1/L2,5063
+95484,2023-01-02,-735.00,AUD,Sent money to Edgardo Buenaventura,Edgardo Buenaventura,528,L1/L2,5063
+95485,2023-01-02,-1411.00,AUD,Sent money to DOMINADOR GAMIT,DOMINADOR GAMIT,525,L1/L2,5063
+95486,2023-01-02,-863.00,AUD,Sent money to Noraisa Domado,Noraisa Domado,599,L1/L2,5063
+95487,2023-01-02,-735.00,AUD,Sent money to Joya Mae Noynay,,,none,
+95488,2023-01-02,-845.00,AUD,Sent money to Vicson H. Cuarteros,Vicson H. Cuarteros,638,L1/L2,5063
+95489,2023-01-02,-735.00,AUD,Sent money to Roxanne Reyes,Roxanne Reyes,234,L1/L2,
+95490,2023-01-02,-735.00,AUD,Sent money to Jenalyn Fan,Jenalyn Fan,554,L1/L2,5063
+95491,2023-01-02,-662.00,AUD,Sent money to Sandra L. Capanang,,,none,
+95492,2023-01-02,-737.84,AUD,Sent money to Ahmed Nasr Hammam Nasr,Ahmed Nasr Hammam Nasr,481,L1/L2,5063
+95493,2023-01-02,-735.00,AUD,Sent money to Ralph Efrenson S. Eronga,Ralph E. Seronga,609,L1/L2,5063
+95494,2023-01-02,-882.00,AUD,Sent money to Trixie M Coronel,Trixie trixie,220,L1/L2,5063
+95495,2023-01-02,-882.00,AUD,Sent money to Patricia Rosale S. Lontoc,Patricia Rosale S. Lontoc,603,L1/L2,5063
+95496,2023-01-02,-735.00,AUD,Sent money to Aaron Jasper A. Miranda,Aaron Jasper A. Miranda,475,L1/L2,5061
+95497,2023-01-10,-559.61,AUD,Sent money to ridhi karan and associates,Ridhi Karan,125,L1/L2,6500

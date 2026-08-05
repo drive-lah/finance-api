@@ -156,7 +156,16 @@ _DEBIT_RE = re.compile(r'([\d,]+\.\d{2})\s*\$\s*$')
 # 2026 layout — bare amount, sign unknowable from typography (chain decides)
 _BARE_AMT_RE = re.compile(r'([\d,]+\.\d{2})\s*$')
 # A transaction block's first line: "04 Apr DidiChuxing ..." / "01Apr CIRCLECI..."
-_TXN_START_RE = re.compile(r'^(\d{1,2})\s*([A-Z][a-z]{2})\b\s*(.*)$')
+# The month token is anchored to the 12 real abbreviations and may butt straight
+# up against the description with NO space — the 2021/2022 vintage prints three-
+# letter months (esp. "May") glued to the following word ("02 MayDirect Credit").
+# A plain `[A-Z][a-z]{2}\b` fails there ("MayD" has no word boundary), so the
+# date silently fell back to the previous txn's date and every glued-month row
+# was mis-attributed to the wrong month. Require the month to be followed by a
+# space, an uppercase letter (description start), or end-of-line instead.
+_MONTH_ALT = '|'.join(MONTH_MAP.keys())
+_TXN_START_RE = re.compile(
+    rf'^(\d{{1,2}})\s*({_MONTH_ALT})(?=[A-Z]|\s|$)\s*(.*)$')
 # Header period, tolerant of the line wrap between "Statement" and "Period"
 # and of the 2026 space-collapse ("Period 31Mar2026-30Jun2026")
 _PERIOD_RE = re.compile(
@@ -168,6 +177,11 @@ _PERIOD_RE = re.compile(
 _ACCOUNT_RE = re.compile(r'Account\s*Number\s+([\d\s]+?)\s*$', re.MULTILINE)
 _OPENING_RE = re.compile(r'OPENING\s*BALANCE')
 _CLOSING_RE = re.compile(r'CLOSING\s*BALANCE')
+# A brand-new account opens at zero — this vintage prints the opening as the
+# word "Nil" ("12 Aug 2021 OPENING BALANCE Nil") instead of "$0.00CR", so it
+# carries no _BAL_RE token. Without this the OPENING anchor never fires,
+# in_range stays False, and the whole statement parses to 0 rows.
+_OPENING_NIL_RE = re.compile(r'OPENING\s*BALANCE\s+NIL\b')
 _FORWARD_RE = re.compile(r'BALANCE\s*(CARRIED|BROUGHT)\s*FORWARD')
 # The 2026 generator loses inter-word spaces at default extraction tolerance;
 # a date glued to its month ("31Mar2026") is the vintage signature.
@@ -301,6 +315,13 @@ class CBAiPdfAdapter(BankCSVAdapter):
             upper = line.upper()
 
             # ---- markers (checked before anything else) ----
+            # "OPENING BALANCE Nil" (new account) — no $ token, opens at zero.
+            if _OPENING_NIL_RE.search(upper):
+                self.statement_opening_balance = Decimal("0")
+                prev_balance = Decimal("0")
+                in_range = True
+                block = []
+                continue
             if bal_match and _OPENING_RE.search(upper):
                 bal = self._signed(bal_match)
                 self.statement_opening_balance = bal
