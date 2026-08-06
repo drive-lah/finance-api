@@ -21,6 +21,19 @@ from src.models.schemas import InvoiceCreate, InvoiceUpdate
 from src.services.journal_service import journal_service
 from src.utils.errors import NotFoundError
 
+# Statuses in which field edits (amount, COA, counterparty, dates, attach doc) are allowed — the
+# unpaired, un-posted states (Gaurav, POL-107). Editing is BLOCKED the moment the invoice is
+# PAIRED (a payment is attached — editing would desync the match; unpair back to reconcile first),
+# APPROVED / partially_paid / paid (a journal entry is posted), or terminal (rejected / void).
+# needs_fix + reconcile MUST be editable — needs_fix is literally the "fix the data" state, and
+# reconcile is where the team corrects amount/counterparty before pairing.
+EDITABLE_STATUSES = (
+    InvoiceStatus.DRAFT.value,
+    InvoiceStatus.RECONCILE.value,
+    InvoiceStatus.NEEDS_FIX.value,
+    InvoiceStatus.PENDING_APPROVAL.value,
+)
+
 if TYPE_CHECKING:
     from src.models.bank_account import FinanceBankAccount
     from src.models.journal_entry import FinanceJournalEntry
@@ -388,14 +401,17 @@ class InvoiceService:
         return invoice
 
     def update(self, db: Session, invoice_id: int, data: InvoiceUpdate) -> FinanceInvoice:
-        """Update an invoice. Only draft/pending_approval invoices can be edited."""
+        """Update an invoice. Editable only in the unpaired/un-posted states (EDITABLE_STATUSES):
+        draft, reconcile, needs_fix, pending_approval. Blocked once paired, posted, or terminal."""
         invoice = self.get_by_id(db, invoice_id)
 
-        if invoice.status not in (InvoiceStatus.DRAFT.value, InvoiceStatus.PENDING_APPROVAL.value):
+        if invoice.status not in EDITABLE_STATUSES:
             from src.utils.errors import ConflictError
+            hint = ("unpair it (back to reconcile) before editing"
+                    if invoice.status == InvoiceStatus.PAIRED.value
+                    else "void the journal entry or raise a credit note before changing the amount")
             raise ConflictError(
-                f"Cannot update invoice in '{invoice.status}' status. "
-                f"Only draft or pending_approval invoices can be edited."
+                f"Cannot edit an invoice in '{invoice.status}' status — {hint}."
             )
 
         update_data = data.model_dump(exclude_unset=True)
@@ -439,11 +455,11 @@ class InvoiceService:
         from src.models.entity import FinanceEntity
 
         invoice = self.get_by_id(db, invoice_id)
-        if invoice.status not in (InvoiceStatus.DRAFT.value, InvoiceStatus.PENDING_APPROVAL.value):
+        if invoice.status not in EDITABLE_STATUSES:
             from src.utils.errors import ConflictError
             raise ConflictError(
                 f"Cannot attach a document to an invoice in '{invoice.status}' status "
-                f"(only draft / pending_approval)."
+                f"— a journal entry is already posted."
             )
 
         h = hashlib.sha256(file_bytes).hexdigest()
