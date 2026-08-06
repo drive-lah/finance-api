@@ -147,8 +147,8 @@ class TaskService:
             if action == "approve":
                 invoice_service.approve(db, sid, approved_by=str(caller))
             elif action == "reject":
-                # reject support depends on invoice_service API; leave as informational close
-                pass
+                invoice_service.reject(db, sid, rejection_reason=notes or "rejected",
+                                       rejected_by=str(caller))
             else:
                 raise BadRequestError(f"Unknown action '{action}' for invoice task.")
             return {"status": TaskStatus.DONE.value if action == "approve"

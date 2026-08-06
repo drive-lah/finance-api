@@ -754,6 +754,12 @@ class InvoiceService:
             db.add(schedule)
             invoice.has_amortization_schedule = True
 
+        # Close the approval task (POL-108) — done whether approved directly or via the task.
+        from src.services.task_service import task_service
+        from src.models.task import TaskStatus
+        task_service.close_for_source(db, f"invoice:{invoice.id}", TaskStatus.DONE.value,
+                                      acted_by=approved_by, action="approve")
+
         db.commit()
         db.refresh(invoice)
 
@@ -785,6 +791,11 @@ class InvoiceService:
         invoice.rejection_reason = rejection_reason
         invoice.rejected_by = rejected_by
         invoice.rejected_at = datetime.now(UTC)
+        # Close the approval task (POL-108) — keeps the inbox in sync on a direct reject.
+        from src.services.task_service import task_service
+        from src.models.task import TaskStatus
+        task_service.close_for_source(db, f"invoice:{invoice_id}", TaskStatus.RETURNED.value,
+                                      acted_by=rejected_by, action="reject", notes=rejection_reason)
         db.commit()
         db.refresh(invoice)
         return invoice
@@ -811,6 +822,11 @@ class InvoiceService:
         invoice.voided_by = voided_by
         invoice.voided_at = datetime.now(UTC)
         invoice.void_reason = void_reason
+        # Close the approval task (POL-108) on a direct void.
+        from src.services.task_service import task_service
+        from src.models.task import TaskStatus
+        task_service.close_for_source(db, f"invoice:{invoice_id}", TaskStatus.CANCELLED.value,
+                                      acted_by=voided_by, action="void", notes=void_reason)
         db.commit()
         db.refresh(invoice)
         return invoice
@@ -1711,44 +1727,99 @@ class InvoiceService:
 
         # --- Phase 2: approval rules ---
         # Hard overrides — always require human even if rule says auto_approve
+        # POL (Gaurav 2026-07-31): NO auto-approve — every submitted invoice lands in
+        # pending_approval for human sign-off. POL-108: entering pending_approval ALWAYS
+        # creates an assigned approval task (the assignee gate) + attaches the AI review.
         if invoice.new_vendor:
-            invoice.status = InvoiceStatus.PENDING_APPROVAL.value
-            db.commit()
-            db.refresh(invoice)
-            return {
-                "status": InvoiceStatus.PENDING_APPROVAL.value,
-                "message": "Invoice marked for approval (new vendor)",
-                "invoice": _invoice_dict(invoice, db),
-            }
+            return self._enter_pending_approval(db, invoice, "Invoice marked for approval (new vendor)")
         if invoice.coa_source in ("ai", None):
-            invoice.status = InvoiceStatus.PENDING_APPROVAL.value
-            db.commit()
-            db.refresh(invoice)
-            return {
-                "status": InvoiceStatus.PENDING_APPROVAL.value,
-                "message": "Invoice marked for approval (AI/unset COA requires verification)",
-                "invoice": _invoice_dict(invoice, db),
-            }
-
-        # POL (Gaurav 2026-07-31): NO auto-approve. Every submitted invoice lands in
-        # pending_approval for human sign-off — approval rules are not evaluated here.
-        new_status = InvoiceStatus.PENDING_APPROVAL.value
-        invoice.status = new_status
-        db.commit()
-        db.refresh(invoice)
-        updated = invoice
-        message = "Invoice marked for approval"
-
-        from src.models.schemas import InvoiceResponse
-        return {
-            "status": new_status,
-            "message": message,
-            "invoice": InvoiceResponse.model_validate(updated).model_dump(),
-        }
+            return self._enter_pending_approval(
+                db, invoice, "Invoice marked for approval (AI/unset COA requires verification)")
+        return self._enter_pending_approval(db, invoice, "Invoice marked for approval")
 
     # ── private helpers ────────────────────────────────────────────────────────
 
 
+
+    # Default approver while approval authorities are not yet configured (POL-108):
+    # zilla@ guards ALL approvals. Future: route by authority/threshold (some auto-approve).
+    _DEFAULT_APPROVER_EMAIL = "zilla@drivelah.sg"
+    _APPROVAL_HIGH_RISK_MIN = 1000  # amount at/above this flags the task 'high' risk
+
+    def _enter_pending_approval(self, db: Session, invoice: FinanceInvoice, message: str) -> dict:
+        """Move an invoice to pending_approval AND create its assigned approval task — atomically.
+        This IS the assignee gate (POL-108): an invoice never sits in pending_approval without a
+        task assigned to someone. Runs the AI contract review and attaches it as the card context.
+        """
+        from sqlalchemy import text
+        from src.services.task_service import task_service
+        from src.services.duplicate_detection_service import duplicate_detection_service
+        from src.models.counterparty import FinanceCounterparty
+
+        # Resolve the default approver (zilla) → user id; fall back to a role queue so the
+        # task is ALWAYS assigned (gate holds even if the user row can't be resolved).
+        approver_id = db.execute(
+            text("SELECT id FROM users WHERE lower(email) = :e"),
+            {"e": self._DEFAULT_APPROVER_EMAIL},
+        ).scalar()
+        assignee_role = None if approver_id else "finance.invoices"
+
+        # AI contract review (advisory — never auto-approves; POL-108).
+        try:
+            review = self._ai_contract_review(db, invoice)
+        except Exception:
+            review = {"assessment": "pass", "message": "AI review unavailable", "concerns": []}
+
+        cp = db.get(FinanceCounterparty, invoice.counterparty_id) if invoice.counterparty_id else None
+        vendor = (cp.name if cp else None) or "Unknown vendor"
+        coa_name = None
+        if invoice.contra_account_code:
+            row = db.execute(text("SELECT name FROM finance_accounts WHERE code = :c"),
+                             {"c": invoice.contra_account_code}).first()
+            coa_name = row[0] if row else invoice.contra_account_code
+        dup = duplicate_detection_service.detect(
+            db, entity_id=invoice.entity_id, counterparty_id=invoice.counterparty_id,
+            invoice_number=invoice.invoice_number, total_amount=invoice.total_amount,
+            invoice_date=invoice.invoice_date, currency=invoice.currency,
+            pdf_content_hash=invoice.pdf_content_hash, exclude_id=invoice.id)
+        is_dup = bool(dup.is_duplicate and dup.duplicate_of and dup.duplicate_of < invoice.id)
+
+        amount = float(invoice.total_amount) if invoice.total_amount is not None else 0.0
+        card = {
+            "vendor": vendor, "entity_id": invoice.entity_id,
+            "invoice_number": invoice.invoice_number,
+            "invoice_date": invoice.invoice_date.isoformat() if invoice.invoice_date else None,
+            "due_date": invoice.due_date.isoformat() if invoice.due_date else None,
+            "amount": amount, "currency": invoice.currency,
+            "net_amount": float(invoice.net_amount) if invoice.net_amount is not None else None,
+            "tax_amount": float(invoice.tax_amount) if invoice.tax_amount is not None else None,
+            "coa_code": invoice.contra_account_code, "coa_name": coa_name,
+            "checks": {"counterparty": bool(invoice.counterparty_id),
+                       "coa": bool(invoice.contra_account_code), "not_duplicate": not is_dup},
+            "agent": {"assessment": review.get("assessment"), "message": review.get("message"),
+                      "concerns": review.get("concerns") or []},
+            "pdf_s3_key": invoice.pdf_s3_key, "uploaded_by": invoice.uploaded_by,
+        }
+
+        invoice.status = InvoiceStatus.PENDING_APPROVAL.value
+        task_service.enqueue(
+            db, type="invoice-approval", source_ref=f"invoice:{invoice.id}",
+            title=f"Approve invoice — {vendor} · {invoice.currency} {amount:,.2f}",
+            summary=f"{vendor} · {invoice.currency} {amount:,.2f} · {coa_name or invoice.contra_account_code or 'no COA'}"
+                    + (f" · agent: {review.get('message')}" if review.get("message") else ""),
+            body=card, risk=("high" if amount >= self._APPROVAL_HIGH_RISK_MIN else "low"),
+            amount=invoice.total_amount, currency=invoice.currency,
+            assignee_user_id=approver_id, assignee_role=assignee_role,
+            created_by="invoice-submit",
+        )
+        db.commit()
+        db.refresh(invoice)
+        return {
+            "status": InvoiceStatus.PENDING_APPROVAL.value,
+            "message": message,
+            "assigned_to": self._DEFAULT_APPROVER_EMAIL if approver_id else assignee_role,
+            "invoice": _invoice_dict(invoice, db),
+        }
 
     def _ai_contract_review(self, db: Session, invoice: FinanceInvoice) -> dict:
         """

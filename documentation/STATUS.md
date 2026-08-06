@@ -427,6 +427,7 @@ Canonical spec: `documentation/wip/INVOICES_STATE_MACHINE.md`. 10 statuses; 3 ne
 | ISM-5 | posting engine `vr2_post_provisional` accepts `paired` (flips `paired→paid`) | ✅ code |
 | ISM-6 | FE (admincontrols branch `260802_finance_recon`): `reconcile`/`paired`/`needs_fix` badges + status filters, loud DUPLICATE banner (POL-106), needs_fix reasons, submit→needs_fix alert, action guards. **Also fixed the failed build** (my `start_date` omission on OnboardPayload type). `npm run build` green. | ✅ code (undeployed) |
 | ISM-7 | Triage migration: 664→`reconcile` (50→`paired`), run agent over 237→`needs_fix`/`pending_approval` | ☐ supervised prod write |
+| ISM-8 | Approval = a TASK (POL-108). submit()→pending_approval atomically enqueues an assigned `invoice-approval` task (the assignee gate; default zilla) with the AI contract-review attached as the card body; approve/reject/void close the task; task-dispatch reject wired. FE: clean approval card in the live `MyTasksTab`. Reuses the existing generic task system (no new tables). Behavioural test: gate creates assigned task; imports OK; both builds green. | ✅ code (undeployed) |
 
 **Deploy gate:** ISM-6 (FE) must land before merging to main, else the FE shows "submitted" for an invoice that actually went to `needs_fix`.
 
