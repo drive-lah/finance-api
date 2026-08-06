@@ -425,7 +425,7 @@ Canonical spec: `documentation/wip/INVOICES_STATE_MACHINE.md`. 10 statuses; 3 ne
 | ISM-3 | approve() re-asserts duplicate HARD-BLOCK (POL-106) | ✅ code + test |
 | ISM-4 | matches: provisional pair `reconcile→paired`; unpair (last match) `paired→reconcile` | ✅ code (AST-verified) |
 | ISM-5 | posting engine `vr2_post_provisional` accepts `paired` (flips `paired→paid`) | ✅ code |
-| ISM-6 | FE: Invoices tab must recognise `needs_fix`/`reconcile`/`paired` (submit now returns 200 status=needs_fix, not an error) + status filters | ☐ blocks deploy |
+| ISM-6 | FE (admincontrols branch `260802_finance_recon`): `reconcile`/`paired`/`needs_fix` badges + status filters, loud DUPLICATE banner (POL-106), needs_fix reasons, submit→needs_fix alert, action guards. **Also fixed the failed build** (my `start_date` omission on OnboardPayload type). `npm run build` green. | ✅ code (undeployed) |
 | ISM-7 | Triage migration: 664→`reconcile` (50→`paired`), run agent over 237→`needs_fix`/`pending_approval` | ☐ supervised prod write |
 
 **Deploy gate:** ISM-6 (FE) must land before merging to main, else the FE shows "submitted" for an invoice that actually went to `needs_fix`.
