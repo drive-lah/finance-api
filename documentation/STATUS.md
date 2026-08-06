@@ -432,6 +432,18 @@ Canonical spec: `documentation/wip/INVOICES_STATE_MACHINE.md`. 10 statuses; 3 ne
 
 **Deploy gate:** ISM-6 (FE) must land before merging to main, else the FE shows "submitted" for an invoice that actually went to `needs_fix`.
 
+## 2.11c Requests surface — going-forward daily-use (POL-110, Gaurav 2026-08-06)
+
+Two audiences: **Accounting** (finance-only, unchanged) vs **Requests** (everyone, NEW top-level). Requests = **Raise** (host payout / guest payout / vendor invoice / my claim → same task/approval machinery) + **Track** (LIBERAL for vendor/host/guest — all requests + paid; PRIVATE for own claim). Consolidates 5 scattered items; only new backend = host/guest payout-REQUEST; claims relocate here; Bottle's paid-status feeds Track.
+
+| ID | Item | State |
+|----|------|-------|
+| RS-1 | ✅ 2026-08-06 — **Host/guest paid-status lookup** (Track data). `src/services/host_payout_service.py` + `GET /api/finance/host-payouts?q=&market=&limit=` over ClickHouse `au_/sg_payout_entries` (join `{mkt}_users` for host name). Searchable by host id, trip id/number, payout id, transaction id, description; `payoutStatus='paid'` = truth. Verified: tripNumber→paid row (Ewacom $3,375), hostId→5 paid. | ✅ code |
+| RS-2 | Requests **Track** tab (FE): liberal vendor/host/guest search (uses RS-1 for host/guest + counterparty history for vendors) + own-claim private | ☐ |
+| RS-3 | Requests **Raise** tab (FE) + host/guest payout-REQUEST backend (the one new pipeline); vendor-invoice reuses upload, claim reuses claims | ☐ |
+| RS-4 | Relocate claims from finance module → Requests | ☐ |
+| RS-5 | Slack lookup agent over the same data | ☐ (later) |
+
 ## 2.12 Finance Platform Buildout — SEQUENCED MASTER PLAN (Gaurav 2026-08-04)
 
 Ties the 10 use cases (`wip/USE_CASE_MODULE_MAP.md`) + modules §2.8–2.11 into ONE dependency-ordered backlog. The spine is ACCESS SCOPE (own < read < write < admin), reusing the existing module-grant system. Priority 1 (Gaurav): **give access** — Phase A first. Deps in ().
