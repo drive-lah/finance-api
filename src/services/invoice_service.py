@@ -21,16 +21,15 @@ from src.models.schemas import InvoiceCreate, InvoiceUpdate
 from src.services.journal_service import journal_service
 from src.utils.errors import NotFoundError
 
-# Statuses in which field edits (amount, COA, counterparty, dates, attach doc) are SAFE — the
-# PRE-LEDGER states with NO posted journal entry. POL-107. Editing is BLOCKED once a JE exists
-# (approved / partially_paid / paid — a bill JE is booked) or the invoice is terminal
-# (rejected / void); those require a void+reissue or a credit note, not an in-place edit.
-# NOTE: needs_fix + reconcile MUST be editable — needs_fix is literally the "fix the data" state,
-# and reconcile is where the team corrects amount/counterparty before pairing.
+# Statuses in which field edits (amount, COA, counterparty, dates, attach doc) are allowed — the
+# unpaired, un-posted states (Gaurav, POL-107). Editing is BLOCKED the moment the invoice is
+# PAIRED (a payment is attached — editing would desync the match; unpair back to reconcile first),
+# APPROVED / partially_paid / paid (a journal entry is posted), or terminal (rejected / void).
+# needs_fix + reconcile MUST be editable — needs_fix is literally the "fix the data" state, and
+# reconcile is where the team corrects amount/counterparty before pairing.
 EDITABLE_STATUSES = (
     InvoiceStatus.DRAFT.value,
     InvoiceStatus.RECONCILE.value,
-    InvoiceStatus.PAIRED.value,
     InvoiceStatus.NEEDS_FIX.value,
     InvoiceStatus.PENDING_APPROVAL.value,
 )
@@ -402,15 +401,17 @@ class InvoiceService:
         return invoice
 
     def update(self, db: Session, invoice_id: int, data: InvoiceUpdate) -> FinanceInvoice:
-        """Update an invoice. Editable in any PRE-LEDGER state (EDITABLE_STATUSES); blocked once a
-        journal entry is posted (approved/partially_paid/paid) or the invoice is terminal."""
+        """Update an invoice. Editable only in the unpaired/un-posted states (EDITABLE_STATUSES):
+        draft, reconcile, needs_fix, pending_approval. Blocked once paired, posted, or terminal."""
         invoice = self.get_by_id(db, invoice_id)
 
         if invoice.status not in EDITABLE_STATUSES:
             from src.utils.errors import ConflictError
+            hint = ("unpair it (back to reconcile) before editing"
+                    if invoice.status == InvoiceStatus.PAIRED.value
+                    else "void the journal entry or raise a credit note before changing the amount")
             raise ConflictError(
-                f"Cannot update invoice in '{invoice.status}' status — a journal entry is already "
-                f"posted. Void the entry (or raise a credit note) before changing the amount."
+                f"Cannot edit an invoice in '{invoice.status}' status — {hint}."
             )
 
         update_data = data.model_dump(exclude_unset=True)
