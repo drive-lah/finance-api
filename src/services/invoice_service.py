@@ -1764,50 +1764,28 @@ class InvoiceService:
         ).scalar()
         assignee_role = None if approver_id else "finance.invoices"
 
-        # AI contract review (advisory — never auto-approves; POL-108).
-        try:
-            review = self._ai_contract_review(db, invoice)
-        except Exception:
-            review = {"assessment": "pass", "message": "AI review unavailable", "concerns": []}
-
-        cp = db.get(FinanceCounterparty, invoice.counterparty_id) if invoice.counterparty_id else None
-        vendor = (cp.name if cp else None) or "Unknown vendor"
-        coa_name = None
-        if invoice.contra_account_code:
-            row = db.execute(text("SELECT name FROM finance_accounts WHERE code = :c"),
-                             {"c": invoice.contra_account_code}).first()
-            coa_name = row[0] if row else invoice.contra_account_code
-        dup = duplicate_detection_service.detect(
-            db, entity_id=invoice.entity_id, counterparty_id=invoice.counterparty_id,
-            invoice_number=invoice.invoice_number, total_amount=invoice.total_amount,
-            invoice_date=invoice.invoice_date, currency=invoice.currency,
-            pdf_content_hash=invoice.pdf_content_hash, exclude_id=invoice.id)
-        is_dup = bool(dup.is_duplicate and dup.duplicate_of and dup.duplicate_of < invoice.id)
-
+        # Approval Agent v2 card (POL-109) — ClickHouse-sourced enrichment + double-pay +
+        # Sonnet summary/risk/confidence. BEST-EFFORT: on failure fall back to a minimal card so
+        # the task is never blocked (the assignee gate still holds).
+        from src.services import approval_card_service
         amount = float(invoice.total_amount) if invoice.total_amount is not None else 0.0
-        card = {
-            "vendor": vendor, "entity_id": invoice.entity_id,
-            "invoice_number": invoice.invoice_number,
-            "invoice_date": invoice.invoice_date.isoformat() if invoice.invoice_date else None,
-            "due_date": invoice.due_date.isoformat() if invoice.due_date else None,
-            "amount": amount, "currency": invoice.currency,
-            "net_amount": float(invoice.net_amount) if invoice.net_amount is not None else None,
-            "tax_amount": float(invoice.tax_amount) if invoice.tax_amount is not None else None,
-            "coa_code": invoice.contra_account_code, "coa_name": coa_name,
-            "checks": {"counterparty": bool(invoice.counterparty_id),
-                       "coa": bool(invoice.contra_account_code), "not_duplicate": not is_dup},
-            "agent": {"assessment": review.get("assessment"), "message": review.get("message"),
-                      "concerns": review.get("concerns") or []},
-            "pdf_s3_key": invoice.pdf_s3_key, "uploaded_by": invoice.uploaded_by,
-        }
+        body = approval_card_service.build_card_body(db, invoice)
+        if not body:
+            cp = db.get(FinanceCounterparty, invoice.counterparty_id) if invoice.counterparty_id else None
+            vendor = (cp.name if cp else None) or "Unknown vendor"
+            body = {"agent_version": "v2-min", "vendor": vendor, "summary": None,
+                    "risk_flags": [], "confidence": None}
+        vendor = body.get("vendor") or "Unknown vendor"
+        conf = body.get("confidence")
+        summary = (body.get("summary") or f"{vendor} · {invoice.currency} {amount:,.2f}")[:200]
+        # Risk: high-value OR low-confidence surfaces for closer review.
+        risk = "high" if (amount >= self._APPROVAL_HIGH_RISK_MIN or (conf is not None and conf < 40)) else "low"
 
         invoice.status = InvoiceStatus.PENDING_APPROVAL.value
         task_service.enqueue(
             db, type="invoice-approval", source_ref=f"invoice:{invoice.id}",
             title=f"Approve invoice — {vendor} · {invoice.currency} {amount:,.2f}",
-            summary=f"{vendor} · {invoice.currency} {amount:,.2f} · {coa_name or invoice.contra_account_code or 'no COA'}"
-                    + (f" · agent: {review.get('message')}" if review.get("message") else ""),
-            body=card, risk=("high" if amount >= self._APPROVAL_HIGH_RISK_MIN else "low"),
+            summary=summary, body=body, risk=risk,
             amount=invoice.total_amount, currency=invoice.currency,
             assignee_user_id=approver_id, assignee_role=assignee_role,
             created_by="invoice-submit",
