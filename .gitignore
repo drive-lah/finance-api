@@ -66,3 +66,4 @@ documentation/wip/reconciliation/backups/
 .claude/
 documentation/wip/FINAL.csv
 documentation/wip/triage_backup_*.json
+documentation/wip/approval_agent/card_backup_*.json
