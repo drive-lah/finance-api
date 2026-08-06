@@ -170,6 +170,9 @@ def build_card_body(db, invoice):
         card = _build_card(inv, anchors, tkt, trip, dp)
         return {
             "agent_version": "v2", "vendor": vendor,
+            "counterparty_id": invoice.counterparty_id,      # for the "vendor payment history" link
+            "invoice_id": invoice.id,                        # our INTERNAL id
+            "invoice_number": invoice.invoice_number,        # the VENDOR's document number (distinct from invoice_id)
             "summary": card.get("summary"), "risk_flags": card.get("risk_flags") or [],
             "confidence": card.get("confidence"),
             "requester": {"team": anchors.get("team"), "approved_by": anchors.get("approved_by")},
