@@ -33,6 +33,7 @@ def list_matches():
 def create_match():
     """Create a PROVISIONAL invoice↔payment match (manual). Enforces 1 active match per txn+invoice."""
     from src.models.invoice_payment_match import FinanceInvoicePaymentMatch
+    from src.models.invoice import FinanceInvoice, InvoiceStatus
     body = request.get_json(force=True) or {}
     invoice_id = body.get("invoice_id"); transaction_id = body.get("transaction_id")
     if not invoice_id or not transaction_id:
@@ -49,6 +50,11 @@ def create_match():
             invoice_id=int(invoice_id), transaction_id=int(transaction_id),
             state="provisional", source="manual", created_by=body.get("created_by") or "ui")
         db.add(m); db.flush()
+        # State machine (POL-107): provisionally pairing a reconcile-arm invoice advances it
+        # reconcile → paired (awaiting posting authorization; the team never posts).
+        inv = db.get(FinanceInvoice, int(invoice_id))
+        if inv is not None and inv.status == InvoiceStatus.RECONCILE.value:
+            inv.status = InvoiceStatus.PAIRED.value
         return jsonify(m.to_dict()), 201
 
 
@@ -56,13 +62,23 @@ def create_match():
 def delete_match(match_id):
     """Detach (break) a match. Provisional → just delete. Logged → blocked (void the JE first)."""
     from src.models.invoice_payment_match import FinanceInvoicePaymentMatch
+    from src.models.invoice import FinanceInvoice, InvoiceStatus
     with db_session() as db:
         m = db.get(FinanceInvoicePaymentMatch, match_id)
         if not m:
             raise NotFoundError(f"match {match_id} not found")
         if m.state == "logged":
             raise ConflictError("match is logged — void the journal entry before detaching")
-        db.delete(m)
+        inv_id = m.invoice_id
+        db.delete(m); db.flush()
+        # State machine (POL-107): unpairing the last provisional match sends a paired
+        # invoice back to reconcile (it is no longer matched).
+        inv = db.get(FinanceInvoice, inv_id)
+        if inv is not None and inv.status == InvoiceStatus.PAIRED.value:
+            remaining = (db.query(FinanceInvoicePaymentMatch)
+                         .filter(FinanceInvoicePaymentMatch.invoice_id == inv_id).count())
+            if remaining == 0:
+                inv.status = InvoiceStatus.RECONCILE.value
         return jsonify({"deleted": match_id})
 
 

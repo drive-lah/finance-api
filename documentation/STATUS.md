@@ -414,6 +414,22 @@ Employee claims are a SEPARATE track from vendor invoices: employee self-submits
 
 ---
 
+## 2.11b Invoice State Machine (POL-107) — backend built 2026-08-06, NOT yet deployed
+
+Canonical spec: `documentation/wip/INVOICES_STATE_MACHINE.md`. 10 statuses; 3 new (`reconcile`, `paired`, `needs_fix`).
+
+| ID | Item | State |
+|----|------|-------|
+| ISM-1 | Enum + `reconcile`/`paired`/`needs_fix` (no DB migration — status is varchar) | ✅ code (branch `finance_work`, undeployed) |
+| ISM-2 | submit() routes guardrail failures (dup/no-cp/missing) → `needs_fix` w/ reasons in `ai_extraction_raw.needs_fix`, re-submittable after fix (clears stamp) | ✅ code + 4 behavioural tests pass |
+| ISM-3 | approve() re-asserts duplicate HARD-BLOCK (POL-106) | ✅ code + test |
+| ISM-4 | matches: provisional pair `reconcile→paired`; unpair (last match) `paired→reconcile` | ✅ code (AST-verified) |
+| ISM-5 | posting engine `vr2_post_provisional` accepts `paired` (flips `paired→paid`) | ✅ code |
+| ISM-6 | FE: Invoices tab must recognise `needs_fix`/`reconcile`/`paired` (submit now returns 200 status=needs_fix, not an error) + status filters | ☐ blocks deploy |
+| ISM-7 | Triage migration: 664→`reconcile` (50→`paired`), run agent over 237→`needs_fix`/`pending_approval` | ☐ supervised prod write |
+
+**Deploy gate:** ISM-6 (FE) must land before merging to main, else the FE shows "submitted" for an invoice that actually went to `needs_fix`.
+
 ## 2.12 Finance Platform Buildout — SEQUENCED MASTER PLAN (Gaurav 2026-08-04)
 
 Ties the 10 use cases (`wip/USE_CASE_MODULE_MAP.md`) + modules §2.8–2.11 into ONE dependency-ordered backlog. The spine is ACCESS SCOPE (own < read < write < admin), reusing the existing module-grant system. Priority 1 (Gaurav): **give access** — Phase A first. Deps in ().

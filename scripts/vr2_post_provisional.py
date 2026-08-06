@@ -59,7 +59,9 @@ def build_targets(db):
         if iid in EXCLUDE: continue
         i = db.get(FinanceInvoice, iid); t = db.get(FinanceTransaction, tid)
         if not i or not t: continue
-        if i.status != InvoiceStatus.DRAFT.value: continue
+        # POL-107: reconcile-arm invoices are PAIRED when a provisional match exists;
+        # posting flips paired → paid. DRAFT retained for pre-cutover backward-compat.
+        if i.status not in (InvoiceStatus.DRAFT.value, InvoiceStatus.PAIRED.value): continue
         ba = db.get(FinanceBankAccount, t.bank_account_id) if t.bank_account_id else None
         if not ba or not ba.coa_account_code: continue
         cp = db.get(FinanceCounterparty, i.counterparty_id) if i.counterparty_id else None
