@@ -21,6 +21,20 @@ from src.models.schemas import InvoiceCreate, InvoiceUpdate
 from src.services.journal_service import journal_service
 from src.utils.errors import NotFoundError
 
+# Statuses in which field edits (amount, COA, counterparty, dates, attach doc) are SAFE — the
+# PRE-LEDGER states with NO posted journal entry. POL-107. Editing is BLOCKED once a JE exists
+# (approved / partially_paid / paid — a bill JE is booked) or the invoice is terminal
+# (rejected / void); those require a void+reissue or a credit note, not an in-place edit.
+# NOTE: needs_fix + reconcile MUST be editable — needs_fix is literally the "fix the data" state,
+# and reconcile is where the team corrects amount/counterparty before pairing.
+EDITABLE_STATUSES = (
+    InvoiceStatus.DRAFT.value,
+    InvoiceStatus.RECONCILE.value,
+    InvoiceStatus.PAIRED.value,
+    InvoiceStatus.NEEDS_FIX.value,
+    InvoiceStatus.PENDING_APPROVAL.value,
+)
+
 if TYPE_CHECKING:
     from src.models.bank_account import FinanceBankAccount
     from src.models.journal_entry import FinanceJournalEntry
@@ -388,14 +402,15 @@ class InvoiceService:
         return invoice
 
     def update(self, db: Session, invoice_id: int, data: InvoiceUpdate) -> FinanceInvoice:
-        """Update an invoice. Only draft/pending_approval invoices can be edited."""
+        """Update an invoice. Editable in any PRE-LEDGER state (EDITABLE_STATUSES); blocked once a
+        journal entry is posted (approved/partially_paid/paid) or the invoice is terminal."""
         invoice = self.get_by_id(db, invoice_id)
 
-        if invoice.status not in (InvoiceStatus.DRAFT.value, InvoiceStatus.PENDING_APPROVAL.value):
+        if invoice.status not in EDITABLE_STATUSES:
             from src.utils.errors import ConflictError
             raise ConflictError(
-                f"Cannot update invoice in '{invoice.status}' status. "
-                f"Only draft or pending_approval invoices can be edited."
+                f"Cannot update invoice in '{invoice.status}' status — a journal entry is already "
+                f"posted. Void the entry (or raise a credit note) before changing the amount."
             )
 
         update_data = data.model_dump(exclude_unset=True)
@@ -439,11 +454,11 @@ class InvoiceService:
         from src.models.entity import FinanceEntity
 
         invoice = self.get_by_id(db, invoice_id)
-        if invoice.status not in (InvoiceStatus.DRAFT.value, InvoiceStatus.PENDING_APPROVAL.value):
+        if invoice.status not in EDITABLE_STATUSES:
             from src.utils.errors import ConflictError
             raise ConflictError(
                 f"Cannot attach a document to an invoice in '{invoice.status}' status "
-                f"(only draft / pending_approval)."
+                f"— a journal entry is already posted."
             )
 
         h = hashlib.sha256(file_bytes).hexdigest()
