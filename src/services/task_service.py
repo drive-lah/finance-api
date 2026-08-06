@@ -61,6 +61,44 @@ class TaskService:
             t.notes = notes or t.notes
         return len(rows)
 
+    # ── live hydration ──────────────────────────────────────────────────────────
+    def hydrate_source(self, db, dicts: list[dict]) -> list[dict]:
+        """The source workflow is the system of record. For invoice-sourced tasks, override the
+        DENORMALIZED amount / currency / title snapshot with the LIVE invoice, so editing an
+        invoice is reflected on its approval card immediately (no drift, no per-edit sync).
+        Non-invoice tasks (claims / payouts that own their amount) pass through unchanged."""
+        from src.models.invoice import FinanceInvoice
+        from src.models.counterparty import FinanceCounterparty
+
+        def _iid(sr: str):
+            p = (sr or "").split(":")
+            return int(p[1]) if len(p) == 2 and p[0] == "invoice" and p[1].isdigit() else None
+
+        inv_ids = {i for d in dicts if (i := _iid(d.get("source_ref"))) is not None}
+        if not inv_ids:
+            return dicts
+        invs = {i.id: i for i in db.query(FinanceInvoice).filter(FinanceInvoice.id.in_(inv_ids)).all()}
+        cp_ids = {i.counterparty_id for i in invs.values() if i.counterparty_id}
+        cps = ({c.id: c.name for c in db.query(FinanceCounterparty)
+                .filter(FinanceCounterparty.id.in_(cp_ids)).all()} if cp_ids else {})
+        for d in dicts:
+            inv = invs.get(_iid(d.get("source_ref")))
+            if inv is None:
+                continue
+            amt = float(inv.total_amount) if inv.total_amount is not None else d.get("amount")
+            d["amount"] = amt
+            d["currency"] = inv.currency or d.get("currency")
+            if (d.get("title") or "").startswith("Approve invoice") and amt is not None:
+                vendor = cps.get(inv.counterparty_id) or "vendor"
+                d["title"] = f"Approve invoice — {vendor} · {inv.currency} {amt:,.2f}"
+            body = d.get("body")
+            if isinstance(body, dict):
+                if "amount" in body:
+                    body["amount"] = amt
+                if "invoice_number" in body:
+                    body["invoice_number"] = inv.invoice_number
+        return dicts
+
     # ── read (own-scoped) ───────────────────────────────────────────────────────
     def list_scoped(self, db, caller_user_id: int, roles: list[str], is_admin: bool,
                     status: str = None):

@@ -37,7 +37,7 @@ def list_tasks():
     status = request.args.get("status")
     with db_session() as db:
         rows = task_service.list_scoped(db, caller, roles, is_admin, status=status)
-        return jsonify([t.to_dict() for t in rows])
+        return jsonify(task_service.hydrate_source(db, [t.to_dict() for t in rows]))
 
 
 @tasks_bp.route("/count", methods=["GET"])
@@ -51,7 +51,8 @@ def count_tasks():
 def get_task(task_id):
     caller, roles, is_admin = _caller()
     with db_session() as db:
-        return jsonify(task_service.get(db, task_id, caller, roles, is_admin).to_dict())
+        t = task_service.get(db, task_id, caller, roles, is_admin)
+        return jsonify(task_service.hydrate_source(db, [t.to_dict()])[0])
 
 
 @tasks_bp.route("/<int:task_id>/act", methods=["POST"])
