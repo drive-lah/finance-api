@@ -184,6 +184,9 @@ def _invoice_dict(invoice: "FinanceInvoice", db: Optional[Session] = None) -> di
         "void_reason": invoice.void_reason,
     }
 
+    # Pay Queue (POL-111): manual rank (NULL = FIFO by approved_at).
+    result["pay_priority"] = invoice.pay_priority
+
     return result
 
 
@@ -794,14 +797,34 @@ class InvoiceService:
 
     def reject(self, db: Session, invoice_id: int, rejection_reason: str,
                rejected_by: Optional[str] = None) -> FinanceInvoice:
-        """Reject an invoice with a reason. Captures who/when (rejected_by = logged-in user)."""
+        """Reject an invoice with a reason. Captures who/when (rejected_by = logged-in user).
+
+        Rejectable from draft / pending_approval AND from the pay queue (`approved`, POL-111).
+        Rejecting an APPROVED invoice is not a status flip — approval already posted the bill JE
+        (Dr expense / Cr 2000 AP), so we REVERSE that entry (void it) to clear the liability.
+        A `paired`/`partially_paid`/`paid` invoice cannot be rejected — unpair / handle the
+        payment first."""
         invoice = self.get_by_id(db, invoice_id)
 
-        if invoice.status not in (InvoiceStatus.DRAFT.value, InvoiceStatus.PENDING_APPROVAL.value):
+        rejectable = (
+            InvoiceStatus.DRAFT.value,
+            InvoiceStatus.PENDING_APPROVAL.value,
+            InvoiceStatus.APPROVED.value,
+        )
+        if invoice.status not in rejectable:
             from src.utils.errors import ConflictError
             raise ConflictError(
-                f"Cannot reject invoice in '{invoice.status}' status."
+                f"Cannot reject invoice in '{invoice.status}' status "
+                f"(only draft, pending_approval, or approved)."
             )
+
+        # Approved → reverse the bill JE that approval posted, so no dangling liability remains.
+        if invoice.status == InvoiceStatus.APPROVED.value and invoice.journal_entry_id:
+            journal_service.void_entry(
+                db, invoice.journal_entry_id,
+                reason=f"invoice #{invoice.id} rejected from pay queue: {rejection_reason}",
+            )
+            invoice.journal_entry_id = None
 
         invoice.status = InvoiceStatus.REJECTED.value
         invoice.rejection_reason = rejection_reason
@@ -846,6 +869,60 @@ class InvoiceService:
         db.commit()
         db.refresh(invoice)
         return invoice
+
+    # ── Pay Queue (POL-111) ────────────────────────────────────────────────────
+    def pay_queue(self, db: Session, entity_id: Optional[int] = None) -> list[FinanceInvoice]:
+        """The approved-payables queue: invoices awaiting payout. Sorted by manual priority
+        first (a drag-reorder ranks the visible set 1..N; lower = higher), then FIFO by
+        approval time for anything not manually ranked (Gaurav, POL-111)."""
+        from sqlalchemy import asc
+        q = db.query(FinanceInvoice).filter(
+            FinanceInvoice.status.in_(
+                (InvoiceStatus.APPROVED.value, InvoiceStatus.PARTIALLY_PAID.value)
+            )
+        )
+        if entity_id is not None:
+            q = q.filter(FinanceInvoice.entity_id == entity_id)
+        # NULLS LAST so manually-ranked items sit on top in their chosen order, then the rest
+        # by approval time (oldest first). Portable NULLS-LAST via a computed flag.
+        return (
+            q.order_by(
+                asc(FinanceInvoice.pay_priority.is_(None)),
+                asc(FinanceInvoice.pay_priority),
+                asc(FinanceInvoice.approved_at),
+                asc(FinanceInvoice.id),
+            ).all()
+        )
+
+    def reorder_pay_queue(
+        self, db: Session, ordered_invoice_ids: list[int], moved_by: Optional[str] = None
+    ) -> list[FinanceInvoice]:
+        """Apply a manual drag-reorder: write pay_priority = 1..N in the given order, and log
+        every invoice whose position actually changed to the append-only move-log (POL-111).
+        Only pay-queue invoices (approved / partially_paid) may be ranked."""
+        from src.models.pay_queue_move import FinancePayQueueMove
+        # Current order (before) to compute from→to positions for the trail.
+        before = {inv.id: idx + 1 for idx, inv in enumerate(self.pay_queue(db))}
+        pos = 0
+        touched: list[FinanceInvoice] = []
+        for iid in ordered_invoice_ids:
+            inv = db.get(FinanceInvoice, int(iid))
+            if inv is None or inv.status not in (
+                InvoiceStatus.APPROVED.value, InvoiceStatus.PARTIALLY_PAID.value
+            ):
+                continue  # ignore anything not in the pay queue
+            pos += 1
+            new_from = before.get(inv.id)
+            if inv.pay_priority != pos:
+                if new_from != pos:
+                    db.add(FinancePayQueueMove(
+                        invoice_id=inv.id, from_position=new_from, to_position=pos,
+                        moved_by=moved_by,
+                    ))
+                inv.pay_priority = pos
+            touched.append(inv)
+        db.commit()
+        return self.pay_queue(db)
 
     def get_open_for_counterparty(
         self,

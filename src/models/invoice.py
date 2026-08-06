@@ -111,6 +111,9 @@ class FinanceInvoice(Base):
     )
     approved_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     rejection_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # Pay Queue manual priority (POL-111). NULL = not manually ranked → falls to approved_at FIFO.
+    # A drag-reorder rewrites the visible set to 1..N; lower number = higher in the pay queue.
+    pay_priority: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     # Full action-audit trail (migration 047) — who/when/why for every transition.
     submitted_by: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     submitted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
