@@ -582,6 +582,27 @@ class InvoiceService:
                 f"Only pending_approval invoices can be approved (submit it first)."
             )
 
+        # POL-106 (ground rule): a DUPLICATE can NEVER be approved — re-assert the block at
+        # approval time, catching any duplicate that surfaced after submit. Clear it first.
+        from src.services.duplicate_detection_service import duplicate_detection_service
+        _dup = duplicate_detection_service.detect(
+            db,
+            entity_id=invoice.entity_id,
+            counterparty_id=invoice.counterparty_id,
+            invoice_number=invoice.invoice_number,
+            total_amount=invoice.total_amount,
+            invoice_date=invoice.invoice_date,
+            currency=invoice.currency,
+            pdf_content_hash=invoice.pdf_content_hash,
+            exclude_id=invoice.id,
+        )
+        if _dup.is_duplicate and _dup.duplicate_of and _dup.duplicate_of < invoice.id:
+            from src.utils.errors import ConflictError
+            raise ConflictError(
+                f"Duplicate of invoice #{_dup.duplicate_of} ({_dup.level}) — a duplicate cannot "
+                f"be approved (POL-106). Resolve the duplicate before approval."
+            )
+
         # COA priority at approval time:
         # 1. Manual override from approver (contra_account_code parameter) — highest priority
         # 2. For VERIFIED counterparties: ALWAYS use default_account_code (ignores AI suggestion)
@@ -1592,13 +1613,20 @@ class InvoiceService:
         """
         invoice = self.get_by_id(db, invoice_id)
 
-        if invoice.status != InvoiceStatus.DRAFT.value:
+        # Submittable from draft OR needs_fix (re-submit after resolving an exception).
+        if invoice.status not in (InvoiceStatus.DRAFT.value, InvoiceStatus.NEEDS_FIX.value):
             from src.utils.errors import ConflictError
             raise ConflictError(
-                f"Only draft invoices can be submitted. Current status: {invoice.status}"
+                f"Only draft or needs_fix invoices can be submitted. Current status: {invoice.status}"
             )
 
-        # --- Phase 1: field validation ---
+        # --- Exception screen (POL-107 state machine). A guardrail failure PARKS the
+        #     invoice in needs_fix (a tracked worklist state) with the reasons recorded,
+        #     rather than throwing a dead API error. The approval agent's job: nothing
+        #     with an open exception reaches pending_approval. ---
+        reasons: list[str] = []
+
+        # 1. Field completeness
         missing = []
         if not invoice.entity_id:
             missing.append("entity_id")
@@ -1612,15 +1640,10 @@ class InvoiceService:
         if not invoice.invoice_date or invoice.invoice_date <= _date(1901, 1, 1):
             missing.append("invoice_date (a real date — this stub carries the 1900 unknown-date sentinel)")
         if missing:
-            from src.utils.errors import BadRequestError
-            raise BadRequestError(
-                f"Cannot submit invoice — missing required fields: {', '.join(missing)}"
-            )
+            reasons.append("Missing required fields: " + ", ".join(missing))
 
-        # --- HARD BLOCK (Gaurav 2026-08-01): a duplicate cannot be promoted past draft —
-        # "first one wins". The deterministic layers (identical file, or same vendor +
-        # invoice number + amount) block; same-number-different-amount or numberless
-        # same-amount only warns (surfaced elsewhere as review, not blocked here). ---
+        # 2. Duplicate (POL-106 hard block). "First one wins": flag only if the matched
+        #    original was ingested BEFORE this one (lower id).
         from src.services.duplicate_detection_service import duplicate_detection_service
         dup = duplicate_detection_service.detect(
             db,
@@ -1633,14 +1656,40 @@ class InvoiceService:
             pdf_content_hash=invoice.pdf_content_hash,
             exclude_id=invoice.id,
         )
-        # "first one wins": block only if the matched original was ingested BEFORE this
-        # one (lower id). If THIS is the earliest, it is the original and may proceed.
-        if dup.is_duplicate and dup.duplicate_of and dup.duplicate_of < invoice.id:
-            from src.utils.errors import ConflictError
-            raise ConflictError(
-                f"Duplicate of invoice #{dup.duplicate_of} ({dup.level}). {dup.reason} "
-                f"A duplicate cannot be promoted past draft (first one wins)."
+        is_duplicate = bool(dup.is_duplicate and dup.duplicate_of and dup.duplicate_of < invoice.id)
+        if is_duplicate:
+            reasons.append(
+                f"Duplicate of invoice #{dup.duplicate_of} ({dup.level}). {dup.reason}"
             )
+
+        if reasons:
+            # Park in needs_fix; stamp the reasons + the duplicate flag (POL-106 gate reads it).
+            raw = dict(invoice.ai_extraction_raw or {})
+            raw["needs_fix"] = {
+                "reasons": reasons,
+                "is_duplicate": is_duplicate,
+                "duplicate_of": dup.duplicate_of if is_duplicate else None,
+                "flagged_at": datetime.now(UTC).isoformat(),
+            }
+            invoice.ai_extraction_raw = raw
+            invoice.submitted_by = submitted_by
+            invoice.submitted_at = datetime.now(UTC)
+            invoice.status = InvoiceStatus.NEEDS_FIX.value
+            db.commit()
+            db.refresh(invoice)
+            return {
+                "status": InvoiceStatus.NEEDS_FIX.value,
+                "message": "Moved to needs_fix — resolve before approval: " + "; ".join(reasons),
+                "reasons": reasons,
+                "is_duplicate": is_duplicate,
+                "invoice": _invoice_dict(invoice, db),
+            }
+
+        # Passed the screen — clear any prior needs_fix stamp (re-submit after a fix).
+        if (invoice.ai_extraction_raw or {}).get("needs_fix"):
+            raw = dict(invoice.ai_extraction_raw or {})
+            raw.pop("needs_fix", None)
+            invoice.ai_extraction_raw = raw
 
         # --- SOFT BLOCK (Gaurav 2026-07-31): submitting a doc flagged NOT-an-invoice
         # requires an explicit reason. Not a hard stop — they may proceed WITH a reason. ---

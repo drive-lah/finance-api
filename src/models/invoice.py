@@ -17,7 +17,11 @@ from src.database import Base
 
 
 class InvoiceStatus(str, enum.Enum):
-    DRAFT = "draft"
+    # Canonical state machine: documentation/wip/INVOICES_STATE_MACHINE.md (POL-107).
+    DRAFT = "draft"                      # captured, not yet triaged
+    RECONCILE = "reconcile"             # believed paid; awaiting finance to provisionally PAIR the payment
+    PAIRED = "paired"                   # provisional match made; awaiting posting authorization (NOT posted)
+    NEEDS_FIX = "needs_fix"             # approval agent flagged an exception (duplicate / no counterparty / missing info)
     PENDING_APPROVAL = "pending_approval"
     APPROVED = "approved"
     PARTIALLY_PAID = "partially_paid"
