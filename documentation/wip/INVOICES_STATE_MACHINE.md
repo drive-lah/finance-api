@@ -75,6 +75,28 @@ draft ──▶ approval agent screens ──┬── exception ──▶ needs
    posts. The team never writes to the ledger.
 3. **`draft → reconcile` vs `draft → approval arm`** is decided solely by "already paid outside the
    system?" (today: the Retool `is_provisional_paid` flag).
+4. **Posted = LOCKED, and pairing reposts.** A match has two states: **PROVISIONAL** (proposed, no
+   ledger effect, freely reversible) and **LOGGED** (posted — invoice `paid`/`partially_paid` +
+   transaction `RECONCILED` + knock-off JE booked). A LOGGED match is **not reversible from the UI**:
+   `delete_match` blocks it at the API ("match is logged — void the journal entry before detaching"),
+   and the MatchChip hides the unpair `X`. To undo, you void the journal entry, not the match.
+5. **Any transaction is pairable EXCEPT one already in a match.** A transaction that was direct-expensed
+   (already `RECONCILED`, JE booked) is still fully pairable to an invoice — the clash rule
+   (`create_match`) blocks only transactions/invoices already sitting in
+   `finance_invoice_payment_matches`. When such a transaction is posted against an invoice, posting
+   **reverses the original direct-expense JE** (`_reopen_transaction`, "superseded direct expense") and
+   **reposts** the spend through the invoice's knock-off JE. This is the reposting mechanism: the
+   transaction moves from a generic direct expense to a proper counterparty-attributed invoice
+   settlement, with no double-count. (Case B in `vr2_post_provisional.py`.)
+6. **Invoices are EDITABLE only in the unpaired/un-posted states (Gaurav, 2026-08-06).**
+   `EDITABLE_STATUSES = {draft, reconcile, needs_fix, pending_approval}` — the states with no attached
+   payment and no posted JE. Editing (amount, COA, counterparty, dates, attach doc) is BLOCKED once the
+   invoice is **`paired`** (a payment is attached — editing would desync the match; **unpair back to
+   `reconcile` first**), **`approved`/`partially_paid`/`paid`** (a JE is posted), or terminal
+   (`rejected`/`void`). Enforced in `invoice_service.update()` + `attach_document()`. `needs_fix` and
+   `reconcile` MUST be editable — `needs_fix` is literally the "fix the data" state. (Root cause of the
+   2026-08-06 team bug: the guard predated POL-107 and allowed only `draft`/`pending_approval`, so every
+   post-triage `reconcile`/`needs_fix` invoice 409'd on an amount edit.)
 
 ## Transition table
 

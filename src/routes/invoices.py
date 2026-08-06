@@ -211,6 +211,60 @@ def void_invoice(invoice_id: int):
         return jsonify(_invoice_dict(invoice, db)), 200
 
 
+# ── Pay Queue (POL-111) ──────────────────────────────────────────────────────
+@invoices_bp.route("/pay-queue", methods=["GET"])
+def get_pay_queue():
+    """The approved-payables queue — invoices awaiting payout, sorted by manual priority then
+    FIFO by approval time. Optional ?entity_id=."""
+    entity_id = request.args.get("entity_id", type=int)
+    with db_session() as db:
+        rows = invoice_service.pay_queue(db, entity_id=entity_id)
+        return jsonify({"items": [_invoice_dict(inv, db) for inv in rows], "count": len(rows)}), 200
+
+
+@invoices_bp.route("/pay-queue/reorder", methods=["POST"])
+def reorder_pay_queue():
+    """Apply a manual drag-reorder. Body: { ordered_invoice_ids: [int], moved_by: str }.
+    Writes pay_priority = 1..N in the given order and logs each moved invoice to the trail."""
+    data = request.get_json() or {}
+    ids = data.get("ordered_invoice_ids")
+    if not isinstance(ids, list) or not ids:
+        return jsonify({"error": "ordered_invoice_ids (non-empty list) is required"}), 400
+    with db_session() as db:
+        rows = invoice_service.reorder_pay_queue(db, ids, moved_by=data.get("moved_by"))
+        return jsonify({"items": [_invoice_dict(inv, db) for inv in rows], "count": len(rows)}), 200
+
+
+@invoices_bp.route("/pay-queue/moves", methods=["GET"])
+def get_pay_queue_moves():
+    """The append-only reorder audit trail. Optional ?invoice_id= to scope to one invoice."""
+    from src.models.pay_queue_move import FinancePayQueueMove
+    invoice_id = request.args.get("invoice_id", type=int)
+    with db_session() as db:
+        q = db.query(FinancePayQueueMove)
+        if invoice_id is not None:
+            q = q.filter(FinancePayQueueMove.invoice_id == invoice_id)
+        moves = q.order_by(FinancePayQueueMove.moved_at.desc()).limit(500).all()
+        return jsonify({"items": [m.to_dict() for m in moves], "count": len(moves)}), 200
+
+
+@invoices_bp.route("/<int:invoice_id>/pay", methods=["POST"])
+def pay_invoice(invoice_id: int):
+    """Pay an approved invoice by pairing an outgoing bank transaction to it (approval-arm
+    payment). Books the AP payment JE (Dr 2000 AP / Cr bank), records the payment, and flips
+    the invoice approved → paid / partially_paid. Body: { transaction_id: int (required),
+    matched_by: str }."""
+    data = request.get_json() or {}
+    transaction_id = data.get("transaction_id")
+    if not transaction_id:
+        return jsonify({"error": "transaction_id is required"}), 400
+    with db_session() as db:
+        result = invoice_service.match_transaction(
+            db, invoice_id, int(transaction_id), matched_by=data.get("matched_by") or "manual"
+        )
+        return jsonify(result), 200
+
+
 @invoices_bp.route("/<int:invoice_id>/submit", methods=["POST"])
 def submit_invoice(invoice_id: int):
     """
