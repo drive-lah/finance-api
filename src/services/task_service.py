@@ -112,6 +112,26 @@ class TaskService:
         db.flush()
         return t
 
+    # ── reassign (stays OPEN, moves to another person's queue with a comment) ─────
+    def reassign(self, db, task_id, new_assignee_user_id: int, comment: str,
+                 caller_user_id, roles, is_admin) -> Task:
+        """Reassign an OPEN task to another user with a comment. The task stays open and
+        appears in the new assignee's queue. The comment + who/when is appended to notes
+        (audit trail). Approve/reject/void CLOSE a task; reassign does NOT."""
+        t = self._visible(db, task_id, caller_user_id, roles, is_admin)
+        if t.status != TaskStatus.OPEN.value:
+            raise BadRequestError(f"Task is {t.status}, not open — cannot reassign.")
+        if not new_assignee_user_id:
+            raise BadRequestError("assignee_user_id is required to reassign.")
+        t.assignee_user_id = int(new_assignee_user_id)
+        t.assignee_role = None  # a direct reassignment overrides any role queue
+        stamp = (f"[{datetime.utcnow():%Y-%m-%d %H:%M} · reassigned by {caller_user_id} "
+                 f"→ user {new_assignee_user_id}]")
+        line = f"{stamp} {comment}".strip() if comment else stamp
+        t.notes = (t.notes + "\n" + line) if t.notes else line
+        db.flush()
+        return t
+
     def _route(self, db, task: Task, action: str, caller, is_admin, notes) -> dict:
         """Dispatch the action to the source workflow. The source service re-checks its own
         permissions — the task layer never bypasses them."""
@@ -146,13 +166,17 @@ class TaskService:
             from src.services.invoice_service import invoice_service
             if action == "approve":
                 invoice_service.approve(db, sid, approved_by=str(caller))
+                return {"status": TaskStatus.DONE.value}
             elif action == "reject":
                 invoice_service.reject(db, sid, rejection_reason=notes or "rejected",
                                        rejected_by=str(caller))
+                return {"status": TaskStatus.RETURNED.value}
+            elif action == "void":
+                invoice_service.void(db, sid, voided_by=str(caller),
+                                     void_reason=notes or "voided via task")
+                return {"status": TaskStatus.CANCELLED.value}
             else:
                 raise BadRequestError(f"Unknown action '{action}' for invoice task.")
-            return {"status": TaskStatus.DONE.value if action == "approve"
-                    else TaskStatus.RETURNED.value}
 
         # generic info task — just acknowledge
         if action in ("ack", "done", "dismiss"):

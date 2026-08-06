@@ -60,8 +60,37 @@ def act_task(task_id):
     body = request.get_json(force=True) or {}
     action = body.get("action")
     if not action:
-        raise BadRequestError("action is required (approve | reject | ack | dismiss).")
+        raise BadRequestError("action is required (approve | reject | void | ack | dismiss).")
     with db_session() as db:
         t = task_service.act(db, task_id, action, caller, roles, is_admin,
                              notes=body.get("notes"))
         return jsonify(t.to_dict())
+
+
+@tasks_bp.route("/<int:task_id>/reassign", methods=["POST"])
+def reassign_task(task_id):
+    """Reassign an open task to another user with a comment — stays open, moves to their queue."""
+    caller, roles, is_admin = _caller()
+    body = request.get_json(force=True) or {}
+    with db_session() as db:
+        t = task_service.reassign(db, task_id, body.get("assignee_user_id"),
+                                  body.get("comment"), caller, roles, is_admin)
+        return jsonify(t.to_dict())
+
+
+@tasks_bp.route("/assignable-users", methods=["GET"])
+def assignable_users():
+    """Users a task can be reassigned to (id, name, email). Optional ?q= name/email filter."""
+    _caller()
+    from sqlalchemy import text
+    q = (request.args.get("q") or "").strip()
+    with db_session() as db:
+        sql = ("SELECT id, name, email FROM users "
+               "WHERE coalesce(deleted_at::text,'')='' AND email IS NOT NULL")
+        params = {}
+        if q:
+            sql += " AND (name ILIKE :q OR email ILIKE :q)"
+            params["q"] = f"%{q}%"
+        sql += " ORDER BY name LIMIT 100"
+        rows = db.execute(text(sql), params).mappings().all()
+        return jsonify([dict(r) for r in rows])

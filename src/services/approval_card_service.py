@@ -107,6 +107,26 @@ def _trip_ctx(trip_uuid, market="au"):
             "window": f"{t['bookingStart']} → {t['bookingEnd']}", "status": t["lastTransition"]}
 
 
+def resolve_requester(db, anchors):
+    """Best-effort requester (POL-109): the Retool 'Approved by' name mapped to a current user,
+    so 'reassign to the requester' has a real queue. Sparse for the historical set; going forward
+    the invoice UPLOADER is the requester. Falls back to the requesting team."""
+    nm = (anchors.get("approved_by") or "").strip()
+    team = anchors.get("team")
+    if not nm or nm.upper().startswith("N/A") or "limit" in nm.lower():
+        return {"name": None, "user_id": None, "email": None, "team": team}
+    row = db.execute(text(
+        "SELECT id, name, email FROM users "
+        "WHERE (name ILIKE :n OR split_part(lower(email),'@',1)=lower(:n)) AND email IS NOT NULL "
+        "ORDER BY (split_part(lower(email),'@',1)=lower(:n)) DESC LIMIT 1"),
+        {"n": nm}).mappings().first()
+    if row:
+        return {"name": row["name"], "user_id": row["id"], "email": row["email"], "team": team,
+                "source": "retool:approved_by"}
+    return {"name": nm, "user_id": None, "email": None, "team": team,
+            "source": "retool:approved_by(unmatched)"}
+
+
 def _double_pay(db, counterparty_id, amount):
     if not counterparty_id:
         return {"result": "no counterparty — cannot check"}
@@ -175,7 +195,7 @@ def build_card_body(db, invoice):
             "invoice_number": invoice.invoice_number,        # the VENDOR's document number (distinct from invoice_id)
             "summary": card.get("summary"), "risk_flags": card.get("risk_flags") or [],
             "confidence": card.get("confidence"),
-            "requester": {"team": anchors.get("team"), "approved_by": anchors.get("approved_by")},
+            "requester": resolve_requester(db, anchors),
             "ticket": ({k: tkt.get(k) for k in ("ticket", "type", "state", "trip_code", "summary")}
                        if tkt else None),
             "trip": trip, "double_pay": dp,
