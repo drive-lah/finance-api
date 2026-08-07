@@ -101,9 +101,13 @@ class TaskService:
 
     # ── read (own-scoped) ───────────────────────────────────────────────────────
     def list_scoped(self, db, caller_user_id: int, roles: list[str], is_admin: bool,
-                    status: str = None):
+                    status: str = None, scope: str = "mine"):
+        """The inbox is OWN-SCOPED BY DEFAULT — everyone (admins included) sees only tasks
+        assigned to them (their user id OR a role they hold). An admin can opt into the
+        whole-company view with scope='all' (Gaurav 2026-08-07: don't show me Zilla's queue)."""
         q = db.query(Task)
-        if not is_admin:
+        all_view = is_admin and scope == "all"
+        if not all_view:
             conds = []
             if caller_user_id is not None:
                 conds.append(Task.assignee_user_id == caller_user_id)
@@ -116,9 +120,10 @@ class TaskService:
         q = q.filter(Task.status == (status or TaskStatus.OPEN.value))
         return q.order_by(Task.priority.desc(), Task.created_at.asc()).all()
 
-    def counts(self, db, caller_user_id: int, roles: list[str], is_admin: bool) -> dict:
+    def counts(self, db, caller_user_id: int, roles: list[str], is_admin: bool,
+               scope: str = "mine") -> dict:
         rows = self.list_scoped(db, caller_user_id, roles, is_admin,
-                                status=TaskStatus.OPEN.value)
+                                status=TaskStatus.OPEN.value, scope=scope)
         return {"open": len(rows)}
 
     def _visible(self, db, task_id, caller_user_id, roles, is_admin) -> Task:
