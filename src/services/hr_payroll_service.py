@@ -413,14 +413,28 @@ class HrPayrollService:
             if not emp:
                 raise ValueError(f"Employee {item.employee_id} not found for payroll item {item.id}")
 
-            # Determine salary account: from employee record or Phase 4A rules
-            salary_code = emp.salary_expense_code
+            # Salary account — SINGLE SOURCE OF TRUTH is the employee's COUNTERPARTY
+            # default_account_code (Gaurav 2026-08-07). Fall back to the legacy employee
+            # column only transitionally (pre-backfill) with a warning, then Phase 4A rules.
+            from src.models.counterparty import FinanceCounterparty
+            cp = db.query(FinanceCounterparty).filter(
+                FinanceCounterparty.external_id == str(emp.user_id),
+                FinanceCounterparty.external_system == "employee",
+            ).first()
+            salary_code = cp.default_account_code if cp else None
+            if not salary_code and emp.salary_expense_code:
+                salary_code = emp.salary_expense_code
+                logger.warning(
+                    "Employee %s counterparty has no default_account_code — falling back to the "
+                    "legacy employee salary_expense_code %s. Backfill the counterparty.",
+                    emp.id, salary_code,
+                )
             if not salary_code:
                 salary_code = self._get_salary_account_from_rules(db, emp, item.currency)
             if not salary_code:
                 raise ValueError(
                     f"Cannot determine salary account for employee {item.employee_id}. "
-                    f"Please set salary_expense_code on employee record or create a Phase 4A salary rule."
+                    f"Set the salary COA on their counterparty (default_account_code)."
                 )
 
             gross = Decimal(str(item.gross_amount))
