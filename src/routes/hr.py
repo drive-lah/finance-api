@@ -168,7 +168,7 @@ def list_employees():
                    coalesce(e.address, u.address) as address,
                    coalesce(e.country, u.country) as country,
                    coalesce(e.phone_number, u.phone_number) as phone_number,
-                   coalesce(e.teams, u.teams) as teams,
+                   u.teams as teams,  -- single source of truth: users.teams (hr copy retired)
                    u.region as staging_region, u.date_of_joining,
                    m.name as manager_name
             from users u
