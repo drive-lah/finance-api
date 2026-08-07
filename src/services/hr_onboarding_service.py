@@ -326,7 +326,9 @@ class HrOnboardingService:
                 phone_number=u.get("phone_number"),
                 designation=u.get("org_role"),
                 manager_id=u.get("manager_id"),
-                teams=u.get("teams"),
+                # teams are NOT stored on the employee record — single source of truth is
+                # users.teams (org-directory attribute; drives KPIs/auth/sync). Retired the
+                # hr_employees.teams copy (Gaurav 2026-08-07).
                 region=_RMAP.get((u.get("region") or "").lower()),
             )
             db.add(emp)
