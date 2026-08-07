@@ -268,8 +268,10 @@ class HrOnboardingService:
         bank_account_number = item.get("bank_account_number")
         bank_code = item.get("bank_code")
 
-        # 6. Update users table
-        teams_str = ",".join(teams) if isinstance(teams, list) else str(teams) if teams else None
+        # 6. Update users table. users.teams is a Postgres ARRAY (text[]) — pass a Python list so
+        # psycopg2 adapts it to an array literal; a comma-joined string produces
+        # "malformed array literal". Empty → None (avoids the empty-array type-ambiguity error).
+        teams_list = teams if isinstance(teams, list) else ([teams] if teams else [])
         db.execute(
             text(
                 "UPDATE users SET "
@@ -288,7 +290,7 @@ class HrOnboardingService:
                 "employee_type": employee_type,
                 "bank_account_number": bank_account_number,
                 "bank_code": bank_code,
-                "teams": teams_str,
+                "teams": teams_list or None,
                 "date_of_joining": start_date_val,
                 "id": user_id,
             },
