@@ -269,6 +269,7 @@ class HrOnboardingService:
 
         employee_type = item.get("employee_type", "FULL_TIME")
         teams = item.get("teams")
+        nationality = item.get("nationality")
         bank_account_number = item.get("bank_account_number")
         bank_code = item.get("bank_code")
 
@@ -288,6 +289,7 @@ class HrOnboardingService:
                 "bank_account_number = :bank_account_number, "
                 "bank_code = :bank_code, "
                 + ("teams = :teams, " if set_teams else "")
+                + ("nationality = :nationality, " if nationality else "")
                 + "date_of_joining = :date_of_joining "
                 "WHERE id = :id"
             ),
@@ -300,6 +302,7 @@ class HrOnboardingService:
                 "date_of_joining": start_date_val,
                 "id": user_id,
                 **({"teams": teams_list or None} if set_teams else {}),
+                **({"nationality": nationality} if nationality else {}),
             },
         )
 
