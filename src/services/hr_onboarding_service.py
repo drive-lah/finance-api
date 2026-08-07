@@ -159,8 +159,12 @@ class HrOnboardingService:
             assert user_row is not None  # just onboarded above — row exists
             salary_expense_code = item.get("salary_expense_code")
             payroll_entity_id = item["payroll_entity_id"]
+            # users.teams is a Postgres ARRAY (list); older rows/paths may hold a comma-string.
             teams_raw = user_row[6]
-            teams_list = teams_raw.split(",") if teams_raw else []
+            teams_list = (
+                list(teams_raw) if isinstance(teams_raw, (list, tuple))
+                else (teams_raw.split(",") if teams_raw else [])
+            )
 
             return {
                 "success": True,
