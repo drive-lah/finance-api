@@ -264,14 +264,13 @@ class HrOnboardingService:
         # --- All validations passed: perform writes ---
 
         employee_type = item.get("employee_type", "FULL_TIME")
-        teams = item.get("teams", [])
         bank_account_number = item.get("bank_account_number")
         bank_code = item.get("bank_code")
 
-        # 6. Update users table. users.teams is a Postgres ARRAY (text[]) — pass a Python list so
-        # psycopg2 adapts it to an array literal; a comma-joined string produces
-        # "malformed array literal". Empty → None (avoids the empty-array type-ambiguity error).
-        teams_list = teams if isinstance(teams, list) else ([teams] if teams else [])
+        # 6. Update users table. Teams are NOT written here — they are pre-defined on users
+        # (org sync) and drive KPIs; onboarding must NEVER change them (Gaurav 2026-08-07). The
+        # employee record INHERITS the existing users.teams below. HR provides only join date +
+        # salary; teams are managed elsewhere.
         db.execute(
             text(
                 "UPDATE users SET "
@@ -280,7 +279,6 @@ class HrOnboardingService:
                 "employee_type = :employee_type, "
                 "bank_account_number = :bank_account_number, "
                 "bank_code = :bank_code, "
-                "teams = :teams, "
                 "date_of_joining = :date_of_joining "
                 "WHERE id = :id"
             ),
@@ -290,7 +288,6 @@ class HrOnboardingService:
                 "employee_type": employee_type,
                 "bank_account_number": bank_account_number,
                 "bank_code": bank_code,
-                "teams": teams_list or None,
                 "date_of_joining": start_date_val,
                 "id": user_id,
             },
