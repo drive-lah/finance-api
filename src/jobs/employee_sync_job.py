@@ -174,7 +174,7 @@ def _resolve_entity_id(db: Session, user_id: int) -> int | None:
     row = db.execute(
         text(
             "SELECT entity_id FROM finance_counterparties "
-            "WHERE external_id = :ext_id AND external_system = 'users' "
+            "WHERE external_id = :ext_id AND external_system = 'employee' "
             "LIMIT 1"
         ),
         {"ext_id": str(user_id)},

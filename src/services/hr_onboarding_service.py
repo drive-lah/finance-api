@@ -323,18 +323,23 @@ class HrOnboardingService:
         # 7b. Create compensation + deduction rules from the payload (if salary given)
         self._create_compensation_and_deductions(db, emp, item, entity)
 
-        # 8. Create FinanceCounterparty record (if not exists)
+        # 8. Upsert the employee's FinanceCounterparty — the SINGLE SOURCE OF TRUTH for the
+        # salary/expense COA (Gaurav 2026-08-07). Always set default_account_code to the chosen
+        # salary code, whether the counterparty is new OR already exists (the old create-only
+        # path let a pre-existing counterparty keep a stale/blank COA).
         existing_cp = db.query(FinanceCounterparty).filter(
             FinanceCounterparty.external_id == str(user_id),
-            FinanceCounterparty.external_system == "users",
+            FinanceCounterparty.external_system == "employee",
         ).first()
-        if not existing_cp:
+        if existing_cp:
+            existing_cp.default_account_code = salary_expense_code
+        else:
             cp = FinanceCounterparty(
                 name=user_name or f"User {user_id}",
                 type="employee",
                 entity_id=payroll_entity_id,
                 external_id=str(user_id),
-                external_system="users",
+                external_system="employee",
                 default_account_code=salary_expense_code,
             )
             db.add(cp)
@@ -525,7 +530,7 @@ class HrOnboardingService:
             # 3. Deactivate FinanceCounterparty (if exists)
             cp = db.query(FinanceCounterparty).filter(
                 FinanceCounterparty.external_id == str(user_id),
-                FinanceCounterparty.external_system == "users",
+                FinanceCounterparty.external_system == "employee",
             ).first()
             if cp:
                 cp.status = "inactive"
