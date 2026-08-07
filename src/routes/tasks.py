@@ -35,16 +35,18 @@ def _caller():
 def list_tasks():
     caller, roles, is_admin = _caller()
     status = request.args.get("status")
+    scope = request.args.get("scope", "mine")  # own-scoped by default; admins may pass scope=all
     with db_session() as db:
-        rows = task_service.list_scoped(db, caller, roles, is_admin, status=status)
+        rows = task_service.list_scoped(db, caller, roles, is_admin, status=status, scope=scope)
         return jsonify(task_service.hydrate_source(db, [t.to_dict() for t in rows]))
 
 
 @tasks_bp.route("/count", methods=["GET"])
 def count_tasks():
     caller, roles, is_admin = _caller()
+    scope = request.args.get("scope", "mine")
     with db_session() as db:
-        return jsonify(task_service.counts(db, caller, roles, is_admin))
+        return jsonify(task_service.counts(db, caller, roles, is_admin, scope=scope))
 
 
 @tasks_bp.route("/<int:task_id>", methods=["GET"])
