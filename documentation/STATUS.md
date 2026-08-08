@@ -491,6 +491,18 @@ Ties the 10 use cases (`wip/USE_CASE_MODULE_MAP.md`) + modules §2.8–2.11 into
 
 ---
 
+## 2.13 Compliance Overview module — ⏸ PARKED (Gaurav, 2026-08-08)
+
+Central compliance register + overview for admin.drivelah.com (peer tab to Finance/HR). Prompted by the AFCA systemic-issue mess (missed deadline, $36.7K unpaid fees, ASIC-referred determination) — a spreadsheet can't defend the failure mode (deadlines missed / matters dropped). **Decision (Gaurav): build lean on the EXISTING task/tracker rails — a "compliance matter" is a new task TYPE, NOT a bespoke module.** Not Sheets-only (structurally can't prevent the failure), not a heavyweight build (over-solutioning).
+
+- **CO-1** Matter schema: type (AFCA/ASIC/tax/super/BAS/dispute), authority, owner, deadline + recurrence flag, status, $ exposure, docs, next action. Reuse task assignee/due/status/audit; link to finance (fees = pay-queue invoices, settlements = payouts).
+- **CO-2** Two shapes: RECURRING statutory (tax/super/BAS/ASIC-annual — cadence-driven, auto-raise next) + EVENT-DRIVEN cases (AFCA/ASIC/disputes — grow over time).
+- **CO-3** Overview tab = RAG board + top-line strip (# overdue · # due-this-month · $ exposure · next critical deadline · regulator-reportable). Default NOT green — unowned/undated matters show at-risk (the AFCA gap). Board-showable for weekly Gaurav/DJ review.
+- **CO-4** Non-negotiable = PROCESS: one accountable owner + weekly cadence + loud deadline alerts. Tool enforces; without it, it rots.
+- **Bootstrap:** capture live obligations in a Sheet THIS WEEK (AFCA/ASIC/tax/super/BAS/R&D) so nothing's invisible, then fold into the tracker.
+
+---
+
 ## 3. Decisions
 
 | Decision | Resolution |
