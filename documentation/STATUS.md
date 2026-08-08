@@ -381,7 +381,7 @@ PRD: `wip/APPROVAL_WORKFLOW_PRD.md`. Module 3 of 3 (Ingestion → **Approval** �
 | ID | Item | State |
 |----|------|-------|
 | AW-1 | Extend `finance_approval_rules`: `approval_steps` (0/1/2) + `first_approver_role` + `second_approver_role` + `escalation_role` (approvers mapped to permission module) | ☐ |
-| AW-2 | `finance_coa_field_requirements` (COA → required fields + per-field validator) — the upload gate (II-5) | ☐ |
+| AW-2 | **LOCKED (Gaurav 2026-08-09): ONE finance-owned table + FE settings module, sheet retired.** Build `finance_coa_config` — one row per COA, columns = the `COA_APPROVAL_CONFIG_SHEET.csv` shape (threshold, approver_1, approver_2, second_approver_above, needs_trip_id, needs_intercom_id, other_required, auto_approve_ok). Both gates read it live: **door gate** (required anchors at upload/raise) + **sign-off gate** (approver routing draft→approved). Companion append-only `finance_coa_config_audit` (coa, field, old, new, who, when) + per-row history view. **Finance Settings module (admincontrols, finance-gated) = editable grid; edits behaviour by editing a row, no importer/CSV/eng ticket.** Sheet `COA_APPROVAL_CONFIG_SHEET.csv` is the seed (partly filled), then retired. **Start flat (one threshold/COA); add amount-band child rows only if a real account needs >2 tiers.** OPEN before build: approver identity = Slack ID (old `finance_approval_rules`) → **dashboard role/user** (target). Supersedes the old `finance_coa_field_requirements` split — one table, not two. | ☐ |
 | AW-3 | `finance_invoice_metadata` (trip_id / intercom_ticket_id / rego / claim_ref + validation result) | ☐ |
 | AW-4 | `finance_invoice_approvals` (append-only per-step sign-off log: step, approver, decision, reason, ts) | ☐ |
 | AW-5 | Upload validation gate — trip_id→TMS lookup, ticket_id→Intercom lookup; invalid ⇒ no draft | ☐ (dep: TMS + Intercom validators) |
@@ -443,6 +443,25 @@ Two audiences: **Accounting** (finance-only, unchanged) vs **Requests** (everyon
 | RS-3 | Requests **Raise** tab (FE) + host/guest payout-REQUEST backend (the one new pipeline); vendor-invoice reuses upload, claim reuses claims | ☐ |
 | RS-4 | Relocate claims from finance module → Requests | ☐ |
 | RS-5 | Slack lookup agent over the same data | ☐ (later) |
+
+### RS-3 RAISE FLOW — SPEC IN PROGRESS (defining, Gaurav 2026-08-09; DO NOT BUILD until locked)
+
+**Principle: keep it SIMPLE — we don't have per-COA info yet, so gate ONLY where policy exists; everything else is amount + free text.** One form, request type picked first, then form adapts. All types → the EXISTING approval-task machinery (v2 card → pending_approval → assignee queue, POL-108). Every request carries a **free-text reason** (Gaurav: must-have).
+
+- **RS-3a — Vendor invoice.**
+  - **Vendor picker**; if absent → **"Request new vendor"** = create a PENDING vendor for finance to CONFIRM, never auto-create (avoids the counterparty pollution cleaned 2026-08-07/08). *Confirm-not-auto — pending Gaurav's yes.*
+  - **COA drives required ANCHORS** via a per-COA config: e.g. damage/cleaning/incidentals (502x) → **trip_id** (or **vehicle/rego** if no trip) **+ intercom ticket**; insurance excess (5036) → **claim ref / rego**. All other COAs → amount + free text only. **Config table is AW-2 `finance_coa_config` (LOCKED — one table + FE settings module, sheet retired) — NOT built yet.** Start tiny (3–4 COAs).
+  - **Real-time VALIDATION** (validity, not presence): trip_id/rego → ClickHouse (`au_/sg_transactions`, listings) + show trip back (dates/guest/host); intercom ticket → Intercom. Invalid ⇒ warn/block.
+  - Doc upload reuses ingestion.
+- **RS-3b — Host / guest payment.** `user_id` REQUIRED (validate → show name); `trip_id` optional (validate if trip-related); amount/currency/free-text. **On host-payout approval → insert into the payout-entry sheet via an EXISTING API** ("sits in payout entry, settled via the existing rail, NOT auto-paid"). **Gaurav will provide the API + field mapping.** Guest payment → its own refund rail.
+- **RS-3c — My claim** reuses claims (RS-4 relocation).
+
+**What EXISTS vs to-build (verified 2026-08-09):**
+- ✅ **Approving-AUTHORITY table** `finance_approval_rules` (coa_account_prefix + amount_min/max + vendor_type + entity_id → approver + escalation + timeout) — BUT Slack-approver based (old engine); **modernize to role/assignee (POL-108)** for the going-forward flow.
+- ☐ **COA→required-ANCHOR-fields** config (AW-2) — the "which COA demands trip/ticket/rego" table — NOT built. This is the RS-3a enabler.
+- **Vendor must-have fields** (DB enforces only name/type/gst/status today): for a usable approved vendor = **name · type=vendor · entity · default COA · GST-registered + ABN/tax-reg · currency**; payee bank (separate `finance_payout_bank_accounts`) only when paying via Wise.
+
+**STILL TO LOCK before build:** (1) host-payout-entry API + field mapping [Gaurav to give], (2) starter COA→anchor list [Gaurav/finance], (3) new-vendor = request→finance-confirm [Gaurav yes?], (4) vendor approval must-have field set [above — confirm], (5) modernize approval authority Slack→role.
 
 ## 2.12 Finance Platform Buildout — SEQUENCED MASTER PLAN (Gaurav 2026-08-04)
 
