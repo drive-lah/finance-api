@@ -34,6 +34,7 @@ from src.models.vendor_payout import (
 from src.models.task import Task, TaskStatus
 from src.models.coa_config import FinanceCoaConfig, FinanceCoaConfigAudit
 from src.models.invoice_approval import FinanceInvoiceMetadata, FinanceInvoiceApproval
+from src.models.incident import FinanceIncident, FinanceIncidentCoaMap
 from src.models.schemas import (
     EntityCreate,
     EntityUpdate,
