@@ -493,14 +493,16 @@ The host/guest payout-request bridge (RS-3b) is a **TEMPORARY** stand-in for wha
 
 **PRINCIPLE:** interim does exactly what IMS does on charging AND payouts, team-driven. No divergence in what hits PGW/Stripe or the payout rail.
 
-**Open question being verified (agent running 2026-08-09):** does IMS create the charge in **PGW first, PGW then creates/settles the Stripe object** (Gaurav's recollection), or hit Stripe directly? And does the charge/invoice carry **line items** (desc/amount/GST/account) or a single net amount per leg? The answer decides whether our interim needs a line-item editor or just amount+incident-type. **To fill here from the trace, then confirm with Gaurav.**
+**TRACE RESOLVED (verified against `tms/tms-incidentals-service` code, 2026-08-09):**
+- **CH-1 Guest charge = PGW-FIRST, confirmed** (Gaurav's recollection is right). IMS never touches Stripe directly. Path (`payment-orchestration.service.ts` `chargeGuest`): SM `PENDING_CHARGE→CHARGE_IN_PROGRESS` **then** `pgw.CreatePayment(...)` → PGW creates/settles the **Stripe** object → result fires `PAID` (P6) or `INVOICE_PENDING` (P7). PGW is the payment boundary; `source=INCIDENTS`, `provider_code="stripe"`.
+- **NO LINE-ITEM EDITOR NEEDED.** The PGW `CreatePayment` request carries **ONE payin per incident** with **three aggregate amounts** — `amount_gross` (guest), `amount_host_share`, `amount_platform_share` — not itemized lines. IMS *does* hold internal `pricingSnapshot.line_items[]` tagged by `meta.leg` (`charge_guest`/`payout_host`/`refund_guest`) but **sums them by leg before PGW**. ⇒ interim UI = **single amount + incident type**, three-party split derived, no multi-line editor.
+- **Incident type → PGW `business_type`** hardcoded map in `payment-orchestration.service.ts` (~L48-66): 7=LATE_FEE, 8=CLEANING, 9=DAMAGE, 10=FUEL, 11=TOLL, … (this is a SECOND mapping alongside type→COA; both keyed on the incident type).
+- **CH-2 Dunning invoice = the PGW Stripe-invoice** object, created by PGW's `HandlePaymentFailed(payin_id)` on charge failure (`INVOICE_PENDING`). PGW hydrates it from the original payin (business_type + amount_gross); IMS adds no line items. **This is the exact analog of "team creates an invoice in Stripe today."**
+- **CH-3 Refund = PGW `CreateRefund`** per payin, newest-first fan-out until covered; single amount each; NOT a new invoice. Sibling `IncidentRefund` rows track attempts.
+- **CH-4 Host payout = Payouts Service `createPayoutAdjustment`** — single **signed** `amountMinor` (+credit/−debit) + refs + reason; **not itemized**; refs-only (Pricing hydrates). **STUBBED in IMS (not live).**
+- **CH-5 RESOLVED on UI: single amount + incident type, no line-item editor.** Still OPEN: does the interim **call PGW itself** (IMS's exact rail) or keep **Stripe-direct** as the team does today + book the ledger — see decision below.
 
-**Placeholder sub-items (pending trace):**
-- CH-1 Guest charge path — PGW client method + request shape (line items?) + Pricing source.
-- CH-2 Dunning invoice path (paymentStatus INVOICE_PENDING) = the closest analog to "team creates invoice in Stripe today".
-- CH-3 Guest refund path — PGW vs Stripe, request shape.
-- CH-4 Host payout/debit path — Payouts Service adjustment shape (single delta vs itemized).
-- CH-5 Decide interim UI: line-item editor vs amount+type; and whether our tool CREATES the Stripe/PGW object or captures a reference (the open sub-call).
+**THE ONE OPEN DECISION (Gaurav):** IMS's rail is **PGW→Stripe**. The team's rail TODAY is **Stripe-direct**. "Interim does exactly what IMS does" ⇒ ideally the interim tool calls **PGW** (`CreatePayment` for charge, `HandlePaymentFailed`/invoice for dunning, `CreateRefund` for refund, `createPayoutAdjustment` for host). **BUT that hinges on whether PGW is live and callable from finance-api NOW.** If PGW is production-ready → interim calls PGW = zero-divergence, cutover is purely "swap team-trigger for IMS-event." If PGW is NOT yet callable → interim stays **Stripe-direct + books the sub-ledger**, and we swap to PGW when it lands (one extra swap). **Need: (a) is PGW live in prod today? (b) can finance-api call it? Then pick PGW-rail vs Stripe-direct-interim.**
 
 ## 2.12 Finance Platform Buildout — SEQUENCED MASTER PLAN (Gaurav 2026-08-04)
 
