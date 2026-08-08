@@ -449,7 +449,7 @@ Two audiences: **Accounting** (finance-only, unchanged) vs **Requests** (everyon
 **Principle: keep it SIMPLE — we don't have per-COA info yet, so gate ONLY where policy exists; everything else is amount + free text.** One form, request type picked first, then form adapts. All types → the EXISTING approval-task machinery (v2 card → pending_approval → assignee queue, POL-108). Every request carries a **free-text reason** (Gaurav: must-have).
 
 - **RS-3a — Vendor invoice.**
-  - **Vendor picker**; if absent → **"Request new vendor"** = create a PENDING vendor for finance to CONFIRM, never auto-create (avoids the counterparty pollution cleaned 2026-08-07/08). *Confirm-not-auto — pending Gaurav's yes.*
+  - **Vendor picker**; if absent → **"Request new vendor"** = create a PENDING vendor for finance to CONFIRM, never auto-create (avoids the counterparty pollution cleaned 2026-08-07/08). **LOCKED (Gaurav 2026-08-09): new-vendor approval is a FINANCE TASK — it surfaces in finance's approval workflow, all vendor details supplied by the team there. Until the vendor is finance-approved, the invoice STAYS IN DRAFT (cannot progress to approval/payment).**
   - **COA drives required ANCHORS** via a per-COA config: e.g. damage/cleaning/incidentals (502x) → **trip_id** (or **vehicle/rego** if no trip) **+ intercom ticket**; insurance excess (5036) → **claim ref / rego**. All other COAs → amount + free text only. **Config table is AW-2 `finance_coa_config` (LOCKED — one table + FE settings module, sheet retired) — NOT built yet.** Start tiny (3–4 COAs).
   - **Real-time VALIDATION** (validity, not presence): trip_id/rego → ClickHouse (`au_/sg_transactions`, listings) + show trip back (dates/guest/host); intercom ticket → Intercom. Invalid ⇒ warn/block.
   - Doc upload reuses ingestion.
@@ -461,7 +461,31 @@ Two audiences: **Accounting** (finance-only, unchanged) vs **Requests** (everyon
 - ☐ **COA→required-ANCHOR-fields** config (AW-2) — the "which COA demands trip/ticket/rego" table — NOT built. This is the RS-3a enabler.
 - **Vendor must-have fields** (DB enforces only name/type/gst/status today): for a usable approved vendor = **name · type=vendor · entity · default COA · GST-registered + ABN/tax-reg · currency**; payee bank (separate `finance_payout_bank_accounts`) only when paying via Wise.
 
-**STILL TO LOCK before build:** (1) host-payout-entry API + field mapping [Gaurav to give], (2) starter COA→anchor list [Gaurav/finance], (3) new-vendor = request→finance-confirm [Gaurav yes?], (4) vendor approval must-have field set [above — confirm], (5) modernize approval authority Slack→role.
+**DECISIONS LOCKED (Gaurav 2026-08-09):**
+- (1) **Approver identity → dashboard role/user** (retire Slack IDs). YES.
+- (2) **Amount tiers → keep it simple: one threshold per COA** for now (flat; add bands only if a real account needs >2).
+- (3) **Config sheet → filled IN-APP once the FE Finance Settings module is live** (do not chase the CSV; ship the module with defaults, finance completes it in-app).
+- (4) **Host/guest payout-entry API** — Gaurav will provide; **build assuming we have it** (define a clean insert-adapter seam; wire the real endpoint when handed over).
+- (5) **New vendor → finance-approved as a finance TASK** (shows in finance approval workflow, team supplies all details there); **invoice stays in DRAFT until the vendor is approved.**
+
+**STILL OPEN (Gaurav said WAIT / provide later):** host-payout-entry API endpoint + exact field mapping [Gaurav to hand over]; starter COA→anchor list (which 3–4 COAs demand trip/ticket/rego first) [Gaurav/finance to seed in the new module].
+
+### RS-3 ↔ IMS ALIGNMENT (Gaurav 2026-08-09 — MUST NOT BUILD AGAINST THE GRAIN)
+The host/guest payout-request bridge (RS-3b) is a **TEMPORARY** stand-in for what IMS will auto-generate. Per FINANCIAL_LEDGER_PLAN.md the interim is deliberately built to the **IMS incident shape** so cutover is a source-swap, not a rebuild. Two hard constraints Gaurav set for anything we build now:
+- **Team selects INCIDENT, never COA.** The COA (and the three-party money legs) must be **derived automatically** from the incident type/sub-code — mirroring how IMS will do it. Do NOT put a COA picker in the host/guest incident-request flow. (Vendor-invoice RS-3a is different — that IS a COA-anchored AP flow and keeps its COA selection.)
+- **When IMS goes live, this bridge is REMOVED.** Host/guest payout requests then auto-generate from IMS incidents. So the interim must carry the same keys (trip_id, guest_id, host_user_id, listing_id, type, sub_code) and feed the SAME incident sub-ledger projection (STEP-3), not a throwaway path.
+
+**IMS FINDINGS (verified against `tms/tms-incidentals-service` code+docs, 2026-08-09):**
+- **IMS does NOT map incident→COA. Explicitly out-of-scope** ("IMS does NOT write ledger entries… emits events consumed by an Accounting Service… does not exist yet"). **finance-api IS that Accounting Service (ledger-plan D-1).** ⇒ **the incident-type→COA map is OURS to own** — same finance-owned config pattern as AW-2. This *confirms* Gaurav's rule (team picks incident, COA derives) and tells us WHERE the mapping lives: here, not IMS.
+- **Taxonomy to mirror:** IMS keys incidents on `type_code` (+ optional `sub_type_code`), ~29 codes live in `ims_incidental_type_config` (e.g. `excess_mileage`, `late_return`, `accident_damage`[sub: guest_injury/car_damage/third_party_property], `tolls`, `parking_fine`, `traffic_fine`, `cleaning`, `damage`, `host_cancellation_penalty`). **Our interim incident-type list + COA map MUST key on these exact `type_code`s** → cutover = source-swap, zero remap.
+- **Money shape:** `amount_guest_minor` (int, +owes / −refund), `amount_host_delta_minor` (+credit / −debit), `amount_platform_delta_minor` (derived), `currency_code`. **Minor units** (convert to decimal at our seam per O-4).
+- **State machines:** guest `paymentStatus` (NOT_REQUIRED→PENDING_CHARGE→CHARGE_IN_PROGRESS→PAID / CHARGE_FAILED→INVOICE_PENDING / REFUND_*→REFUNDED / WRITTEN_OFF); host `payoutStatus` (NOT_APPLICABLE→HOST_CREDIT_PENDING/HOST_DEBIT_PENDING→ADJUSTED; BLOCKED_PENDING_*). Mirror these enums in our obligation model (IT-1).
+- **Cutover event:** `incident.approved.v1` (ref-ids + host/guest amounts) is the payout/booking trigger; `incident.payment.paid.v1` = guest knock-off; `incident.payout.credit/debit.pending.v1` = host entry create. Ref-ids only for pricing → `Pricing.GetPrice` hydration later.
+- **Build status:** incident model + guest PGW leg LIVE in IMS; **host Payouts Service is a STUB (not implemented)** → host auto-payout is NOT imminent; **IMS does not yet feed finance at all** (no accounting consumer). ⇒ **the interim bridge (payout-entry sheet for host, Raise flow for guest) is genuinely needed and will run for a real while — not a throwaway few-week stopgap.**
+
+**⇒ NEW CONFIG ARTIFACT (folds into AW-2 pattern):** `finance_incident_coa_map` — key `(type_code, sub_type_code?)` → COA for each leg (guest AR/revenue, host AP `2120`/debit, platform). Finance-owned, editable in the Finance Settings module, audited. Seeded from the IMS `ims_incidental_type_config` code list. This is the O-3 "incident chart-of-accounts map" made concrete. IMS-event consumer at cutover reads the SAME table.
+
+**RECEIVABLES — RESOLVED to option (a), pending one sub-call (Gaurav 2026-08-09):** guest incident receivable enters via the **guest CHARGE request in the Raise flow** → books **Dr guest-AR / Cr incident-revenue** (counterparty-tagged) at approval; **PGW/Stripe settlement (`payin_id`/`payment_id`) is the knock-off** (Dr bank / Cr guest-AR). Matches IMS `amount_guest_minor>0` + paymentStatus, and IT-4/IT-9 guest leg. At cutover `incident.payment.paid.v1` replaces the manual signal. **OPEN sub-call:** does our tool **create the Stripe invoice itself** (Gaurav-lean per no-build-cost-weighting rule; true IMS behaviour) OR **capture charge + Stripe reference** while team keeps raising in Stripe (lighter, keeps a manual step). Awaiting Gaurav.
 
 ## 2.12 Finance Platform Buildout — SEQUENCED MASTER PLAN (Gaurav 2026-08-04)
 
