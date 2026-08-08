@@ -453,7 +453,7 @@ Two audiences: **Accounting** (finance-only, unchanged) vs **Requests** (everyon
   - **COA drives required ANCHORS** via a per-COA config: e.g. damage/cleaning/incidentals (502x) → **trip_id** (or **vehicle/rego** if no trip) **+ intercom ticket**; insurance excess (5036) → **claim ref / rego**. All other COAs → amount + free text only. **Config table is AW-2 `finance_coa_config` (LOCKED — one table + FE settings module, sheet retired) — NOT built yet.** Start tiny (3–4 COAs).
   - **Real-time VALIDATION** (validity, not presence): trip_id/rego → ClickHouse (`au_/sg_transactions`, listings) + show trip back (dates/guest/host); intercom ticket → Intercom. Invalid ⇒ warn/block.
   - Doc upload reuses ingestion.
-- **RS-3b — Host / guest payment.** `user_id` REQUIRED (validate → show name); `trip_id` optional (validate if trip-related); amount/currency/free-text. **On host-payout approval → insert into the payout-entry sheet via an EXISTING API** ("sits in payout entry, settled via the existing rail, NOT auto-paid"). **Gaurav will provide the API + field mapping.** Guest payment → its own refund rail.
+- **RS-3b — Host / guest payment.** `user_id` REQUIRED (validate → show name); `trip_id` optional (validate if trip-related); amount/currency/free-text. **On host-payout approval → insert into the payout-entry sheet via an EXISTING API** ("sits in payout entry, settled via the existing rail, NOT auto-paid"). **Gaurav will provide the API + field mapping.** Guest payment → its own refund rail. **PRINCIPLE (Gaurav 2026-08-09): the interim must do EXACTLY what IMS would do on BOTH charging and payouts — same request shapes, same rails, same accounting — only TEAM-DRIVEN instead of event-driven. The manual raise is IMS's hand-crank; cutover swaps the hand for the event, nothing else.** ⇒ charging/invoice-creation mechanics (PGW-first-then-Stripe? line items?) must match IMS — captured in §2.11d.
 - **RS-3c — My claim** reuses claims (RS-4 relocation).
 
 **What EXISTS vs to-build (verified 2026-08-09):**
@@ -486,6 +486,21 @@ The host/guest payout-request bridge (RS-3b) is a **TEMPORARY** stand-in for wha
 **⇒ NEW CONFIG ARTIFACT (folds into AW-2 pattern):** `finance_incident_coa_map` — key `(type_code, sub_type_code?)` → COA for each leg (guest AR/revenue, host AP `2120`/debit, platform). Finance-owned, editable in the Finance Settings module, audited. Seeded from the IMS `ims_incidental_type_config` code list. This is the O-3 "incident chart-of-accounts map" made concrete. IMS-event consumer at cutover reads the SAME table.
 
 **RECEIVABLES — RESOLVED to option (a), pending one sub-call (Gaurav 2026-08-09):** guest incident receivable enters via the **guest CHARGE request in the Raise flow** → books **Dr guest-AR / Cr incident-revenue** (counterparty-tagged) at approval; **PGW/Stripe settlement (`payin_id`/`payment_id`) is the knock-off** (Dr bank / Cr guest-AR). Matches IMS `amount_guest_minor>0` + paymentStatus, and IT-4/IT-9 guest leg. At cutover `incident.payment.paid.v1` replaces the manual signal. **OPEN sub-call:** does our tool **create the Stripe invoice itself** (Gaurav-lean per no-build-cost-weighting rule; true IMS behaviour) OR **capture charge + Stripe reference** while team keeps raising in Stripe (lighter, keeps a manual step). Awaiting Gaurav.
+
+## 2.11d Charging & Invoice-Creation Flow — interim mirrors IMS (Gaurav 2026-08-09; DO NOT BUILD until "everything else" is fixed)
+
+> Own section because it's the trickiest seam: HOW a guest charge / dunning invoice / refund / host payout is actually CREATED, so the interim team-driven flow produces the SAME artifacts IMS will (line items, PGW→Stripe order, refs) — cutover = swap hand-crank for event, zero rebuild. **Sequencing (Gaurav): fix everything else first, then build this.**
+
+**PRINCIPLE:** interim does exactly what IMS does on charging AND payouts, team-driven. No divergence in what hits PGW/Stripe or the payout rail.
+
+**Open question being verified (agent running 2026-08-09):** does IMS create the charge in **PGW first, PGW then creates/settles the Stripe object** (Gaurav's recollection), or hit Stripe directly? And does the charge/invoice carry **line items** (desc/amount/GST/account) or a single net amount per leg? The answer decides whether our interim needs a line-item editor or just amount+incident-type. **To fill here from the trace, then confirm with Gaurav.**
+
+**Placeholder sub-items (pending trace):**
+- CH-1 Guest charge path — PGW client method + request shape (line items?) + Pricing source.
+- CH-2 Dunning invoice path (paymentStatus INVOICE_PENDING) = the closest analog to "team creates invoice in Stripe today".
+- CH-3 Guest refund path — PGW vs Stripe, request shape.
+- CH-4 Host payout/debit path — Payouts Service adjustment shape (single delta vs itemized).
+- CH-5 Decide interim UI: line-item editor vs amount+type; and whether our tool CREATES the Stripe/PGW object or captures a reference (the open sub-call).
 
 ## 2.12 Finance Platform Buildout — SEQUENCED MASTER PLAN (Gaurav 2026-08-04)
 
