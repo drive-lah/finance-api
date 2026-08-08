@@ -319,6 +319,28 @@ def import_transactions():
         return jsonify(result), 200
 
 
+@transactions_bp.route('/<int:transaction_id>/counterparty', methods=['POST'])
+def reassign_counterparty(transaction_id: int):
+    """Correct the counterparty on a transaction (finance self-serve). Allowed only when the
+    transaction is NOT paired to an invoice; paired/posted transactions are locked.
+
+    Body:
+      counterparty_id int (required)
+      add_alias       str (optional) — record on the new counterparty for future auto-matching
+      changed_by      str (optional)
+    """
+    data = request.get_json(silent=True) or {}
+    counterparty_id = data.get("counterparty_id")
+    if not counterparty_id:
+        raise BadRequestError("counterparty_id is required")
+    with db_session() as db:
+        txn = transaction_service.reassign_counterparty(
+            db, transaction_id, counterparty_id,
+            add_alias=data.get("add_alias"), changed_by=data.get("changed_by"),
+        )
+        return jsonify(TransactionResponse.model_validate(txn).model_dump()), 200
+
+
 @transactions_bp.route('/<int:transaction_id>/resolve-needs-review', methods=['POST'])
 def resolve_needs_review(transaction_id: int):
     """

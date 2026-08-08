@@ -148,6 +148,41 @@ class TransactionService:
         """Get transaction by ID."""
         return db.query(FinanceTransaction).filter(FinanceTransaction.id == transaction_id).first()
 
+    def reassign_counterparty(self, db: Session, transaction_id: int, counterparty_id: int,
+                              add_alias: Optional[str] = None,
+                              changed_by: Optional[str] = None) -> FinanceTransaction:
+        """Correct the counterparty on a transaction. ALLOWED ONLY when the transaction is NOT
+        paired to an invoice (Gaurav 2026-08-08): a paired/posted transaction is locked — detach
+        the invoice match first. Counterparty is attribution metadata, so this does NOT change
+        the ledger (the COA / journal entry are untouched). Optionally records add_alias on the
+        new counterparty so future look-alike descriptions match it, not a sibling vendor."""
+        from src.models.invoice_payment_match import FinanceInvoicePaymentMatch
+        from src.utils.errors import NotFoundError, ConflictError
+        from src.models.counterparty import FinanceCounterparty
+
+        txn = db.get(FinanceTransaction, transaction_id)
+        if not txn:
+            raise NotFoundError(f"Transaction {transaction_id} not found")
+        paired = (db.query(FinanceInvoicePaymentMatch)
+                  .filter(FinanceInvoicePaymentMatch.transaction_id == transaction_id).first())
+        if paired:
+            raise ConflictError(
+                "This transaction is paired to an invoice — detach the pairing before changing "
+                "its counterparty.")
+        cp = db.get(FinanceCounterparty, int(counterparty_id))
+        if not cp:
+            raise NotFoundError(f"Counterparty {counterparty_id} not found")
+
+        txn.counterparty_id = cp.id
+        txn.counterparty_name = cp.name
+        if add_alias and add_alias.strip():
+            existing = [a.lower().strip() for a in (cp.aliases or []) if a]
+            if add_alias.lower().strip() not in existing:
+                cp.aliases = list(cp.aliases or []) + [add_alias.strip()]
+        db.commit()
+        db.refresh(txn)
+        return txn
+
     def approve(self, db: Session, transaction_id: int) -> FinanceTransaction:
         """
         Approve a Matched transaction.
