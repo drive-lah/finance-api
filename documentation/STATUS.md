@@ -502,7 +502,13 @@ The host/guest payout-request bridge (RS-3b) is a **TEMPORARY** stand-in for wha
 - **CH-4 Host payout = Payouts Service `createPayoutAdjustment`** — single **signed** `amountMinor` (+credit/−debit) + refs + reason; **not itemized**; refs-only (Pricing hydrates). **STUBBED in IMS (not live).**
 - **CH-5 RESOLVED on UI: single amount + incident type, no line-item editor.** Still OPEN: does the interim **call PGW itself** (IMS's exact rail) or keep **Stripe-direct** as the team does today + book the ledger — see decision below.
 
-**THE ONE OPEN DECISION (Gaurav):** IMS's rail is **PGW→Stripe**. The team's rail TODAY is **Stripe-direct**. "Interim does exactly what IMS does" ⇒ ideally the interim tool calls **PGW** (`CreatePayment` for charge, `HandlePaymentFailed`/invoice for dunning, `CreateRefund` for refund, `createPayoutAdjustment` for host). **BUT that hinges on whether PGW is live and callable from finance-api NOW.** If PGW is production-ready → interim calls PGW = zero-divergence, cutover is purely "swap team-trigger for IMS-event." If PGW is NOT yet callable → interim stays **Stripe-direct + books the sub-ledger**, and we swap to PGW when it lands (one extra swap). **Need: (a) is PGW live in prod today? (b) can finance-api call it? Then pick PGW-rail vs Stripe-direct-interim.**
+**RAIL DECISION — LOCKED (Gaurav 2026-08-09): PGW is NOT live ⇒ interim rail = STRIPE-DIRECT, behind a swappable RAIL-ADAPTER seam.** IMS's eventual rail is PGW→Stripe; PGW isn't callable yet, so the interim can't route through it. Design so the cutover is a **rail swap, nothing else**:
+- **`PaymentRail` interface** (one seam) with methods matching IMS's PGW shape: `charge(incident)` (single amount + 3-party split), `issueInvoice(incident)` (dunning), `refund(incident, amount)`, `payoutAdjustment(host, signedAmount)`.
+- **Interim impl = `StripeDirectRail`** — our tool calls the **Stripe API directly** (charge/invoice/refund), mirroring what PGW would do; guest knock-off on Stripe settlement webhook. Host leg → **payout-entry sheet** (IMS Payouts Service is ALSO stubbed, so the sheet stays the host rail).
+- **Future impl = `PgwRail`** — swap in when PGW lands; UI, incident model, sub-ledger projection, and the raise action all UNCHANGED.
+- **Invariant kept constant across the swap:** the RAISE action (amount + incident type + refs) and the LEDGER projection. Only the rail impl and the trigger (team-click → IMS-event) change at cutover.
+
+**FINAL SUB-CONFIRM (create-vs-capture):** recommend the interim tool **CREATES the Stripe object itself** via `StripeDirectRail` (removes today's manual Stripe step; matches IMS's create-then-settle shape; cutover = pure rail swap) rather than the team creating in Stripe manually while we only capture a reference (lighter now, but keeps a manual double-entry and diverges more from IMS). Pending Gaurav's nod.
 
 ## 2.12 Finance Platform Buildout — SEQUENCED MASTER PLAN (Gaurav 2026-08-04)
 
