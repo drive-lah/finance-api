@@ -14,6 +14,7 @@ import logging
 from sqlalchemy import text
 
 from src.clients.clickhouse_client import ClickHouseClient
+from src.services import enrichment_service
 
 logger = logging.getLogger(__name__)
 _ch = ClickHouseClient()
@@ -55,56 +56,38 @@ def _parse_anchors(descr):
 
 
 def _ticket_ctx(ticket_no):
+    """Ticket context for the card = shared raw resolution (enrichment_service) + a Sonnet summary.
+    The ClickHouse lookups live in enrichment_service now; only the LLM summary is card-specific."""
     if not ticket_no:
         return None
-    r = _ch.execute_single(
-        "SELECT ticket_attributes, ticket_type, ticket_state, toString(ticket_parts) parts "
-        f"FROM intercom_tickets WHERE ticket_id='{_esc(ticket_no)}' LIMIT 1")
-    if not r:
-        return {"ticket": ticket_no, "note": "not found"}
-    attrs = json.loads(r.get("ticket_attributes") or "{}")
-    desc = attrs.get("_default_description_", "")
-    tc = re.search(r"Trip ID\s*:?\s*(T[AS]\d+)", desc)
-    parts = json.loads(r.get("parts") or "{}").get("ticket_parts", [])
-    thread = []
-    for p in parts:
-        body = re.sub(r"<[^>]+>", " ", p.get("body") or "").strip()
-        if body:
-            thread.append(f"{(p.get('author') or {}).get('name', '?')}: {body}")
+    r = enrichment_service.resolve_ticket(ticket_no)
+    if not r.get("found"):
+        return {"ticket": r.get("ticket") or ticket_no, "note": "not found"}
+    thread = r.get("thread") or []
+    desc = r.get("description") or ""
     summary = None
     if thread or desc:
         summary = _ask(
             "Summarise this Drive lah back-office ticket for a finance approver in 3-5 sentences: "
             "what happened, who was liable, amounts/quotes, resolution. Facts only.",
-            f"TITLE: {attrs.get('_default_title_','')}\nTYPE: {r.get('ticket_type')}\n"
-            f"STATE: {r.get('ticket_state')}\nDESCRIPTION: {desc}\nTHREAD:\n" + "\n".join(thread)[:20000],
+            f"TITLE: {r.get('title') or ''}\nTYPE: {r.get('type')}\n"
+            f"STATE: {r.get('state')}\nDESCRIPTION: {desc}\nTHREAD:\n" + "\n".join(thread)[:20000],
             max_tokens=450)
-    tt = r.get("ticket_type")
-    try:
-        tt = json.loads(tt).get("name", tt) if tt else tt
-    except Exception:
-        pass
-    return {"ticket": ticket_no, "type": tt, "state": r.get("ticket_state"),
-            "trip_code": tc.group(1) if tc else None,
-            "trip_uuid": attrs.get("Trip Reference Numnber") or attrs.get("Trip Reference Number"),
+    tc = re.match(r"^T[AS]\d+$", str(r.get("trip_ref") or ""))
+    return {"ticket": r.get("ticket"), "type": r.get("type"), "state": r.get("state"),
+            "trip_code": r.get("trip_ref") if tc else None,
+            "trip_uuid": None if tc else r.get("trip_ref"),
             "summary": summary}
 
 
-def _trip_ctx(trip_uuid, market="au"):
-    if not trip_uuid:
+def _trip_ctx(trip_ref, market="au"):
+    """Trip context for the card, via the shared resolver (accepts a TA/TS code or a transaction UUID)."""
+    if not trip_ref:
         return None
-    t = _ch.execute_single(
-        "SELECT listingId, customerId, providerId, bookingStart, bookingEnd, lastTransition "
-        f"FROM {market}_transactions WHERE id='{_esc(trip_uuid)}' LIMIT 1")
-    if not t:
+    r = enrichment_service.resolve_trip_any(trip_ref, market)
+    if not r or not r.get("found"):
         return None
-    lst = _ch.execute_single(f"SELECT title FROM {market}_listings WHERE id='{_esc(t['listingId'])}' LIMIT 1")
-    host = _ch.execute_single(f"SELECT concat(firstName,' ',lastName) n, email FROM {market}_users WHERE id='{_esc(t['providerId'])}' LIMIT 1")
-    guest = _ch.execute_single(f"SELECT concat(firstName,' ',lastName) n FROM {market}_users WHERE id='{_esc(t['customerId'])}' LIMIT 1")
-    return {"vehicle": lst.get("title") if lst else None,
-            "host": host.get("n") if host else None, "host_email": host.get("email") if host else None,
-            "guest": guest.get("n") if guest else None,
-            "window": f"{t['bookingStart']} → {t['bookingEnd']}", "status": t["lastTransition"]}
+    return {k: r.get(k) for k in ("vehicle", "host", "host_email", "guest", "window", "status", "trip_code")}
 
 
 def resolve_requester(db, anchors):
@@ -180,8 +163,34 @@ def build_card_body(db, invoice):
         vendor = vendor or rr.get("payee") or "Unknown vendor"
         market = "au" if invoice.entity_id == 3 else "sg"
         anchors = _parse_anchors(descr)
-        tkt = _ticket_ctx(anchors["ticket"])
-        trip = _trip_ctx(tkt.get("trip_uuid") if tkt else None, market) if tkt else None
+
+        # Prefer the anchors the raiser ENTERED at ratify (finance_invoice_metadata): a direct trip
+        # code (TA…/TS…) and one-or-more ticket numbers. Fall back to the parsed retool description
+        # for the historical set. Trip is resolved DIRECTLY from the entered code — not only via a
+        # ticket (fixes the old gap) — then from a ticket's embedded trip ref as a fallback.
+        meta_trip = meta_tickets = None
+        try:
+            from src.models.invoice_approval import FinanceInvoiceMetadata
+            m = db.query(FinanceInvoiceMetadata).filter(
+                FinanceInvoiceMetadata.invoice_id == invoice.id).first()
+            if m:
+                meta_trip = m.trip_id
+                meta_tickets = m.intercom_ticket_id
+        except Exception:
+            pass
+
+        ticket_src = meta_tickets or anchors.get("ticket")
+        tkts = enrichment_service.resolve_tickets(ticket_src) if ticket_src else []
+        # Summarise each resolved ticket (card-specific LLM step) via the existing _ticket_ctx path.
+        tkt_cards = [c for c in (_ticket_ctx(t.get("ticket")) for t in tkts if t.get("found")) if c]
+        tkt = tkt_cards[0] if tkt_cards else (_ticket_ctx(ticket_src) if ticket_src else None)
+
+        trip = None
+        if meta_trip:
+            trip = _trip_ctx(meta_trip, market)          # direct: the entered TA/TS code
+        if not trip:
+            ref = tkt.get("trip_code") or tkt.get("trip_uuid") if tkt else None
+            trip = _trip_ctx(ref, market) if ref else None
         dp = _double_pay(db, invoice.counterparty_id, invoice.total_amount)
         inv = {"vendor": vendor, "amount": float(invoice.total_amount or 0), "currency": invoice.currency,
                "coa": invoice.contra_account_code,
@@ -198,6 +207,8 @@ def build_card_body(db, invoice):
             "requester": resolve_requester(db, anchors),
             "ticket": ({k: tkt.get(k) for k in ("ticket", "type", "state", "trip_code", "summary")}
                        if tkt else None),
+            # All cited tickets (a payment can reference several), lightweight for the card list.
+            "tickets": [{k: c.get(k) for k in ("ticket", "type", "state")} for c in tkt_cards] or None,
             "trip": trip, "double_pay": dp,
         }
     except Exception:

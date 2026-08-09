@@ -858,12 +858,16 @@ class InvoiceService:
 
     def void(self, db: Session, invoice_id: int, voided_by: Optional[str] = None,
              void_reason: Optional[str] = None) -> FinanceInvoice:
-        """Void an invoice. Only draft, pending_approval, or rejected invoices can be voided.
-        Captures who/when/why for traceability (voided_by = logged-in user)."""
+        """Void an invoice. Allowed in any pre-payment / no-ledger-posting state:
+        draft, needs_fix, pending_approval, rejected. Blocked once money or the ledger
+        is involved (approved/paid/partially_paid). Captures who/when/why (voided_by = logged-in user)."""
         invoice = self.get_by_id(db, invoice_id)
 
+        # needs_fix is a held exception (dup / missing info) — no money moved, so it's voidable
+        # exactly like draft (Gaurav 2026-08-09: could not void a needs_fix duplicate, id 236).
         allowed = (
             InvoiceStatus.DRAFT.value,
+            InvoiceStatus.NEEDS_FIX.value,
             InvoiceStatus.PENDING_APPROVAL.value,
             InvoiceStatus.REJECTED.value,
         )
@@ -871,7 +875,7 @@ class InvoiceService:
             from src.utils.errors import ConflictError
             raise ConflictError(
                 f"Cannot void invoice in '{invoice.status}' status. "
-                f"Only draft, pending_approval, or rejected invoices can be voided."
+                f"Only draft, needs_fix, pending_approval, or rejected invoices can be voided."
             )
 
         invoice.status = InvoiceStatus.VOID.value

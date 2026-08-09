@@ -99,6 +99,21 @@ class TaskService:
                     body["invoice_number"] = inv.invoice_number
         return dicts
 
+    def attach_assignee_names(self, db, dicts: list[dict]) -> list[dict]:
+        """Resolve assignee_user_id → a display name (assignee_name) so the admin all-tasks
+        view shows WHOSE queue each task sits in (Gaurav 2026-08-09). Role-only tasks keep
+        assignee_role as the label. No-op when nothing is user-assigned."""
+        from src.models.user import User
+        uids = {d.get("assignee_user_id") for d in dicts if d.get("assignee_user_id")}
+        if not uids:
+            return dicts
+        names = {r[0]: (r[1] or r[2] or f"user {r[0]}")
+                 for r in db.query(User.id, User.name, User.email).filter(User.id.in_(uids)).all()}
+        for d in dicts:
+            uid = d.get("assignee_user_id")
+            d["assignee_name"] = names.get(uid) if uid else (d.get("assignee_role") or None)
+        return dicts
+
     # ── read (own-scoped) ───────────────────────────────────────────────────────
     def list_scoped(self, db, caller_user_id: int, roles: list[str], is_admin: bool,
                     status: str = None, scope: str = "mine"):
