@@ -1805,14 +1805,22 @@ class InvoiceService:
             if need:
                 reasons.append(f"COA {invoice.contra_account_code} requires: " + ", ".join(need))
 
-        # 4. Vendor must be finance-approved (POL-115 — no auto-activation). A pending vendor
-        #    (inactive / unverified) holds the invoice in needs_fix until finance approves it.
+        # 4. Vendor must be finance-approved (POL-115 — no auto-activation). This is NOT a team-fix
+        #    exception (needs_fix) — it's WAITING ON FINANCE. So the invoice STAYS IN DRAFT; when
+        #    finance approves the vendor, approve_vendor() auto-submits the draft. Return early so
+        #    the invoice never advances past draft while its vendor is pending.
         if invoice.counterparty_id:
             cp = db.get(FinanceCounterparty, invoice.counterparty_id)
             _ctype = str(getattr(cp.type, "value", cp.type)).lower() if cp else ""
             _cstatus = str(getattr(cp.status, "value", cp.status)).lower() if cp else ""
             if cp and _ctype == "vendor" and (_cstatus != "active" or not cp.is_verified):
-                reasons.append(f"Vendor '{cp.name}' is not yet finance-approved.")
+                invoice.submitted_by = submitted_by
+                invoice.submitted_at = datetime.now(UTC)
+                db.commit()
+                db.refresh(invoice)
+                return {"status": InvoiceStatus.DRAFT.value,
+                        "message": f"Held in draft — vendor '{cp.name}' is awaiting finance approval.",
+                        "invoice": _invoice_dict(invoice, db)}
 
         if reasons:
             # Park in needs_fix; stamp the reasons + the duplicate flag (POL-106 gate reads it).
@@ -1999,10 +2007,11 @@ class InvoiceService:
         cp.status = "active"
         cp.is_verified = True
         db.flush()
+        # Any draft awaiting this vendor auto-submits now (not just new_vendor-flagged ones — a draft
+        # created via the ratify quick-add isn't flagged but is equally held).
         held = db.query(FinanceInvoice).filter(
             FinanceInvoice.counterparty_id == counterparty_id,
             FinanceInvoice.status == InvoiceStatus.DRAFT.value,
-            FinanceInvoice.new_vendor.is_(True),
         ).all()
         db.commit()
         submitted = []
