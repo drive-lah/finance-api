@@ -1805,6 +1805,15 @@ class InvoiceService:
             if need:
                 reasons.append(f"COA {invoice.contra_account_code} requires: " + ", ".join(need))
 
+        # 4. Vendor must be finance-approved (POL-115 — no auto-activation). A pending vendor
+        #    (inactive / unverified) holds the invoice in needs_fix until finance approves it.
+        if invoice.counterparty_id:
+            cp = db.get(FinanceCounterparty, invoice.counterparty_id)
+            _ctype = str(getattr(cp.type, "value", cp.type)).lower() if cp else ""
+            _cstatus = str(getattr(cp.status, "value", cp.status)).lower() if cp else ""
+            if cp and _ctype == "vendor" and (_cstatus != "active" or not cp.is_verified):
+                reasons.append(f"Vendor '{cp.name}' is not yet finance-approved.")
+
         if reasons:
             # Park in needs_fix; stamp the reasons + the duplicate flag (POL-106 gate reads it).
             raw = dict(invoice.ai_extraction_raw or {})

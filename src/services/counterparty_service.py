@@ -63,10 +63,28 @@ class CounterpartyService:
         # Vendors without a default account will use categorization rules or asset parking in Phase 4
         # (No strict validation — allows vendors with NULL default_account_code)
 
+        # NO AUTO-ACTIVATION OF VENDORS (Gaurav 2026-08-09, POL-115): a newly created vendor is
+        # ALWAYS pending — inactive + unverified — and raises a finance vendor-approval task. It only
+        # goes active when finance approves it (invoice_service.approve_vendor). Applies to every
+        # path that creates a vendor (ratify quick-add, raise-new-vendor, counterparties module).
+        data = dict(data)
+        is_vendor = str(data.get("type", "")).lower() == "vendor"
+        if is_vendor:
+            data["status"] = "inactive"
+            data["is_verified"] = False
         cp = FinanceCounterparty(**data)
         db.add(cp)
         db.commit()
         db.refresh(cp)
+        if is_vendor:
+            from src.services.task_service import task_service
+            task_service.enqueue(
+                db, type="vendor-approval", source_ref=f"vendor:{cp.id}",
+                title=f"Approve new vendor — {cp.name}",
+                summary="New vendor created — fill details + approve to activate.",
+                assignee_role="finance.invoices",
+            )
+            db.commit()
         return cp
 
     def update(self, db: Session, counterparty_id: int, data: dict) -> Optional[FinanceCounterparty]:
