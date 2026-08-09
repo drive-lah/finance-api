@@ -36,8 +36,14 @@ from src.models.invoice import FinanceInvoice, InvoiceStatus
 logger = logging.getLogger(__name__)
 
 # Statuses that make an invoice "occupy" an identity (a live bill). void/rejected don't.
+# Everything that means "this invoice already exists" — ALL statuses except terminal REJECTED / VOID.
+# needs_fix / reconcile / paired were previously (wrongly) excluded, which let a document already
+# parked in needs_fix be re-uploaded (Gaurav 2026-08-09, Home & Away #03107).
 _ACTIVE_STATUSES = [
     InvoiceStatus.DRAFT.value,
+    InvoiceStatus.RECONCILE.value,
+    InvoiceStatus.PAIRED.value,
+    InvoiceStatus.NEEDS_FIX.value,
     InvoiceStatus.PENDING_APPROVAL.value,
     InvoiceStatus.APPROVED.value,
     InvoiceStatus.PARTIALLY_PAID.value,
