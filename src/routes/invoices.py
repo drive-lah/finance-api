@@ -375,14 +375,24 @@ def extract_invoice():
     from src.services.ai_extraction_service import ai_extraction_service
     from src.services.s3_service import s3_service
 
-    # Load entity names so AI can match Bill-To
+    # Load entity names (Bill-To) + the invoice-valid chart of accounts (the COA picker's options).
     with db_session() as db:
         from src.models.entity import FinanceEntity
+        from src.models.account import FinanceAccount
         entities = db.query(FinanceEntity).filter(FinanceEntity.status == "active").all()
         entity_names = [e.name for e in entities]
+        # Expense / Cost of Sales / non-bank Assets — what a vendor invoice can book to.
+        _INVOICE_COA_TYPES = {"expense", "cost of sales", "asset"}
+        account_list = []
+        for a in db.query(FinanceAccount).all():
+            at = str(getattr(a.account_type, "value", a.account_type) or "").lower()
+            if at in _INVOICE_COA_TYPES and not getattr(a, "is_bank_account", False):
+                account_list.append({"code": a.code, "name": a.name,
+                                     "description": getattr(a, "description", None)})
 
-    logger.info(f"Calling AI extraction service with file_extension={ext}...")
-    result = ai_extraction_service.extract_invoice_data(file_bytes, entity_names=entity_names, file_extension=ext)
+    logger.info(f"Calling AI extraction service with file_extension={ext}... ({len(account_list)} COA options)")
+    result = ai_extraction_service.extract_invoice_data(
+        file_bytes, entity_names=entity_names, file_extension=ext, account_list=account_list)
     logger.info(f"AI extraction complete. Result keys: {list(result.keys())}, extraction_error: {result.get('extraction_error')}")
 
     # Vendor matching — find or prepare auto-create

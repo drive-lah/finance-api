@@ -23,6 +23,10 @@ EXTRACTION_PROMPT = """You are an expert accounting assistant. Extract structure
 Our company entities are:
 {entity_list}
 
+Chart of Accounts — choose suggested_coa_account from THIS list, matching the invoice to the account
+name AND description (this is the full authoritative list; do NOT guess a code that isn't here):
+{account_list}
+
 Return ONLY a JSON object with these exact fields (use null for missing fields):
 {{
   "is_invoice": "boolean - true ONLY if this document is a genuine vendor invoice, tax invoice, or bill requesting payment. false for statements of account, receipts, recovery/demand letters, bank statements, spreadsheet/Excel screenshots, or reports",
@@ -39,7 +43,7 @@ Return ONLY a JSON object with these exact fields (use null for missing fields):
   "service_period_start": "YYYY-MM-DD or null - start of billing/service period",
   "service_period_end": "YYYY-MM-DD or null - end of billing/service period",
   "description": "string - 1-2 sentence description of what was invoiced",
-  "suggested_coa_account": "one of: 6000 (Salaries), 6100 (Marketing), 6200 (HR), 6300 (Office/Rent), 6400 (Travel), 6500 (Professional Fees/Legal/Accounting), 6600 (Banking Fees), 6700 (Technology/Software/Cloud), 6800 (Other OpEx), 5010 (Payment Processing), 5030 (Device Costs), 7100 (FX), or null if unclear",
+  "suggested_coa_account": "the single best-matching account CODE from the Chart of Accounts list above — match the invoice's line items / description to the account NAME and DESCRIPTION; return only the code (e.g. \\"5033\\"), or null if genuinely unclear",
   "bill_to_entity_hint": "string or null - which of our entities is this billed to, based on the Bill To / To / Attention field",
   "confidence": number between 0 and 1
 }}
@@ -55,7 +59,7 @@ Rules:
   * Look for "for the period", "subscription period", "billing period", "invoice for [month]", month names, or date ranges
   * If invoice says "for February 2026" or "February 2026 subscription", set service_period_start = first day of that month, service_period_end = last day of that month
   * If NO explicit service period found, use invoice_date as BOTH service_period_start AND service_period_end
-- For COA: AWS/GCP/Azure/Cloudflare/Digital Ocean/GitHub → 6700. Legal/accounting → 6500. Office rent → 6300. Payroll/salary → 6000. Marketing/ads → 6100. Bank charges → 6600.
+- For suggested_coa_account: choose the ONE account code from the Chart of Accounts above whose name/description best fits what this invoice is FOR. Examples: a towing bill → the "Towing" incidentals account; a damage/panel repair → the damage/workshop account; cloud/software/hosting → Technology; legal/accounting → Professional/Legal Fees; office rent → Office Rent. Match on meaning, return only the code.
 - tax_amount: extract the GST/VAT line item amount (not the total). Look for "GST", "VAT", "Tax" line. If no tax line exists, set to null — do NOT guess.
 - subtotal_amount: the pre-tax amount if shown separately, otherwise null
 - Return ONLY the JSON, no explanation
@@ -99,13 +103,26 @@ class AIExtractionService:
             "confidence": 0.0, "raw_text": raw_text, "extraction_error": error or None,
         }
 
-    def extract_invoice_data_from_image(self, image_bytes: bytes, media_type: str, entity_names: list[str] | None = None) -> dict:
+    @staticmethod
+    def _format_accounts(account_list: list[dict] | None) -> str:
+        """The chart of accounts as a picklist for the COA prompt: '- CODE: Name — description'."""
+        if not account_list:
+            return "- (chart not provided — leave suggested_coa_account null)"
+        lines = []
+        for a in account_list:
+            code = a.get("code"); name = a.get("name") or ""
+            desc = (a.get("description") or "").strip()
+            lines.append(f"- {code}: {name}" + (f" — {desc}" if desc else ""))
+        return "\n".join(lines)
+
+    def extract_invoice_data_from_image(self, image_bytes: bytes, media_type: str, entity_names: list[str] | None = None, account_list: list[dict] | None = None) -> dict:
         """
         Extract structured invoice data from image bytes using Claude vision API.
 
         image_bytes: JPEG image bytes
         media_type: MIME type (e.g., "image/jpeg")
         entity_names: list of entity names to pass to the prompt for Bill-To matching.
+        account_list: the invoice-valid chart of accounts (code/name/description) for the COA picker.
         Returns a dict with extracted fields (raw_text will be "(image — no raw text)").
         """
         try:
@@ -119,6 +136,7 @@ class AIExtractionService:
             # Strip the "Invoice text:" section since vision model reads image directly
             # Get the part before invoice_text placeholder
             vision_prompt = EXTRACTION_PROMPT.replace("{invoice_text}", "").replace("{entity_list}", entity_list)
+            vision_prompt = vision_prompt.replace("{account_list}", self._format_accounts(account_list))
             vision_prompt = vision_prompt.replace("Invoice text:\n", "")
             vision_prompt += "\nExtract the invoice data from the image above."
 
@@ -160,13 +178,14 @@ class AIExtractionService:
             logger.error(f"AI extraction error: {e}", exc_info=True)
             return self._empty_result("", str(e))
 
-    def extract_invoice_data(self, file_bytes: bytes, entity_names: list[str] | None = None, file_extension: str = ".pdf") -> dict:
+    def extract_invoice_data(self, file_bytes: bytes, entity_names: list[str] | None = None, file_extension: str = ".pdf", account_list: list[dict] | None = None) -> dict:
         """
         Extract structured invoice data from file bytes (PDF or image).
 
         file_bytes: bytes of the file (PDF, JPEG, PNG)
         entity_names: list of entity names to pass to the prompt for Bill-To matching.
         file_extension: extension including dot (e.g., ".pdf", ".jpg", ".jpeg", ".png")
+        account_list: the invoice-valid chart of accounts (code/name/description) for the COA picker.
         Returns a dict with extracted fields plus raw_text and extraction_error.
         """
         logger.info(f"extract_invoice_data called. file_extension={file_extension}, file_size={len(file_bytes)} bytes")
@@ -175,7 +194,7 @@ class AIExtractionService:
         if file_extension in ('.jpg', '.jpeg', '.png'):
             media_type = "image/jpeg" if file_extension in ('.jpg', '.jpeg') else "image/png"
             logger.info(f"Detected image file ({file_extension}), using vision API with media_type={media_type}")
-            return self.extract_invoice_data_from_image(file_bytes, media_type, entity_names)
+            return self.extract_invoice_data_from_image(file_bytes, media_type, entity_names, account_list)
 
         # Handle PDF via text extraction
         try:
@@ -190,6 +209,7 @@ class AIExtractionService:
             client = self._get_client()
             prompt = EXTRACTION_PROMPT.format(
                 entity_list=entity_list,
+                account_list=self._format_accounts(account_list),
                 invoice_text=raw_text[:8000],
             )
 
