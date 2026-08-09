@@ -26,6 +26,13 @@ def list_config():
         return jsonify(coa_config_service.list_all(db))
 
 
+@coa_config_bp.route("/approvers", methods=["GET"])
+def approvers():
+    """Onboarded employees for the approver dropdown (never free text)."""
+    with db_session() as db:
+        return jsonify(coa_config_service.onboarded_approvers(db))
+
+
 @coa_config_bp.route("/<code>", methods=["GET"])
 def get_config(code):
     with db_session() as db:
