@@ -145,6 +145,21 @@ def get_invoice(invoice_id: int):
         return jsonify(_invoice_dict(invoice, db)), 200
 
 
+@invoices_bp.route("/<int:invoice_id>/metadata", methods=["GET"])
+def get_invoice_metadata(invoice_id: int):
+    """The captured supporting anchors (trip id / ticket number / rego / claim ref)."""
+    with db_session() as db:
+        return jsonify(invoice_service.get_metadata(db, invoice_id))
+
+
+@invoices_bp.route("/<int:invoice_id>/metadata", methods=["PUT"])
+def put_invoice_metadata(invoice_id: int):
+    """Capture/update the supporting anchors during ratification (the COA door gate reads these)."""
+    data = request.get_json(silent=True) or {}
+    with db_session() as db:
+        return jsonify(invoice_service.set_metadata(db, invoice_id, data))
+
+
 @invoices_bp.route("/<int:invoice_id>", methods=["PUT"])
 def update_invoice(invoice_id: int):
     """Update an invoice (draft/pending_approval only)."""

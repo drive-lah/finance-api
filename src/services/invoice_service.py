@@ -1873,6 +1873,31 @@ class InvoiceService:
     _DEFAULT_APPROVER_EMAIL = "zilla@drivelah.sg"
     _APPROVAL_HIGH_RISK_MIN = 1000  # amount at/above this flags the task 'high' risk
 
+    def get_metadata(self, db: Session, invoice_id: int) -> dict:
+        from src.models.invoice_approval import FinanceInvoiceMetadata
+        m = db.query(FinanceInvoiceMetadata).filter(
+            FinanceInvoiceMetadata.invoice_id == invoice_id).first()
+        return m.to_dict() if m else {"invoice_id": invoice_id, "trip_id": None,
+                                      "intercom_ticket_id": None, "rego": None, "claim_ref": None}
+
+    def set_metadata(self, db: Session, invoice_id: int, fields: dict) -> dict:
+        """Upsert the supporting anchors captured at ratification (trip / ticket / rego / claim)."""
+        from src.models.invoice_approval import FinanceInvoiceMetadata
+        from datetime import datetime, UTC
+        m = db.query(FinanceInvoiceMetadata).filter(
+            FinanceInvoiceMetadata.invoice_id == invoice_id).first()
+        if m is None:
+            m = FinanceInvoiceMetadata(invoice_id=invoice_id)
+            db.add(m)
+        for k in ("trip_id", "intercom_ticket_id", "rego", "claim_ref"):
+            if k in fields:
+                v = fields[k]
+                setattr(m, k, (str(v).strip() or None) if v is not None else None)
+        m.updated_at = datetime.now(UTC)
+        db.flush()
+        db.commit()
+        return m.to_dict()
+
     def raise_invoice(self, db: Session, payload: dict) -> dict:
         """Flow 2 — the Raise-a-vendor-invoice front door.
 
