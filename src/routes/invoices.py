@@ -126,6 +126,17 @@ def create_invoice():
         return jsonify(_invoice_dict(invoice, db)), 201
 
 
+@invoices_bp.route("/raise", methods=["POST"])
+def raise_invoice():
+    """Flow 2 — raise a vendor invoice: gate COA anchors, create draft, store anchors, submit."""
+    data = request.get_json() or {}
+    with db_session() as db:
+        try:
+            return jsonify(invoice_service.raise_invoice(db, data)), 201
+        except ConflictError as e:
+            return jsonify({"error": str(e)}), 400
+
+
 @invoices_bp.route("/<int:invoice_id>", methods=["GET"])
 def get_invoice(invoice_id: int):
     """Get an invoice by ID."""

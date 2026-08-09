@@ -188,6 +188,10 @@ def _invoice_dict(invoice: "FinanceInvoice", db: Optional[Session] = None) -> di
     # Pay Queue (POL-111): manual rank (NULL = FIFO by approved_at).
     result["pay_priority"] = invoice.pay_priority
 
+    # Canonical internal reference (the "DL id") — deterministic from the invoice id, threads the
+    # request → approval task → payout → JE → bank reconciliation.
+    result["internal_ref"] = f"DL-INV-{invoice.id:06d}"
+
     return result
 
 
@@ -1839,6 +1843,65 @@ class InvoiceService:
     # zilla@ guards ALL approvals. Future: route by authority/threshold (some auto-approve).
     _DEFAULT_APPROVER_EMAIL = "zilla@drivelah.sg"
     _APPROVAL_HIGH_RISK_MIN = 1000  # amount at/above this flags the task 'high' risk
+
+    def raise_invoice(self, db: Session, payload: dict) -> dict:
+        """Flow 2 — the Raise-a-vendor-invoice front door.
+
+        1) gate the COA's required anchors (finance_coa_config door gate — request-route only);
+        2) create the draft; 3) store the captured anchors on finance_invoice_metadata;
+        4) submit → pending_approval (assigns the task to the config approver, POL-115).
+        Returns the invoice (with internal_ref) + who it's assigned to.
+        """
+        from src.models.schemas import InvoiceCreate
+        from src.models.invoice_approval import FinanceInvoiceMetadata
+        from src.services import coa_config_service
+        from src.utils.errors import ConflictError
+
+        coa = payload.get("contra_account_code")
+        trip_id = (payload.get("trip_id") or "").strip() or None
+        ticket = (payload.get("intercom_ticket_id") or "").strip() or None
+        rego = (payload.get("rego") or "").strip() or None
+        claim_ref = (payload.get("claim_ref") or "").strip() or None
+
+        # DOOR gate — presence of the anchors this COA demands (live TMS/Intercom validity is AW-5).
+        req = coa_config_service.require_fields(db, coa) if coa else {"trip_id": False, "intercom_id": False, "other": None}
+        missing = []
+        if req.get("trip_id") and not trip_id:
+            missing.append("trip_id")
+        if req.get("intercom_id") and not ticket:
+            missing.append("intercom_ticket_id")
+        if missing:
+            raise ConflictError(f"COA {coa} requires: {', '.join(missing)}")
+
+        create = InvoiceCreate(
+            entity_id=payload["entity_id"],
+            counterparty_id=payload.get("counterparty_id"),
+            invoice_number=payload.get("invoice_number"),
+            invoice_date=payload["invoice_date"],
+            total_amount=payload["total_amount"],
+            currency=payload["currency"],
+            contra_account_code=coa,
+            uploaded_by=payload.get("uploaded_by"),
+            notes=payload.get("notes"),
+            new_vendor=bool(payload.get("new_vendor", False)),
+        )
+        invoice = self.create(db, create)
+
+        if any([trip_id, ticket, rego, claim_ref]):
+            db.add(FinanceInvoiceMetadata(
+                invoice_id=invoice.id, trip_id=trip_id, intercom_ticket_id=ticket,
+                rego=rego, claim_ref=claim_ref,
+            ))
+            db.flush()
+
+        # New vendor not yet finance-approved → hold in draft (POL-115); else submit for approval.
+        if payload.get("new_vendor"):
+            db.commit()
+            return {"status": InvoiceStatus.DRAFT.value,
+                    "message": "Invoice held in draft until the new vendor is finance-approved.",
+                    "invoice": _invoice_dict(invoice, db)}
+
+        return self.submit(db, invoice.id, confirmed=True, submitted_by=payload.get("uploaded_by"))
 
     def _enter_pending_approval(self, db: Session, invoice: FinanceInvoice, message: str) -> dict:
         """Move an invoice to pending_approval AND create its assigned approval task — atomically.
