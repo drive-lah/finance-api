@@ -94,6 +94,28 @@ def list_all(db: Session) -> list[dict]:
     return out
 
 
+def onboarded_approvers(db: Session) -> list[dict]:
+    """Onboarded employees (hr_employees ⋈ users), excluding offboarded — the approver picklist.
+
+    Onboarded = an hr_employees row exists (POL-112); offboarded = users.employment_end_date set.
+    Returns [{email, name}] sorted by name. This is what the config's approver dropdown consumes so
+    an approver is always a real, current employee — never free text.
+    """
+    from sqlalchemy import text
+    rows = db.execute(text(
+        """
+        SELECT u.email AS email, COALESCE(u.name, u.email) AS name
+        FROM hr_employees e
+        JOIN users u ON u.id = e.user_id
+        WHERE e.employment_end_date IS NULL
+          AND (u.status IS NULL OR lower(u.status) = 'active')
+          AND u.email IS NOT NULL
+        ORDER BY name
+        """
+    )).mappings().all()
+    return [{"email": r["email"], "name": r["name"]} for r in rows]
+
+
 def get(db: Session, coa_code: str) -> Optional[dict]:
     r = db.execute(
         select(FinanceCoaConfig).where(FinanceCoaConfig.coa_code == coa_code)
