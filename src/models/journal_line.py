@@ -59,12 +59,6 @@ class FinanceJournalLine(Base):
         ForeignKey("finance_entities.id", ondelete="CASCADE"),
         nullable=False
     )
-    # Sub-ledger dimension (ledger-plan STEP-1): who this line is FOR + which leg. Nullable —
-    # entity-level lines leave it null; incident/vendor lines tag it so the GL is a per-counterparty
-    # sub-ledger. Role is the leg (guest|host|vendor|platform), NOT the person (same human can be
-    # guest on one incident, host on another).
-    counterparty_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, index=True)
-    role: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)
     # POL-25 currency layer: debit/credit are ALWAYS the entity's functional
     # currency (converted at booking time); the native statement fact survives.
     currency: Mapped[Optional[str]] = mapped_column(
