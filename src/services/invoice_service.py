@@ -188,10 +188,6 @@ def _invoice_dict(invoice: "FinanceInvoice", db: Optional[Session] = None) -> di
     # Pay Queue (POL-111): manual rank (NULL = FIFO by approved_at).
     result["pay_priority"] = invoice.pay_priority
 
-    # Canonical internal reference (the "DL id") — deterministic from the invoice id, threads the
-    # request → approval task → payout → JE → bank reconciliation.
-    result["internal_ref"] = f"DL-INV-{invoice.id:06d}"
-
     return result
 
 
@@ -296,9 +292,25 @@ class InvoiceService:
         Checks for semantic duplicates (same entity+counterparty+invoice_number+date+currency)
         before inserting. Auto-matches against contracts if counterparty is set.
         """
-        # Duplicates are ALLOWED at draft (Gaurav 2026-08-01): we create the invoice and
-        # FLAG it if it duplicates an earlier one; promotion is blocked later (submit gate).
-        # No hard reject here — the dedup verdict is applied after insert.
+        # HARD DUPLICATE BLOCK AT INGEST (Gaurav 2026-08-09, reverses the 2026-08-01 allow-at-draft
+        # policy): a document seen before CANNOT be added. When a file hash is present (the upload
+        # path), run the existing tiered detector; if it returns action="block" (L1 byte-identical
+        # file, or L2 same vendor+invoice#+amount), REJECT — do not create the draft. Historical
+        # bulk imports (no pdf_content_hash) are unaffected.
+        if data.pdf_content_hash:
+            from src.services.duplicate_detection_service import duplicate_detection_service
+            from src.utils.errors import ConflictError
+            verdict = duplicate_detection_service.detect(
+                db, entity_id=data.entity_id, counterparty_id=data.counterparty_id,
+                invoice_number=data.invoice_number, total_amount=data.total_amount,
+                invoice_date=data.invoice_date, currency=data.currency,
+                pdf_content_hash=data.pdf_content_hash,
+            )
+            if getattr(verdict, "action", None) == "block":
+                raise ConflictError(
+                    f"Duplicate invoice — {verdict.reason} This document cannot be added again."
+                )
+
         invoice = FinanceInvoice(
             entity_id=data.entity_id,
             counterparty_id=data.counterparty_id,
@@ -1775,6 +1787,23 @@ class InvoiceService:
             reasons.append(
                 f"Duplicate of invoice #{dup.duplicate_of} ({dup.level}). {dup.reason}"
             )
+
+        # 3. COA-required anchors (AW-2 door gate, request-route only). The COA config decides which
+        #    supporting info this expense demands; captured on finance_invoice_metadata at ratify.
+        if invoice.contra_account_code:
+            from src.services import coa_config_service
+            from src.models.invoice_approval import FinanceInvoiceMetadata
+            req = coa_config_service.require_fields(db, invoice.contra_account_code)
+            meta = db.query(FinanceInvoiceMetadata).filter(
+                FinanceInvoiceMetadata.invoice_id == invoice.id
+            ).first()
+            need = []
+            if req.get("trip_id") and not (meta and meta.trip_id):
+                need.append("trip id")
+            if req.get("intercom_id") and not (meta and meta.intercom_ticket_id):
+                need.append("ticket number")
+            if need:
+                reasons.append(f"COA {invoice.contra_account_code} requires: " + ", ".join(need))
 
         if reasons:
             # Park in needs_fix; stamp the reasons + the duplicate flag (POL-106 gate reads it).

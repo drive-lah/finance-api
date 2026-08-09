@@ -45,6 +45,8 @@ class FinanceCoaConfig(Base):
 
     # The editable fields, in the order the settings grid presents them. Also the set the audit
     # log diffs against — anything not here is not a user-facing config field.
+    # `other_required` dropped from the editable set (Gaurav 2026-08-09) — the concrete anchors are
+    # trip id + ticket number; extras aren't a gate. Column kept (no migration) but no longer exposed.
     EDITABLE_FIELDS = (
         "approval_threshold_sgd",
         "approver_1",
@@ -53,7 +55,6 @@ class FinanceCoaConfig(Base):
         "auto_approve_ok",
         "needs_trip_id",
         "needs_intercom_id",
-        "other_required",
         "notes",
     )
 

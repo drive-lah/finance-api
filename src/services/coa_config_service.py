@@ -144,6 +144,14 @@ def upsert(db: Session, coa_code: str, fields: dict, changed_by: Optional[str] =
         row = FinanceCoaConfig(coa_code=coa_code)
         db.add(row)
 
+    # Approver 2 cannot be the same person as approver 1 (Gaurav 2026-08-09) — resolve the effective
+    # values (incoming or existing) and reject a clash before writing.
+    from src.utils.errors import ConflictError
+    eff_a1 = _coerce("approver_1", fields["approver_1"]) if "approver_1" in fields else row.approver_1
+    eff_a2 = _coerce("approver_2", fields["approver_2"]) if "approver_2" in fields else row.approver_2
+    if eff_a1 and eff_a2 and str(eff_a1).lower() == str(eff_a2).lower():
+        raise ConflictError("Approver 2 must be a different person from Approver 1.")
+
     changes: list[tuple[str, Optional[str], Optional[str]]] = []
     for field in FinanceCoaConfig.EDITABLE_FIELDS:
         if field not in fields:
