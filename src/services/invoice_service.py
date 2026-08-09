@@ -1873,9 +1873,23 @@ class InvoiceService:
         if missing:
             raise ConflictError(f"COA {coa} requires: {', '.join(missing)}")
 
+        # New vendor (Flow 3): create a PENDING counterparty (inactive + unverified) — never active —
+        # so finance must approve it (POL-115). The invoice links to it and holds in draft.
+        new_vendor = bool(payload.get("new_vendor"))
+        counterparty_id = payload.get("counterparty_id")
+        if new_vendor and not counterparty_id and payload.get("vendor_name"):
+            cp = FinanceCounterparty(
+                name=str(payload["vendor_name"]).strip(),
+                type="vendor", status="inactive", is_verified=False,
+                is_gst_registered=bool(payload.get("is_gst_registered", False)),
+            )
+            db.add(cp)
+            db.flush()
+            counterparty_id = cp.id
+
         create = InvoiceCreate(
             entity_id=payload["entity_id"],
-            counterparty_id=payload.get("counterparty_id"),
+            counterparty_id=counterparty_id,
             invoice_number=payload.get("invoice_number"),
             invoice_date=payload["invoice_date"],
             total_amount=payload["total_amount"],
@@ -1883,7 +1897,7 @@ class InvoiceService:
             contra_account_code=coa,
             uploaded_by=payload.get("uploaded_by"),
             notes=payload.get("notes"),
-            new_vendor=bool(payload.get("new_vendor", False)),
+            new_vendor=new_vendor,
         )
         invoice = self.create(db, create)
 
@@ -1894,14 +1908,48 @@ class InvoiceService:
             ))
             db.flush()
 
-        # New vendor not yet finance-approved → hold in draft (POL-115); else submit for approval.
-        if payload.get("new_vendor"):
+        # New vendor not yet finance-approved → hold the invoice in DRAFT (POL-115) and raise a
+        # finance vendor-approval TASK. When finance approves the vendor, the invoice auto-submits.
+        if new_vendor and counterparty_id:
+            from src.services.task_service import task_service
+            task_service.enqueue(
+                db, type="vendor-approval", source_ref=f"vendor:{counterparty_id}",
+                title=f"Approve new vendor — {payload.get('vendor_name') or ('cp ' + str(counterparty_id))}",
+                summary=f"New vendor requested on {_invoice_dict(invoice, db).get('internal_ref')}; "
+                        f"fill details + approve to unblock the invoice.",
+                assignee_role="finance.invoices", created_by=payload.get("uploaded_by"),
+            )
             db.commit()
             return {"status": InvoiceStatus.DRAFT.value,
-                    "message": "Invoice held in draft until the new vendor is finance-approved.",
+                    "message": "Vendor requested — invoice held in draft until finance approves the vendor.",
                     "invoice": _invoice_dict(invoice, db)}
 
         return self.submit(db, invoice.id, confirmed=True, submitted_by=payload.get("uploaded_by"))
+
+    def approve_vendor(self, db: Session, counterparty_id: int, approved_by: str) -> dict:
+        """Finance approves a requested vendor → activate + verify it, then auto-submit any invoices
+        held in draft awaiting it (Flow 3)."""
+        cp = db.get(FinanceCounterparty, counterparty_id)
+        if cp is None:
+            from src.utils.errors import NotFoundError
+            raise NotFoundError(f"counterparty {counterparty_id} not found")
+        cp.status = "active"
+        cp.is_verified = True
+        db.flush()
+        held = db.query(FinanceInvoice).filter(
+            FinanceInvoice.counterparty_id == counterparty_id,
+            FinanceInvoice.status == InvoiceStatus.DRAFT.value,
+            FinanceInvoice.new_vendor.is_(True),
+        ).all()
+        db.commit()
+        submitted = []
+        for inv in held:
+            try:
+                self.submit(db, inv.id, confirmed=True, submitted_by=approved_by)
+                submitted.append(inv.id)
+            except Exception:
+                pass
+        return {"counterparty_id": counterparty_id, "status": "active", "submitted_invoices": submitted}
 
     def _enter_pending_approval(self, db: Session, invoice: FinanceInvoice, message: str) -> dict:
         """Move an invoice to pending_approval AND create its assigned approval task — atomically.

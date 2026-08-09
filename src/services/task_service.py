@@ -205,6 +205,21 @@ class TaskService:
             return {"status": TaskStatus.DONE.value if action == "approve"
                     else TaskStatus.RETURNED.value}
 
+        if kind == "vendor" and sid is not None:
+            from src.services.invoice_service import invoice_service
+            if action == "approve":
+                invoice_service.approve_vendor(db, sid, str(caller))
+                return {"status": TaskStatus.DONE.value}
+            elif action == "reject":
+                from src.models.counterparty import FinanceCounterparty
+                cp = db.get(FinanceCounterparty, sid)
+                if cp:
+                    cp.status = "inactive"
+                    cp.is_verified = False
+                return {"status": TaskStatus.RETURNED.value}
+            else:
+                raise BadRequestError(f"Unknown action '{action}' for vendor task.")
+
         if kind == "invoice" and sid is not None:
             from src.services.invoice_service import invoice_service
             if action == "approve":
