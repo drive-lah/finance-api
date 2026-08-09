@@ -8,6 +8,7 @@ payment recording, AP knock-off lookups, and the AI contract review gate.
 import json
 import logging
 import os
+from decimal import Decimal
 from datetime import datetime, date, UTC
 from typing import TYPE_CHECKING, Optional, cast
 
@@ -1849,11 +1850,20 @@ class InvoiceService:
         from src.services.duplicate_detection_service import duplicate_detection_service
         from src.models.counterparty import FinanceCounterparty
 
-        # Resolve the default approver (zilla) → user id; fall back to a role queue so the
-        # task is ALWAYS assigned (gate holds even if the user row can't be resolved).
+        # Resolve the approver from the COA config (AW-2 sign-off gate): the invoice's expense COA
+        # decides approver_1 (an onboarded employee). This config applies ONLY to the request-raise
+        # route (raised invoices / payout requests) — automated economic-event postings never enter
+        # this path. Fall back to the default approver, then a role queue, so the assignee gate
+        # ALWAYS holds even if config/user can't be resolved.
+        from src.services import coa_config_service
+        route = coa_config_service.routing(
+            db, invoice.contra_account_code,
+            Decimal(str(invoice.total_amount)) if invoice.total_amount is not None else None,
+        )
+        approver_email = route.get("approver_1") or self._DEFAULT_APPROVER_EMAIL
         approver_id = db.execute(
             text("SELECT id FROM users WHERE lower(email) = :e"),
-            {"e": self._DEFAULT_APPROVER_EMAIL},
+            {"e": str(approver_email).lower()},
         ).scalar()
         assignee_role = None if approver_id else "finance.invoices"
 
@@ -1888,7 +1898,7 @@ class InvoiceService:
         return {
             "status": InvoiceStatus.PENDING_APPROVAL.value,
             "message": message,
-            "assigned_to": self._DEFAULT_APPROVER_EMAIL if approver_id else assignee_role,
+            "assigned_to": approver_email if approver_id else assignee_role,
             "invoice": _invoice_dict(invoice, db),
         }
 

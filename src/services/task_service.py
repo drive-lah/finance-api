@@ -208,11 +208,26 @@ class TaskService:
         if kind == "invoice" and sid is not None:
             from src.services.invoice_service import invoice_service
             if action == "approve":
-                invoice_service.approve(db, sid, approved_by=str(caller))
-                return {"status": TaskStatus.DONE.value}
+                # Two-step sign-off (AW-6) routed through THIS task queue, not a separate surface:
+                # finance_coa_config decides steps + approvers. On a non-final step the task stays
+                # OPEN and is reassigned to the next approver; only the final step posts the JE.
+                from src.services import approval_chain_service as ac
+                from sqlalchemy import text as _text
+                res = ac.decide(db, sid, str(caller), "approved")
+                if res.get("final"):
+                    return {"status": TaskStatus.DONE.value}
+                inv = invoice_service.get_by_id(db, sid)
+                nxt = ac.next_step_for(db, inv)
+                next_uid = db.execute(
+                    _text("SELECT id FROM users WHERE lower(email) = :e"),
+                    {"e": str(nxt.get("approver") or "").lower()},
+                ).scalar() if nxt.get("approver") else None
+                task.assignee_user_id = next_uid
+                task.assignee_role = None if next_uid else "finance.invoices"
+                return {"status": TaskStatus.OPEN.value}
             elif action == "reject":
-                invoice_service.reject(db, sid, rejection_reason=notes or "rejected",
-                                       rejected_by=str(caller))
+                from src.services import approval_chain_service as ac
+                ac.decide(db, sid, str(caller), "rejected", reason=notes or "rejected")
                 return {"status": TaskStatus.RETURNED.value}
             elif action == "void":
                 invoice_service.void(db, sid, voided_by=str(caller),
