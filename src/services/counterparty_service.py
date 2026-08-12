@@ -98,6 +98,31 @@ class CounterpartyService:
         db.refresh(cp)
         return cp
 
+    # ── GST vendor gate (POL-119) ───────────────────────────────────────────────
+    # Entity → market. AU entity charges/claims AU GST; SG entities are not GST-registered today.
+    ENTITY_COUNTRY = {3: "AU", 1: "SG", 2: "SG"}
+
+    @staticmethod
+    def market_for_entity(entity_id: Optional[int]) -> Optional[str]:
+        return CounterpartyService.ENTITY_COUNTRY.get(entity_id)
+
+    @staticmethod
+    def registered_in(cp: FinanceCounterparty, country: Optional[str]) -> bool:
+        """Is this vendor GST-registered in `country` (per gst_registrations)? The vendor gate for
+        direct-expense GST: entity registered AND account gst_applicable AND registered_in(vendor)."""
+        if not cp or not country:
+            return False
+        c = country.upper()
+        return any((r.get("country") or "").upper() == c for r in (cp.gst_registrations or []))
+
+    @staticmethod
+    def registration_number(cp: FinanceCounterparty, country: str) -> Optional[str]:
+        c = (country or "").upper()
+        for r in (cp.gst_registrations or []):
+            if (r.get("country") or "").upper() == c:
+                return r.get("registration_number")
+        return None
+
     def delete(self, db: Session, counterparty_id: int) -> bool:
         cp = db.get(FinanceCounterparty, counterparty_id)
         if not cp:

@@ -129,6 +129,42 @@ def resolve_trip_any(ref: str, market: Optional[str] = None) -> Optional[dict]:
     return {"found": False, "input": ref, "error": "unrecognised trip reference"}
 
 
+# ── rego (listing registration) ───────────────────────────────────────────────
+def normalize_rego(raw: str) -> Optional[str]:
+    """Uppercase and strip ALL spaces — regos are entered inconsistently ('smh 7616g' == 'SMH7616G')."""
+    if not raw:
+        return None
+    s = re.sub(r"\s+", "", str(raw)).upper()
+    return s or None
+
+
+def resolve_rego(raw_rego: str, market: Optional[str] = None) -> dict:
+    """Resolve a vehicle registration (number plate) to its listing + host — the VEHICLE-level anchor
+    for costs that aren't trip-specific (e.g. towing). Case- and space-insensitive. Rego isn't
+    market-tagged, so try au then sg. Stored in `{market}_listings.publicData.license_plate_number`."""
+    rego = normalize_rego(raw_rego)
+    if not rego:
+        return {"found": False, "input": raw_rego, "error": "empty registration"}
+    for mk in ([market] if market else ["au", "sg"]):
+        # Don't hard-filter deleted: a towed/serviced car may be a DELISTED listing. Prefer an active
+        # listing (deleted ASC), newest first, but still resolve a deleted one if that's all there is.
+        lst = _ch.execute_single(
+            "SELECT id, title, userId, deleted, JSONExtractString(publicData,'license_plate_number') rego "
+            f"FROM {mk}_listings "
+            f"WHERE upper(replaceAll(JSONExtractString(publicData,'license_plate_number'),' ',''))='{_esc(rego)}' "
+            "ORDER BY deleted ASC, createdAt DESC LIMIT 1")
+        if lst:
+            host = _ch.execute_single(
+                f"SELECT concat(firstName,' ',lastName) n, email FROM {mk}_users WHERE id='{_esc(lst['userId'])}' LIMIT 1")
+            return {
+                "found": True, "input": rego, "rego": lst.get("rego") or rego, "market": mk,
+                "listing_id": lst["id"], "vehicle": lst.get("title"),
+                "delisted": bool(int(lst.get("deleted") or 0)),
+                "host": host.get("n") if host else None, "host_email": host.get("email") if host else None,
+            }
+    return {"found": False, "input": rego, "error": "registration not found"}
+
+
 # ── tickets ───────────────────────────────────────────────────────────────────
 def split_ticket_ids(raw: str) -> list[str]:
     """A payment can cite multiple tickets. Split on comma / whitespace / semicolon; keep digit runs."""
@@ -138,16 +174,29 @@ def split_ticket_ids(raw: str) -> list[str]:
     return [p for p in (re.sub(r"\D", "", x) for x in parts) if p]
 
 
-def resolve_ticket(ticket_no: str) -> dict:
-    """Raw Intercom ticket context (no LLM). Returns found + attributes + the plain-text thread so a
-    caller can summarise it if it wants. Trip reference embedded in the ticket is surfaced as trip_ref."""
+# Two ticket syncs. `intercom_tickets` (API) is FAST (~0.4s, sorted on ticket_id) but MISSES the newer
+# 9-digit / Receivables tickets (e.g. 123076693). `z_mysql_intercom_tickets` (MySQL mirror) is the
+# SUPERSET but a slow full-scan (~24s). So: hit the fast table first; only fall back to the slow mirror
+# on a miss, with an extended timeout. `with_thread=False` (live validation) skips the heavy parts pull.
+_TICKET_FAST = "intercom_tickets"
+_TICKET_FULL = "z_mysql_intercom_tickets"
+_TICKET_SLOW_TIMEOUT = 45
+
+
+def resolve_ticket(ticket_no: str, with_thread: bool = True) -> dict:
+    """Raw Intercom ticket context (no LLM). Returns found + attributes + (optionally) the plain-text
+    thread so a caller can summarise it. Trip reference embedded in the ticket is surfaced as trip_ref."""
     tid = re.sub(r"\D", "", str(ticket_no or ""))
     if not tid:
         return {"found": False, "input": ticket_no, "error": "not a ticket number"}
     import json
-    r = _ch.execute_single(
-        "SELECT ticket_attributes, ticket_type, ticket_state, toString(ticket_parts) parts "
-        f"FROM intercom_tickets WHERE ticket_id='{_esc(tid)}' LIMIT 1")
+    parts_col = "toString(ticket_parts) parts" if with_thread else "'' parts"
+    cols = f"ticket_attributes, ticket_type, ticket_state, {parts_col}"
+    r = _ch.execute_single(f"SELECT {cols} FROM {_TICKET_FAST} WHERE ticket_id='{_esc(tid)}' LIMIT 1")
+    if not r:  # rare: newer/Receivables ticket only in the slow mirror
+        r = _ch.execute_single(
+            f"SELECT {cols} FROM {_TICKET_FULL} WHERE ticket_id='{_esc(tid)}' LIMIT 1",
+            timeout=_TICKET_SLOW_TIMEOUT)
     if not r:
         return {"found": False, "input": tid, "ticket": tid, "error": "ticket not found"}
     attrs = json.loads(r.get("ticket_attributes") or "{}")
@@ -174,21 +223,24 @@ def resolve_ticket(ticket_no: str) -> dict:
     }
 
 
-def resolve_tickets(raw: str) -> list[dict]:
-    """Resolve a comma/space-separated list of ticket numbers, in order, de-duplicated."""
+def resolve_tickets(raw: str, with_thread: bool = True) -> list[dict]:
+    """Resolve a comma/space-separated list of ticket numbers, in order, de-duplicated. Pass
+    with_thread=False for the live form (skips the heavy thread pull → faster)."""
     seen, out = set(), []
     for tid in split_ticket_ids(raw):
         if tid in seen:
             continue
         seen.add(tid)
-        out.append(resolve_ticket(tid))
+        out.append(resolve_ticket(tid, with_thread=with_thread))
     return out
 
 
 # ── one-shot validation for the upload form ───────────────────────────────────
-def validate_anchors(trip_id: Optional[str] = None, ticket_ids: Optional[str] = None) -> dict:
+def validate_anchors(trip_id: Optional[str] = None, ticket_ids: Optional[str] = None,
+                     rego: Optional[str] = None) -> dict:
     """Catch-at-the-door check for the ratify form: resolve whatever anchors were entered and hand back
-    a compact, display-ready verdict. Never raises — a miss is data, not an error."""
+    a compact, display-ready verdict. Never raises — a miss is data, not an error. Trip and rego are
+    ALTERNATIVES — a trip-specific cost gives a trip; a vehicle-level one (towing) gives a rego."""
     out: dict = {}
     if trip_id and str(trip_id).strip():
         # Accept BOTH a TA/TS code (going forward) and a transaction UUID (the historical Retool anchor).
@@ -201,11 +253,20 @@ def validate_anchors(trip_id: Optional[str] = None, ticket_ids: Optional[str] = 
             if t.get("found") else (t.get("error") or "not found"),
             "market": t.get("market"),
         }
+    if rego and str(rego).strip():
+        g = resolve_rego(rego)
+        out["rego"] = {
+            "found": g.get("found", False),
+            "rego": g.get("rego") or g.get("input"),
+            "label": (f"{g.get('vehicle') or 'vehicle ?'} · host {g.get('host') or '?'}").strip(" ·")
+            if g.get("found") else (g.get("error") or "not found"),
+            "market": g.get("market"),
+        }
     if ticket_ids and str(ticket_ids).strip():
         out["tickets"] = [
             {"ticket": r.get("ticket") or r.get("input"), "found": r.get("found", False),
              "label": (r.get("title") or f"{r.get('type') or 'ticket'} · {r.get('state') or ''}").strip(" ·")
              if r.get("found") else (r.get("error") or "not found")}
-            for r in resolve_tickets(ticket_ids)
+            for r in resolve_tickets(ticket_ids, with_thread=False)  # live form: skip heavy thread
         ]
     return out

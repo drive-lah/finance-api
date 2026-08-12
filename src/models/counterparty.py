@@ -56,8 +56,14 @@ class FinanceCounterparty(Base):
     address: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Tax / AP
-    tax_registration_number: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    is_gst_registered: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    tax_registration_number: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # DEPRECATED — see gst_registrations
+    is_gst_registered: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)      # DEPRECATED — see gst_registrations
+    # Per-country GST registration (POL-119). Vendors are GLOBAL — one vendor can be registered in AU
+    # and/or SG, each with its own number. Array of {"country": "AU"|"SG", "registration_number": str}.
+    # Country present ⇒ registered in that market; the number rides along. Back-populated from invoice
+    # history (a vendor that charged GST on an AU invoice is AU-registered). This is the vendor gate for
+    # direct-expense GST: entity registered AND account gst_applicable AND country ∈ gst_registrations.
+    gst_registrations: Mapped[Optional[list]] = mapped_column(JSON, nullable=False, default=list)
     payment_terms_days: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
     # Accounting default
@@ -108,6 +114,7 @@ class FinanceCounterparty(Base):
             "address": self.address,
             "tax_registration_number": self.tax_registration_number,
             "is_gst_registered": self.is_gst_registered,
+            "gst_registrations": self.gst_registrations or [],
             "payment_terms_days": self.payment_terms_days,
             "default_account_code": self.default_account_code,
             "aliases": self.aliases or [],

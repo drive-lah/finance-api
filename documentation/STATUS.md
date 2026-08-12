@@ -576,6 +576,30 @@ Central compliance register + overview for admin.drivelah.com (peer tab to Finan
 
 ---
 
+## 2.14 GST Engine — cash-basis, four-account, deferred both sides (LOCKED, Gaurav 2026-08-11 · POL-119)
+
+Canonical model in **KNOWLEDGE POL-119** (+ POL-118 timing, POL-87 per-entity gate). Cash-basis: GST claimable/payable ONLY at cash movement; **GST never touches the P&L** (P&L always net). Replaces the current WRONG accrual-at-approval posting.
+
+**Accounts:** 1350 GST Receivable (Input Tax, claimable) · 2500 GST Payable (Output Tax) · **1355 (new) GST Receivable – Deferred (Unpaid Purchases)** · **2505 (new) GST Payable – Deferred (Uncollected Sales)**. Single-control 2510 rejected. BAS = Δ2500(cash-collected) − Δ1350(cash-paid); deferred accounts invisible to BAS.
+
+- **G-1** Create accounts 1355 + 2505 (deferred input/output). Migration.
+- **G-2** Restrict the COA GST tick-boxes (`gst_applicable_au/sg`, mig 057 ✅) to revenue/expense/COS/capex-asset account types only — grey out liability/equity/bank/cash/receivables; depreciation stays untickable (non-cash). FE.
+- **G-3** ✅ DONE (backend) — vendor GST registration is now PER-COUNTRY (vendors are global). New JSONB col `finance_counterparties.gst_registrations` = `[{country:'AU'|'SG', registration_number}]` (mig 058, on prod). **Back-populated from invoice history**: a vendor that charged GST on an AU/SG invoice → that country added, ABN/GST no. pulled from extracted `vendor_tax_id` — **118 vendors (95 AU, 25 SG), 113 with a stored number.** Legacy `is_gst_registered`/`tax_registration_number` deprecated. Gate helper `counterparty_service.registered_in(cp, country)` + `market_for_entity(entity_id)` (3→AU, 1/2→SG). **Direct-expense gate = entity registered AND account `gst_applicable_<country>` AND `registered_in(vendor, country)`.** Invoiced purchases read GST from the invoice's own `tax_amount`. REMAINING: FE editor for per-country registrations on the counterparty modal; auto-add country when a new GST invoice lands; unknown vendors (no history) default off + reviewable.
+- **G-4** STOP posting GST at `invoice_service.approve()`. Bill books: `Dr expense/asset(net) + Dr 1355 / Cr AP(gross)`. No 1350 at bill.
+- **G-5** Payment hook (input): on cash-out settling AP, `Dr 1350 / Cr 1355` for the paid portion's GST (proportional on partial). Direct no-invoice payment: `Dr expense(net)+Dr 1350 / Cr Bank`.
+- **G-6** Sales side: invoice raised → `Cr 2505`; cash collected → `Dr 2505 / Cr 2500`; Stripe direct → `Cr 2500`; write-off/never-collected → reverse 2505 (no GST owed). Sales deferral is REQUIRED (invoices paid late/never).
+- **G-7** Reverse the $245,594 already on 1350 from old accrual postings; re-derive on the cash model.
+- **G-8** BAS report = quarter's cash-basis 2500 − 1350; reconcile against the accountant's lodged BAS.
+
+Gate: entity GST-registered (AU=0.10 / SG=null) AND account gst_applicable_<country> AND (purchases) vendor is_gst_registered.
+
+**BUILT SO FAR (the BRAIN, verified):** `gst_service.py` (gate + 1/11), 4 accounts (1350/2500/1355/2505 on prod), per-country account flags (mig 057 + 96 AU ticked), per-country vendor `gst_registrations` (mig 058 + 118 backfilled). **NOT BUILT (the HANDS) — BUILD NOW:**
+- **G-H1 POSTING HOOKS** — inject the GST line into the SAME journal at DRAFT-CREATE on BOTH routes (bank-match builder + economic-events builder); it rides the parent JE's draft→posted lifecycle (NO separate GST journal, no orphan). Rule: GST recognised at the CASH/reconciliation step, to 1350/2500 (or deferred→live flush at payment).
+- **G-H2 CLEANUP / BATCH RUNNER (DOING FIRST)** — restate the existing accrual GST on 1350 (only src=`invoice_approval`, ~$245k 2023-2026; ~$29.5k is H1-2026). Two ops, **scope 2026-onward** (pre-2026 lodged/closed = opening balances): (a) **unpaid** approved invoices → GST reclass **1350 → 1355** (deferred, off BAS); (b) **PAID** approved invoices → **reverse the approval-dated 1350 GST + re-post dated at the CASH PAYMENT date** (right account, right BAS quarter — the timing fix Gaurav flagged 2026-08-13). Also the revenue "flip": output GST on AU cash collected → 2500 (revenue currently gross, $3.0M AU, 2500 only has $24k QB relics).
+- **DISCIPLINE (Gaurav, 2026-08-13): ALWAYS DRY-RUN FIRST.** Every ledger-restatement op produces a per-item report (what moves where, amount, BAS quarter) shown to Gaurav BEFORE any write; then execute supervised + backed-up + before/after tripwire (VR-1c rule). Never bulk-write prod blind.
+
+---
+
 ## 3. Decisions
 
 | Decision | Resolution |

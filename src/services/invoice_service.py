@@ -858,16 +858,18 @@ class InvoiceService:
 
     def void(self, db: Session, invoice_id: int, voided_by: Optional[str] = None,
              void_reason: Optional[str] = None) -> FinanceInvoice:
-        """Void an invoice. Allowed in any pre-payment / no-ledger-posting state:
-        draft, needs_fix, pending_approval, rejected. Blocked once money or the ledger
-        is involved (approved/paid/partially_paid). Captures who/when/why (voided_by = logged-in user)."""
+        """Void an invoice. Allowed in any pre-posting state where nothing has hit the ledger:
+        draft, needs_fix, reconcile, pending_approval, rejected. Blocked once money or the ledger
+        is involved (paired/approved/paid/partially_paid). Captures who/when/why (voided_by)."""
         invoice = self.get_by_id(db, invoice_id)
 
-        # needs_fix is a held exception (dup / missing info) — no money moved, so it's voidable
-        # exactly like draft (Gaurav 2026-08-09: could not void a needs_fix duplicate, id 236).
+        # needs_fix is a held exception (no money moved); reconcile is believed-paid-outside but NOT
+        # yet paired/posted, so voiding it has no ledger effect either — both voidable like draft
+        # (Gaurav 2026-08-09 needs_fix id 236; 2026-08-10 reconcile). paired stays blocked: posting authorized.
         allowed = (
             InvoiceStatus.DRAFT.value,
             InvoiceStatus.NEEDS_FIX.value,
+            InvoiceStatus.RECONCILE.value,
             InvoiceStatus.PENDING_APPROVAL.value,
             InvoiceStatus.REJECTED.value,
         )
@@ -875,7 +877,7 @@ class InvoiceService:
             from src.utils.errors import ConflictError
             raise ConflictError(
                 f"Cannot void invoice in '{invoice.status}' status. "
-                f"Only draft, needs_fix, pending_approval, or rejected invoices can be voided."
+                f"Only draft, needs_fix, reconcile, pending_approval, or rejected invoices can be voided."
             )
 
         invoice.status = InvoiceStatus.VOID.value
@@ -1802,8 +1804,10 @@ class InvoiceService:
                 FinanceInvoiceMetadata.invoice_id == invoice.id
             ).first()
             need = []
-            if req.get("trip_id") and not (meta and meta.trip_id):
-                need.append("trip id")
+            # The trip requirement is satisfied by a trip id OR a vehicle rego — a cost isn't always
+            # trip-specific (e.g. towing is vehicle-level). Either operational anchor clears the gate.
+            if req.get("trip_id") and not (meta and (meta.trip_id or meta.rego)):
+                need.append("trip id or vehicle rego")
             if req.get("intercom_id") and not (meta and meta.intercom_ticket_id):
                 need.append("ticket number")
             if need:
@@ -1817,7 +1821,12 @@ class InvoiceService:
             cp = db.get(FinanceCounterparty, invoice.counterparty_id)
             _ctype = str(getattr(cp.type, "value", cp.type)).lower() if cp else ""
             _cstatus = str(getattr(cp.status, "value", cp.status)).lower() if cp else ""
-            if cp and _ctype == "vendor" and (_cstatus != "active" or not cp.is_verified):
+            # Hold only genuinely-pending vendors = NOT active. New vendors are created 'inactive'
+            # (counterparty_service.create), so status catches them; approve_vendor flips to active.
+            # Do NOT also require is_verified — 82 legacy vendors are active-but-unverified (e.g.
+            # Experian) and are legitimately usable; keying on is_verified wrongly held their invoices
+            # in draft with no vendor task to clear them (Gaurav 2026-08-10).
+            if cp and _ctype == "vendor" and _cstatus != "active":
                 invoice.submitted_by = submitted_by
                 invoice.submitted_at = datetime.now(UTC)
                 db.commit()

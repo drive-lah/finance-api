@@ -21,8 +21,9 @@ enrichment_bp = Blueprint("enrichment", __name__, url_prefix="/api/finance/enric
 def validate():
     trip_id = request.args.get("trip_id")
     ticket_ids = request.args.get("ticket_ids")
+    rego = request.args.get("rego")
     try:
-        return jsonify(enrichment_service.validate_anchors(trip_id=trip_id, ticket_ids=ticket_ids))
+        return jsonify(enrichment_service.validate_anchors(trip_id=trip_id, ticket_ids=ticket_ids, rego=rego))
     except Exception as e:  # never fail the form on a lookup hiccup
         logger.warning("enrichment.validate failed: %s", e)
         return jsonify({"error": "resolution unavailable"}), 200

@@ -91,7 +91,17 @@ class FinanceAccount(Base):
     offset_account_code: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     gst_applicable: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=False,
-        comment="Whether this account is subject to GST"
+        comment="LEGACY single GST flag — superseded by the per-country flags below (POL-118)"
+    )
+    # GST-applicability is decided PER COUNTRY — an account can carry GST in AU but not SG (or vice
+    # versa when SG registers). These two flags are the account-level gate in the 3-condition model
+    # (entity registered AND account gst_applicable_<country> AND vendor registered). Finance ticks
+    # them in the Chart of Accounts grid. (Gaurav 2026-08-10, POL-118)
+    gst_applicable_au: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, comment="Account is GST-applicable in Australia"
+    )
+    gst_applicable_sg: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, comment="Account is GST-applicable in Singapore"
     )
     status: Mapped[AccountStatus] = mapped_column(
         SQLEnum(AccountStatus, name="account_status", native_enum=False),
@@ -139,6 +149,8 @@ class FinanceAccount(Base):
             "description": self.description,
             "is_bank_account": self.is_bank_account,
             "gst_applicable": self.gst_applicable,
+            "gst_applicable_au": self.gst_applicable_au,
+            "gst_applicable_sg": self.gst_applicable_sg,
             "status": self.status.value,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,

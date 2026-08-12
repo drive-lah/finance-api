@@ -168,7 +168,7 @@ def build_card_body(db, invoice):
         # code (TA…/TS…) and one-or-more ticket numbers. Fall back to the parsed retool description
         # for the historical set. Trip is resolved DIRECTLY from the entered code — not only via a
         # ticket (fixes the old gap) — then from a ticket's embedded trip ref as a fallback.
-        meta_trip = meta_tickets = None
+        meta_trip = meta_tickets = meta_rego = None
         try:
             from src.models.invoice_approval import FinanceInvoiceMetadata
             m = db.query(FinanceInvoiceMetadata).filter(
@@ -176,6 +176,7 @@ def build_card_body(db, invoice):
             if m:
                 meta_trip = m.trip_id
                 meta_tickets = m.intercom_ticket_id
+                meta_rego = m.rego
         except Exception:
             pass
 
@@ -191,6 +192,13 @@ def build_card_body(db, invoice):
         if not trip:
             ref = tkt.get("trip_code") or tkt.get("trip_uuid") if tkt else None
             trip = _trip_ctx(ref, market) if ref else None
+        # Vehicle-level anchor (towing etc.): resolve the rego to vehicle/host when there's no trip.
+        if not trip and meta_rego:
+            g = enrichment_service.resolve_rego(meta_rego)
+            if g.get("found"):
+                trip = {"vehicle": g.get("vehicle"), "host": g.get("host"), "host_email": g.get("host_email"),
+                        "guest": None, "window": None, "status": ("delisted vehicle" if g.get("delisted") else None),
+                        "rego": g.get("rego")}
         dp = _double_pay(db, invoice.counterparty_id, invoice.total_amount)
         inv = {"vendor": vendor, "amount": float(invoice.total_amount or 0), "currency": invoice.currency,
                "coa": invoice.contra_account_code,
