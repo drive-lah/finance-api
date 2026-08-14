@@ -57,7 +57,7 @@ def main():
 
     rows = []
     for cid, nm in cps:
-        best = max(((score(nm, r["holder"]), r) for r in recips), default=(0, None))
+        best = max(((score(nm, r["holder"]), r) for r in recips), key=lambda t: t[0], default=(0, None))
         s, r = best
         matched = s >= 0.70
         rows.append({

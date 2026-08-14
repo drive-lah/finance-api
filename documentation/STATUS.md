@@ -428,6 +428,20 @@ Spec: `wip/PAYOUTS_DATA_MODEL.md`. Replaces the flat `finance_payout_bank_accoun
 | PM-7 | Payout state machine (POL-126) — DECISION: unified register for `system_wise` + `external_manual` (finance-team console payouts) vs reconcile-lane-only for manual | ☐ Gaurav call |
 | PM-8 | **Payout↔payable↔bank-txn linkage (POL-128).** Generalise the invoice-only link to polymorphic `payable_type`/`payable_id` (invoice\|payroll\|other); `transaction_id`/`match_id`/`journal_entry_id` already link the bank line + JE. Chain: payable ← finance_payouts → bank txn → JE | ☐ Phase-2 cutover |
 
+### 2.8b Payout state machine + `payment_initiated` — PLAN (LOCKED 2026-08-15, POL-129..133)
+
+Canonical model = **`wip/PAYOUT_MODEL.md`** (renamed from PAYOUTS_DATA_MODEL.md; single source of truth for the payout machine, supersedes `VENDOR_PAYOUT_MECHANISM_PRD.md`). Invoice side = `wip/INVOICES_STATE_MACHINE.md` (`payment_initiated` added). **SCOPE GUARD (Gaurav): work ONLY the invoice state machine + the payout machine. Do NOT touch the categorization engine — it stays the sole matcher (POL-131).**
+
+Context: id-8 phantom (DQ-102) — a payout showed success while Wise `funds_refunded` it, because we mark done on fund, never re-check Wise, and had no `payment_initiated` holding state. Voided.
+
+| ID | Item | State |
+|----|------|-------|
+| SM-1 | **Fix `_send`:** funding success → payout `sent` only (money left balance). Do NOT jump to `awaiting_import` on fund alone. | ☐ next |
+| SM-2 | **Wise delivery status tracking (POL-130):** webhook `transfers#state-change` (primary) + `GET /v1/transfers/{id}` poller (backup) → drive `sent → awaiting_import` on `outgoing_payment_sent`, `→ failed` on `funds_refunded`/`bounced_back`. NOT built = the id-8 gap. | ☐ |
+| SM-3 | **Invoice `payment_initiated` (POL-132):** enum + transitions — payout fired ⇒ `approved → payment_initiated`; Wise refund ⇒ `payment_initiated → approved`. The categorization engine's import-pair (VP-5) flips `payment_initiated → paid` on a real matched txn (no change to the engine, just its target state). Invoices-tab filter. | ☐ |
+| SM-4 | **Pay-time safety (POL-133):** BLOCK when no active registration on the paying channel (kill the wrong-account fallback in `create_payout`); review-before-pay confirm (`payee · account · channel · amount`). | ☐ |
+| SM-5 | Reconciliation stays VP-5 only (POL-131) — daily Wise import + `wise_transfer_id` pairing, idempotent on `balance_transaction_id`. **No new matcher, no one-off fetch.** Verify VP-5 fires on a real Wise import (still unproven). | ☐ verify |
+
 ## 2.9 Invoice Ingestion — minimal-friction pipeline (MEGA-TASK, Gaurav 2026-08-03)
 
 One capture surface only: the existing **upload** system (no email intake). Every invoice → **draft**. Design is largely EXISTING behavior + one new gate. Business rules confirmed by Gaurav 2026-08-03.

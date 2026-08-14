@@ -24,6 +24,8 @@ class InvoiceStatus(str, enum.Enum):
     NEEDS_FIX = "needs_fix"             # approval agent flagged an exception (duplicate / no counterparty / missing info)
     PENDING_APPROVAL = "pending_approval"
     APPROVED = "approved"
+    PAYMENT_INITIATED = "payment_initiated"  # payout fired; money on its way, waiting for the real txn
+    #                                          to import + pair. NOT paid (POL-132, 2026-08-15).
     PARTIALLY_PAID = "partially_paid"
     PAID = "paid"
     REJECTED = "rejected"

@@ -1,8 +1,14 @@
-# Payouts Data Model — long-term design (Gaurav + Pickle, 2026-08-14)
+# PAYOUT MODEL — CANONICAL (Gaurav + Pickle, 2026-08-14)
 
-> Branch `260814_payout_module`. Agreed in design; **nothing migrated yet** — this is the spec to review
-> before any DDL runs. Supersedes the flat `finance_payout_bank_accounts` (recipient id embedded on the
-> account row, one-recipient-only).
+> **The single source of truth for the payout machine.** Branch `260814_payout_module`. Covers the data
+> model (3-layer payee/bank/channel), the payout state machine, the Wise integration (create → fund →
+> deliver → confirm), and how a payout reconciles to a paid invoice. **Supersedes**
+> `VENDOR_PAYOUT_MECHANISM_PRD.md` and the flat `finance_payout_bank_accounts`. Invoice-side states live
+> in `INVOICES_STATE_MACHINE.md`, which cross-references this doc at `payment_initiated`.
+>
+> **Guardrails (Gaurav, 2026-08-15):** the categorization engine is the SOLE matcher — payouts reconcile
+> ONLY through the normal periodic Wise import, never a one-off fetch. An invoice is `paid` ONLY when a
+> real transaction is matched to it. Money never leaves without an explicit, SCA-signed fund call.
 
 ## Principle
 
@@ -142,7 +148,83 @@ must link BOTH ways: to **what it pays** and to **the bank line that settles it*
   `wise_transfer_id` match), plus `match_id` + `journal_entry_id`. So the chain is
   **payable ← finance_payouts → bank transaction → JE**, traceable in both directions.
 
+## How a Wise transfer really works (grounded, POL-129)
+
+A payout is **three calls**, and money moves only on the second:
+
+1. **Quote** — `POST /v3/profiles/{id}/quotes` (price lock; no money).
+2. **Create transfer** — `POST /v1/transfers` (record only; status `incoming_payment_waiting`; **no money moves**).
+   `customerTransactionId` MUST be a UUID (Wise's idempotency key; we derive uuid5 from our key).
+3. **Fund from balance** — `POST /v3/profiles/{id}/transfers/{tid}/payments {"type":"BALANCE"}`. **This is what
+   moves the money**, and Wise NEVER auto-debits the balance — every payment is explicitly authorised.
+   SCA-gated: first call returns `403 + x-2fa-approval`; we sign the token with our registered key and
+   retry with `x-2fa-approval` + `X-Signature`. (`wise_service.fund_transfer` + `_sign_2fa`.)
+
+After funding, Wise processes and the transfer ends in a terminal status:
+`outgoing_payment_sent` (delivered) · `bounced_back` / `funds_refunded` (failed, money returned) · `cancelled`.
+
+**Cross-profile rule (why AU failed):** a Wise recipient belongs to ONE profile. Paying a recipient from a
+different profile is rejected (`invalid currency ["SGD","AUD"], account type "singapore"`). So a payout can
+only use a registration that exists ON the paying channel — see the block-and-register rule below.
+
+## Payout state machine (POL-130)
+
+`PayoutState`: `draft → requested → sent → awaiting_import → posted`; plus `failed`, `cancelled`.
+Mapped to the Wise reality (this is the fix for the id-8 phantom, where we marked success before Wise
+confirmed):
+
+| Our state | Meaning | Set by |
+|-----------|---------|--------|
+| `draft` | payout row created | create_payout |
+| `requested` | maker raised; awaiting checker if ≥ SGD 1,000 | maker |
+| `sent` | transfer created **and funded** (money left balance, SCA ok) | fund_transfer success |
+| `awaiting_import` | Wise confirms `outgoing_payment_sent`; waiting for the bank line to import + pair | **Wise delivery signal** |
+| `posted` | the outgoing transaction imported and the categorization engine paired it → knock-off JE posted | import pairing (VP-5) |
+| `failed` | Wise `bounced_back`/`funds_refunded`, or fund/create error | Wise signal / error |
+| `cancelled` | operator cancelled, or voided | operator |
+
+**Delivery confirmation (NEW, the missing piece).** We do NOT trust "funded" as "delivered." A payout
+advances `sent → awaiting_import` only on a real Wise delivery signal, and drops to `failed` on a refund:
+
+- **Primary: Wise webhook** — register `transfers#state-change`; Wise pushes `outgoing_payment_sent` /
+  `bounced_back` / `funds_refunded` in real time → drive the state machine.
+- **Backup: polling** — `GET /v1/transfers/{id}` on a schedule until terminal (covers missed webhooks).
+
+## Reconciliation — the categorization engine is the SOLE matcher (POL-131)
+
+`awaiting_import → posted` happens ONLY through the normal periodic (daily) Wise **transaction import**.
+We do NOT fetch the single transaction from Wise. The daily run pulls all transactions (last-sync
+incremental + overlap), and the categorization engine's import-pair hook (VP-5) matches the outgoing line
+to the payout on `wise_transfer_id`, pairs it to the payable, and posts the knock-off JE.
+
+- **No parallel matcher, no one-off fetch.** The categorization engine stays the one source of truth for
+  matching. The payout machine never matches on its own.
+- **Idempotent, so "pull everything" is safe.** The import dedups on Wise's line id
+  (`balance_transaction_id`); re-seen lines are skipped, and pairing on `wise_transfer_id` fires once.
+- **A refund never pairs.** `funds_refunded` produces no outgoing line to match, so the payout goes
+  `failed` (Wise signal) and the invoice never reaches `paid`.
+
+## Invoice linkage — `payment_initiated` (POL-132)
+
+The invoice-side mirror lives in `INVOICES_STATE_MACHINE.md`. The invariant: **an invoice is `paid` ONLY
+when a real transaction is matched to it.** So:
+
+`approved` → (payout fired) → **`payment_initiated`** → (daily import lands the outgoing line + the
+categorization engine pairs on `wise_transfer_id`) → `paid`. On Wise `funds_refunded` → back to `approved`
+(surface for review). `payment_initiated` is the holding state that guarantees we never show `paid` on a
+promise — it is the direct fix for the id-8 phantom.
+
+## Pay-time safety (POL-133)
+
+- **Block, do not fall back.** If the counterparty has no active registration on the paying channel, the
+  payout is BLOCKED with "add a bank account for this channel first," never silently routed to a
+  different-currency/other-profile account. (The AU failure was our code grabbing the SGD account.)
+- **Review before pay.** The operator sees exactly `payee · account (masked) · channel · amount` and
+  confirms before anything fires. No blind pay.
+
 ## Open follow-ups (not this migration)
-- `wise_service.create_recipient` + the counterparty-view bank-account management flow (add/edit/deactivate).
+- `wise_service.create_recipient` + the counterparty-view bank-account management flow (add/edit/deactivate) — built (PM-6).
 - Backfill matcher: match Wise's 120 existing recipients to counterparties, propose links (confirm-gated) — built (PM-5).
 - Polymorphic payable link (`payable_type`/`payable_id`) on `finance_payouts` at the Phase-2 cutover.
+- **Wise delivery status tracking (webhook + poll)** — NOT built; the id-8 gap. Build per POL-130.
+- **`payment_initiated` invoice state + block-and-register + review-before-pay** — NOT built. Build per POL-132/133.

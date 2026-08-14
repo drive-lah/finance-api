@@ -107,21 +107,21 @@ class PayoutService:
         requires_checker = amount_sgd is not None and Decimal(str(amount_sgd)) >= CHECKER_THRESHOLD_SGD
         profile = ENTITY_WISE_PROFILE[inv.entity_id]
 
-        # Resolve the RECIPIENT (a confirmed FinancePayoutBankAccount for this vendor).
-        # The FE's source-balance pick is informational; the payee is the stored recipient.
+        # Resolve the RECIPIENT for the PAYING CHANNEL. SM-4 (POL-133): the recipient MUST belong to
+        # the paying entity's channel — we do NOT fall back to a different-entity/other-currency account.
+        # (The AU failure was the old code grabbing Dirk's SGD account for an AU payout.) An account for
+        # the paying channel exists or the payout is BLOCKED with "register one first".
         recipient = (db.query(FinancePayoutBankAccount)
                      .filter(FinancePayoutBankAccount.counterparty_id == inv.counterparty_id,
-                             FinancePayoutBankAccount.status == "active")
-                     .order_by(FinancePayoutBankAccount.is_default.desc(),
+                             FinancePayoutBankAccount.status == "active",
+                             FinancePayoutBankAccount.entity_id == inv.entity_id)
+                     .order_by(FinancePayoutBankAccount.currency == ccy,  # prefer same-currency
+                               FinancePayoutBankAccount.is_default.desc(),
                                FinancePayoutBankAccount.id.asc()).first())
-        # currency preference: a same-currency confirmed account if one exists
-        same_ccy = (db.query(FinancePayoutBankAccount)
-                    .filter(FinancePayoutBankAccount.counterparty_id == inv.counterparty_id,
-                            FinancePayoutBankAccount.status == "active",
-                            FinancePayoutBankAccount.currency == ccy).first())
-        recipient = same_ccy or recipient
         if not DRY_RUN and not recipient:
-            raise BadRequestError("No confirmed Wise recipient for this vendor — confirm one first.")
+            raise BadRequestError(
+                f"No bank account registered for this vendor on entity {inv.entity_id}'s payout channel. "
+                f"Add a bank account for this channel before paying.")
         resolved_bank_account_id = recipient.id if recipient else bank_account_id
 
         payout = FinanceVendorPayout(
@@ -191,21 +191,25 @@ class PayoutService:
         try:
             from src.models.payout_channels import (
                 PaymentChannel, CounterpartyBankAccount, PayoutChannelRegistration)
-            ch = (db.query(PaymentChannel)
-                  .filter_by(provider="wise", our_entity_id=payout.entity_id, status="active").first())
-            if ch:
-                profile_id = (ch.config or {}).get("profile_id")
-                ba = (db.query(CounterpartyBankAccount)
-                      .filter_by(counterparty_id=payout.counterparty_id, status="active")
-                      .order_by(CounterpartyBankAccount.is_default.desc(),
-                                CounterpartyBankAccount.id.asc()).first())
-                if profile_id and ba:
-                    reg = (db.query(PayoutChannelRegistration)
-                           .filter_by(bank_account_id=ba.id, channel_id=ch.id, status="active").first())
-                    if reg:
-                        return str(profile_id), reg.external_recipient_id
+            # SAVEPOINT: on an un-migrated DB the new tables don't exist; a failed query would abort
+            # the WHOLE payout transaction (InFailedSqlTransaction). begin_nested() confines that failure
+            # to a savepoint so the outer transaction survives and the legacy fallback still works.
+            with db.begin_nested():
+                ch = (db.query(PaymentChannel)
+                      .filter_by(provider="wise", our_entity_id=payout.entity_id, status="active").first())
+                if ch:
+                    profile_id = (ch.config or {}).get("profile_id")
+                    ba = (db.query(CounterpartyBankAccount)
+                          .filter_by(counterparty_id=payout.counterparty_id, status="active")
+                          .order_by(CounterpartyBankAccount.is_default.desc(),
+                                    CounterpartyBankAccount.id.asc()).first())
+                    if profile_id and ba:
+                        reg = (db.query(PayoutChannelRegistration)
+                               .filter_by(bank_account_id=ba.id, channel_id=ch.id, status="active").first())
+                        if reg:
+                            return str(profile_id), reg.external_recipient_id
         except Exception:
-            logger.exception("new-model pay-target resolution failed; falling back to legacy")
+            logger.exception("new-model pay-target resolution unavailable; using legacy resolution")
         ba = db.get(FinancePayoutBankAccount, payout.bank_account_id) if payout.bank_account_id else None
         return payout.wise_profile_id, (ba.wise_recipient_id if ba else None)
 
@@ -237,12 +241,53 @@ class PayoutService:
             self._event(db, payout, "send_failed", PayoutState.FAILED.value, actor, reason=str(e))
             raise
         payout.settled_at = datetime.utcnow()
+        # SM-1 (POL-130): funding success means money LEFT the balance -> `sent`. Do NOT jump to
+        # awaiting_import here. `awaiting_import` is set ONLY on a real Wise delivery signal
+        # (outgoing_payment_sent) via apply_wise_status(); marking delivered on fund alone is the
+        # id-8 phantom (DQ-102, the transfer can still funds_refunded).
         payout.state = PayoutState.SENT.value
         self._event(db, payout, "sent", PayoutState.SENT.value, actor, snapshot={
             "wise_transfer_id": payout.wise_transfer_id, "wise_quote_id": payout.wise_quote_id,
             "dry_run": payout.is_dry_run})
-        payout.state = PayoutState.AWAITING_IMPORT.value
-        self._event(db, payout, "awaiting_import", PayoutState.AWAITING_IMPORT.value, actor)
+        # SM-3 (POL-132): a real payout puts the invoice into payment_initiated (money on its way).
+        # It reaches paid ONLY when the categorization engine pairs the imported txn (VP-5, POL-131).
+        if not payout.is_dry_run:
+            self._set_invoice_status(db, payout.invoice_id, InvoiceStatus.PAYMENT_INITIATED.value,
+                                     from_states={InvoiceStatus.APPROVED.value}, actor=actor,
+                                     reason=f"payout {payout.id} initiated")
+
+    def _set_invoice_status(self, db, invoice_id, new_status, *, from_states, actor=None, reason=None):
+        """Move an invoice into a payout-driven state, only from an allowed prior state (idempotent,
+        no-op otherwise). Payout machine owns this transition; the categorization engine still owns
+        the paired->paid flip (POL-131 — we never match here)."""
+        from src.models.invoice import FinanceInvoice
+        inv = db.get(FinanceInvoice, invoice_id) if invoice_id else None
+        if inv and inv.status in from_states:
+            inv.status = new_status
+            db.flush()
+            logger.info("invoice %s -> %s (%s)", invoice_id, new_status, reason)
+            return True
+        return False
+
+    def apply_wise_status(self, db, payout, wise_status: str, actor=None):
+        """SM-2 (POL-130): map a Wise transfer status onto the payout + invoice state machines. Called
+        by the Wise webhook / poller (NOT built yet). Reconciliation to `paid` is NOT done here — that
+        stays with the categorization engine on the daily import (POL-131)."""
+        s = (wise_status or "").lower()
+        if s == "outgoing_payment_sent" and payout.state == PayoutState.SENT.value:
+            payout.state = PayoutState.AWAITING_IMPORT.value
+            self._event(db, payout, "delivered", PayoutState.AWAITING_IMPORT.value, actor,
+                        reason="wise: outgoing_payment_sent")
+        elif s in ("funds_refunded", "bounced_back", "cancelled", "charged_back"):
+            payout.state = PayoutState.FAILED.value
+            payout.failure_reason = f"wise: {s}"
+            self._event(db, payout, "failed", PayoutState.FAILED.value, actor, reason=f"wise: {s}")
+            # revert the invoice out of payment_initiated for review (POL-132)
+            self._set_invoice_status(db, payout.invoice_id, InvoiceStatus.APPROVED.value,
+                                     from_states={InvoiceStatus.PAYMENT_INITIATED.value}, actor=actor,
+                                     reason=f"payout {payout.id} {s}")
+        db.flush()
+        return payout.state
 
     def cancel(self, db, payout_id: int, actor: dict, reason: str) -> FinanceVendorPayout:
         payout = db.get(FinanceVendorPayout, payout_id)

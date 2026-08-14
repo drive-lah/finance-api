@@ -12,7 +12,7 @@ One machine serves **both** the historical cutover (the invoices sitting in the 
 **and** every future invoice uploaded from now on. Nothing bespoke is bolted on for the backfill: the
 historical piles simply *enter* the machine at different points and then ride the identical rails.
 
-## The statuses (10)
+## The statuses (11)
 
 | Status | Meaning | Who acts | New? |
 |---|---|---|---|
@@ -22,12 +22,20 @@ historical piles simply *enter* the machine at different points and then ride th
 | `needs_fix` | Approval agent flagged an **exception**: duplicate, no counterparty, or missing info | finance resolves | **NEW** |
 | `pending_approval` | Clean and agent-blessed, awaiting human approve | finance approver | existing |
 | `approved` | Approved; bill JE posted; now a payable awaiting payment | system | existing |
+| `payment_initiated` | **A payout has been fired for this invoice; money is on its way, waiting for the real transaction to import and pair.** NOT yet paid. | system (payout machine) | **NEW (2026-08-15)** |
 | `partially_paid` | Some but not all settled | system | existing |
 | `paid` | Fully settled and posted (TERMINAL, happy) | system | existing |
 | `rejected` | Approver declined | finance | existing |
 | `void` | Killed: true duplicate, cancelled (TERMINAL) | finance | existing |
 
 Terminal states: `paid`, `rejected`, `void`.
+
+**`payment_initiated` is the payout holding state (POL-132).** When a payout is fired against an approved
+invoice, the invoice moves `approved → payment_initiated`, NOT straight to paid. It reaches `paid` ONLY
+when the real outgoing transaction lands via the normal daily Wise import and the **categorization engine**
+pairs it on `wise_transfer_id` (the sole matcher — no one-off fetch, no parallel matching). If Wise reports
+`funds_refunded`/`bounced_back`, it reverts `payment_initiated → approved` for review. Full payout side:
+`PAYOUT_MODEL.md`. Invariant: **an invoice is `paid` only when a real transaction is matched to it.**
 
 ## The two arms
 
@@ -113,7 +121,10 @@ draft ──▶ approval agent screens ──┬── exception ──▶ needs
 | `pending_approval` | `approved` | human approve (bill JE posts) |
 | `pending_approval` | `needs_fix` | issue surfaced during review |
 | `pending_approval` | `rejected` | approver declines |
-| `approved` | `partially_paid` / `paid` | payment recorded |
+| `approved` | `payment_initiated` | **a payout is fired for this invoice** (money on its way) |
+| `payment_initiated` | `paid` | the outgoing transaction imported + categorization engine paired it on `wise_transfer_id` |
+| `payment_initiated` | `approved` | Wise `funds_refunded`/`bounced_back` — payout failed, revert for review |
+| `approved` | `partially_paid` / `paid` | payment recorded directly (reconciliation arm, not via a system payout) |
 | `partially_paid` | `paid` | remainder settled |
 | any non-terminal | `void` | killed with reason |
 
@@ -145,3 +156,7 @@ Duplicate signals present today (must be honoured before approval — POL-106):
 4. Enforce `paired → paid` as authorization-only (not exposed to the finance team's actions).
 5. Triage migration: move the 664 → `reconcile` (50 → `paired`), run the approval agent over the 237.
 6. Surface each status as a filter in the Invoices tab (POL-105: the tab IS the queue).
+7. **Add `payment_initiated` (2026-08-15).** The payout machine moves `approved → payment_initiated` on
+   fire; the categorization engine's import-pair (VP-5) flips `payment_initiated → paid` on a real matched
+   transaction; a Wise refund reverts to `approved`. Surface it as an Invoices-tab filter. Do NOT build a
+   matcher here — pairing stays in the categorization engine. Payout side: `PAYOUT_MODEL.md` (POL-130/132).
