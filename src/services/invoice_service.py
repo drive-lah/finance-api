@@ -719,44 +719,26 @@ class InvoiceService:
 
         inv_ref = f"Invoice {invoice.invoice_number or invoice.id}"
 
-        if tax > 0:
-            # 3-line GST JE: Dr expense (net) + Dr 1350 GST Input (tax) / Cr AP (total)
-            lines = [
-                {
-                    "account_code": debit_code,
-                    "debit_amount": round(net, 2),
-                    "credit_amount": 0.0,
-                    "description": inv_ref,
-                },
-                {
-                    "account_code": GST_INPUT_ACCOUNT_CODE,
-                    "debit_amount": round(tax, 2),
-                    "credit_amount": 0.0,
-                    "description": f"GST Input Tax - {inv_ref}",
-                },
-                {
-                    "account_code": credit_code,
-                    "debit_amount": 0.0,
-                    "credit_amount": round(total, 2),
-                    "description": inv_ref,
-                },
-            ]
-        else:
-            # Standard 2-line JE: Dr expense / Cr payable (dedicated liability or 2000 AP)
-            lines = [
-                {
-                    "account_code": debit_code,
-                    "debit_amount": total,
-                    "credit_amount": 0.0,
-                    "description": inv_ref,
-                },
-                {
-                    "account_code": credit_code,
-                    "debit_amount": 0.0,
-                    "credit_amount": total,
-                    "description": inv_ref,
-                },
-            ]
+        # GST is CASH-BASIS (POL-118/119, Gaurav 2026-08-14): the bill books GROSS at
+        # approval and posts NO 1350 GST Input line. The input GST credit is claimed
+        # later, at the CASH payment, by the cash-time GST engine (which carves it out of
+        # the expense). The GST amount stays recorded on the invoice (invoice.tax_amount)
+        # for that claim; `tax`/`net` above are retained for validation/record only.
+        # 2-line JE: Dr expense/prepaid (gross) / Cr payable (dedicated liability or 2000 AP).
+        lines = [
+            {
+                "account_code": debit_code,
+                "debit_amount": total,
+                "credit_amount": 0.0,
+                "description": inv_ref,
+            },
+            {
+                "account_code": credit_code,
+                "debit_amount": 0.0,
+                "credit_amount": total,
+                "description": inv_ref,
+            },
+        ]
 
         entry = journal_service.create(
             db=db,

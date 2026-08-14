@@ -804,5 +804,180 @@ class ReportService:
         return out
 
 
+    def get_bas(
+        self,
+        db: Session,
+        entity_id: int,
+        date_from: date,
+        date_to: date,
+        basis: str = "posted",
+    ) -> dict:
+        """Australian Business Activity Statement (BAS) — GST + PAYG withholding.
+
+        Cash-basis two-account GST model: output GST accrues to 2500 (GST Payable),
+        input GST to 1350 (GST Receivable), only when cash moves. BAS labels map
+        directly to the ATO Activity Statement:
+          1A = GST on sales      = net credit movement on 2500 over the period
+          1B = GST on purchases  = net debit movement on 1350 over the period
+          G1 = total sales (GST-inclusive) = 1A * 11 (10% GST -> 1/11 of gross)
+          box7 = net GST         = 1A - 1B
+          W1 = total wages       = debit movement on wage COAs
+          W2 = amount withheld   = credit movement on 2301 (PAYG Withholding Payable)
+          8A = owed to ATO       = 1A + W2
+          8B = ATO credits       = 1B
+          box9 = net amount      = 8A - 8B
+        """
+        WAGE_CODES = ["6000", "6003", "5061", "5063"]
+
+        # A period BAS measures GST on the period's SALES and PURCHASES only.
+        # ATO/BAS settlements (paying or receiving the net GST) move the GST control
+        # account directly against a bank account — they settle the liability, they are
+        # not trading GST. Any JE that touches both a GST control account and a bank
+        # account is a settlement, so exclude those lines from 1A/1B.
+        bank_codes = [f"10{n:02d}" for n in range(0, 25)]
+        settlement_entries = (
+            db.query(FinanceJournalLine.entry_id)
+            .filter(FinanceJournalLine.entity_id == entity_id)
+            .filter(FinanceJournalLine.account_code.in_(bank_codes))
+        ).subquery()
+
+        def movement(codes: list[str], side: str) -> float:
+            """Net (debit-credit) or (credit-debit) trading GST movement for codes."""
+            q = (
+                db.query(
+                    func.coalesce(func.sum(FinanceJournalLine.debit_amount), 0).label("dr"),
+                    func.coalesce(func.sum(FinanceJournalLine.credit_amount), 0).label("cr"),
+                )
+                .join(FinanceJournalEntry, FinanceJournalLine.entry_id == FinanceJournalEntry.id)
+                .filter(FinanceJournalLine.entity_id == entity_id)
+                .filter(FinanceJournalEntry.status.in_(self._statuses(basis)))
+                .filter(FinanceJournalEntry.entry_date >= date_from)
+                .filter(FinanceJournalEntry.entry_date <= date_to)
+                .filter(FinanceJournalLine.account_code.in_(codes))
+                .filter(FinanceJournalLine.entry_id.notin_(db.query(settlement_entries.c.entry_id)))
+            )
+            r = q.one()
+            dr, cr = Decimal(str(r.dr or 0)), Decimal(str(r.cr or 0))
+            return float(round(dr - cr if side == "dr" else cr - dr, 2))
+
+        output_gst = movement(["2500"], "cr")   # 1A
+        input_gst = movement(["1350"], "dr")     # 1B
+        net_gst = round(output_gst - input_gst, 2)          # box 7
+        g1 = round(output_gst * 11, 2)                      # total GST-inclusive sales
+        wages = movement(WAGE_CODES, "dr")                  # W1
+        withheld = movement(["2301"], "cr")                 # W2
+        owed = round(output_gst + withheld, 2)              # 8A
+        ato_credits = round(input_gst, 2)                   # 8B
+        net_amount = round(owed - ato_credits, 2)           # box 9
+
+        return {
+            "entity_id": entity_id,
+            "currency": self._functional(db, entity_id),
+            "basis": basis,
+            "period": {"from": date_from.isoformat(), "to": date_to.isoformat()},
+            "gst": {
+                "G1_total_sales": g1,
+                "1A_gst_on_sales": output_gst,
+                "1B_gst_on_purchases": input_gst,
+                "7_net_gst": net_gst,
+                "source": {
+                    "1A": "credit movement on 2500 (GST Payable)",
+                    "1B": "debit movement on 1350 (GST Receivable)",
+                },
+            },
+            "payg_withholding": {
+                "W1_total_wages": wages,
+                "W2_amount_withheld": withheld,
+                "source": {
+                    "W1": "debit movement on wage COAs " + ", ".join(WAGE_CODES),
+                    "W2": "credit movement on 2301 (PAYG Withholding Payable)",
+                },
+            },
+            "summary": {
+                "8A_owed_to_ato": owed,
+                "8B_ato_credits": ato_credits,
+                "9_net_amount": net_amount,
+                "direction": "payable" if net_amount >= 0 else "refund",
+            },
+        }
+
+    def get_bas_detail(
+        self,
+        db: Session,
+        entity_id: int,
+        date_from: date,
+        date_to: date,
+        box: str,
+        basis: str = "posted",
+    ) -> dict:
+        """Per-transaction detail behind one BAS box — every contributing ledger line,
+        each carrying its journal_entry_id for click-through. Self-sums to the box total.
+          1A/G1 = 2500 credit lines · 1B = 1350 debit lines · W1 = wage-COA debit lines ·
+          W2 = 2301 credit lines. Same settlement exclusion as get_bas (bank-touching JEs).
+        """
+        BOX = {
+            "1A": (["2500"], "cr", 1), "G1": (["2500"], "cr", 11), "1B": (["1350"], "dr", 1),
+            "W1": (["6000", "6003", "5061", "5063"], "dr", 1), "W2": (["2301"], "cr", 1),
+        }
+        if box not in BOX:
+            raise ValueError(f"unknown BAS box '{box}' (expected one of {sorted(BOX)})")
+        codes, side, mult = BOX[box]
+        bank_codes = [f"10{n:02d}" for n in range(0, 25)]
+        settlement_entries = (
+            db.query(FinanceJournalLine.entry_id)
+            .filter(FinanceJournalLine.entity_id == entity_id)
+            .filter(FinanceJournalLine.account_code.in_(bank_codes))
+        ).subquery()
+        q = (
+            db.query(
+                FinanceJournalEntry.entry_date, FinanceJournalEntry.id.label("je_id"),
+                FinanceJournalEntry.source, FinanceJournalEntry.reference_number,
+                FinanceJournalEntry.description, FinanceJournalLine.account_code,
+                FinanceAccount.name.label("account_name"),
+                FinanceJournalLine.debit_amount, FinanceJournalLine.credit_amount,
+            )
+            .join(FinanceJournalEntry, FinanceJournalLine.entry_id == FinanceJournalEntry.id)
+            .outerjoin(FinanceAccount, and_(
+                FinanceJournalLine.account_code == FinanceAccount.code,
+                or_(FinanceAccount.entity_id == entity_id, FinanceAccount.entity_id == None),
+            ))
+            .filter(FinanceJournalLine.entity_id == entity_id)
+            .filter(FinanceJournalEntry.status.in_(self._statuses(basis)))
+            .filter(FinanceJournalEntry.entry_date >= date_from)
+            .filter(FinanceJournalEntry.entry_date <= date_to)
+            .filter(FinanceJournalLine.account_code.in_(codes))
+            .filter(FinanceJournalLine.entry_id.notin_(db.query(settlement_entries.c.entry_id)))
+            .order_by(FinanceJournalEntry.entry_date, FinanceJournalEntry.id)
+        )
+        rows, total = [], Decimal("0")
+        for r in q.all():
+            dr, cr = Decimal(str(r.debit_amount or 0)), Decimal(str(r.credit_amount or 0))
+            amt = (cr - dr) if side == "cr" else (dr - cr)
+            if amt == 0:
+                continue
+            val = amt * mult
+            total += val
+            rows.append({
+                "date": r.entry_date.isoformat(),
+                "journal_entry_id": r.je_id,
+                "reference": r.reference_number,
+                "source": r.source,
+                "description": r.description,
+                "account_code": r.account_code,
+                "account_name": r.account_name,
+                "amount": float(round(val, 2)),
+            })
+        return {
+            "box": box,
+            "entity_id": entity_id,
+            "currency": self._functional(db, entity_id),
+            "basis": basis,
+            "period": {"from": date_from.isoformat(), "to": date_to.isoformat()},
+            "rows": rows,
+            "count": len(rows),
+            "total": float(round(total, 2)),
+        }
+
+
 # Singleton instance
 report_service = ReportService()

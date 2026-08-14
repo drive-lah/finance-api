@@ -5,8 +5,11 @@ Both the live hooks (going-forward: bill → deferred, payment → claimable) an
 + arithmetic — NO ledger mutation here (callers post the JEs). Canonical spec: wip/GST_ENGINE.md.
 
 GATES:
-  input  (money out) = entity registered AND account.gst_applicable_<mkt> AND vendor registered in mkt
-  output (money in)  = entity registered AND revenue account.gst_applicable_<mkt>
+  input  (money out): invoiced -> the INVOICE's GST is the truth (tax>0 claim it; no GST on the
+                      invoice -> claim only if the vendor is AU-registered, i.e. extraction miss;
+                      unregistered vendor -> no claim, DQ-99); direct expense -> entity registered
+                      AND account.gst_applicable_<mkt> AND vendor registered in mkt.
+  output (money in)  = entity registered AND revenue account.gst_applicable_<mkt> (no vendor gate)
 MARKET: entity 3 → AU, entities 1/2 → SG (SG posts zero today — not registered).
 AMOUNT: 1/11 of the GST-inclusive cash (AU 10%). For invoiced purchases the invoice's own tax_amount wins.
 
@@ -90,3 +93,72 @@ def describe(db: Session, entity_id, account_code, counterparty_id, gross, direc
         "gst": gst_from_gross(gross) if applies else 0.0,
         "net": round(float(gross or 0) - (gst_from_gross(gross) if applies else 0.0), 2),
     }
+
+
+# ── the ONE locked decision function (GST_ENGINE.md, four accounts) ────────────
+def _hit(account: str, side: str, amount: Decimal, verdict: str, reason: str) -> dict:
+    return {"account": account, "side": side, "amount": float(amount.quantize(Decimal("0.01"))),
+            "verdict": verdict, "reason": reason}
+
+
+def _none(reason: str) -> dict:
+    return {"account": None, "side": None, "amount": 0.0, "verdict": "EXCLUDED", "reason": reason}
+
+
+def _review(reason: str) -> dict:
+    return {"account": None, "side": None, "amount": 0.0, "verdict": "REVIEW", "reason": reason}
+
+
+def classify(*, entity_registered: bool, account_applicable: bool, direction: str,
+             leg_touches_bank: bool, gross, invoice_tax=None, has_invoice: bool = False,
+             vendor_registered_flag: Optional[bool] = None, is_refund: bool = False,
+             is_deposit: bool = False, is_host_payout: bool = False,
+             claim_host_by_default: bool = True) -> dict:
+    """The single going-forward GST decision (locked model). Pure — no DB, no posting.
+
+    direction : 'output' (revenue / money-in) | 'input' (expense / money-out)
+    Routing   : realized (bank leg) -> 1350/2500 ; accrual leg -> 1355/2505.
+    Returns {account, side, amount, verdict, reason}. account=None means no GST posted.
+    """
+    if is_deposit:
+        return _none("deposit — not a supply; no GST until forfeited")
+    if not entity_registered:
+        return _none("entity not GST-registered (SG)")
+    if not account_applicable:
+        return _none("account not gst-applicable")
+
+    amount = (Decimal(str(invoice_tax)) if (has_invoice and invoice_tax is not None)
+              else Decimal(str(gst_from_gross(gross))))
+    if amount <= 0:
+        return _none("zero GST amount")
+
+    realized = leg_touches_bank
+
+    # refund/chargeback reverses OUTPUT, whatever account it is booked against
+    if is_refund:
+        acct = GST_OUTPUT if realized else GST_OUTPUT_DEFERRED
+        return _hit(acct, "debit", amount, "output_reversal", "refund/chargeback reduces output GST")
+
+    if direction == "output":
+        acct = GST_OUTPUT if realized else GST_OUTPUT_DEFERRED
+        return _hit(acct, "credit", amount, "output", "output GST on revenue")
+
+    # input — the INVOICE is the source of truth; the vendor gate is supreme (DQ-99).
+    #   invoice_tax > 0           -> claim exactly that (amount above already used it).
+    #   invoice_tax None/0        -> the invoice showed no GST. Fall back to 1/11×gross ONLY when
+    #                                the vendor IS AU-registered (a genuine extraction miss). An
+    #                                unregistered/foreign vendor genuinely charged no GST -> no claim.
+    #   direct expense (no invoice) -> claim only if the vendor is AU-registered.
+    if not is_host_payout:
+        invoice_had_gst = has_invoice and invoice_tax is not None and float(invoice_tax) > 0
+        if not invoice_had_gst:
+            if vendor_registered_flag is None:
+                return _review("expense, no counterparty — attach then decide")
+            if not vendor_registered_flag:
+                if has_invoice:
+                    return _none("invoiced purchase shows no GST + vendor not AU-registered — no input GST (DQ-99)")
+                return _review("direct expense, vendor not AU-registered — reverse-charge/review")
+    if is_host_payout and not claim_host_by_default and not vendor_registered_flag:
+        return _review("host payout, host not registered — RCTI required")
+    acct = GST_INPUT if realized else GST_INPUT_DEFERRED
+    return _hit(acct, "debit", amount, "input", "claimable input GST")
