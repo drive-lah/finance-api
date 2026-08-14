@@ -31,6 +31,9 @@ from src.models.employee_claim import FinanceEmployeeClaim, ClaimStatus
 from src.models.vendor_payout import (
     FinancePayoutBankAccount, FinanceVendorPayout, FinanceVendorPayoutEvent, PayoutState,
 )
+from src.models.payout_channels import (
+    PaymentChannel, CounterpartyBankAccount, PayoutChannelRegistration, FinancePayoutReferenceAudit,
+)
 from src.models.task import Task, TaskStatus
 from src.models.coa_config import FinanceCoaConfig, FinanceCoaConfigAudit
 from src.models.invoice_approval import FinanceInvoiceMetadata, FinanceInvoiceApproval

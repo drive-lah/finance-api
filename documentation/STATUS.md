@@ -410,6 +410,24 @@ PRD: `wip/VENDOR_PAYOUT_MECHANISM_PRD.md`. Branch `260803_finance_payout_mech`. 
 | VP-9 | Arm live: flip `PAYOUT_DRY_RUN=0`, confirm token transfer-scope, send real $1 SGD to Dirk-Jan (recipient 297347886 confirmed, invoice 2487) | 🔄 (awaits VP-7) |
 | VP-10 | v2 deferred: cross-entity (intercompany 8xxx), cross-currency (FX→7100), payment-confirmation email (entity sender), maker-checker UI polish | ☐ |
 
+**Live-test progress (2026-08-14, branch `260814_payout_module`, instance on 8082/3002/5175 → prod, ARMED):** VP-7 ✅ SCA public key uploaded to Wise. Two real bugs found + fixed on the way to the $1: (a) `customerTransactionId` must be a UUID (was `inv<id>-<ts>`) → `create_transfer` now derives a stable uuid5; (b) old Wise token was read-only → replaced with full-access. Full quote+transfer proven in isolation (real unfunded transfers 2309530592 + 1). VP-9 still open (retry Pended on the AUD/`singapore` transient). **Blocker surfaced: recipient mapping is 1 of 624** → drove the data-model redesign below.
+
+### 2.8a Payouts data model — 3-layer channel-aware split (LOCKED 2026-08-14, POL-124/125/126, DQ-100)
+
+Spec: `wip/PAYOUTS_DATA_MODEL.md`. Replaces the flat `finance_payout_bank_accounts` (recipient id embedded, one per payee+entity).
+
+| ID | Item | State |
+|----|------|-------|
+| PM-1 | `counterparty_bank_account` (real account, no recipient id) + `payment_channel` (rails catalog, provider column) + `payout_channel_registration` (account×channel → recipient id) + `finance_payout_reference_audit` (append-only bank-account/registration audit) | ✅ code + migration `059_payout_channels` (additive); **clone-verified**, prod-pending |
+| PM-2 | Models `payout_channels.py` + registered; recipient resolves via ORM join `(cp, entity)→registration→recipient` (proven cp268/entity2→297347886) | ✅ clone-verified |
+| PM-3 | Bank-account CRUD audit wired (`payee_bank_accounts.py` create/update/delete → reference audit, best-effort) | ✅ clone-verified (3 rows create/update/delete) |
+| PM-4a | Repoint `payout_service` recipient resolution onto the channel/registration model (`_resolve_pay_target`), **with legacy fallback** (ENTITY_WISE_PROFILE + embedded recipient) so an un-migrated DB still pays | ✅ clone-verified: cp268/entity2 → (13811029, 297347886) via NEW model; no-reg → legacy fallback; prod instance stayed 200 |
+| PM-4b | **CUTOVER (breaking, deferred):** rename `finance_vendor_payouts`→`finance_payouts` (+`_events`), add `channel_id`/`registration_id`, drop legacy `finance_payout_bank_accounts`, remove the fallback | ☐ Phase-2 (prod-migrate + deploy together) |
+| PM-5 | Backfill matcher: match Wise's 120 existing recipients → counterparties, confirm-gated proposed links | ✅ built + run (`wip/payout_recipient_backfill.py`, proposals CSV): 41 HIGH / 19 MEDIUM / 60 LOW of 120. Awaiting Gaurav confirm to WRITE links |
+| PM-6 | **Bank-account lifecycle = OUR SYSTEM IS MASTER (POL-127).** ✅ BUILT + clone/Wise-verified: `wise_service.create_recipient`/`delete_recipient`; `payout_recipient_service` (add → create Wise recipient + registration; edit → NEW recipient + supersede old reg; deactivate → status flip, all audited); routes `/api/finance/payout-recipients` registered. E2E test: add→edit→deactivate on cp268 wrote 7 audit rows, superseded reg correctly, real Wise recipients created+deleted, cleaned up. Fixed `ux_pcr_account_channel` → PARTIAL unique (active only) so supersede works. **FE ✅ built + Interceptor-verified:** `CounterpartyBankAccounts.tsx` embedded in `VendorDetailView` (accounts table + registrations + add/edit/deactivate form), `accountingService` methods, admin-bff `/accounting/payout-recipients` proxy (finance.payouts gated), finance-api GET list + `/channels`. Screenshot confirms Dirk-Jan's SGD account shows `Wise SG → 297347886` on the counterparty detail (finance-api pointed at clone for the check, then restored to prod). LEFT: per-currency `details` from Wise account-requirements (only SG/AU/IBAN hardcoded); route input validation (400 not 500 on missing field) | ✅ full-stack, clone-verified |
+| PM-7 | Payout state machine (POL-126) — DECISION: unified register for `system_wise` + `external_manual` (finance-team console payouts) vs reconcile-lane-only for manual | ☐ Gaurav call |
+| PM-8 | **Payout↔payable↔bank-txn linkage (POL-128).** Generalise the invoice-only link to polymorphic `payable_type`/`payable_id` (invoice\|payroll\|other); `transaction_id`/`match_id`/`journal_entry_id` already link the bank line + JE. Chain: payable ← finance_payouts → bank txn → JE | ☐ Phase-2 cutover |
+
 ## 2.9 Invoice Ingestion — minimal-friction pipeline (MEGA-TASK, Gaurav 2026-08-03)
 
 One capture surface only: the existing **upload** system (no email intake). Every invoice → **draft**. Design is largely EXISTING behavior + one new gate. Business rules confirmed by Gaurav 2026-08-03.

@@ -57,6 +57,7 @@ def create_app(config=None):
     from src.routes.economic_events import economic_events_bp
     from src.routes.payouts import payouts_bp
     from src.routes.payee_bank_accounts import payee_bank_accounts_bp
+    from src.routes.payout_recipients import payout_recipients_bp
     from src.routes.claims import claims_bp
     from src.routes.tasks import tasks_bp
     from src.routes.host_payouts import host_payouts_bp
@@ -86,6 +87,7 @@ def create_app(config=None):
     app.register_blueprint(economic_events_bp)
     app.register_blueprint(payouts_bp)
     app.register_blueprint(payee_bank_accounts_bp)
+    app.register_blueprint(payout_recipients_bp)
     app.register_blueprint(claims_bp)
     app.register_blueprint(tasks_bp)
     app.register_blueprint(host_payouts_bp)

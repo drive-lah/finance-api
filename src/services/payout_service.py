@@ -182,6 +182,33 @@ class PayoutService:
         self._send(db, payout, actor)
         return payout
 
+    def _resolve_pay_target(self, db, payout):
+        """(profile_id, recipient_id) for this payout. PREFER the channel/registration model
+        (PaymentChannel by our_entity_id → the counterparty's default bank account → its active
+        registration on that channel); FALL BACK to the legacy ENTITY_WISE_PROFILE + the embedded
+        FinancePayoutBankAccount.wise_recipient_id so an un-migrated DB still pays. Guarded: a missing
+        new-model table just triggers the fallback."""
+        try:
+            from src.models.payout_channels import (
+                PaymentChannel, CounterpartyBankAccount, PayoutChannelRegistration)
+            ch = (db.query(PaymentChannel)
+                  .filter_by(provider="wise", our_entity_id=payout.entity_id, status="active").first())
+            if ch:
+                profile_id = (ch.config or {}).get("profile_id")
+                ba = (db.query(CounterpartyBankAccount)
+                      .filter_by(counterparty_id=payout.counterparty_id, status="active")
+                      .order_by(CounterpartyBankAccount.is_default.desc(),
+                                CounterpartyBankAccount.id.asc()).first())
+                if profile_id and ba:
+                    reg = (db.query(PayoutChannelRegistration)
+                           .filter_by(bank_account_id=ba.id, channel_id=ch.id, status="active").first())
+                    if reg:
+                        return str(profile_id), reg.external_recipient_id
+        except Exception:
+            logger.exception("new-model pay-target resolution failed; falling back to legacy")
+        ba = db.get(FinancePayoutBankAccount, payout.bank_account_id) if payout.bank_account_id else None
+        return payout.wise_profile_id, (ba.wise_recipient_id if ba else None)
+
     def _send(self, db, payout, actor):
         """Create the Wise transfer + fund it (real), or simulate (dry-run). Approve=send."""
         try:
@@ -189,17 +216,20 @@ class PayoutService:
                 payout.wise_quote_id = f"DRYRUN-Q-{payout.id}"
                 payout.wise_transfer_id = f"DRYRUN-TRANSFER-{payout.id}"
             else:
-                q = wise_service.create_quote(int(payout.wise_profile_id), payout.currency,
+                # PM-4: resolve (profile, recipient) through the new channel/registration model,
+                # falling back to the legacy ENTITY_WISE_PROFILE + embedded recipient when the new
+                # tables/rows aren't present (keeps the un-migrated prod instance working).
+                profile_id, recipient_id = self._resolve_pay_target(db, payout)
+                q = wise_service.create_quote(int(profile_id), payout.currency,
                                               payout.currency, float(payout.amount))
                 payout.wise_quote_id = str(q.get("id"))
-                ba = db.get(FinancePayoutBankAccount, payout.bank_account_id) if payout.bank_account_id else None
-                if not ba or not ba.wise_recipient_id:
+                if not recipient_id:
                     raise BadRequestError("No confirmed Wise recipient for this vendor.")
-                t = wise_service.create_transfer(ba.wise_recipient_id, payout.wise_quote_id,
+                t = wise_service.create_transfer(recipient_id, payout.wise_quote_id,
                                                  payout.idempotency_key,
                                                  f"INV {payout.invoice_id}")
                 payout.wise_transfer_id = str(t.get("id"))
-                fund = wise_service.fund_transfer(int(payout.wise_profile_id), payout.wise_transfer_id)
+                fund = wise_service.fund_transfer(int(profile_id), payout.wise_transfer_id)
                 if fund.get("__sca_required__"):
                     raise BadRequestError("Wise SCA required — register the SCA keypair to fund (PRD §5.5).")
         except Exception as e:

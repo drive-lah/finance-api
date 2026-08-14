@@ -10,12 +10,27 @@ from flask import Blueprint, request, jsonify
 
 from src.database import db_session
 from src.models.vendor_payout import FinancePayoutBankAccount
+from src.models.payout_channels import FinancePayoutReferenceAudit
 from src.utils.errors import NotFoundError, BadRequestError
 
 logger = logging.getLogger(__name__)
 
 payee_bank_accounts_bp = Blueprint(
     "payee_bank_accounts", __name__, url_prefix="/api/finance/payee-bank-accounts")
+
+
+def _audit(db, action, target_id, before, after):
+    """Append-only trail for every bank-account mutation (money-routing data). Best-effort: an audit
+    failure (e.g. the table not yet migrated) must never block the CRUD, but is logged loudly."""
+    try:
+        actor = request.headers.get("X-User-Email") or request.headers.get("X-User-Id")
+        db.add(FinancePayoutReferenceAudit(
+            target_type="bank_account", target_id=target_id, action=action,
+            before=before, after=after, actor=actor,
+            actor_role=request.headers.get("X-User-Role"), actor_ip=request.remote_addr))
+        db.flush()
+    except Exception:
+        logger.exception("bank-account audit write failed (action=%s id=%s)", action, target_id)
 
 _EDITABLE = ("entity_id", "currency", "account_holder_name", "bank_name", "account_number",
              "bank_code", "country", "wise_recipient_id", "is_default", "status")
@@ -60,6 +75,7 @@ def create_account():
             is_default=bool(body.get("is_default", False)), status="active",
             source=body.get("source") or "manual", created_by=body.get("created_by") or "ui")
         db.add(a); db.flush()
+        _audit(db, "create", a.id, None, a.to_dict())
         return jsonify(a.to_dict()), 201
 
 
@@ -70,12 +86,14 @@ def update_account(account_id):
         a = db.get(FinancePayoutBankAccount, account_id)
         if not a:
             raise NotFoundError(f"bank account {account_id} not found")
+        before = a.to_dict()
         for k in _EDITABLE:
             if k in body:
                 setattr(a, k, body[k])
         if "account_number" in body:
             a.masked_account = _mask(body["account_number"])
         db.flush()
+        _audit(db, "update", a.id, before, a.to_dict())
         return jsonify(a.to_dict())
 
 
@@ -85,5 +103,6 @@ def delete_account(account_id):
         a = db.get(FinancePayoutBankAccount, account_id)
         if not a:
             raise NotFoundError(f"bank account {account_id} not found")
+        _audit(db, "delete", a.id, a.to_dict(), None)
         db.delete(a)
         return jsonify({"deleted": account_id})
