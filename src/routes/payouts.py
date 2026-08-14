@@ -151,6 +151,11 @@ def _verify_wise_signature(raw: bytes, sig_b64: str | None) -> bool:
     at WISE_WEBHOOK_PUBLIC_KEY_PATH. Until that key is configured we treat every event as UNVERIFIED and
     ignore it — the poller is the reliable path, the webhook is only the real-time optimization."""
     import os
+    # TEST-ONLY escape hatch: WISE_WEBHOOK_INSECURE_SKIP_VERIFY=1 processes unsigned events so we can
+    # smoke-test delivery over ngrok before configuring Wise's public key. NEVER set this in prod.
+    if os.environ.get("WISE_WEBHOOK_INSECURE_SKIP_VERIFY") == "1":
+        logger.warning("Wise webhook signature verification SKIPPED (test mode) — do NOT use in prod")
+        return True
     path = os.environ.get("WISE_WEBHOOK_PUBLIC_KEY_PATH")
     if not path or not sig_b64:
         return False
