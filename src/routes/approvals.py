@@ -34,7 +34,10 @@ def queue():
 @approvals_bp.route("/<int:invoice_id>/decide", methods=["POST"])
 def decide(invoice_id):
     data = request.get_json(silent=True) or {}
-    approver = data.get("approver") or request.headers.get("X-User-Email")
+    # TRUST BOUNDARY (PR-16): the approver identity comes ONLY from X-User-Email, which the
+    # authenticated BFF sets server-side after its own auth — finance-api is never exposed to
+    # browsers directly. A client-supplied body field must never override it.
+    approver = request.headers.get("X-User-Email")
     decision = data.get("decision")
     if not approver or not decision:
         return jsonify({"error": "approver and decision required"}), 400

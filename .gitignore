@@ -67,3 +67,8 @@ documentation/wip/reconciliation/backups/
 documentation/wip/FINAL.csv
 documentation/wip/triage_backup_*.json
 documentation/wip/approval_agent/card_backup_*.json
+documentation/wip/_local/
+# PR-12: prod-mutating one-off restatement scripts stay OFF main (already executed; keep local only)
+documentation/wip/gst_h1_*.py
+documentation/wip/gst_legacy_redate.py
+documentation/wip/gst_h1_prod_migrate*.py

@@ -1357,6 +1357,31 @@ class InvoiceService:
             return None
         return rec_code, pay_code
 
+    def _input_gst_reclass(self, db: Session, invoice: FinanceInvoice, paid_amount: float):
+        """PR-1: at cash payment of a GROSS-booked bill (POL-121), return (expense_code, gst_amount)
+        for the paid slice's claimable input GST — Dr 1350 / Cr <expense COA>. classify() is the ONE
+        gate (respects the invoice's own tax, the account flag, and the vendor gate / DQ-99). Partial
+        payments scale the full-invoice GST by the paid fraction. (None, 0.0) means no claim."""
+        from src.services import gst_service
+        expense_code = invoice.contra_account_code
+        total = float(invoice.total_amount or 0)
+        if not expense_code or total <= 0:
+            return None, 0.0
+        market = gst_service.market_for_entity(invoice.entity_id)
+        vendor_flag = (gst_service.vendor_registered(db, invoice.counterparty_id, market)
+                       if invoice.counterparty_id else None)
+        verdict = gst_service.classify(
+            entity_registered=gst_service.entity_is_gst_registered(db, invoice.entity_id),
+            account_applicable=gst_service.account_gst_applicable(db, expense_code, market),
+            direction="input", leg_touches_bank=True, gross=total,
+            has_invoice=True, invoice_tax=invoice.tax_amount,
+            vendor_registered_flag=vendor_flag,
+        )
+        if verdict.get("account") != gst_service.GST_INPUT or verdict.get("amount", 0.0) <= 0:
+            return None, 0.0
+        fraction = min(1.0, float(paid_amount) / total)
+        return expense_code, round(float(verdict["amount"]) * fraction, 2)
+
     def create_ap_payment_entries(
         self,
         db: Session,
@@ -1383,6 +1408,7 @@ class InvoiceService:
         """
         import uuid
         from src.models.journal_entry import FinanceJournalEntry
+        from src.services import gst_service
 
         bank_entity_id = bank_account.entity_id
         invoice_entity_id = invoice.entity_id
@@ -1394,26 +1420,28 @@ class InvoiceService:
         ap_code = self._payable_account_for(db, invoice.contra_account_code)
 
         if bank_entity_id == invoice_entity_id:
-            # ── Same-entity: single 2-line JE ──────────────────────────────
+            # ── Same-entity: Dr AP / Cr Bank, plus (PR-1) the cash-time input-GST claim ─────
+            lines = [
+                {"account_code": ap_code, "debit_amount": abs_amount, "credit_amount": 0.0,
+                 "description": inv_ref},
+                {"account_code": bank_coa, "debit_amount": 0.0, "credit_amount": abs_amount,
+                 "description": inv_ref},
+            ]
+            # POL-121: the bill was booked GROSS at approval (no 1350). Claim the paid slice's input
+            # GST NOW, at cash payment: Dr 1350 / Cr <expense COA>, moving GST out of the gross expense
+            # into the receivable, dated in the payment's BAS quarter. classify() is the gate.
+            exp_code, gst_amt = self._input_gst_reclass(db, invoice, abs_amount)
+            if exp_code and gst_amt > 0:
+                lines.append({"account_code": gst_service.GST_INPUT, "debit_amount": gst_amt,
+                              "credit_amount": 0.0, "description": f"{inv_ref} — input GST claimed at payment"})
+                lines.append({"account_code": exp_code, "debit_amount": 0.0, "credit_amount": gst_amt,
+                              "description": f"{inv_ref} — expense net of GST (POL-121)"})
             entry = journal_service.create(
                 db=db,
                 entity_id=bank_entity_id,
                 entry_date=txn_date,
                 description=description,
-                lines=[
-                    {
-                        "account_code": ap_code,
-                        "debit_amount": abs_amount,
-                        "credit_amount": 0.0,
-                        "description": inv_ref,
-                    },
-                    {
-                        "account_code": bank_coa,
-                        "debit_amount": 0.0,
-                        "credit_amount": abs_amount,
-                        "description": inv_ref,
-                    },
-                ],
+                lines=lines,
             )
             entry.source = source
             entry.reference_number = f"INV-{invoice.id}"  # trace JE -> invoice
@@ -2009,14 +2037,34 @@ class InvoiceService:
             FinanceInvoice.status == InvoiceStatus.DRAFT.value,
         ).all()
         db.commit()
-        submitted = []
+        submitted, failed = [], []
         for inv in held:
             try:
                 self.submit(db, inv.id, confirmed=True, submitted_by=approved_by)
                 submitted.append(inv.id)
-            except Exception:
-                pass
-        return {"counterparty_id": counterparty_id, "status": "active", "submitted_invoices": submitted}
+            except Exception as exc:
+                # PR-2: NEVER swallow. A held invoice that fails to auto-submit on vendor approval
+                # is a stuck worklist item — log it, and raise a finance task so a human clears it.
+                db.rollback()
+                logger.exception("approve_vendor: auto-submit failed for invoice %s (vendor %s)",
+                                 inv.id, counterparty_id)
+                failed.append({"invoice_id": inv.id, "error": str(exc)})
+                try:
+                    from src.services.task_service import task_service
+                    task_service.enqueue(
+                        db, type="invoice-fix",
+                        title=f"Auto-submit failed after vendor approval — invoice #{inv.id}",
+                        source_ref=f"invoice:{inv.id}", source_system="finance",
+                        summary=(f"Vendor {cp.name or counterparty_id} was approved but invoice #{inv.id} "
+                                 f"could not auto-submit: {exc}"),
+                        assignee_role="finance.invoices", risk="medium", created_by=approved_by,
+                    )
+                    db.commit()
+                except Exception:
+                    db.rollback()
+                    logger.exception("approve_vendor: could not enqueue follow-up task for invoice %s", inv.id)
+        return {"counterparty_id": counterparty_id, "status": "active",
+                "submitted_invoices": submitted, "failed_invoices": failed}
 
     def _enter_pending_approval(self, db: Session, invoice: FinanceInvoice, message: str) -> dict:
         """Move an invoice to pending_approval AND create its assigned approval task — atomically.

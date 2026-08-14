@@ -143,8 +143,39 @@ class EconomicEventService:
     # PROJECT
     # ------------------------------------------------------------------
 
+    def _bank_codes(self, db: Session) -> set[str]:
+        """The set of bank-account COA codes (POL-123 Step 2). A JE has a bank leg iff one of its
+        legs is in this set. Source of truth = finance_bank_accounts, shared with report_service."""
+        from src.models.bank_account import FinanceBankAccount
+        return {r[0] for r in db.query(FinanceBankAccount.coa_account_code)
+                .filter(FinanceBankAccount.coa_account_code.isnot(None)).all()}
+
+    def _lane_a_gst(self, db: Session, entity_id: int, debit: str, credit: str,
+                    amount: Decimal, bank_codes: set[str]) -> tuple[Optional[str], Decimal, Optional[str]]:
+        """POL-123 Lane A (economic events). Returns (gst_account, gst_amount, net_side).
+        Machine: Step 1 entity gate; Step 2 bank-leg gate (exactly one leg is a bank account);
+        Step 3 Lane A = direction from the bank side + the CONTRA's COA flag, then 1/11. No invoice,
+        no vendor, no refund special-case (a refund out lands as input; box 7 net identical).
+        net_side = 'credit' (output, net the credit leg) or 'debit' (input, net the debit)."""
+        from src.services import gst_service
+        if not gst_service.entity_is_gst_registered(db, entity_id):
+            return None, Decimal("0"), None
+        debit_is_bank, credit_is_bank = debit in bank_codes, credit in bank_codes
+        if debit_is_bank == credit_is_bank:  # both (transfer) or neither (accrual) -> no cash-basis GST
+            return None, Decimal("0"), None
+        mkt = gst_service.market_for_entity(entity_id)
+        if debit_is_bank:      # cash IN -> output; contra is the credited account
+            contra, acct, net_side = credit, gst_service.GST_OUTPUT, "credit"
+        else:                  # cash OUT -> input; contra is the debited account
+            contra, acct, net_side = debit, gst_service.GST_INPUT, "debit"
+        if not gst_service.account_gst_applicable(db, contra, mkt):
+            return None, Decimal("0"), None
+        gst = Decimal(str(gst_service.gst_from_gross(float(amount))))
+        return (acct, gst, net_side) if gst > 0 else (None, Decimal("0"), None)
+
     def project_month(self, db: Session, entity_id: int, period: date) -> dict[str, Any]:
         period = period.replace(day=1)
+        bank_codes = self._bank_codes(db)
         events = (db.query(FinanceEconomicEvent)
                   .filter_by(entity_id=entity_id, period=period, status="STAGED").all())
         templates = {t.event_type: t for t in db.query(FinanceJETemplate)
@@ -179,16 +210,30 @@ class EconomicEventService:
                 # so every line stamps currency=functional, native=amount, rate=1
                 # — same completeness contract as _create_simple_entry.
                 ccy = ev.currency
+                # POL-123 Lane A: GST fires only when this event has a bank leg; the contra COA flag
+                # decides, 1/11 in the bank-side direction. No invoice, no vendor, no refund
+                # special-case (refunds land as input by design — box 7 net is identical).
+                gst_acct, gst_amt, net_side = self._lane_a_gst(db, entity_id, debit, credit, amount, bank_codes)
+                debit_amt = amount - gst_amt if net_side == "debit" else amount
+                credit_amt = amount - gst_amt if net_side == "credit" else amount
                 db.add(FinanceJournalLine(entry_id=je.id, entity_id=entity_id,
-                                          account_code=debit, debit_amount=amount,
+                                          account_code=debit, debit_amount=debit_amt,
                                           credit_amount=Decimal("0"), description=je.description,
-                                          currency=ccy, native_amount=amount,
+                                          currency=ccy, native_amount=debit_amt,
                                           fx_rate=Decimal("1")))
                 db.add(FinanceJournalLine(entry_id=je.id, entity_id=entity_id,
                                           account_code=credit, debit_amount=Decimal("0"),
-                                          credit_amount=amount, description=je.description,
-                                          currency=ccy, native_amount=amount,
+                                          credit_amount=credit_amt, description=je.description,
+                                          currency=ccy, native_amount=credit_amt,
                                           fx_rate=Decimal("1")))
+                if gst_acct and gst_amt > 0:
+                    is_out = net_side == "credit"
+                    db.add(FinanceJournalLine(
+                        entry_id=je.id, entity_id=entity_id, account_code=gst_acct,
+                        debit_amount=Decimal("0") if is_out else gst_amt,
+                        credit_amount=gst_amt if is_out else Decimal("0"),
+                        description=f"{je.description} — {'output' if is_out else 'input'} GST (POL-123)",
+                        currency=ccy, native_amount=gst_amt, fx_rate=Decimal("1")))
                 ev.journal_entry_id = je.id
                 ev.status = "POSTED"
                 ev.posted_at = datetime.now(UTC)

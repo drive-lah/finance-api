@@ -28,6 +28,19 @@ def _esc(s: str) -> str:
     return (s or "").replace("'", "''")
 
 
+_MARKETS = {"au", "sg"}
+
+
+def _mkt(market: str) -> str:
+    """Allowlist a market before it is interpolated into a ClickHouse table name (PR-10).
+    Table names cannot be parameterised, so the ONLY safe interpolation is a value proven to be
+    one of the two known markets. Anything else is a bug (or an attack) — fail loudly."""
+    m = (market or "").lower()
+    if m not in _MARKETS:
+        raise ValueError(f"invalid market for table interpolation: {market!r}")
+    return m
+
+
 # ── trip ────────────────────────────────────────────────────────────────────
 def normalize_trip_code(raw: str) -> Optional[str]:
     """Uppercase, strip spaces/punctuation; return a clean TA######## / TS######## or None."""
@@ -54,16 +67,16 @@ def resolve_trip(raw_code: str) -> dict:
     market = market_of_trip(code)
     t = _ch.execute_single(
         "SELECT id, bookingStart, bookingEnd, listingId, providerId, customerId, lastTransition "
-        f"FROM {market}_transactions "
+        f"FROM {_mkt(market)}_transactions "
         f"WHERE JSONExtractString(metadata,'tripReferenceCode')='{_esc(code)}' LIMIT 1"
     )
     if not t:
         return {"found": False, "input": code, "market": market, "error": "trip not found"}
-    lst = _ch.execute_single(f"SELECT title FROM {market}_listings WHERE id='{_esc(t['listingId'])}' LIMIT 1")
+    lst = _ch.execute_single(f"SELECT title FROM {_mkt(market)}_listings WHERE id='{_esc(t['listingId'])}' LIMIT 1")
     host = _ch.execute_single(
-        f"SELECT concat(firstName,' ',lastName) n, email FROM {market}_users WHERE id='{_esc(t['providerId'])}' LIMIT 1")
+        f"SELECT concat(firstName,' ',lastName) n, email FROM {_mkt(market)}_users WHERE id='{_esc(t['providerId'])}' LIMIT 1")
     guest = _ch.execute_single(
-        f"SELECT concat(firstName,' ',lastName) n FROM {market}_users WHERE id='{_esc(t['customerId'])}' LIMIT 1")
+        f"SELECT concat(firstName,' ',lastName) n FROM {_mkt(market)}_users WHERE id='{_esc(t['customerId'])}' LIMIT 1")
     return {
         "found": True, "input": code, "trip_code": code, "market": market,
         "trip_uuid": t["id"],
@@ -86,11 +99,11 @@ def _extract_uuid(s: str) -> Optional[str]:
 
 
 def _trip_from_row(t: dict, market: str, code: Optional[str]) -> dict:
-    lst = _ch.execute_single(f"SELECT title FROM {market}_listings WHERE id='{_esc(t['listingId'])}' LIMIT 1")
+    lst = _ch.execute_single(f"SELECT title FROM {_mkt(market)}_listings WHERE id='{_esc(t['listingId'])}' LIMIT 1")
     host = _ch.execute_single(
-        f"SELECT concat(firstName,' ',lastName) n, email FROM {market}_users WHERE id='{_esc(t['providerId'])}' LIMIT 1")
+        f"SELECT concat(firstName,' ',lastName) n, email FROM {_mkt(market)}_users WHERE id='{_esc(t['providerId'])}' LIMIT 1")
     guest = _ch.execute_single(
-        f"SELECT concat(firstName,' ',lastName) n FROM {market}_users WHERE id='{_esc(t['customerId'])}' LIMIT 1")
+        f"SELECT concat(firstName,' ',lastName) n FROM {_mkt(market)}_users WHERE id='{_esc(t['customerId'])}' LIMIT 1")
     return {
         "found": True, "input": code or t["id"], "trip_code": code, "market": market, "trip_uuid": t["id"],
         "vehicle": lst.get("title") if lst else None,
@@ -111,7 +124,7 @@ def resolve_trip_uuid(trip_uuid: str, market: Optional[str] = None) -> dict:
         t = _ch.execute_single(
             "SELECT id, bookingStart, bookingEnd, listingId, providerId, customerId, lastTransition, "
             "JSONExtractString(metadata,'tripReferenceCode') code "
-            f"FROM {mk}_transactions WHERE id='{_esc(uid)}' LIMIT 1")
+            f"FROM {_mkt(mk)}_transactions WHERE id='{_esc(uid)}' LIMIT 1")
         if t:
             return _trip_from_row(t, mk, t.get("code") or None)
     return {"found": False, "input": uid, "error": "trip not found"}
@@ -150,12 +163,12 @@ def resolve_rego(raw_rego: str, market: Optional[str] = None) -> dict:
         # listing (deleted ASC), newest first, but still resolve a deleted one if that's all there is.
         lst = _ch.execute_single(
             "SELECT id, title, userId, deleted, JSONExtractString(publicData,'license_plate_number') rego "
-            f"FROM {mk}_listings "
+            f"FROM {_mkt(mk)}_listings "
             f"WHERE upper(replaceAll(JSONExtractString(publicData,'license_plate_number'),' ',''))='{_esc(rego)}' "
             "ORDER BY deleted ASC, createdAt DESC LIMIT 1")
         if lst:
             host = _ch.execute_single(
-                f"SELECT concat(firstName,' ',lastName) n, email FROM {mk}_users WHERE id='{_esc(lst['userId'])}' LIMIT 1")
+                f"SELECT concat(firstName,' ',lastName) n, email FROM {_mkt(mk)}_users WHERE id='{_esc(lst['userId'])}' LIMIT 1")
             return {
                 "found": True, "input": rego, "rego": lst.get("rego") or rego, "market": mk,
                 "listing_id": lst["id"], "vehicle": lst.get("title"),

@@ -41,12 +41,21 @@ def entity_is_gst_registered(db: Session, entity_id: Optional[int]) -> bool:
 def account_gst_applicable(db: Session, account_code: Optional[str], market: Optional[str]) -> bool:
     if not account_code or not market:
         return False
+    # PR-10: `col` is one of exactly two literals (allowlisted by the ternary), never caller input —
+    # safe to interpolate into the column position, which cannot be parameterised.
     col = "gst_applicable_au" if market.upper() == "AU" else "gst_applicable_sg"
     r = db.execute(
         text(f"SELECT {col} FROM finance_accounts WHERE code=:c ORDER BY (entity_id IS NULL) DESC LIMIT 1"),
         {"c": account_code},
     ).scalar()
     return bool(r)
+
+
+# POL-123 FINAL (Gaurav, 2026-08-15): NO refund special-casing anywhere — no COA flag, no event set,
+# no hardcoding. A refund out is treated by the pure machine as cash-out = input GST (Dr 1350).
+# Box 7 net GST is IDENTICAL to the reversal treatment (the 1A and 1B effects cancel exactly);
+# the accepted trade-off is grossed-up 1A/1B and a derived G1 that includes refunds. The bank lane's
+# input decision is the vendor gate over a correct vendor list (DQ-101); nothing else.
 
 
 def vendor_registered(db: Session, counterparty_id: Optional[int], market: Optional[str]) -> bool:
