@@ -254,6 +254,12 @@ class WiseService:
             result = result.get("content", result.get("accounts", []))
         return result if isinstance(result, list) else []
 
+    def get_transfer(self, transfer_id) -> dict:
+        """GET a transfer's current status (POL-130 poller). Returns the Wise transfer object incl
+        `status` (incoming_payment_waiting / outgoing_payment_sent / funds_refunded / bounced_back / ...)."""
+        r = self._get(f"/v1/transfers/{transfer_id}")
+        return r if isinstance(r, dict) else {}
+
     def create_recipient(self, profile_id: int, currency: str, account_holder_name: str,
                          account_type: str, details: dict) -> dict:
         """Register a recipient (bank account) on a Wise profile. Returns the created account incl `id`

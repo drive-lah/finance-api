@@ -136,6 +136,62 @@ def cancel_payout(payout_id):
         return jsonify(p.to_dict())
 
 
+@payouts_bp.route("/poll-statuses", methods=["POST"])
+def poll_statuses():
+    """SM-2 poller trigger (POL-130) — schedule this (e.g. every few minutes / daily). Asks Wise for
+    the current status of every non-terminal payout and advances the state machine (delivered ->
+    awaiting_import, refunded -> failed + invoice revert). Reconciliation to paid stays with the
+    categorization engine (POL-131)."""
+    with db_session() as db:
+        return jsonify(payout_service.poll_pending_statuses(db, _actor()))
+
+
+def _verify_wise_signature(raw: bytes, sig_b64: str | None) -> bool:
+    """Verify a Wise webhook signature (RSA-SHA256 over the raw body) with Wise's published public key
+    at WISE_WEBHOOK_PUBLIC_KEY_PATH. Until that key is configured we treat every event as UNVERIFIED and
+    ignore it — the poller is the reliable path, the webhook is only the real-time optimization."""
+    import os
+    path = os.environ.get("WISE_WEBHOOK_PUBLIC_KEY_PATH")
+    if not path or not sig_b64:
+        return False
+    try:
+        import base64
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import padding
+        with open(path, "rb") as f:
+            pub = serialization.load_pem_public_key(f.read())
+        pub.verify(base64.b64decode(sig_b64), raw, padding.PKCS1v15(), hashes.SHA256())
+        return True
+    except Exception:
+        logger.exception("Wise webhook signature verification error")
+        return False
+
+
+@payouts_bp.route("/webhook", methods=["POST"])
+def wise_webhook():
+    """Wise `transfers#state-change` receiver (POL-130). Signature-verified; drives the payout state
+    machine off delivered/refunded. Always returns 200 so Wise does not retry-storm."""
+    raw = request.get_data()
+    if not _verify_wise_signature(raw, request.headers.get("X-Signature-SHA256")
+                                  or request.headers.get("X-Signature")):
+        logger.warning("Wise webhook ignored (unverified — set WISE_WEBHOOK_PUBLIC_KEY_PATH; poller covers it)")
+        return jsonify({"ok": True, "ignored": "unverified"}), 200
+    evt = request.get_json(silent=True) or {}
+    if evt.get("event_type") != "transfers#state-change":
+        return jsonify({"ok": True, "ignored": evt.get("event_type")}), 200
+    data = evt.get("data") or {}
+    transfer_id = str((data.get("resource") or {}).get("id") or "")
+    status = data.get("current_state")
+    with db_session() as db:
+        from src.models.vendor_payout import FinanceVendorPayout
+        p = db.query(FinanceVendorPayout).filter_by(wise_transfer_id=transfer_id).first()
+        if not p:
+            return jsonify({"ok": True, "ignored": "no matching payout"}), 200
+        payout_service.apply_wise_status(db, p, status, {"user_id": "wise-webhook"})
+        db.commit()
+        return jsonify({"ok": True, "payout_id": p.id, "state": p.state}), 200
+
+
 @payouts_bp.route("/config", methods=["GET"])
 def payout_config():
     """Surface the operating config the FE needs (dry-run, threshold, entity map)."""

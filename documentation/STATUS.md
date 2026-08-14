@@ -436,11 +436,11 @@ Context: id-8 phantom (DQ-102) — a payout showed success while Wise `funds_ref
 
 | ID | Item | State |
 |----|------|-------|
-| SM-1 | **Fix `_send`:** funding success → payout `sent` only (money left balance). Do NOT jump to `awaiting_import` on fund alone. | ☐ next |
-| SM-2 | **Wise delivery status tracking (POL-130):** webhook `transfers#state-change` (primary) + `GET /v1/transfers/{id}` poller (backup) → drive `sent → awaiting_import` on `outgoing_payment_sent`, `→ failed` on `funds_refunded`/`bounced_back`. NOT built = the id-8 gap. | ☐ |
-| SM-3 | **Invoice `payment_initiated` (POL-132):** enum + transitions — payout fired ⇒ `approved → payment_initiated`; Wise refund ⇒ `payment_initiated → approved`. The categorization engine's import-pair (VP-5) flips `payment_initiated → paid` on a real matched txn (no change to the engine, just its target state). Invoices-tab filter. | ☐ |
-| SM-4 | **Pay-time safety (POL-133):** BLOCK when no active registration on the paying channel (kill the wrong-account fallback in `create_payout`); review-before-pay confirm (`payee · account · channel · amount`). | ☐ |
-| SM-5 | Reconciliation stays VP-5 only (POL-131) — daily Wise import + `wise_transfer_id` pairing, idempotent on `balance_transaction_id`. **No new matcher, no one-off fetch.** Verify VP-5 fires on a real Wise import (still unproven). | ☐ verify |
+| SM-1 | **Fix `_send`:** funding success → payout `sent` only. | ✅ done (commit 6ab1c08) |
+| SM-2 | **Wise delivery status tracking (POL-130):** `payout_service.apply_wise_status` + `poll_pending_statuses` poller (`wise_service.get_transfer`) + routes `POST /payouts/poll-statuses` and `POST /payouts/webhook` (signature-verified, poller-fallback). **E2E verified on clone with real Wise:** a payout in `sent` on transfer 2311266073 → poll fetched `funds_refunded` → payout `failed` + invoice reverted `payment_initiated → approved`. | ✅ built + verified. OPS LEFT: schedule the poller (cron → /poll-statuses), set `WISE_WEBHOOK_PUBLIC_KEY_PATH` + register the Wise webhook |
+| SM-3 | **Invoice `payment_initiated` (POL-132):** `InvoiceStatus.PAYMENT_INITIATED` (varchar, no migration); `_send` moves `approved → payment_initiated` on real send; `apply_wise_status` reverts on refund; categorization engine still flips → `paid` (untouched). | ✅ done + verified. LEFT: Invoices-tab filter chip (FE) |
+| SM-4 | **Pay-time safety (POL-133):** `create_payout` BLOCKS when no account on the paying entity's channel (wrong-account fallback removed). FE **review-before-pay modal** in PayoutsTab (payee · amount · channel · resolved recipient, or a red block if none). | ✅ done (backend verified; FE tsc-clean) |
+| SM-5 | Reconciliation stays VP-5 only (POL-131). Verify VP-5 fires on a real Wise import (still unproven). | ☐ verify (needs a real import) |
 
 ## 2.9 Invoice Ingestion — minimal-friction pipeline (MEGA-TASK, Gaurav 2026-08-03)
 

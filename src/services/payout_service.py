@@ -289,6 +289,33 @@ class PayoutService:
         db.flush()
         return payout.state
 
+    def poll_pending_statuses(self, db, actor=None) -> dict:
+        """SM-2 poller (POL-130): for every payout still in a non-terminal delivery state, ask Wise for
+        the transfer's current status and run it through apply_wise_status. Safe to run on a schedule
+        (idempotent — a state that hasn't changed is a no-op). Reconciliation to `paid` is NOT here;
+        that stays with the categorization engine on the daily import (POL-131)."""
+        pending = (db.query(FinanceVendorPayout)
+                   .filter(FinanceVendorPayout.state.in_([PayoutState.SENT.value,
+                                                          PayoutState.AWAITING_IMPORT.value]),
+                           FinanceVendorPayout.is_dry_run.is_(False),
+                           FinanceVendorPayout.wise_transfer_id.isnot(None)).all())
+        checked, changed = 0, []
+        for p in pending:
+            if str(p.wise_transfer_id).startswith("DRYRUN"):
+                continue
+            try:
+                status = (wise_service.get_transfer(p.wise_transfer_id) or {}).get("status")
+                before = p.state
+                self.apply_wise_status(db, p, status, actor)
+                checked += 1
+                if p.state != before:
+                    changed.append({"payout_id": p.id, "wise_status": status,
+                                    "from": before, "to": p.state})
+            except Exception:
+                logger.exception("poll status failed for payout %s (transfer %s)", p.id, p.wise_transfer_id)
+        db.commit()
+        return {"checked": checked, "changed": changed}
+
     def cancel(self, db, payout_id: int, actor: dict, reason: str) -> FinanceVendorPayout:
         payout = db.get(FinanceVendorPayout, payout_id)
         if not payout:
