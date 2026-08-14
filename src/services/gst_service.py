@@ -143,7 +143,10 @@ def classify(*, entity_registered: bool, account_applicable: bool, direction: st
 
     realized = leg_touches_bank
 
-    # refund/chargeback reverses OUTPUT, whatever account it is booked against
+    # DORMANT BY DESIGN (POL-123 final, Gaurav 2026-08-15): the live engine NEVER passes
+    # is_refund — refunds land as input on cash-out (box 7 net identical). This branch is kept
+    # ONLY for the historical H1 reconciliation scripts (gst_h1_pertxn), which posted refunds as
+    # output reversals. Do NOT wire it into live posting.
     if is_refund:
         acct = GST_OUTPUT if realized else GST_OUTPUT_DEFERRED
         return _hit(acct, "debit", amount, "output_reversal", "refund/chargeback reduces output GST")

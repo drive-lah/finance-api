@@ -205,8 +205,11 @@ class VendorMatchingService:
                 summary="Auto-created from an uploaded invoice (unmatched) — fill details + approve to activate.",
                 assignee_role="finance.invoices",
             )
-        except Exception:
-            pass  # never block extraction on the task
+        except Exception as e:
+            # re-review F11: never block extraction, but a silent enqueue failure left vendors
+            # stuck inactive with no signal — make it loudly visible in logs.
+            logger.warning("vendor-approval task enqueue FAILED for new vendor %s — vendor stays "
+                           "inactive with no task: %s", getattr(new_cp, 'id', '?'), e, exc_info=True)
         logger.info(f"Created PENDING vendor (awaiting finance approval): '{vendor_name}' (id={new_cp.id})")
         return new_cp, True, 0.0
 

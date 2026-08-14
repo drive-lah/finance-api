@@ -804,6 +804,13 @@ class ReportService:
         return out
 
 
+    def _bank_coa_codes(self, db: Session) -> list[str]:
+        """Bank-account COA codes from finance_bank_accounts — the single source of truth for
+        'this leg is cash' (shared with the GST engine's bank-leg gate, POL-123)."""
+        from src.models.bank_account import FinanceBankAccount
+        return [r[0] for r in db.query(FinanceBankAccount.coa_account_code)
+                .filter(FinanceBankAccount.coa_account_code.isnot(None)).distinct().all()]
+
     def get_bas(
         self,
         db: Session,
@@ -834,7 +841,9 @@ class ReportService:
         # account directly against a bank account — they settle the liability, they are
         # not trading GST. Any JE that touches both a GST control account and a bank
         # account is a settlement, so exclude those lines from 1A/1B.
-        bank_codes = [f"10{n:02d}" for n in range(0, 25)]
+        # re-review F10: the real bank set comes from finance_bank_accounts (same source as the
+        # GST engine's bank-leg gate), not a hard-coded 10xx range.
+        bank_codes = self._bank_coa_codes(db)
         settlement_entries = (
             db.query(FinanceJournalLine.entry_id)
             .filter(FinanceJournalLine.entity_id == entity_id)
@@ -922,7 +931,9 @@ class ReportService:
         if box not in BOX:
             raise ValueError(f"unknown BAS box '{box}' (expected one of {sorted(BOX)})")
         codes, side, mult = BOX[box]
-        bank_codes = [f"10{n:02d}" for n in range(0, 25)]
+        # re-review F10: the real bank set comes from finance_bank_accounts (same source as the
+        # GST engine's bank-leg gate), not a hard-coded 10xx range.
+        bank_codes = self._bank_coa_codes(db)
         settlement_entries = (
             db.query(FinanceJournalLine.entry_id)
             .filter(FinanceJournalLine.entity_id == entity_id)

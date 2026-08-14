@@ -2045,6 +2045,8 @@ class InvoiceService:
             except Exception as exc:
                 # PR-2: NEVER swallow. A held invoice that fails to auto-submit on vendor approval
                 # is a stuck worklist item — log it, and raise a finance task so a human clears it.
+                # (Safe w.r.t. prior iterations: every successful submit() path COMMITS internally,
+                # so this rollback only reverts the failed submit's uncommitted work — re-review F1.)
                 db.rollback()
                 logger.exception("approve_vendor: auto-submit failed for invoice %s (vendor %s)",
                                  inv.id, counterparty_id)

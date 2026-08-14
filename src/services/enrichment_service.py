@@ -13,6 +13,7 @@ ANCHOR CONTRACT (verified against live data 2026-08-09):
     A payment can cite SEVERAL tickets → callers pass a comma/space-separated list; resolve_tickets
     splits and resolves each.
 """
+import logging
 import re
 from typing import Optional
 
@@ -224,8 +225,9 @@ def resolve_ticket(ticket_no: str, with_thread: bool = True) -> dict:
     tt = r.get("ticket_type")
     try:
         tt = json.loads(tt).get("name", tt) if tt else tt
-    except Exception:
-        pass
+    except (ValueError, TypeError, AttributeError):
+        # re-review F9: malformed ticket_type JSON — keep the raw string, but don't hide it
+        logging.getLogger(__name__).debug("ticket_type not parseable as JSON for ticket %s: %r", tid, tt)
     return {
         "found": True, "input": tid, "ticket": tid, "type": tt, "state": r.get("ticket_state"),
         "title": attrs.get("_default_title_"),

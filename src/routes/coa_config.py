@@ -45,7 +45,10 @@ def get_config(code):
 @coa_config_bp.route("/<code>", methods=["PUT"])
 def upsert_config(code):
     data = request.get_json(silent=True) or {}
-    changed_by = data.pop("changed_by", None) or request.headers.get("X-User-Email")
+    # TRUST BOUNDARY (re-review F5): audit attribution comes ONLY from X-User-Email (BFF-set,
+    # authenticated). A body-supplied changed_by must never win. Body value is discarded.
+    data.pop("changed_by", None)
+    changed_by = request.headers.get("X-User-Email")
     with db_session() as db:
         row = coa_config_service.upsert(db, code, data, changed_by=changed_by)
         return jsonify(row)

@@ -87,33 +87,37 @@ def decide(
     nxt = next_step_for(db, invoice)
     step = nxt["step"]
 
-    db.add(
-        FinanceInvoiceApproval(
-            invoice_id=invoice_id,
-            step=step,
-            approver_user_id=approver_user_id,
-            decision=decision,
-            reason=reason,
+    def _record(decision_final: str):
+        # Audit row is written ONLY after the downstream state change succeeds (re-review F2):
+        # a failed approve/reject must never leave a persisted decision row with the invoice
+        # still in pending_approval (audit/state divergence broke the step counter on retry).
+        db.add(
+            FinanceInvoiceApproval(
+                invoice_id=invoice_id,
+                step=step,
+                approver_user_id=approver_user_id,
+                decision=decision_final,
+                reason=reason,
+            )
         )
-    )
-    db.flush()
+        db.commit()
 
     if decision == REJECTED:
-        db.commit()
         invoice_service.reject(db, invoice_id, reason or "rejected in approval chain", rejected_by=approver_user_id)
+        _record(REJECTED)
         return {"outcome": "rejected", "step": step}
 
     if decision == RETURNED:
         invoice.status = InvoiceStatus.NEEDS_FIX.value
-        db.commit()
+        _record(RETURNED)
         return {"outcome": "returned", "step": step}
 
     # approved
     if step >= nxt["steps_required"]:
-        db.commit()
         invoice_service.approve(db, invoice_id, approved_by=approver_user_id, contra_account_code=contra_account_code)
+        _record(APPROVED)
         return {"outcome": "approved", "step": step, "final": True}
-    db.commit()
+    _record(APPROVED)
     return {"outcome": "step_approved", "step": step, "final": False, "awaiting_step": step + 1}
 
 

@@ -36,7 +36,7 @@ def _name_map(db: Session, user_ids: set[int]) -> dict[int, str]:
     return {r[0]: (r[1] or r[2] or f"user {r[0]}") for r in rows}
 
 
-def _who_with(task: Optional[Task], names: dict[int, str], approval_states: tuple) -> Optional[str]:
+def _who_with(task: Optional[Task], names: dict[int, str]) -> Optional[str]:
     if task is None:
         return None
     if task.assignee_user_id:
@@ -70,7 +70,11 @@ def my_requests(db: Session, identifier: Optional[str] = None, user_id: Optional
     assignee_ids = {t.assignee_user_id for t in list(inv_task.values()) + list(claim_task.values()) if t.assignee_user_id}
     names = _name_map(db, assignee_ids)
 
-    cp_names = {c.id: c.name for c in db.execute(select(FinanceCounterparty)).scalars().all()} if invs else {}
+    # re-review F7: only fetch the counterparties these invoices actually reference (was a full scan)
+    cp_ids = {i.counterparty_id for i in invs if i.counterparty_id}
+    cp_names = ({c.id: c.name for c in db.execute(
+        select(FinanceCounterparty).where(FinanceCounterparty.id.in_(cp_ids))).scalars().all()}
+        if cp_ids else {})
 
     for inv in invs:
         t = inv_task.get(f"invoice:{inv.id}")
@@ -83,7 +87,7 @@ def my_requests(db: Session, identifier: Optional[str] = None, user_id: Optional
             "amount": float(inv.total_amount) if inv.total_amount is not None else None,
             "currency": inv.currency,
             "status": inv.status,
-            "who_with": _who_with(t, names, ()),
+            "who_with": _who_with(t, names),
             "created_at": inv.created_at.isoformat() if getattr(inv, "created_at", None) else None,
         })
 
@@ -97,7 +101,7 @@ def my_requests(db: Session, identifier: Optional[str] = None, user_id: Optional
             "amount": float(c.amount) if c.amount is not None else None,
             "currency": getattr(c, "currency", None),
             "status": c.status,
-            "who_with": _who_with(t, names, ()),
+            "who_with": _who_with(t, names),
             "created_at": c.created_at.isoformat() if getattr(c, "created_at", None) else None,
         })
 
