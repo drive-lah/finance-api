@@ -83,10 +83,16 @@ class PayrollService:
         from src.models.hr_employee import HrEmployee
         from src.models.counterparty import FinanceCounterparty
         from src.models.payroll_approval import FinancePayrollApproval
+        from src.models.payroll_adjustment import FinancePayrollAdjustment
         from src.utils.errors import NotFoundError
         run = db.get(FinancePayrollRun, run_id)
         if not run:
             raise NotFoundError(f"Payroll run {run_id} not found")
+        # PR-7 touch: adjustment reasons per employee, surfaced to approvers (audit visibility).
+        adj_by_emp: dict[int, list] = {}
+        for a in db.query(FinancePayrollAdjustment).filter(FinancePayrollAdjustment.run_id == run_id).all():
+            adj_by_emp.setdefault(a.employee_id, []).append(
+                {"field": a.field, "old": a.old_value, "new": a.new_value, "reason": a.reason})
 
         def _name(emp):
             cp = (db.query(FinanceCounterparty)
@@ -123,7 +129,8 @@ class PayrollService:
             prev = prior_gross.get(it.employee_id)
             change = "new" if prev is None else ("changed" if abs(prev - gross) > 0.01 else "same")
             g["lines"].append({"employee_id": it.employee_id, "name": _name(emp), "gross": gross,
-                               "net": float(it.net_amount), "change": change, "prev_gross": prev})
+                               "net": float(it.net_amount), "change": change, "prev_gross": prev,
+                               "adjustments": adj_by_emp.get(it.employee_id, [])})
             g["total"] += gross
             g["headcount"] += 1
         # leavers: anyone paid in the prior run but not in this one (attributed to their salary group)

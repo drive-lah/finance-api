@@ -124,11 +124,16 @@ class HrPayrollService:
         if open_comp:
             open_comp.effective_to = new_from - timedelta(days=1)
 
+        sched = (data.get("pay_schedule") or "monthly").lower()
+        split = data.get("pay_split_pct")
         comp = HrCompensation(
             employee_id=employee_id,
             pay_type=data["pay_type"],
             gross_amount=Decimal(str(data["gross_amount"])),
             currency=data.get("currency", "SGD"),
+            pay_schedule=sched,
+            pay_split_pct=(Decimal(str(split)) if split not in (None, "") else
+                           (Decimal("50") if sched == "semi_monthly" else None)),
             effective_from=new_from,
             effective_to=data.get("effective_to"),
         )
