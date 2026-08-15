@@ -215,6 +215,35 @@ without sign-off.
 | 5 | `economic_events/service.py::project_month` (:200) | **Live bypass** — posts directly, own GST (Lane A), fx=1 | Fold into posting layer + shared GST decorator (own lane) |
 | 6 | `scripts/vr2_post_{icfx,crossentity,provisional,pairings,xcurrency}.py` | **One-off remediation** (VR-2 invoice pairing, ~Aug 2026: "the 728", "the 102", provisional table) — git-tracked, inherit app `DATABASE_URL` (**prod by default**), only `POST_MODE=pilot\|all`, no prod guard | If VR-2 posting is complete: archive/delete or add a hard clone-only DSN guard (VR-1c footgun class) |
 
+## 7c. Exhaustive scan result (2026-08-16) — the complete posting surface
+
+A full-codebase scan (every `FinanceJournalEntry(`/`FinanceJournalLine(` construction, every
+`journal_service.create`/`post_entry`, every direct `status=POSTED`, raw SQL, bulk insert,
+migrations, void/reversal, duplicate/merge) closes the surface. Two things the earlier passes
+had not pinned:
+
+- **`transaction_service.approve` (:214) is the real DRAFT→POSTED trigger** for the bank-driven
+  lanes. It flips a matched transaction's linked JE to POSTED **directly** (`je.status = POSTED`),
+  bypassing `post_entry`, and posts all MATCHED partner legs of the same JE at once. So the
+  categorization DRAFT entries (simple, transfer) post when their transaction is **approved** —
+  that is the "downstream" trigger the map referenced vaguely. In the target this becomes the
+  normal `matched → approved` transition through the posting layer, not a raw status assignment.
+- **Stripe Sync is a two-file subsystem**: `sync_service.py` + `journal_entry_builder.py`
+  (`build_je`, `build_payout_je`, both `status=POSTED`). Still dormant (no caller of `sync_month`),
+  but the builder is where its lines are constructed.
+
+**Confirmed NOT posting paths** (ruled out): migrations only create/alter schema, never INSERT JE
+data; zero raw `INSERT INTO finance_journal_*`; zero `bulk_insert_mappings`/`add_all` for JEs; no
+recurring/duplicate/merge JE creation; `void_entry` is a soft-VOID (sets status=VOID, no reversing
+entry). `csv_adapters`, `account_service`, `bank_account_service` do not post.
+
+**Complete inventory — every JE write in the codebase:**
+- *Create:* `journal_service.create` (23 sites) · `economic_events.project_month` (direct) ·
+  `stripe_sync` (sync_service + journal_entry_builder, direct, dormant) · 5 `vr2_post_*` scripts.
+- *Post (DRAFT→POSTED):* `journal_service.post_entry` (manual route + payroll `decide_group`) ·
+  `transaction_service.approve` (direct flip) · 8 inline `status=POSTED` at create.
+- *Void:* `journal_service.void_entry` + `invoice_service.void` (soft-VOID, no reversing JE).
+
 ## 8. Non-goals / risks
 
 - **Non-goal:** touching the categorization *matching* logic (off-limits per standing rule). This
