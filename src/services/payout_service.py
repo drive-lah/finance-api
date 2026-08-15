@@ -307,9 +307,13 @@ class PayoutService:
             "dry_run": payout.is_dry_run})
         # SM-3 (POL-132): a real payout puts the invoice into payment_initiated (money on its way).
         # It reaches paid ONLY when the categorization engine pairs the imported txn (VP-5, POL-131).
+        # A tranche can be initiated from an already-partially-paid invoice too (POL-136): the SECOND
+        # payment on a partially_paid payable must also move to payment_initiated (money in transit),
+        # then the categorization engine pairs it back down to partially_paid / paid (POL-131).
         if not payout.is_dry_run:
             self._set_invoice_status(db, payout.invoice_id, InvoiceStatus.PAYMENT_INITIATED.value,
-                                     from_states={InvoiceStatus.APPROVED.value}, actor=actor,
+                                     from_states={InvoiceStatus.APPROVED.value,
+                                                  InvoiceStatus.PARTIALLY_PAID.value}, actor=actor,
                                      reason=f"payout {payout.id} initiated")
 
     def _set_invoice_status(self, db, invoice_id, new_status, *, from_states, actor=None, reason=None):
@@ -338,8 +342,14 @@ class PayoutService:
             payout.state = PayoutState.FAILED.value
             payout.failure_reason = f"wise: {s}"
             self._event(db, payout, "failed", PayoutState.FAILED.value, actor, reason=f"wise: {s}")
-            # revert the invoice out of payment_initiated for review (POL-132)
-            self._set_invoice_status(db, payout.invoice_id, InvoiceStatus.APPROVED.value,
+            # Revert the invoice out of payment_initiated (POL-132). Restore the PRIOR state: if earlier
+            # tranches were already paired (amount_paid > 0) it goes back to partially_paid, not approved —
+            # a failed 2nd tranche must not wipe out the balance already settled.
+            from src.models.invoice import FinanceInvoice
+            inv = db.get(FinanceInvoice, payout.invoice_id) if payout.invoice_id else None
+            revert_to = (InvoiceStatus.PARTIALLY_PAID.value
+                         if inv and float(inv.amount_paid or 0) > 0 else InvoiceStatus.APPROVED.value)
+            self._set_invoice_status(db, payout.invoice_id, revert_to,
                                      from_states={InvoiceStatus.PAYMENT_INITIATED.value}, actor=actor,
                                      reason=f"payout {payout.id} {s}")
         db.flush()

@@ -30,12 +30,16 @@ historical piles simply *enter* the machine at different points and then ride th
 
 Terminal states: `paid`, `rejected`, `void`.
 
-**`payment_initiated` is the payout holding state (POL-132).** When a payout is fired against an approved
-invoice, the invoice moves `approved → payment_initiated`, NOT straight to paid. It reaches `paid` ONLY
-when the real outgoing transaction lands via the normal daily Wise import and the **categorization engine**
-pairs it on `wise_transfer_id` (the sole matcher — no one-off fetch, no parallel matching). If Wise reports
-`funds_refunded`/`bounced_back`, it reverts `payment_initiated → approved` for review. Full payout side:
-`PAYOUT_MODEL.md`. Invariant: **an invoice is `paid` only when a real transaction is matched to it.**
+**`payment_initiated` is the payout holding state (POL-132).** When a payout is fired against an invoice,
+the invoice moves `{approved, partially_paid} → payment_initiated`, NOT straight to paid. Partial payments
+(POL-136) matter here: a SECOND tranche fired against an already `partially_paid` invoice ALSO moves to
+`payment_initiated`, then the engine pairs it back down to `partially_paid` (still owed) or `paid` (fully
+covered). It reaches `paid`/`partially_paid` ONLY when the real outgoing transaction lands via the normal
+daily Wise import and the **categorization engine** pairs it on `wise_transfer_id` (the sole matcher — no
+one-off fetch, no parallel matching). If Wise reports `funds_refunded`/`bounced_back`, it reverts out of
+`payment_initiated` to its PRIOR state — `partially_paid` if earlier tranches were already settled
+(`amount_paid > 0`), else `approved` — so a failed tranche never wipes out balance already paired. Full
+payout side: `PAYOUT_MODEL.md`. Invariant: **an invoice is `paid` only when a real transaction is matched.**
 
 ## The two arms
 
@@ -121,9 +125,9 @@ draft ──▶ approval agent screens ──┬── exception ──▶ needs
 | `pending_approval` | `approved` | human approve (bill JE posts) |
 | `pending_approval` | `needs_fix` | issue surfaced during review |
 | `pending_approval` | `rejected` | approver declines |
-| `approved` | `payment_initiated` | **a payout is fired for this invoice** (money on its way) |
-| `payment_initiated` | `paid` | the outgoing transaction imported + categorization engine paired it on `wise_transfer_id` |
-| `payment_initiated` | `approved` | Wise `funds_refunded`/`bounced_back` — payout failed, revert for review |
+| `approved` / `partially_paid` | `payment_initiated` | **a payout is fired** (money on its way); a 2nd tranche on a partially_paid invoice initiates too (POL-136) |
+| `payment_initiated` | `paid` / `partially_paid` | the outgoing transaction imported + categorization engine paired it on `wise_transfer_id`; `partially_paid` if still owed |
+| `payment_initiated` | `partially_paid` / `approved` | Wise `funds_refunded`/`bounced_back` — payout failed; revert to prior state (`partially_paid` if `amount_paid>0`, else `approved`) |
 | `approved` | `partially_paid` / `paid` | payment recorded directly (reconciliation arm, not via a system payout) |
 | `partially_paid` | `paid` | remainder settled |
 | any non-terminal | `void` | killed with reason |

@@ -443,6 +443,7 @@ Context: id-8 phantom (DQ-102) — a payout showed success while Wise `funds_ref
 | SM-4 | **Pay-time safety (POL-133):** `create_payout` BLOCKS when no account on the paying entity's channel (wrong-account fallback removed). FE **review-before-pay modal** in PayoutsTab (payee · amount · channel · resolved recipient, or a red block if none). | ✅ done (backend verified; FE tsc-clean) |
 | SM-5 | Reconciliation stays VP-5 only (POL-131). Verify VP-5 fires on a real Wise import (still unproven). | ☐ verify (needs a real import) |
 | SM-6 | **Currency guard (POL-137):** pay in the payable's own currency, funded from the same-currency Wise balance; BLOCK (no auto-convert) if we hold no/insufficient balance in that ccy. `_assert_source_balance` in `_send`. | ✅ done — unit-tested (enough→OK, short→block w/ shortfall, missing→block w/ top-up, case-insensitive); compiles |
+| SM-7 | **Partial-tranche state fix (POL-132+136):** `_send` now moves `{approved, partially_paid} → payment_initiated` (2nd tranche on a partially_paid invoice was previously a silent no-op); failure revert restores PRIOR state (`partially_paid` if `amount_paid>0`, else `approved`) instead of hardcoded `approved`. | ✅ done — clone-tested all 3 paths (partially_paid→payment_initiated; refund w/ amount_paid>0→partially_paid; refund w/ amount_paid=0→approved) |
 
 ### 2.8c ONE payout tab — consolidation + polymorphic payable + actions + paid-labels (LOCKED 2026-08-15)
 
