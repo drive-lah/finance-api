@@ -103,16 +103,25 @@ class ClaimService:
             raise BadRequestError("Only the claimant's manager can approve this claim.")
         if caller_user_id == c.owner_user_id and not is_admin:
             raise BadRequestError("You cannot approve your own claim.")
-        # bill JE: Dr claim-COA / Cr 2303 Employee Claims Payable
-        amt = float(c.amount)
+        # bill JE: Dr claim-COA / Cr 2303 Employee Claims Payable.
+        # POL-141: a claim can be foreign (employee_claim.currency); the JE must be in the entity's
+        # functional currency. Convert the claim amount at the approval-date rate.
+        from src.models.entity import FinanceEntity
+        from src.services.fx_service import fx_service
+        _func = db.get(FinanceEntity, c.entity_id).base_currency if c.entity_id else None
+        _native = Decimal(str(c.amount))
+        _bill_date = date.today()
+        _func_amt, _rate = fx_service.to_functional_or_same(db, _native, c.currency, _func, _bill_date)
+        _meta = {"currency": c.currency, "native_amount": _native, "fx_rate": _rate}
+        amt = float(_func_amt)
         lines = [
             {"account_code": c.coa_account_code, "debit_amount": amt, "credit_amount": 0.0,
-             "description": f"Employee claim #{c.id} ({c.category})"},
+             "description": f"Employee claim #{c.id} ({c.category})", **_meta},
             {"account_code": EMPLOYEE_CLAIMS_PAYABLE, "debit_amount": 0.0, "credit_amount": amt,
-             "description": f"Employee claim #{c.id} payable"},
+             "description": f"Employee claim #{c.id} payable", **_meta},
         ]
         je = journal_service.create(
-            db, entity_id=c.entity_id, entry_date=date.today(),
+            db, entity_id=c.entity_id, entry_date=_bill_date,
             description=f"Employee claim #{c.id} — {c.description or c.category}",
             lines=lines, reference_number=f"CLAIM-{c.id}",
             status=JournalEntryStatus.POSTED)
@@ -132,21 +141,48 @@ class ClaimService:
         (clearing the SAME liability the approval JE credited), flips the claim PAID, links the txn.
         Same-entity only for v1 (claims are within the employee's entity); cross-entity raises."""
         from src.models.journal_entry import FinanceJournalEntry
+        from src.models.journal_line import FinanceJournalLine
+        from src.models.entity import FinanceEntity
+        from src.services.fx_service import fx_service
         if bank_account.entity_id != claim.entity_id:
             raise BadRequestError(
                 f"Cross-entity claim reimbursement not supported (bank entity {bank_account.entity_id} "
                 f"≠ claim entity {claim.entity_id}).")
-        amt = float(abs_amount)
+        # POL-141: clear the 2303 payable (booked in functional at approval) against the bank payment
+        # (bank-native, converted at the payment-date rate). Any rate spread plugs to 7100. Same-ccy
+        # collapses to the old behaviour (rate=1, no residue).
+        _func = db.get(FinanceEntity, claim.entity_id).base_currency if claim.entity_id else None
+        _native = Decimal(str(abs_amount))
+        _bank_func, _rate = fx_service.to_functional_or_same(db, _native, bank_account.currency, _func, txn_date)
+        # the exact functional payable that approval credited to 2303 (falls back to the payment amount)
+        _payable = None
+        if claim.journal_entry_id:
+            _row = (db.query(FinanceJournalLine)
+                    .filter(FinanceJournalLine.entry_id == claim.journal_entry_id,
+                            FinanceJournalLine.account_code == EMPLOYEE_CLAIMS_PAYABLE).first())
+            if _row is not None:
+                _payable = Decimal(str(_row.credit_amount))
+        _dr = _payable if _payable is not None else _bank_func
         ref = f"CLAIM-{claim.id}"
+        lines = [
+            {"account_code": EMPLOYEE_CLAIMS_PAYABLE, "debit_amount": float(_dr), "credit_amount": 0.0,
+             "description": f"Reimburse employee claim #{claim.id}",
+             "currency": _func, "native_amount": _dr, "fx_rate": Decimal("1")},
+            {"account_code": bank_account.coa_account_code, "debit_amount": 0.0, "credit_amount": float(_bank_func),
+             "description": f"Reimburse employee claim #{claim.id}",
+             "currency": bank_account.currency, "native_amount": _native, "fx_rate": _rate},
+        ]
+        _residue = _dr - _bank_func  # Dr side − Cr side
+        if abs(_residue) >= Decimal("0.01"):
+            if _residue > 0:   # owed more than paid → FX gain (extra credit)
+                lines.append({"account_code": "7100", "debit_amount": 0.0, "credit_amount": float(_residue),
+                              "description": f"FX gain on claim #{claim.id} reimbursement"})
+            else:              # paid more than owed → FX loss (extra debit)
+                lines.append({"account_code": "7100", "debit_amount": float(-_residue), "credit_amount": 0.0,
+                              "description": f"FX loss on claim #{claim.id} reimbursement"})
         je = journal_service.create(
             db, entity_id=claim.entity_id, entry_date=txn_date, description=description,
-            lines=[
-                {"account_code": EMPLOYEE_CLAIMS_PAYABLE, "debit_amount": amt, "credit_amount": 0.0,
-                 "description": f"Reimburse employee claim #{claim.id}"},
-                {"account_code": bank_account.coa_account_code, "debit_amount": 0.0, "credit_amount": amt,
-                 "description": f"Reimburse employee claim #{claim.id}"},
-            ],
-            reference_number=ref, status=JournalEntryStatus.POSTED)
+            lines=lines, reference_number=ref, status=JournalEntryStatus.POSTED)
         je.source = source
         claim.status = ClaimStatus.PAID.value
         db.flush()
