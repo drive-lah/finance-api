@@ -119,77 +119,122 @@ def cmd_check(args):
 def gather_scorecard(db, year, ba_ids):
     y0, y1 = year_window(year)
     p = {"ba": ba_ids, "y0": y0, "y1": y1}
-    mix = [dict(zip(("route", "status", "n", "amt"), r)) for r in db.execute(text("""
-        SELECT coalesce(categorized_by_logic,'(none)'), status, count(*), round(sum(abs(amount))::numeric,2)
-        FROM finance_transactions
-        WHERE bank_account_id = ANY(:ba) AND transaction_date BETWEEN :y0 AND :y1
-        GROUP BY 1,2 ORDER BY 3 DESC"""), p).fetchall()]
-    cps = [dict(zip(("cp", "n", "amt"), r)) for r in db.execute(text("""
-        SELECT coalesce(cp.name, t.counterparty_name, '(none)'), count(*), round(sum(abs(t.amount))::numeric,2)
+    header = [dict(zip(("ba", "acct", "coa", "ccy", "entity"), r)) for r in db.execute(text("""
+        SELECT ba.id, ba.account_name, ba.coa_account_code, ba.currency, e.name
+        FROM finance_bank_accounts ba JOIN finance_entities e ON e.id=ba.entity_id
+        WHERE ba.id = ANY(:ba) ORDER BY ba.id"""), p).fetchall()]
+    coa_names = {r[0]: r[1] for r in db.execute(text(
+        "SELECT code, name FROM finance_accounts WHERE entity_id IS NULL")).fetchall()}
+    txns = [dict(zip(("id", "ba", "dt", "amt", "ccy", "descr", "status", "route", "coa",
+                      "cp", "ai_coa", "ai_conf", "ai_why"), r)) for r in db.execute(text("""
+        SELECT t.id, t.bank_account_id, t.transaction_date, round(t.amount::numeric,2), t.currency,
+               left(coalesce(t.description,''),110), t.status, coalesce(t.categorized_by_logic,''),
+               coalesce(t.coa_account_code,''), coalesce(cp.name, t.counterparty_name, ''),
+               coalesce(t.ai_suggested_account_code,''), t.ai_confidence, left(coalesce(t.ai_reasoning,''),160)
         FROM finance_transactions t LEFT JOIN finance_counterparties cp ON cp.id=t.counterparty_id
         WHERE t.bank_account_id = ANY(:ba) AND t.transaction_date BETWEEN :y0 AND :y1
-        GROUP BY 1 ORDER BY 3 DESC LIMIT 25"""), p).fetchall()]
-    suspects = [dict(zip(("id", "dt", "amt", "descr", "status", "route", "coa"), r)) for r in db.execute(text("""
-        SELECT t.id, t.transaction_date, round(t.amount::numeric,2), left(coalesce(t.description,''),90),
-               t.status, coalesce(t.categorized_by_logic,''), coalesce(t.coa_account_code,'')
-        FROM finance_transactions t
-        WHERE t.bank_account_id = ANY(:ba) AND t.transaction_date BETWEEN :y0 AND :y1
-          AND (t.status IN ('NEEDS_REVIEW','PENDING','IMPORTED')
-               OR t.categorized_by_logic IN ('ai','needs_review_resolution')
-               OR abs(t.amount) > 10000)
-        ORDER BY abs(t.amount) DESC LIMIT 200"""), p).fetchall()]
-    gst = db.execute(text("""
-        SELECT l.account_code, count(*), round(sum(l.debit_amount+l.credit_amount)::numeric,2)
-        FROM finance_journal_lines l JOIN finance_journal_entries je ON je.id=l.entry_id
-        JOIN finance_transactions t ON t.reconciled_journal_entry_id=je.id
-        WHERE t.bank_account_id = ANY(:ba) AND t.transaction_date BETWEEN :y0 AND :y1
-          AND l.account_code IN ('1350','2500') GROUP BY 1"""), p).fetchall()
-    return mix, cps, suspects, [dict(zip(("acct", "n", "amt"), r)) for r in gst]
+        ORDER BY t.bank_account_id, t.transaction_date, t.id"""), p).fetchall()]
+    return header, coa_names, txns
 
 
 def cmd_scorecard(args):
     ba_ids = [int(x) for x in args.bank_account_ids.split(",")]
     with db_session() as db:
-        mix, cps, suspects, gst = gather_scorecard(db, args.year, ba_ids)
+        header, coa_names, txns = gather_scorecard(db, args.year, ba_ids)
         inv = gather_check(db, args.year, ba_ids)
     e = html.escape
 
-    def tbl(headers, rows):
-        h = "".join(f"<th>{e(str(x))}</th>" for x in headers)
-        b = "".join("<tr>" + "".join(f"<td>{e('' if v is None else str(v))}</td>" for v in r) + "</tr>" for r in rows)
-        return f"<table><thead><tr>{h}</tr></thead><tbody>{b}</tbody></table>"
+    def coa_label(code):
+        return f"{code} {coa_names.get(code, '')}".strip()
 
-    inv_rows = [(r["name"], r["coa"], r["month_end"], r["statement"], r["ledger"],
-                 r["diff"], ("⚠" if (r["diff"] and abs(r["diff"]) > 0.02) else "✓") if r["statement"] is not None else "—")
-                for r in inv]
+    acct_by_ba = {h["ba"]: h for h in header}
+    entities = sorted({h["entity"] for h in header})
+    head_lines = "".join(
+        f"<li><b>{e(h['acct'])}</b> — account code {e(h['coa'])} · {e(h['ccy'])} · {e(h['entity'])} (bank id {h['ba']})</li>"
+        for h in header)
+
+    from collections import Counter as _C
+    mix = _C()
+    for t in txns:
+        mix[(t["route"] or "(unresolved)", t["status"])] += 1
+
+    inv_rows = "".join(
+        f"<tr><td>{e(r['name'])}</td><td>{e(r['month_end'])}</td>"
+        f"<td class=n>{'' if r['statement'] is None else format(r['statement'], ',.2f')}</td>"
+        f"<td class=n>{format(r['ledger'], ',.2f')}</td>"
+        f"<td class=n>{'' if r['diff'] is None else format(r['diff'], ',.2f')}</td>"
+        f"<td>{('✓' if (r['diff'] is not None and abs(r['diff']) <= 0.02) else ('⚠' if r['diff'] is not None else '—'))}</td></tr>"
+        for r in inv)
+
+    txn_rows = []
+    for t in txns:
+        booked = coa_label(t["coa"]) if t["coa"] else ""
+        ai = ""
+        if t["ai_coa"]:
+            conf = f" @ {float(t['ai_conf']):.0%}" if t["ai_conf"] is not None else ""
+            ai = f"{coa_label(t['ai_coa'])}{conf}<div class=why>{e(t['ai_why'])}</div>"
+        need = t["status"] in ("NEEDS_REVIEW", "PENDING", "IMPORTED")
+        txn_rows.append(
+            f"<tr data-txn={t['id']} class={'review' if need else 'ok'}>"
+            f"<td>{t['id']}</td><td>{e(str(t['dt']))}</td>"
+            f"<td class=n>{format(float(t['amt']), ',.2f')}</td>"
+            f"<td>{e(acct_by_ba[t['ba']]['acct'])}</td>"
+            f"<td class=descr>{e(t['descr'])}</td>"
+            f"<td>{e(t['cp'])}</td>"
+            f"<td>{e(t['status'])}<div class=why>{e(t['route'])}</div></td>"
+            f"<td>{booked}</td><td>{ai}</td>"
+            f"<td><select class=verdict><option value=''></option><option>OK</option>"
+            f"<option>Wrong COA</option><option>Wrong counterparty</option><option>Other</option></select>"
+            f"<input class=fb placeholder='correct COA / name / note' size=22></td></tr>")
+
     doc = f"""<!doctype html><html><head><meta charset="utf-8">
-<title>History recon scorecard — {args.year}</title>
+<title>History recon — {args.year} — {e(', '.join(entities))}</title>
 <style>
  body{{font-family:-apple-system,Segoe UI,sans-serif;margin:24px;color:#1a202c}}
- h1{{font-size:20px}} h2{{font-size:15px;margin-top:28px;border-bottom:2px solid #e2e8f0;padding-bottom:4px}}
- table{{border-collapse:collapse;font-size:12.5px;margin-top:8px}}
- th{{background:#f7fafc;text-align:left;padding:4px 10px;border-bottom:2px solid #cbd5e0}}
- td{{padding:3px 10px;border-bottom:1px solid #edf2f7;font-variant-numeric:tabular-nums}}
- .note{{color:#718096;font-size:12px}}
+ h1{{font-size:20px;margin-bottom:2px}} h2{{font-size:15px;margin-top:28px;border-bottom:2px solid #e2e8f0;padding-bottom:4px}}
+ table{{border-collapse:collapse;font-size:12px;margin-top:8px;width:100%}}
+ th{{background:#f7fafc;text-align:left;padding:4px 8px;border-bottom:2px solid #cbd5e0;position:sticky;top:0}}
+ td{{padding:3px 8px;border-bottom:1px solid #edf2f7;vertical-align:top}}
+ td.n{{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}}
+ td.descr{{max-width:340px}} .why{{color:#718096;font-size:11px}}
+ tr.review{{background:#fffbea}} .note{{color:#718096;font-size:12.5px}}
+ #export{{position:fixed;right:24px;top:18px;background:#2b6cb0;color:#fff;border:0;border-radius:8px;padding:10px 16px;font-size:13px;cursor:pointer}}
+ ul{{font-size:13px}}
 </style></head><body>
-<h1>Previous-years reconciliation — scorecard {args.year}</h1>
-<p class="note">Shadow run (draft-only, nothing posted). Bank accounts: {e(args.bank_account_ids)}.
-Feedback on any line goes back into rules/corpus, then the year re-runs. POL-124.</p>
-<h2>Categorization mix (route × status)</h2>
-{tbl(["route","status","txns","gross amount"], [(m["route"],m["status"],m["n"],m["amt"]) for m in mix])}
-<h2>Month-end invariants (statement running balance vs ledger incl. drafts)</h2>
-{tbl(["account","coa","month-end","statement","ledger","diff",""], inv_rows)}
-<h2>GST lines produced (AU only expected)</h2>
-{tbl(["gst account","lines","gross"], [(g["acct"],g["n"],g["amt"]) for g in gst]) if gst else "<p class='note'>none</p>"}
-<h2>Counterparty concentration (top 25 by amount)</h2>
-{tbl(["counterparty","txns","gross amount"], [(c["cp"],c["n"],c["amt"]) for c in cps])}
-<h2>Suspects / review queue (review-status, AI-routed, or &gt; $10k — up to 200)</h2>
-{tbl(["txn","date","amount","description","status","route","coa"],
-     [(s["id"],s["dt"],s["amt"],s["descr"],s["status"],s["route"],s["coa"]) for s in suspects])}
-</body></html>"""
+<button id=export onclick=exportFb()>Export my feedback (JSON)</button>
+<h1>Previous-years reconciliation — {args.year}</h1>
+<p class=note><b>Entity:</b> {e(', '.join(entities))}. Shadow run on the clone: entries are DRAFT only, nothing is posted.
+Yellow rows need your input. For any row you disagree with: pick a verdict, type the correct account name or note,
+then click <b>Export my feedback</b> (top right) and send me the file — I apply it (rules / counterparties / corpus), re-run the year, and send a fresh scorecard.</p>
+<h2>Bank accounts covered</h2><ul>{head_lines}</ul>
+<h2>How much booked automatically</h2>
+<table><thead><tr><th>route</th><th>status</th><th>txns</th></tr></thead><tbody>
+{''.join(f'<tr><td>{e(k[0])}</td><td>{e(k[1])}</td><td class=n>{v}</td></tr>' for k, v in sorted(mix.items(), key=lambda x: -x[1]))}
+</tbody></table>
+<h2>Bank balance check — statement vs our books, each month-end</h2>
+<p class=note>"Our books" = every entry (posted + draft) on that bank account up to the date, excluding the temporary opening/park entries.
+A ⚠ means the year isn't fully booked yet at that date (usually the unresolved rows below).</p>
+<table><thead><tr><th>account</th><th>month-end</th><th>bank statement</th><th>our books</th><th>difference</th><th></th></tr></thead>
+<tbody>{inv_rows}</tbody></table>
+<h2>Every transaction ({len(txns)}) — booked account, AI recommendation, and your verdict</h2>
+<table><thead><tr><th>txn</th><th>date</th><th>amount</th><th>bank account</th><th>description</th><th>counterparty</th>
+<th>status / route</th><th>booked to</th><th>AI recommendation</th><th>your verdict + correction</th></tr></thead>
+<tbody>{''.join(txn_rows)}</tbody></table>
+<script>
+function exportFb() {{
+  const rows = [];
+  document.querySelectorAll('tr[data-txn]').forEach(tr => {{
+    const v = tr.querySelector('.verdict').value, f = tr.querySelector('.fb').value;
+    if (v || f) rows.push({{txn: +tr.dataset.txn, verdict: v, input: f}});
+  }});
+  const blob = new Blob([JSON.stringify({{year: {args.year}, bank_account_ids: [{e(args.bank_account_ids)}], feedback: rows}}, null, 1)], {{type: 'application/json'}});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'scorecard_feedback_{args.year}.json'; a.click();
+}}
+</script></body></html>"""
     with open(args.out, "w") as f:
         f.write(doc)
-    print(f"scorecard -> {args.out} ({len(doc)//1024} KB)")
+    print(f"scorecard -> {args.out} ({len(doc)//1024} KB, {len(txns)} txns)")
 
 
 def main():
