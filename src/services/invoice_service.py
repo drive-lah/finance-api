@@ -1055,6 +1055,109 @@ class InvoiceService:
 
         return query.order_by(FinanceInvoice.invoice_date.asc(), FinanceInvoice.id.asc()).all()
 
+    def post_pairing(self, db: Session, invoice_id: int, posted_by: str = "ui") -> dict:
+        """Post a PAIRED (reconcile-arm) invoice — the Mechanism-A posting action (Gaurav, 2026-08-15).
+
+        Algorithm (locked in STATUS I-5 v1):
+          1. invoice must be `paired`; every matched txn must be books-open (>= 2026-01-01) — pre-2026
+             pairings REFUSE (their cash lives in opening balances; the history pipeline books them).
+          2. VOID the txn's interim JE if one exists (categorized/parked; its GST lines unwind with it).
+          3. Bill JE: entity-functional at the invoice-date rate, GROSS (POL-121), POSTED.
+          4. Payment via create_ap_payment_entries — the full stack: payment-date currency conversion,
+             the POL-123 GST claim, auto-FX residue clearing. Posted, txn RECONCILED, match logged.
+        """
+        from datetime import date as _date, datetime as _dt, UTC as _UTC
+        from src.models.transaction import FinanceTransaction, TransactionStatus
+        from src.models.bank_account import FinanceBankAccount
+        from src.models.invoice_payment_match import FinanceInvoicePaymentMatch
+        from src.models.entity import FinanceEntity
+        from src.models.journal_entry import JournalEntryStatus
+        from src.services.fx_service import fx_service
+        from src.utils.errors import BadRequestError
+
+        invoice = self.get_by_id(db, invoice_id)
+        if invoice.status != InvoiceStatus.PAIRED.value:
+            raise BadRequestError(f"Invoice {invoice_id} is not in paired status (is: {invoice.status}).")
+        matches = (db.query(FinanceInvoicePaymentMatch)
+                   .filter(FinanceInvoicePaymentMatch.invoice_id == invoice_id).all())
+        if not matches:
+            raise BadRequestError(f"Invoice {invoice_id} has no payment matches.")
+        txns = [db.get(FinanceTransaction, m.transaction_id) for m in matches]
+        if any(t is None for t in txns):
+            raise BadRequestError("A matched transaction no longer exists.")
+        for t in txns:
+            if t.transaction_date < _date(2026, 1, 1):
+                raise BadRequestError(
+                    f"Txn {t.id} is dated {t.transaction_date} (pre-books-open). Pre-2026 pairings are "
+                    "posted by the history pipeline, never here (POL-124/POL-28).")
+
+        # 2) void any interim JEs on the matched txns
+        voided = []
+        for t in txns:
+            if t.reconciled_journal_entry_id:
+                je = journal_service.void_entry(
+                    db, t.reconciled_journal_entry_id,
+                    reason=f"re-routed through AP by post_pairing of invoice {invoice_id}")
+                if je is not None:
+                    voided.append(je.id)
+                t.reconciled_journal_entry_id = None
+
+        # 3) bill JE — functional at invoice-date rate, gross, POSTED
+        entity_row = db.get(FinanceEntity, invoice.entity_id)
+        func_ccy = entity_row.base_currency if entity_row else None
+        inv_ccy = invoice.currency or func_ccy
+        total_native = Decimal(str(invoice.total_amount))
+        if func_ccy and inv_ccy != func_ccy:
+            total_func, fx_rate = fx_service.to_functional(
+                db, total_native, inv_ccy, func_ccy, invoice.invoice_date)
+        else:
+            total_func, fx_rate = total_native, Decimal("1")
+        debit_code = invoice.contra_account_code
+        if not debit_code:
+            raise BadRequestError(f"Invoice {invoice_id} has no expense account (contra_account_code).")
+        credit_code = self._payable_account_for(db, debit_code)
+        inv_ref = f"Invoice {invoice.invoice_number or invoice.id}"
+        meta = {"currency": inv_ccy, "native_amount": total_native, "fx_rate": fx_rate}
+        bill = journal_service.create(
+            db=db, entity_id=invoice.entity_id, entry_date=invoice.invoice_date,
+            description=f"AP Invoice (post-pairing): {invoice.invoice_number or f'#{invoice.id}'}",
+            lines=[
+                {"account_code": debit_code, "debit_amount": float(total_func), "credit_amount": 0.0,
+                 "description": inv_ref, **meta},
+                {"account_code": credit_code, "debit_amount": 0.0, "credit_amount": float(total_func),
+                 "description": inv_ref, **meta},
+            ],
+            status=JournalEntryStatus.POSTED,
+        )
+        bill.source = "pairing_post"
+        bill.reference_number = f"INV-{invoice.id}"
+        db.flush()
+        invoice.journal_entry_id = bill.id
+
+        # 4) payment(s) via the full-stack constructor
+        payment_ids = []
+        for t in txns:
+            bank_account = db.get(FinanceBankAccount, t.bank_account_id)
+            if not bank_account or not bank_account.coa_account_code:
+                raise BadRequestError(f"Bank account for txn {t.id} has no COA code.")
+            entry = self.create_ap_payment_entries(
+                db=db, bank_account=bank_account, invoice=invoice,
+                txn_date=t.transaction_date, abs_amount=abs(float(t.amount)),
+                source="pairing_post",
+                description=f"AP Payment (post-pairing by {posted_by}): {inv_ref}")
+            entry.status = "POSTED"
+            entry.posted_at = _dt.now(_UTC)
+            t.reconciled_journal_entry_id = entry.id
+            t.status = TransactionStatus.RECONCILED
+            payment_ids.append(entry.id)
+            self.record_payment(db, invoice.id, abs(float(t.amount)))
+        for m in matches:
+            m.state = "logged"
+        db.commit()
+        db.refresh(invoice)
+        return {"invoice_id": invoice.id, "status": invoice.status, "bill_je": bill.id,
+                "payment_jes": payment_ids, "voided_interim_jes": voided}
+
     def match_transaction(
         self,
         db: Session,
