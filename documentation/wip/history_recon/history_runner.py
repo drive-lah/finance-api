@@ -176,7 +176,8 @@ def cmd_scorecard(args):
         need = t["status"] in ("NEEDS_REVIEW", "PENDING", "IMPORTED")
         txn_rows.append(
             f"<tr data-txn={t['id']} data-status=\"{e(t['status'])}\" data-route=\"{e(t['route'])}\" "
-            f"data-acct=\"{e(acct_by_ba[t['ba']]['acct'])}\" class={'review' if need else 'ok'}>"
+            f"data-acct=\"{e(acct_by_ba[t['ba']]['acct'])}\" data-nocp={0 if t['cp'] else 1} "
+            f"class={'review' if need else 'ok'}>"
             f"<td>{t['id']}</td><td>{e(str(t['dt']))}</td>"
             f"<td class=n>{format(float(t['amt']), ',.2f')}</td>"
             f"<td>{e(acct_by_ba[t['ba']]['acct'])}</td>"
@@ -224,6 +225,7 @@ A ⚠ means the year isn't fully booked yet at that date (usually the unresolved
  <select id=froute onchange=applyF()><option value="">all routes</option></select>
  <select id=facct onchange=applyF()><option value="">all bank accounts</option></select>
  <label><input type=checkbox id=fneed onchange=applyF()> only rows needing input</label>
+ <label><input type=checkbox id=fnocp onchange=applyF()> no counterparty identified</label>
  <span id=fcount class=note></span>
 </div>
 <table id=txntable><thead><tr><th>txn</th><th>date</th><th>amount</th><th>bank account</th><th>description</th><th>counterparty</th>
@@ -238,7 +240,8 @@ function applyF() {{
   document.querySelectorAll('#txntable tbody tr').forEach(tr=>{{
     const ok=(!q||tr.textContent.toLowerCase().includes(q))
       && (!st||tr.dataset.status===st) && (!rt||tr.dataset.route===rt)
-      && (!ac||tr.dataset.acct===ac) && (!need||tr.classList.contains('review'));
+      && (!ac||tr.dataset.acct===ac) && (!need||tr.classList.contains('review'))
+      && (!document.getElementById('fnocp').checked||tr.dataset.nocp==='1');
     tr.style.display=ok?'':'none'; if(ok)shown++;
   }});
   document.getElementById('fcount').textContent=shown+' shown';
