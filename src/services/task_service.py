@@ -99,6 +99,21 @@ class TaskService:
                     body["invoice_number"] = inv.invoice_number
         return dicts
 
+    def attach_assignee_names(self, db, dicts: list[dict]) -> list[dict]:
+        """Resolve assignee_user_id → a display name (assignee_name) so the admin all-tasks
+        view shows WHOSE queue each task sits in (Gaurav 2026-08-09). Role-only tasks keep
+        assignee_role as the label. No-op when nothing is user-assigned."""
+        from src.models.user import User
+        uids = {d.get("assignee_user_id") for d in dicts if d.get("assignee_user_id")}
+        if not uids:
+            return dicts
+        names = {r[0]: (r[1] or r[2] or f"user {r[0]}")
+                 for r in db.query(User.id, User.name, User.email).filter(User.id.in_(uids)).all()}
+        for d in dicts:
+            uid = d.get("assignee_user_id")
+            d["assignee_name"] = names.get(uid) if uid else (d.get("assignee_role") or None)
+        return dicts
+
     # ── read (own-scoped) ───────────────────────────────────────────────────────
     def list_scoped(self, db, caller_user_id: int, roles: list[str], is_admin: bool,
                     status: str = None, scope: str = "mine"):
@@ -205,14 +220,44 @@ class TaskService:
             return {"status": TaskStatus.DONE.value if action == "approve"
                     else TaskStatus.RETURNED.value}
 
+        if kind == "vendor" and sid is not None:
+            from src.services.invoice_service import invoice_service
+            if action == "approve":
+                invoice_service.approve_vendor(db, sid, str(caller))
+                return {"status": TaskStatus.DONE.value}
+            elif action == "reject":
+                from src.models.counterparty import FinanceCounterparty
+                cp = db.get(FinanceCounterparty, sid)
+                if cp:
+                    cp.status = "inactive"
+                    cp.is_verified = False
+                return {"status": TaskStatus.RETURNED.value}
+            else:
+                raise BadRequestError(f"Unknown action '{action}' for vendor task.")
+
         if kind == "invoice" and sid is not None:
             from src.services.invoice_service import invoice_service
             if action == "approve":
-                invoice_service.approve(db, sid, approved_by=str(caller))
-                return {"status": TaskStatus.DONE.value}
+                # Two-step sign-off (AW-6) routed through THIS task queue, not a separate surface:
+                # finance_coa_config decides steps + approvers. On a non-final step the task stays
+                # OPEN and is reassigned to the next approver; only the final step posts the JE.
+                from src.services import approval_chain_service as ac
+                from sqlalchemy import text as _text
+                res = ac.decide(db, sid, str(caller), "approved")
+                if res.get("final"):
+                    return {"status": TaskStatus.DONE.value}
+                inv = invoice_service.get_by_id(db, sid)
+                nxt = ac.next_step_for(db, inv)
+                next_uid = db.execute(
+                    _text("SELECT id FROM users WHERE lower(email) = :e"),
+                    {"e": str(nxt.get("approver") or "").lower()},
+                ).scalar() if nxt.get("approver") else None
+                task.assignee_user_id = next_uid
+                task.assignee_role = None if next_uid else "finance.invoices"
+                return {"status": TaskStatus.OPEN.value}
             elif action == "reject":
-                invoice_service.reject(db, sid, rejection_reason=notes or "rejected",
-                                       rejected_by=str(caller))
+                from src.services import approval_chain_service as ac
+                ac.decide(db, sid, str(caller), "rejected", reason=notes or "rejected")
                 return {"status": TaskStatus.RETURNED.value}
             elif action == "void":
                 invoice_service.void(db, sid, voided_by=str(caller),

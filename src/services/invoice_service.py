@@ -8,6 +8,7 @@ payment recording, AP knock-off lookups, and the AI contract review gate.
 import json
 import logging
 import os
+from decimal import Decimal
 from datetime import datetime, date, UTC
 from typing import TYPE_CHECKING, Optional, cast
 
@@ -291,9 +292,25 @@ class InvoiceService:
         Checks for semantic duplicates (same entity+counterparty+invoice_number+date+currency)
         before inserting. Auto-matches against contracts if counterparty is set.
         """
-        # Duplicates are ALLOWED at draft (Gaurav 2026-08-01): we create the invoice and
-        # FLAG it if it duplicates an earlier one; promotion is blocked later (submit gate).
-        # No hard reject here — the dedup verdict is applied after insert.
+        # HARD DUPLICATE BLOCK AT INGEST (Gaurav 2026-08-09, reverses the 2026-08-01 allow-at-draft
+        # policy): a document seen before CANNOT be added. When a file hash is present (the upload
+        # path), run the existing tiered detector; if it returns action="block" (L1 byte-identical
+        # file, or L2 same vendor+invoice#+amount), REJECT — do not create the draft. Historical
+        # bulk imports (no pdf_content_hash) are unaffected.
+        if data.pdf_content_hash:
+            from src.services.duplicate_detection_service import duplicate_detection_service
+            from src.utils.errors import ConflictError
+            verdict = duplicate_detection_service.detect(
+                db, entity_id=data.entity_id, counterparty_id=data.counterparty_id,
+                invoice_number=data.invoice_number, total_amount=data.total_amount,
+                invoice_date=data.invoice_date, currency=data.currency,
+                pdf_content_hash=data.pdf_content_hash,
+            )
+            if getattr(verdict, "action", None) == "block":
+                raise ConflictError(
+                    f"Duplicate invoice — {verdict.reason} This document cannot be added again."
+                )
+
         invoice = FinanceInvoice(
             entity_id=data.entity_id,
             counterparty_id=data.counterparty_id,
@@ -702,44 +719,26 @@ class InvoiceService:
 
         inv_ref = f"Invoice {invoice.invoice_number or invoice.id}"
 
-        if tax > 0:
-            # 3-line GST JE: Dr expense (net) + Dr 1350 GST Input (tax) / Cr AP (total)
-            lines = [
-                {
-                    "account_code": debit_code,
-                    "debit_amount": round(net, 2),
-                    "credit_amount": 0.0,
-                    "description": inv_ref,
-                },
-                {
-                    "account_code": GST_INPUT_ACCOUNT_CODE,
-                    "debit_amount": round(tax, 2),
-                    "credit_amount": 0.0,
-                    "description": f"GST Input Tax - {inv_ref}",
-                },
-                {
-                    "account_code": credit_code,
-                    "debit_amount": 0.0,
-                    "credit_amount": round(total, 2),
-                    "description": inv_ref,
-                },
-            ]
-        else:
-            # Standard 2-line JE: Dr expense / Cr payable (dedicated liability or 2000 AP)
-            lines = [
-                {
-                    "account_code": debit_code,
-                    "debit_amount": total,
-                    "credit_amount": 0.0,
-                    "description": inv_ref,
-                },
-                {
-                    "account_code": credit_code,
-                    "debit_amount": 0.0,
-                    "credit_amount": total,
-                    "description": inv_ref,
-                },
-            ]
+        # GST is CASH-BASIS (POL-118/119, Gaurav 2026-08-14): the bill books GROSS at
+        # approval and posts NO 1350 GST Input line. The input GST credit is claimed
+        # later, at the CASH payment, by the cash-time GST engine (which carves it out of
+        # the expense). The GST amount stays recorded on the invoice (invoice.tax_amount)
+        # for that claim; `tax`/`net` above are retained for validation/record only.
+        # 2-line JE: Dr expense/prepaid (gross) / Cr payable (dedicated liability or 2000 AP).
+        lines = [
+            {
+                "account_code": debit_code,
+                "debit_amount": total,
+                "credit_amount": 0.0,
+                "description": inv_ref,
+            },
+            {
+                "account_code": credit_code,
+                "debit_amount": 0.0,
+                "credit_amount": total,
+                "description": inv_ref,
+            },
+        ]
 
         entry = journal_service.create(
             db=db,
@@ -841,12 +840,18 @@ class InvoiceService:
 
     def void(self, db: Session, invoice_id: int, voided_by: Optional[str] = None,
              void_reason: Optional[str] = None) -> FinanceInvoice:
-        """Void an invoice. Only draft, pending_approval, or rejected invoices can be voided.
-        Captures who/when/why for traceability (voided_by = logged-in user)."""
+        """Void an invoice. Allowed in any pre-posting state where nothing has hit the ledger:
+        draft, needs_fix, reconcile, pending_approval, rejected. Blocked once money or the ledger
+        is involved (paired/approved/paid/partially_paid). Captures who/when/why (voided_by)."""
         invoice = self.get_by_id(db, invoice_id)
 
+        # needs_fix is a held exception (no money moved); reconcile is believed-paid-outside but NOT
+        # yet paired/posted, so voiding it has no ledger effect either — both voidable like draft
+        # (Gaurav 2026-08-09 needs_fix id 236; 2026-08-10 reconcile). paired stays blocked: posting authorized.
         allowed = (
             InvoiceStatus.DRAFT.value,
+            InvoiceStatus.NEEDS_FIX.value,
+            InvoiceStatus.RECONCILE.value,
             InvoiceStatus.PENDING_APPROVAL.value,
             InvoiceStatus.REJECTED.value,
         )
@@ -854,7 +859,7 @@ class InvoiceService:
             from src.utils.errors import ConflictError
             raise ConflictError(
                 f"Cannot void invoice in '{invoice.status}' status. "
-                f"Only draft, pending_approval, or rejected invoices can be voided."
+                f"Only draft, needs_fix, reconcile, pending_approval, or rejected invoices can be voided."
             )
 
         invoice.status = InvoiceStatus.VOID.value
@@ -1352,6 +1357,31 @@ class InvoiceService:
             return None
         return rec_code, pay_code
 
+    def _input_gst_reclass(self, db: Session, invoice: FinanceInvoice, paid_amount: float):
+        """PR-1: at cash payment of a GROSS-booked bill (POL-121), return (expense_code, gst_amount)
+        for the paid slice's claimable input GST — Dr 1350 / Cr <expense COA>. classify() is the ONE
+        gate (respects the invoice's own tax, the account flag, and the vendor gate / DQ-99). Partial
+        payments scale the full-invoice GST by the paid fraction. (None, 0.0) means no claim."""
+        from src.services import gst_service
+        expense_code = invoice.contra_account_code
+        total = float(invoice.total_amount or 0)
+        if not expense_code or total <= 0:
+            return None, 0.0
+        market = gst_service.market_for_entity(invoice.entity_id)
+        vendor_flag = (gst_service.vendor_registered(db, invoice.counterparty_id, market)
+                       if invoice.counterparty_id else None)
+        verdict = gst_service.classify(
+            entity_registered=gst_service.entity_is_gst_registered(db, invoice.entity_id),
+            account_applicable=gst_service.account_gst_applicable(db, expense_code, market),
+            direction="input", leg_touches_bank=True, gross=total,
+            has_invoice=True, invoice_tax=invoice.tax_amount,
+            vendor_registered_flag=vendor_flag,
+        )
+        if verdict.get("account") != gst_service.GST_INPUT or verdict.get("amount", 0.0) <= 0:
+            return None, 0.0
+        fraction = min(1.0, float(paid_amount) / total)
+        return expense_code, round(float(verdict["amount"]) * fraction, 2)
+
     def create_ap_payment_entries(
         self,
         db: Session,
@@ -1378,6 +1408,7 @@ class InvoiceService:
         """
         import uuid
         from src.models.journal_entry import FinanceJournalEntry
+        from src.services import gst_service
 
         bank_entity_id = bank_account.entity_id
         invoice_entity_id = invoice.entity_id
@@ -1389,26 +1420,28 @@ class InvoiceService:
         ap_code = self._payable_account_for(db, invoice.contra_account_code)
 
         if bank_entity_id == invoice_entity_id:
-            # ── Same-entity: single 2-line JE ──────────────────────────────
+            # ── Same-entity: Dr AP / Cr Bank, plus (PR-1) the cash-time input-GST claim ─────
+            lines = [
+                {"account_code": ap_code, "debit_amount": abs_amount, "credit_amount": 0.0,
+                 "description": inv_ref},
+                {"account_code": bank_coa, "debit_amount": 0.0, "credit_amount": abs_amount,
+                 "description": inv_ref},
+            ]
+            # POL-121: the bill was booked GROSS at approval (no 1350). Claim the paid slice's input
+            # GST NOW, at cash payment: Dr 1350 / Cr <expense COA>, moving GST out of the gross expense
+            # into the receivable, dated in the payment's BAS quarter. classify() is the gate.
+            exp_code, gst_amt = self._input_gst_reclass(db, invoice, abs_amount)
+            if exp_code and gst_amt > 0:
+                lines.append({"account_code": gst_service.GST_INPUT, "debit_amount": gst_amt,
+                              "credit_amount": 0.0, "description": f"{inv_ref} — input GST claimed at payment"})
+                lines.append({"account_code": exp_code, "debit_amount": 0.0, "credit_amount": gst_amt,
+                              "description": f"{inv_ref} — expense net of GST (POL-121)"})
             entry = journal_service.create(
                 db=db,
                 entity_id=bank_entity_id,
                 entry_date=txn_date,
                 description=description,
-                lines=[
-                    {
-                        "account_code": ap_code,
-                        "debit_amount": abs_amount,
-                        "credit_amount": 0.0,
-                        "description": inv_ref,
-                    },
-                    {
-                        "account_code": bank_coa,
-                        "debit_amount": 0.0,
-                        "credit_amount": abs_amount,
-                        "description": inv_ref,
-                    },
-                ],
+                lines=lines,
             )
             entry.source = source
             entry.reference_number = f"INV-{invoice.id}"  # trace JE -> invoice
@@ -1771,6 +1804,47 @@ class InvoiceService:
                 f"Duplicate of invoice #{dup.duplicate_of} ({dup.level}). {dup.reason}"
             )
 
+        # 3. COA-required anchors (AW-2 door gate, request-route only). The COA config decides which
+        #    supporting info this expense demands; captured on finance_invoice_metadata at ratify.
+        if invoice.contra_account_code:
+            from src.services import coa_config_service
+            from src.models.invoice_approval import FinanceInvoiceMetadata
+            req = coa_config_service.require_fields(db, invoice.contra_account_code)
+            meta = db.query(FinanceInvoiceMetadata).filter(
+                FinanceInvoiceMetadata.invoice_id == invoice.id
+            ).first()
+            need = []
+            # The trip requirement is satisfied by a trip id OR a vehicle rego — a cost isn't always
+            # trip-specific (e.g. towing is vehicle-level). Either operational anchor clears the gate.
+            if req.get("trip_id") and not (meta and (meta.trip_id or meta.rego)):
+                need.append("trip id or vehicle rego")
+            if req.get("intercom_id") and not (meta and meta.intercom_ticket_id):
+                need.append("ticket number")
+            if need:
+                reasons.append(f"COA {invoice.contra_account_code} requires: " + ", ".join(need))
+
+        # 4. Vendor must be finance-approved (POL-115 — no auto-activation). This is NOT a team-fix
+        #    exception (needs_fix) — it's WAITING ON FINANCE. So the invoice STAYS IN DRAFT; when
+        #    finance approves the vendor, approve_vendor() auto-submits the draft. Return early so
+        #    the invoice never advances past draft while its vendor is pending.
+        if invoice.counterparty_id:
+            cp = db.get(FinanceCounterparty, invoice.counterparty_id)
+            _ctype = str(getattr(cp.type, "value", cp.type)).lower() if cp else ""
+            _cstatus = str(getattr(cp.status, "value", cp.status)).lower() if cp else ""
+            # Hold only genuinely-pending vendors = NOT active. New vendors are created 'inactive'
+            # (counterparty_service.create), so status catches them; approve_vendor flips to active.
+            # Do NOT also require is_verified — 82 legacy vendors are active-but-unverified (e.g.
+            # Experian) and are legitimately usable; keying on is_verified wrongly held their invoices
+            # in draft with no vendor task to clear them (Gaurav 2026-08-10).
+            if cp and _ctype == "vendor" and _cstatus != "active":
+                invoice.submitted_by = submitted_by
+                invoice.submitted_at = datetime.now(UTC)
+                db.commit()
+                db.refresh(invoice)
+                return {"status": InvoiceStatus.DRAFT.value,
+                        "message": f"Held in draft — vendor '{cp.name}' is awaiting finance approval.",
+                        "invoice": _invoice_dict(invoice, db)}
+
         if reasons:
             # Park in needs_fix; stamp the reasons + the duplicate flag (POL-106 gate reads it).
             raw = dict(invoice.ai_extraction_raw or {})
@@ -1839,6 +1913,161 @@ class InvoiceService:
     _DEFAULT_APPROVER_EMAIL = "zilla@drivelah.sg"
     _APPROVAL_HIGH_RISK_MIN = 1000  # amount at/above this flags the task 'high' risk
 
+    def get_metadata(self, db: Session, invoice_id: int) -> dict:
+        from src.models.invoice_approval import FinanceInvoiceMetadata
+        m = db.query(FinanceInvoiceMetadata).filter(
+            FinanceInvoiceMetadata.invoice_id == invoice_id).first()
+        return m.to_dict() if m else {"invoice_id": invoice_id, "trip_id": None,
+                                      "intercom_ticket_id": None, "rego": None, "claim_ref": None}
+
+    def set_metadata(self, db: Session, invoice_id: int, fields: dict) -> dict:
+        """Upsert the supporting anchors captured at ratification (trip / ticket / rego / claim)."""
+        from src.models.invoice_approval import FinanceInvoiceMetadata
+        from datetime import datetime, UTC
+        m = db.query(FinanceInvoiceMetadata).filter(
+            FinanceInvoiceMetadata.invoice_id == invoice_id).first()
+        if m is None:
+            m = FinanceInvoiceMetadata(invoice_id=invoice_id)
+            db.add(m)
+        for k in ("trip_id", "intercom_ticket_id", "rego", "claim_ref"):
+            if k in fields:
+                v = fields[k]
+                setattr(m, k, (str(v).strip() or None) if v is not None else None)
+        m.updated_at = datetime.now(UTC)
+        db.flush()
+        db.commit()
+        return m.to_dict()
+
+    def raise_invoice(self, db: Session, payload: dict) -> dict:
+        """Flow 2 — the Raise-a-vendor-invoice front door.
+
+        1) gate the COA's required anchors (finance_coa_config door gate — request-route only);
+        2) create the draft; 3) store the captured anchors on finance_invoice_metadata;
+        4) submit → pending_approval (assigns the task to the config approver, POL-115).
+        Returns the invoice (with internal_ref) + who it's assigned to.
+        """
+        from src.models.schemas import InvoiceCreate
+        from src.models.invoice_approval import FinanceInvoiceMetadata
+        from src.services import coa_config_service
+        from src.utils.errors import ConflictError
+
+        coa = payload.get("contra_account_code")
+        trip_id = (payload.get("trip_id") or "").strip() or None
+        ticket = (payload.get("intercom_ticket_id") or "").strip() or None
+        rego = (payload.get("rego") or "").strip() or None
+        claim_ref = (payload.get("claim_ref") or "").strip() or None
+
+        # DOOR gate — presence of the anchors this COA demands (live TMS/Intercom validity is AW-5).
+        req = coa_config_service.require_fields(db, coa) if coa else {"trip_id": False, "intercom_id": False, "other": None}
+        missing = []
+        if req.get("trip_id") and not trip_id:
+            missing.append("trip_id")
+        if req.get("intercom_id") and not ticket:
+            missing.append("intercom_ticket_id")
+        if missing:
+            raise ConflictError(f"COA {coa} requires: {', '.join(missing)}")
+
+        # New vendor (Flow 3): create a PENDING counterparty (inactive + unverified) — never active —
+        # so finance must approve it (POL-115). The invoice links to it and holds in draft.
+        new_vendor = bool(payload.get("new_vendor"))
+        counterparty_id = payload.get("counterparty_id")
+        if new_vendor and not counterparty_id and payload.get("vendor_name"):
+            cp = FinanceCounterparty(
+                name=str(payload["vendor_name"]).strip(),
+                type="vendor", status="inactive", is_verified=False,
+                is_gst_registered=bool(payload.get("is_gst_registered", False)),
+            )
+            db.add(cp)
+            db.flush()
+            counterparty_id = cp.id
+
+        create = InvoiceCreate(
+            entity_id=payload["entity_id"],
+            counterparty_id=counterparty_id,
+            invoice_number=payload.get("invoice_number"),
+            invoice_date=payload["invoice_date"],
+            total_amount=payload["total_amount"],
+            currency=payload["currency"],
+            contra_account_code=coa,
+            uploaded_by=payload.get("uploaded_by"),
+            notes=payload.get("notes"),
+            new_vendor=new_vendor,
+        )
+        invoice = self.create(db, create)
+
+        if any([trip_id, ticket, rego, claim_ref]):
+            db.add(FinanceInvoiceMetadata(
+                invoice_id=invoice.id, trip_id=trip_id, intercom_ticket_id=ticket,
+                rego=rego, claim_ref=claim_ref,
+            ))
+            db.flush()
+
+        # New vendor not yet finance-approved → hold the invoice in DRAFT (POL-115) and raise a
+        # finance vendor-approval TASK. When finance approves the vendor, the invoice auto-submits.
+        if new_vendor and counterparty_id:
+            from src.services.task_service import task_service
+            task_service.enqueue(
+                db, type="vendor-approval", source_ref=f"vendor:{counterparty_id}",
+                title=f"Approve new vendor — {payload.get('vendor_name') or ('cp ' + str(counterparty_id))}",
+                summary=f"New vendor requested on {_invoice_dict(invoice, db).get('internal_ref')}; "
+                        f"fill details + approve to unblock the invoice.",
+                assignee_role="finance.invoices", created_by=payload.get("uploaded_by"),
+            )
+            db.commit()
+            return {"status": InvoiceStatus.DRAFT.value,
+                    "message": "Vendor requested — invoice held in draft until finance approves the vendor.",
+                    "invoice": _invoice_dict(invoice, db)}
+
+        return self.submit(db, invoice.id, confirmed=True, submitted_by=payload.get("uploaded_by"))
+
+    def approve_vendor(self, db: Session, counterparty_id: int, approved_by: str) -> dict:
+        """Finance approves a requested vendor → activate + verify it, then auto-submit any invoices
+        held in draft awaiting it (Flow 3)."""
+        cp = db.get(FinanceCounterparty, counterparty_id)
+        if cp is None:
+            from src.utils.errors import NotFoundError
+            raise NotFoundError(f"counterparty {counterparty_id} not found")
+        cp.status = "active"
+        cp.is_verified = True
+        db.flush()
+        # Any draft awaiting this vendor auto-submits now (not just new_vendor-flagged ones — a draft
+        # created via the ratify quick-add isn't flagged but is equally held).
+        held = db.query(FinanceInvoice).filter(
+            FinanceInvoice.counterparty_id == counterparty_id,
+            FinanceInvoice.status == InvoiceStatus.DRAFT.value,
+        ).all()
+        db.commit()
+        submitted, failed = [], []
+        for inv in held:
+            try:
+                self.submit(db, inv.id, confirmed=True, submitted_by=approved_by)
+                submitted.append(inv.id)
+            except Exception as exc:
+                # PR-2: NEVER swallow. A held invoice that fails to auto-submit on vendor approval
+                # is a stuck worklist item — log it, and raise a finance task so a human clears it.
+                # (Safe w.r.t. prior iterations: every successful submit() path COMMITS internally,
+                # so this rollback only reverts the failed submit's uncommitted work — re-review F1.)
+                db.rollback()
+                logger.exception("approve_vendor: auto-submit failed for invoice %s (vendor %s)",
+                                 inv.id, counterparty_id)
+                failed.append({"invoice_id": inv.id, "error": str(exc)})
+                try:
+                    from src.services.task_service import task_service
+                    task_service.enqueue(
+                        db, type="invoice-fix",
+                        title=f"Auto-submit failed after vendor approval — invoice #{inv.id}",
+                        source_ref=f"invoice:{inv.id}", source_system="finance",
+                        summary=(f"Vendor {cp.name or counterparty_id} was approved but invoice #{inv.id} "
+                                 f"could not auto-submit: {exc}"),
+                        assignee_role="finance.invoices", risk="medium", created_by=approved_by,
+                    )
+                    db.commit()
+                except Exception:
+                    db.rollback()
+                    logger.exception("approve_vendor: could not enqueue follow-up task for invoice %s", inv.id)
+        return {"counterparty_id": counterparty_id, "status": "active",
+                "submitted_invoices": submitted, "failed_invoices": failed}
+
     def _enter_pending_approval(self, db: Session, invoice: FinanceInvoice, message: str) -> dict:
         """Move an invoice to pending_approval AND create its assigned approval task — atomically.
         This IS the assignee gate (POL-108): an invoice never sits in pending_approval without a
@@ -1849,11 +2078,20 @@ class InvoiceService:
         from src.services.duplicate_detection_service import duplicate_detection_service
         from src.models.counterparty import FinanceCounterparty
 
-        # Resolve the default approver (zilla) → user id; fall back to a role queue so the
-        # task is ALWAYS assigned (gate holds even if the user row can't be resolved).
+        # Resolve the approver from the COA config (AW-2 sign-off gate): the invoice's expense COA
+        # decides approver_1 (an onboarded employee). This config applies ONLY to the request-raise
+        # route (raised invoices / payout requests) — automated economic-event postings never enter
+        # this path. Fall back to the default approver, then a role queue, so the assignee gate
+        # ALWAYS holds even if config/user can't be resolved.
+        from src.services import coa_config_service
+        route = coa_config_service.routing(
+            db, invoice.contra_account_code,
+            Decimal(str(invoice.total_amount)) if invoice.total_amount is not None else None,
+        )
+        approver_email = route.get("approver_1") or self._DEFAULT_APPROVER_EMAIL
         approver_id = db.execute(
             text("SELECT id FROM users WHERE lower(email) = :e"),
-            {"e": self._DEFAULT_APPROVER_EMAIL},
+            {"e": str(approver_email).lower()},
         ).scalar()
         assignee_role = None if approver_id else "finance.invoices"
 
@@ -1888,7 +2126,7 @@ class InvoiceService:
         return {
             "status": InvoiceStatus.PENDING_APPROVAL.value,
             "message": message,
-            "assigned_to": self._DEFAULT_APPROVER_EMAIL if approver_id else assignee_role,
+            "assigned_to": approver_email if approver_id else assignee_role,
             "invoice": _invoice_dict(invoice, db),
         }
 

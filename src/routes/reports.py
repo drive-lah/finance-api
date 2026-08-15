@@ -110,6 +110,35 @@ def get_pnl():
         return jsonify({"error": str(e)}), 400
 
 
+@reports_bp.route("/bas", methods=["GET"])
+def get_bas():
+    """Australian BAS (GST + PAYG withholding) for a period. entity_id required."""
+    try:
+        entity_id, basis, date_from, date_to, _sgd, _aud = _parse_common()
+        if not entity_id or date_from is None:
+            return jsonify({"error": "entity_id and date_from are required for BAS"}), 400
+        with db_session() as db:
+            return jsonify(report_service.get_bas(
+                db, entity_id, date_from, date_to, basis)), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@reports_bp.route("/bas/detail", methods=["GET"])
+def get_bas_detail():
+    """Per-transaction detail behind one BAS box (?box=1A|1B|G1|W1|W2). entity_id required."""
+    try:
+        entity_id, basis, date_from, date_to, _sgd, _aud = _parse_common()
+        box = request.args.get("box", "").strip()
+        if not entity_id or date_from is None or not box:
+            return jsonify({"error": "entity_id, date_from and box are required"}), 400
+        with db_session() as db:
+            return jsonify(report_service.get_bas_detail(
+                db, entity_id, date_from, date_to, box, basis)), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
 @reports_bp.route("/balance-sheet", methods=["GET"])
 def get_balance_sheet():
     """Balance sheet as at date_to. entity_id → entity; omitted → consolidated."""

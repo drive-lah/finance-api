@@ -1774,23 +1774,30 @@ Return only the JSON object, no explanation."""
                 transaction.transaction_date)
             abs_amount = float(functional_abs)
 
-        apply_gst = self._should_apply_gst(db, contra_code, rule, entity_id, gst_override)
-        gst_rate = self._get_gst_rate(db, entity_id) if apply_gst else 0.0
+        # PR-1: GST at the draft-JE machine now runs through the ONE locked decision
+        # (gst_service.classify), not the old account.gst_applicable boolean. This is a cash
+        # leg (the bank txn), so it recognises input→1350 / output→2500 and — critically —
+        # applies the vendor gate on input (DQ-99): no counterparty or an unregistered vendor
+        # yields REVIEW, i.e. NO auto-claim, instead of the old over-claim on the COA flag alone.
+        gst_account, gst_amount = self._resolve_gst(
+            db, entity_id=entity_id, contra_code=contra_code,
+            counterparty_id=transaction.counterparty_id, abs_amount=abs_amount,
+            direction=("input" if amount < 0 else "output"), rule=rule, gst_override=gst_override,
+        )
 
-        if apply_gst and gst_rate > 0:
-            ex_gst = round(abs_amount / (1 + gst_rate), 2)
-            gst_amount = round(abs_amount - ex_gst, 2)
+        if gst_account and gst_amount > 0:
+            ex_gst = round(abs_amount - gst_amount, 2)
             if amount < 0:
                 lines = [
-                    {"account_code": contra_code,        "debit_amount": ex_gst,    "credit_amount": 0.0,       "description": je_description},
-                    {"account_code": GST_INPUT_TAX_CODE, "debit_amount": gst_amount, "credit_amount": 0.0,       "description": je_description},
-                    {"account_code": bank_coa_code,      "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
+                    {"account_code": contra_code, "debit_amount": ex_gst,    "credit_amount": 0.0,       "description": je_description},
+                    {"account_code": gst_account, "debit_amount": gst_amount, "credit_amount": 0.0,       "description": je_description},
+                    {"account_code": bank_coa_code, "debit_amount": 0.0,      "credit_amount": abs_amount, "description": je_description},
                 ]
             else:
                 lines = [
-                    {"account_code": bank_coa_code,       "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
-                    {"account_code": contra_code,         "debit_amount": 0.0,        "credit_amount": ex_gst,    "description": je_description},
-                    {"account_code": GST_OUTPUT_TAX_CODE, "debit_amount": 0.0,        "credit_amount": gst_amount, "description": je_description},
+                    {"account_code": bank_coa_code, "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
+                    {"account_code": contra_code,   "debit_amount": 0.0,        "credit_amount": ex_gst,    "description": je_description},
+                    {"account_code": gst_account,   "debit_amount": 0.0,        "credit_amount": gst_amount, "description": je_description},
                 ]
         else:
             if amount >= 0:
@@ -2054,6 +2061,62 @@ Return only the JSON object, no explanation."""
     # ------------------------------------------------------------------
     # GST helpers
     # ------------------------------------------------------------------
+
+    def _resolve_gst(
+        self,
+        db: Session,
+        *,
+        entity_id: int,
+        contra_code: str,
+        counterparty_id: Optional[int],
+        abs_amount: float,
+        direction: str,
+        rule: Optional[FinanceCategorizationRule] = None,
+        gst_override: Optional[bool] = None,
+    ) -> tuple[Optional[str], float]:
+        """PR-1: the ONE going-forward GST decision for a matched bank txn (a cash leg).
+
+        Returns (gst_account_code, gst_amount) or (None, 0.0) for no GST. An explicit or rule-level
+        override still forces the answer (operator intent wins); otherwise gst_service.classify() —
+        the locked model — decides, including the input vendor gate (DQ-99). A REVIEW verdict means
+        NO auto-claim: we book the plain 2-line entry and leave the claim for substantiation.
+        """
+        from src.services import gst_service
+
+        # Operator/rule override forces the outcome; only meaningful when the entity is registered.
+        forced: Optional[bool] = gst_override
+        if forced is None and rule is not None and rule.gst_override is not None:
+            forced = rule.gst_override
+        if forced is False:
+            return None, 0.0
+        if forced is True:
+            if not gst_service.entity_is_gst_registered(db, entity_id):
+                return None, 0.0
+            amt = gst_service.gst_from_gross(abs_amount)
+            code = gst_service.GST_INPUT if direction == "input" else gst_service.GST_OUTPUT
+            return (code, amt) if amt > 0 else (None, 0.0)
+
+        market = gst_service.market_for_entity(entity_id)
+        vendor_flag = (
+            gst_service.vendor_registered(db, counterparty_id, market)
+            if (direction == "input" and counterparty_id) else None
+        )
+        # POL-123 bank lane: the contra flag + the vendor gate are the WHOLE decision. No refund
+        # marker (refunds live 100% in the economic-events lane) and no claim-by-default (correct
+        # vendor registrations make the gate claim real AU vendors and exclude foreign ones).
+        verdict = gst_service.classify(
+            entity_registered=gst_service.entity_is_gst_registered(db, entity_id),
+            account_applicable=gst_service.account_gst_applicable(db, contra_code, market),
+            direction=direction,
+            leg_touches_bank=True,
+            gross=abs_amount,
+            has_invoice=False,
+            invoice_tax=None,
+            vendor_registered_flag=vendor_flag,
+        )
+        if verdict.get("account") and verdict.get("amount", 0.0) > 0:
+            return verdict["account"], float(verdict["amount"])
+        return None, 0.0
 
     def _should_apply_gst(
         self,

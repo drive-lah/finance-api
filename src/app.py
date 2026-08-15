@@ -60,6 +60,10 @@ def create_app(config=None):
     from src.routes.claims import claims_bp
     from src.routes.tasks import tasks_bp
     from src.routes.host_payouts import host_payouts_bp
+    from src.routes.coa_config import coa_config_bp
+    from src.routes.requests import requests_bp
+    from src.routes.enrichment import enrichment_bp
+    from src.routes.approvals import approvals_bp
     app.register_blueprint(entities_bp)
     app.register_blueprint(accounts_bp)
     app.register_blueprint(bank_accounts_bp)
@@ -85,6 +89,10 @@ def create_app(config=None):
     app.register_blueprint(claims_bp)
     app.register_blueprint(tasks_bp)
     app.register_blueprint(host_payouts_bp)
+    app.register_blueprint(coa_config_bp)
+    app.register_blueprint(requests_bp)
+    app.register_blueprint(enrichment_bp)
+    app.register_blueprint(approvals_bp)
 
     # Health check endpoint
     @app.route('/health', methods=['GET'])

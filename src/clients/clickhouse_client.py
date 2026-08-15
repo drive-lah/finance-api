@@ -21,13 +21,14 @@ class ClickHouseClient:
         self.base_url = f"http://{self.host}:{self.port}"
         self.timeout = 30
 
-    def execute_single(self, query: str) -> Optional[Dict[str, Any]]:
+    def execute_single(self, query: str, timeout: Optional[int] = None) -> Optional[Dict[str, Any]]:
         """Execute query, return single row as dict. Returns None if no rows."""
-        rows = self.execute_many(query)
+        rows = self.execute_many(query, timeout=timeout)
         return rows[0] if rows else None
 
-    def execute_many(self, query: str) -> List[Dict[str, Any]]:
-        """Execute query, return all rows as list of dicts."""
+    def execute_many(self, query: str, timeout: Optional[int] = None) -> List[Dict[str, Any]]:
+        """Execute query, return all rows as list of dicts. Optional per-call timeout override for
+        the occasional heavy/unindexed table (e.g. the z_mysql mirrors)."""
         try:
             params = {
                 "user": self.user,
@@ -40,7 +41,7 @@ class ClickHouseClient:
                 self.base_url,
                 params=params,
                 data=query,
-                timeout=self.timeout,
+                timeout=timeout or self.timeout,
             )
 
             if response.status_code != 200:

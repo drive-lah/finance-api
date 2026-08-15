@@ -113,7 +113,9 @@ class AccountCreate(BaseModel):
     sub_category: Optional[str] = Field(None, max_length=100, description="Account sub-category")
     description: Optional[str] = Field(None, description="Detailed description of the account")
     is_bank_account: Optional[bool] = Field(default=False, description="Whether this is a bank account")
-    gst_applicable: Optional[bool] = Field(default=False, description="Whether this account is subject to GST")
+    gst_applicable: Optional[bool] = Field(default=False, description="LEGACY single GST flag (POL-118)")
+    gst_applicable_au: Optional[bool] = Field(default=False, description="GST-applicable in Australia")
+    gst_applicable_sg: Optional[bool] = Field(default=False, description="GST-applicable in Singapore")
     status: Optional[AccountStatus] = Field(default=AccountStatus.ACTIVE, description="Account status")
 
     @field_validator('code')
@@ -134,6 +136,8 @@ class AccountUpdate(BaseModel):
     description: Optional[str] = None
     sub_category: Optional[str] = Field(None, max_length=100)
     gst_applicable: Optional[bool] = None
+    gst_applicable_au: Optional[bool] = None
+    gst_applicable_sg: Optional[bool] = None
 
 
 class AccountResponse(BaseModel):
@@ -150,6 +154,8 @@ class AccountResponse(BaseModel):
     description: Optional[str]
     is_bank_account: bool
     gst_applicable: bool
+    gst_applicable_au: bool = False
+    gst_applicable_sg: bool = False
     status: str
     created_at: datetime
     updated_at: datetime
@@ -679,6 +685,7 @@ class CounterpartyCreate(BaseModel):
     address: Optional[str] = None
     tax_registration_number: Optional[str] = Field(None, max_length=100)
     is_gst_registered: Optional[bool] = Field(default=False)
+    gst_registrations: Optional[list[dict]] = Field(default=None, description="Per-country GST registration [{country, registration_number}] (POL-119)")
     payment_terms_days: Optional[int] = Field(None, gt=0)
     default_account_code: Optional[str] = Field(None, max_length=20)
     aliases: Optional[list[str]] = Field(None, description="Alternate bank description strings for L1 enrichment matching")
@@ -716,6 +723,7 @@ class CounterpartyUpdate(BaseModel):
     address: Optional[str] = None
     tax_registration_number: Optional[str] = Field(None, max_length=100)
     is_gst_registered: Optional[bool] = None
+    gst_registrations: Optional[list[dict]] = Field(None, description="Per-country GST registration: [{country, registration_number}] (POL-119)")
     payment_terms_days: Optional[int] = Field(None, gt=0)
     default_account_code: Optional[str] = Field(None, max_length=20)
     aliases: Optional[list[str]] = Field(None, description="Alternate bank description strings for L1 enrichment matching")
@@ -754,6 +762,7 @@ class CounterpartyResponse(BaseModel):
     address: Optional[str] = None
     tax_registration_number: Optional[str] = None
     is_gst_registered: bool
+    gst_registrations: list[dict] = []
     payment_terms_days: Optional[int] = None
     default_account_code: Optional[str] = None
     currency: Optional[str] = None

@@ -63,10 +63,28 @@ class CounterpartyService:
         # Vendors without a default account will use categorization rules or asset parking in Phase 4
         # (No strict validation — allows vendors with NULL default_account_code)
 
+        # NO AUTO-ACTIVATION OF VENDORS (Gaurav 2026-08-09, POL-115): a newly created vendor is
+        # ALWAYS pending — inactive + unverified — and raises a finance vendor-approval task. It only
+        # goes active when finance approves it (invoice_service.approve_vendor). Applies to every
+        # path that creates a vendor (ratify quick-add, raise-new-vendor, counterparties module).
+        data = dict(data)
+        is_vendor = str(data.get("type", "")).lower() == "vendor"
+        if is_vendor:
+            data["status"] = "inactive"
+            data["is_verified"] = False
         cp = FinanceCounterparty(**data)
         db.add(cp)
         db.commit()
         db.refresh(cp)
+        if is_vendor:
+            from src.services.task_service import task_service
+            task_service.enqueue(
+                db, type="vendor-approval", source_ref=f"vendor:{cp.id}",
+                title=f"Approve new vendor — {cp.name}",
+                summary="New vendor created — fill details + approve to activate.",
+                assignee_role="finance.invoices",
+            )
+            db.commit()
         return cp
 
     def update(self, db: Session, counterparty_id: int, data: dict) -> Optional[FinanceCounterparty]:
@@ -79,6 +97,31 @@ class CounterpartyService:
         db.commit()
         db.refresh(cp)
         return cp
+
+    # ── GST vendor gate (POL-119) ───────────────────────────────────────────────
+    # Entity → market. AU entity charges/claims AU GST; SG entities are not GST-registered today.
+    ENTITY_COUNTRY = {3: "AU", 1: "SG", 2: "SG"}
+
+    @staticmethod
+    def market_for_entity(entity_id: Optional[int]) -> Optional[str]:
+        return CounterpartyService.ENTITY_COUNTRY.get(entity_id)
+
+    @staticmethod
+    def registered_in(cp: FinanceCounterparty, country: Optional[str]) -> bool:
+        """Is this vendor GST-registered in `country` (per gst_registrations)? The vendor gate for
+        direct-expense GST: entity registered AND account gst_applicable AND registered_in(vendor)."""
+        if not cp or not country:
+            return False
+        c = country.upper()
+        return any((r.get("country") or "").upper() == c for r in (cp.gst_registrations or []))
+
+    @staticmethod
+    def registration_number(cp: FinanceCounterparty, country: str) -> Optional[str]:
+        c = (country or "").upper()
+        for r in (cp.gst_registrations or []):
+            if (r.get("country") or "").upper() == c:
+                return r.get("registration_number")
+        return None
 
     def delete(self, db: Session, counterparty_id: int) -> bool:
         cp = db.get(FinanceCounterparty, counterparty_id)

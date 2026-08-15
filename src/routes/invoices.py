@@ -126,12 +126,38 @@ def create_invoice():
         return jsonify(_invoice_dict(invoice, db)), 201
 
 
+@invoices_bp.route("/raise", methods=["POST"])
+def raise_invoice():
+    """Flow 2 — raise a vendor invoice: gate COA anchors, create draft, store anchors, submit."""
+    data = request.get_json() or {}
+    with db_session() as db:
+        try:
+            return jsonify(invoice_service.raise_invoice(db, data)), 201
+        except ConflictError as e:
+            return jsonify({"error": str(e)}), 400
+
+
 @invoices_bp.route("/<int:invoice_id>", methods=["GET"])
 def get_invoice(invoice_id: int):
     """Get an invoice by ID."""
     with db_session() as db:
         invoice = invoice_service.get_by_id(db, invoice_id)
         return jsonify(_invoice_dict(invoice, db)), 200
+
+
+@invoices_bp.route("/<int:invoice_id>/metadata", methods=["GET"])
+def get_invoice_metadata(invoice_id: int):
+    """The captured supporting anchors (trip id / ticket number / rego / claim ref)."""
+    with db_session() as db:
+        return jsonify(invoice_service.get_metadata(db, invoice_id))
+
+
+@invoices_bp.route("/<int:invoice_id>/metadata", methods=["PUT"])
+def put_invoice_metadata(invoice_id: int):
+    """Capture/update the supporting anchors during ratification (the COA door gate reads these)."""
+    data = request.get_json(silent=True) or {}
+    with db_session() as db:
+        return jsonify(invoice_service.set_metadata(db, invoice_id, data))
 
 
 @invoices_bp.route("/<int:invoice_id>", methods=["PUT"])
@@ -349,14 +375,24 @@ def extract_invoice():
     from src.services.ai_extraction_service import ai_extraction_service
     from src.services.s3_service import s3_service
 
-    # Load entity names so AI can match Bill-To
+    # Load entity names (Bill-To) + the invoice-valid chart of accounts (the COA picker's options).
     with db_session() as db:
         from src.models.entity import FinanceEntity
+        from src.models.account import FinanceAccount
         entities = db.query(FinanceEntity).filter(FinanceEntity.status == "active").all()
         entity_names = [e.name for e in entities]
+        # Expense / Cost of Sales / non-bank Assets — what a vendor invoice can book to.
+        _INVOICE_COA_TYPES = {"expense", "cost of sales", "asset"}
+        account_list = []
+        for a in db.query(FinanceAccount).all():
+            at = str(getattr(a.account_type, "value", a.account_type) or "").lower()
+            if at in _INVOICE_COA_TYPES and not getattr(a, "is_bank_account", False):
+                account_list.append({"code": a.code, "name": a.name,
+                                     "description": getattr(a, "description", None)})
 
-    logger.info(f"Calling AI extraction service with file_extension={ext}...")
-    result = ai_extraction_service.extract_invoice_data(file_bytes, entity_names=entity_names, file_extension=ext)
+    logger.info(f"Calling AI extraction service with file_extension={ext}... ({len(account_list)} COA options)")
+    result = ai_extraction_service.extract_invoice_data(
+        file_bytes, entity_names=entity_names, file_extension=ext, account_list=account_list)
     logger.info(f"AI extraction complete. Result keys: {list(result.keys())}, extraction_error: {result.get('extraction_error')}")
 
     # Vendor matching — find or prepare auto-create

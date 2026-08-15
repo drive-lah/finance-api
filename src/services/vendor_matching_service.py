@@ -186,17 +186,31 @@ class VendorMatchingService:
         if matched:
             return matched, False, confidence
 
-        # No match — auto-create unverified counterparty
+        # No match — create a PENDING vendor (NO auto-activation, POL-117): inactive + unverified,
+        # and raise a finance vendor-approval task. It goes active only when finance approves it.
         new_cp = FinanceCounterparty(
             name=vendor_name.strip(),
             type=CounterpartyType.VENDOR.value,
             tax_registration_number=vendor_tax_id,
-            status="active",
+            status="inactive",
             is_verified=False,
         )
         db.add(new_cp)
         db.flush()  # get ID without committing
-        logger.info(f"Auto-created unverified counterparty: '{vendor_name}' (id={new_cp.id})")
+        try:
+            from src.services.task_service import task_service
+            task_service.enqueue(
+                db, type="vendor-approval", source_ref=f"vendor:{new_cp.id}",
+                title=f"Approve new vendor — {new_cp.name}",
+                summary="Auto-created from an uploaded invoice (unmatched) — fill details + approve to activate.",
+                assignee_role="finance.invoices",
+            )
+        except Exception as e:
+            # re-review F11: never block extraction, but a silent enqueue failure left vendors
+            # stuck inactive with no signal — make it loudly visible in logs.
+            logger.warning("vendor-approval task enqueue FAILED for new vendor %s — vendor stays "
+                           "inactive with no task: %s", getattr(new_cp, 'id', '?'), e, exc_info=True)
+        logger.info(f"Created PENDING vendor (awaiting finance approval): '{vendor_name}' (id={new_cp.id})")
         return new_cp, True, 0.0
 
 
