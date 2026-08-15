@@ -157,7 +157,8 @@ class PayoutService:
         resolved_bank_account_id = recipient.id if recipient else bank_account_id
 
         payout = FinanceVendorPayout(
-            invoice_id=invoice_id, counterparty_id=inv.counterparty_id, entity_id=inv.entity_id,
+            invoice_id=invoice_id, payable_type="invoice", payable_id=invoice_id, method="system_wise",
+            counterparty_id=inv.counterparty_id, entity_id=inv.entity_id,
             bank_account_id=resolved_bank_account_id, amount=amount, currency=ccy, amount_sgd=amount_sgd,
             wise_profile_id=profile, idempotency_key=f"inv{invoice_id}-{int(datetime.utcnow().timestamp())}",
             state=PayoutState.DRAFT.value, requires_checker=requires_checker, is_dry_run=DRY_RUN,
@@ -364,6 +365,7 @@ class PayoutService:
                    .filter(FinanceVendorPayout.state.in_([PayoutState.SENT.value,
                                                           PayoutState.AWAITING_IMPORT.value]),
                            FinanceVendorPayout.is_dry_run.is_(False),
+                           FinanceVendorPayout.method == "system_wise",  # external_manual has no Wise transfer to poll
                            FinanceVendorPayout.wise_transfer_id.isnot(None)).all())
         checked, changed = 0, []
         for p in pending:

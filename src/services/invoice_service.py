@@ -896,6 +896,18 @@ class InvoiceService:
             after={"amount": amt, "source_bank_account_id": source_bank_account_id,
                    "reference": reference, "remaining_before": round(remaining, 2)},
             actor=actor, reason="paid outside the system"))
+        # PM-7: record the manual payment in the SAME payout register (method='external_manual'), so every
+        # payout — Wise or outside — is one register. No wise_transfer_id (paired via the reconcile lane,
+        # not pair_on_import); state=awaiting_import (money already left us, awaiting the bank line to pair).
+        from src.models.vendor_payout import FinanceVendorPayout, PayoutState
+        db.add(FinanceVendorPayout(
+            invoice_id=invoice_id, payable_type="invoice", payable_id=invoice_id,
+            counterparty_id=invoice.counterparty_id, entity_id=invoice.entity_id,
+            bank_account_id=None,  # our SOURCE account (source_bank_account_id) lives in the audit; this FK is the PAYEE account
+            amount=amt, currency=invoice.currency,
+            method="external_manual", external_reference=reference,
+            state=PayoutState.AWAITING_IMPORT.value, is_dry_run=False,
+            requested_by=actor, requested_at=datetime.now(UTC), settled_at=datetime.now(UTC)))
         from src.services.task_service import task_service
         from src.models.task import TaskStatus
         task_service.close_for_source(db, f"invoice:{invoice_id}", TaskStatus.RETURNED.value,

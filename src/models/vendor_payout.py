@@ -89,6 +89,12 @@ class FinanceVendorPayout(Base):
     __tablename__ = "finance_vendor_payouts"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    # PM-7: how the payout was made. system_wise = Wise-initiated; external_manual = paid outside + recorded.
+    method: Mapped[str] = mapped_column(String(20), default="system_wise", nullable=False)
+    external_reference: Mapped[str | None] = mapped_column(String(120), nullable=True)  # manual ref (no txn id)
+    # PM-8: polymorphic payable (invoice now, payroll next). invoice_id kept for back-compat until PM-4b.
+    payable_type: Mapped[str] = mapped_column(String(16), default="invoice", nullable=False)
+    payable_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     invoice_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("finance_invoices.id"), nullable=False)
     counterparty_id: Mapped[int] = mapped_column(
@@ -136,6 +142,8 @@ class FinanceVendorPayout(Base):
     def to_dict(self) -> dict:
         return {
             "id": self.id, "invoice_id": self.invoice_id, "counterparty_id": self.counterparty_id,
+            "method": self.method, "external_reference": self.external_reference,
+            "payable_type": self.payable_type, "payable_id": self.payable_id,
             "entity_id": self.entity_id, "bank_account_id": self.bank_account_id,
             "amount": float(self.amount) if self.amount is not None else None,
             "currency": self.currency,
