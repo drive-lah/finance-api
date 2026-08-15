@@ -217,10 +217,47 @@ A ⚠ means the year isn't fully booked yet at that date (usually the unresolved
 <table><thead><tr><th>account</th><th>month-end</th><th>bank statement</th><th>our books</th><th>difference</th><th></th></tr></thead>
 <tbody>{inv_rows}</tbody></table>
 <h2>Every transaction ({len(txns)}) — booked account, AI recommendation, and your verdict</h2>
-<table><thead><tr><th>txn</th><th>date</th><th>amount</th><th>bank account</th><th>description</th><th>counterparty</th>
+<div id=filters style="margin:8px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px">
+ <input id=fsearch placeholder="search description / counterparty / account…" size=34 oninput=applyF()>
+ <select id=fstatus onchange=applyF()><option value="">all statuses</option></select>
+ <select id=froute onchange=applyF()><option value="">all routes</option></select>
+ <select id=facct onchange=applyF()><option value="">all bank accounts</option></select>
+ <label><input type=checkbox id=fneed onchange=applyF()> only rows needing input</label>
+ <span id=fcount class=note></span>
+</div>
+<table id=txntable><thead><tr><th>txn</th><th>date</th><th>amount</th><th>bank account</th><th>description</th><th>counterparty</th>
 <th>status / route</th><th>booked to</th><th>AI recommendation</th><th>your verdict + correction</th></tr></thead>
 <tbody>{''.join(txn_rows)}</tbody></table>
 <script>
+function applyF() {{
+  const q=(document.getElementById('fsearch').value||'').toLowerCase();
+  const st=document.getElementById('fstatus').value, rt=document.getElementById('froute').value;
+  const ac=document.getElementById('facct').value, need=document.getElementById('fneed').checked;
+  let shown=0;
+  document.querySelectorAll('#txntable tbody tr').forEach(tr=>{{
+    const tds=tr.querySelectorAll('td');
+    const text=tr.textContent.toLowerCase();
+    const status=tds[6].textContent.split('\n')[0].trim();
+    const route=(tds[6].querySelector('.why')||{{textContent:''}}).textContent.trim();
+    const acct=tds[3].textContent.trim();
+    let ok=(!q||text.includes(q)) && (!st||status.startsWith(st)) && (!rt||route===rt) && (!ac||acct===ac)
+           && (!need||tr.classList.contains('review'));
+    tr.style.display=ok?'':'none'; if(ok)shown++;
+  }});
+  document.getElementById('fcount').textContent=shown+' shown';
+}}
+window.addEventListener('DOMContentLoaded',()=>{{
+  const sts=new Set(), rts=new Set(), acs=new Set();
+  document.querySelectorAll('#txntable tbody tr').forEach(tr=>{{
+    const tds=tr.querySelectorAll('td');
+    sts.add(tds[6].textContent.split('\n')[0].trim().split(' ')[0]);
+    const w=tds[6].querySelector('.why'); if(w&&w.textContent.trim())rts.add(w.textContent.trim());
+    acs.add(tds[3].textContent.trim());
+  }});
+  const fill=(id,vals)=>{{const el=document.getElementById(id);
+    [...vals].sort().forEach(v=>{{if(!v)return;const o=document.createElement('option');o.textContent=v;el.appendChild(o)}})}};
+  fill('fstatus',sts); fill('froute',rts); fill('facct',acs); applyF();
+}});
 function exportFb() {{
   const rows = [];
   document.querySelectorAll('tr[data-txn]').forEach(tr => {{
