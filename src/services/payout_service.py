@@ -315,6 +315,26 @@ class PayoutService:
         return (str(profile_id) if profile_id else payout.wise_profile_id,
                 reg.external_recipient_id if reg else None)
 
+    def _payout_reference(self, db, payout) -> str:
+        """The reference the payee sees on their statement (Wise `details.reference`, ≤35 chars). For an
+        invoice, lead with the VENDOR'S OWN invoice number so they can reconcile it, then our short id
+        for our traceability; for claims/payroll a clear label. The machine match is on wise_transfer_id,
+        NOT this string, so it's purely for human readability."""
+        pt = payout.payable_type or ("invoice" if payout.invoice_id else "other")
+        if pt == "invoice":
+            inv = db.get(FinanceInvoice, payout.invoice_id or payout.payable_id)
+            if inv and inv.invoice_number:
+                ref = f"{inv.invoice_number} DL{inv.id}"     # THEIR number + our id
+            else:
+                ref = f"DL-INV {payout.invoice_id or payout.payable_id}"
+        elif pt == "claim":
+            ref = f"Reimbursement DL-CL{payout.payable_id}"
+        elif pt == "payroll":
+            ref = f"Payroll DL-PR{payout.payable_id}"
+        else:
+            ref = f"DL payout {payout.id}"
+        return ref[:35]
+
     def _send(self, db, payout, actor):
         """Create the Wise transfer + fund it (real), or simulate (dry-run). Approve=send."""
         try:
@@ -336,7 +356,7 @@ class PayoutService:
                     raise BadRequestError("No confirmed Wise recipient for this vendor.")
                 t = wise_service.create_transfer(recipient_id, payout.wise_quote_id,
                                                  payout.idempotency_key,
-                                                 f"INV {payout.invoice_id}")
+                                                 self._payout_reference(db, payout))
                 payout.wise_transfer_id = str(t.get("id"))
                 fund = wise_service.fund_transfer(int(profile_id), payout.wise_transfer_id)
                 if fund.get("__sca_required__"):
