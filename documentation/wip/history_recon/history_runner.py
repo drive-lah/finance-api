@@ -175,7 +175,7 @@ def cmd_scorecard(args):
             ai = f"{coa_label(t['ai_coa'])}{conf}<div class=why>{e(t['ai_why'])}</div>"
         need = t["status"] in ("NEEDS_REVIEW", "PENDING", "IMPORTED")
         txn_rows.append(
-            f"<tr data-txn={t['id']} data-status=\"{e(t['status'])}\" data-route=\"{e(t['route'])}\" "
+            f"<tr data-txn={t['id']} data-amt={float(t['amt'])} data-status=\"{e(t['status'])}\" data-route=\"{e(t['route'])}\" "
             f"data-acct=\"{e(acct_by_ba[t['ba']]['acct'])}\" data-nocp={0 if t['cp'] else 1} "
             f"class={'review' if need else 'ok'}>"
             f"<td>{t['id']}</td><td>{e(str(t['dt']))}</td>"
@@ -228,7 +228,7 @@ A ⚠ means the year isn't fully booked yet at that date (usually the unresolved
  <label><input type=checkbox id=fnocp onchange=applyF()> no counterparty identified</label>
  <span id=fcount class=note></span>
 </div>
-<table id=txntable><thead><tr><th>txn</th><th>date</th><th>amount</th><th>bank account</th><th>description</th><th>counterparty</th>
+<table id=txntable><thead><tr><th>txn</th><th>date</th><th style=cursor:pointer onclick=sortAmt() title="sort by amount">amount ⇅</th><th>bank account</th><th>description</th><th>counterparty</th>
 <th>status / route</th><th>booked to</th><th>AI recommendation</th><th>your verdict + correction</th></tr></thead>
 <tbody>{''.join(txn_rows)}</tbody></table>
 <script>
@@ -257,6 +257,13 @@ window.addEventListener('DOMContentLoaded',()=>{{
     [...vals].sort().forEach(v=>{{const o=document.createElement('option');o.textContent=v;el.appendChild(o)}})}};
   fill('fstatus',sts); fill('froute',rts); fill('facct',acs); applyF();
 }});
+let sortDir=0;
+function sortAmt() {{
+  sortDir = sortDir===1 ? -1 : 1;
+  const tb=document.querySelector('#txntable tbody');
+  [...tb.querySelectorAll('tr')].sort((a,b)=>sortDir*(Math.abs(+b.dataset.amt)-Math.abs(+a.dataset.amt)))
+    .forEach(tr=>tb.appendChild(tr));
+}}
 function exportFb() {{
   const rows = [];
   document.querySelectorAll('tr[data-txn]').forEach(tr => {{
