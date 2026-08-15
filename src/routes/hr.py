@@ -383,6 +383,17 @@ def submit_payroll_for_approval(run_id: int):
         return jsonify(payroll_service.submit_for_approval(db, run_id, _actor()))
 
 
+@hr_bp.route("/payroll-runs/<int:run_id>/lines/<int:item_id>/adjust", methods=["POST"])
+def adjust_payroll_line(run_id: int, item_id: int):
+    """PR-6: adjust a DRAFT run's payslip line (gross_amount or hours_worked), recomputing deductions +
+    net, with a MANDATORY reason written to the append-only adjustment audit."""
+    body = request.get_json(force=True) or {}
+    with db_session() as db:
+        return jsonify(hr_payroll_service.adjust_line(
+            db, item_id, gross_amount=body.get("gross_amount"), hours_worked=body.get("hours_worked"),
+            reason=body.get("reason", ""), actor=_actor()))
+
+
 @hr_bp.route("/payroll-runs/<int:run_id>/fan-out", methods=["POST"])
 def fan_out_payroll(run_id: int):
     """PR-4: fan a POSTED run out into the payout register (per-employee net + statutory payables)."""

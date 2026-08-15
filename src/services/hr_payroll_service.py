@@ -188,6 +188,82 @@ class HrPayrollService:
     # Payroll run — Step 1: create draft
     # ──────────────────────────────────────────────────────────────────────────
 
+    def _compute_deductions(self, db, employee_id, run_date, gross):
+        """Given a gross, compute (employee_deductions, employer_contributions, net, deduction_lines) from
+        the employee's active deduction rules. Shared by create_run and adjust_line (PR-6) so an adjusted
+        gross recomputes deductions + net consistently."""
+        rules = self._active_deduction_rules(db, employee_id, run_date)
+        deduction_lines, emp_ded, emp_contrib = [], Decimal("0"), Decimal("0")
+        for rule in rules:
+            amount = self._calculate_deduction(rule, gross)
+            if amount <= 0:
+                continue
+            deduction_lines.append({
+                "type": rule.deduction_type,
+                "label": rule.label or rule.deduction_type.replace("_", " ").title(),
+                "amount": float(amount), "employee_bears": rule.employee_bears,
+                "coa_debit_code": rule.coa_debit_code, "coa_credit_code": rule.coa_credit_code})
+            if rule.employee_bears:
+                emp_ded += amount
+            else:
+                emp_contrib += amount
+        return emp_ded, emp_contrib, gross - emp_ded, deduction_lines
+
+    def adjust_line(self, db, item_id: int, *, gross_amount=None, hours_worked=None, reason: str,
+                    actor=None) -> dict:
+        """PR-6: adjust a DRAFT run's payslip line, RECOMPUTING deductions + net, with a MANDATORY reason
+        written to the append-only audit (system-generated original is preserved on the line). Only DRAFT
+        runs (before approval) are adjustable. Returns the updated item + the audit rows."""
+        from src.models.hr_payroll import HrPayrollItem
+        from src.models.hr_employee import HrEmployee
+        from src.models.payroll_adjustment import FinancePayrollAdjustment
+        from src.utils.errors import BadRequestError, NotFoundError
+        if not reason or not reason.strip():
+            raise BadRequestError("A reason is required for any payroll adjustment.")
+        item = db.get(HrPayrollItem, item_id)
+        if not item:
+            raise NotFoundError(f"Payroll line {item_id} not found")
+        run = db.get(FinancePayrollRun, item.finance_payroll_run_id)
+        if not run or run.status != "DRAFT":
+            raise BadRequestError(f"Only a DRAFT run can be adjusted (run is {run.status if run else '—'}).")
+        emp = db.get(HrEmployee, item.employee_id)
+        run_date = run.run_date
+        old = {"gross": float(item.gross_amount), "net": float(item.net_amount),
+               "hours": float(item.hours_worked) if item.hours_worked is not None else None}
+        # derive the new gross: explicit override, or rate × new hours (hourly)
+        if hours_worked is not None:
+            comp = self._active_compensation(db, emp.id, run_date)
+            new_gross = Decimal(str(comp.gross_amount)) * Decimal(str(hours_worked))
+            item.hours_worked = hours_worked
+        elif gross_amount is not None:
+            new_gross = Decimal(str(gross_amount))
+        else:
+            raise BadRequestError("Provide gross_amount or hours_worked to adjust.")
+        emp_ded, emp_contrib, net, lines = self._compute_deductions(db, emp.id, run_date, new_gross)
+        item.gross_amount = new_gross
+        item.employee_deductions = emp_ded
+        item.employer_contributions = emp_contrib
+        item.net_amount = net
+        item.deduction_lines = lines
+        db.flush()
+        audits = []
+        for field, ov, nv in [("gross", old["gross"], float(new_gross)),
+                              ("net", old["net"], float(net)),
+                              ("hours", old["hours"], (float(hours_worked) if hours_worked is not None else old["hours"]))]:
+            if ov != nv:
+                a = FinancePayrollAdjustment(run_id=run.id, payroll_item_id=item.id, employee_id=emp.id,
+                                             field=field, old_value=(str(ov) if ov is not None else None),
+                                             new_value=(str(nv) if nv is not None else None),
+                                             reason=reason.strip(), actor=(actor or {}).get("user_id"))
+                db.add(a); db.flush(); audits.append(a.to_dict())
+        # keep the run totals in sync
+        items = db.query(HrPayrollItem).filter(HrPayrollItem.finance_payroll_run_id == run.id).all()
+        run.gross_amount = sum(Decimal(str(i.gross_amount)) for i in items)
+        run.net_amount = sum(Decimal(str(i.net_amount)) for i in items)
+        db.commit()
+        return {"item_id": item.id, "gross": float(item.gross_amount), "net": float(item.net_amount),
+                "adjustments": audits}
+
     def create_run(self, db: Session, data: dict) -> FinancePayrollRun:
         """
         Create a DRAFT payroll run and auto-calculate payslip items.
@@ -270,30 +346,7 @@ class HrPayrollService:
             else:
                 gross = Decimal(str(comp.gross_amount))
 
-            rules = self._active_deduction_rules(db, emp.id, run_date)
-            deduction_lines = []
-            emp_ded = Decimal("0")
-            emp_contrib = Decimal("0")
-
-            for rule in rules:
-                amount = self._calculate_deduction(rule, gross)
-                if amount <= 0:
-                    continue
-                label = rule.label or rule.deduction_type.replace("_", " ").title()
-                deduction_lines.append({
-                    "type": rule.deduction_type,
-                    "label": label,
-                    "amount": float(amount),
-                    "employee_bears": rule.employee_bears,
-                    "coa_debit_code": rule.coa_debit_code,
-                    "coa_credit_code": rule.coa_credit_code,
-                })
-                if rule.employee_bears:
-                    emp_ded += amount
-                else:
-                    emp_contrib += amount
-
-            net = gross - emp_ded
+            emp_ded, emp_contrib, net, deduction_lines = self._compute_deductions(db, emp.id, run_date, gross)
             item_data_list.append({
                 "employee_id": emp.id,
                 "hours_worked": contractor_hours.get(emp.id),
@@ -351,6 +404,8 @@ class HrPayrollService:
                 employee_deductions=item["employee_deductions"],
                 employer_contributions=item["employer_contributions"],
                 net_amount=item["net_amount"],
+                system_gross_amount=item["gross_amount"],  # PR-6 baseline (immutable)
+                system_net_amount=item["net_amount"],
                 currency=item["currency"],
                 deduction_lines=item["deduction_lines"],
             ))
