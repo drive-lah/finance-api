@@ -784,14 +784,17 @@ class CategorizationService:
             if not ba or not ba.entity_id:
                 continue
             abs_amount = abs(float(txn.amount))
-            lo = txn.transaction_date - timedelta(days=7)
-            hi = txn.transaction_date + timedelta(days=7)
+            # A claim is reimbursed AFTER approval, often weeks later — so window on "approved on/before
+            # the payment (+1d grace), within the last 180d", not a tight ±7d around approval. Oldest first.
+            lo = txn.transaction_date - timedelta(days=180)
+            hi = txn.transaction_date + timedelta(days=1)
             claim = (db.query(FinanceEmployeeClaim)
-                     .filter(FinanceEmployeeClaim.status == ClaimStatus.APPROVED.value,
+                     .filter(FinanceEmployeeClaim.status.in_(
+                                 [ClaimStatus.APPROVED.value, ClaimStatus.PAYMENT_INITIATED.value]),
                              FinanceEmployeeClaim.entity_id == ba.entity_id,
                              FinanceEmployeeClaim.transaction_id.is_(None),
-                             FinanceEmployeeClaim.approved_at.between(lo, hi + timedelta(days=1)))
-                     .order_by(FinanceEmployeeClaim.id.asc()).all())
+                             FinanceEmployeeClaim.approved_at.between(lo, hi))
+                     .order_by(FinanceEmployeeClaim.approved_at.asc(), FinanceEmployeeClaim.id.asc()).all())
             match = next((c for c in claim if abs(float(c.amount) - abs_amount) <= 0.01), None)
             if not match:
                 continue
