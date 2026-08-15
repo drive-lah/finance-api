@@ -1473,6 +1473,34 @@ class InvoiceService:
                               "credit_amount": 0.0, "description": f"{inv_ref} — input GST claimed at payment"})
                 lines.append({"account_code": exp_code, "debit_amount": 0.0, "credit_amount": gst_amt,
                               "description": f"{inv_ref} — expense net of GST (POL-121)"})
+
+            # AUTO-FX CLEARING (Gaurav, 2026-08-15): when this payment settles the invoice in NATIVE
+            # terms, any functional-currency residue on the payable (invoice-date rate vs payment-date
+            # actual) clears to 7100 FX Gains/Losses ON THE SAME JE — a foreign-currency payment can
+            # never strand a residue on AP. Traced via the shared INV-<id> reference.
+            if _bank_ccy != _func_ccy or (invoice.currency and invoice.currency != _func_ccy):
+                from sqlalchemy import text as _text
+                _ap_open = Decimal(str(db.execute(_text(
+                    """SELECT coalesce(sum(l.credit_amount - l.debit_amount), 0)
+                       FROM finance_journal_lines l JOIN finance_journal_entries je ON je.id = l.entry_id
+                       WHERE je.status = 'POSTED' AND l.account_code = :ap AND l.entity_id = :ent
+                         AND je.reference_number = :ref"""),
+                    {"ap": ap_code, "ent": bank_entity_id, "ref": f"INV-{invoice.id}"}).scalar() or 0))
+                _residue = _ap_open - Decimal(str(abs_amount))  # what this payment leaves behind
+                _paid_native = _native_amt
+                _inv_total = Decimal(str(invoice.total_amount or 0))
+                _fully_paid = abs(_paid_native - _inv_total) <= Decimal("0.02") or _paid_native >= _inv_total
+                if _fully_paid and abs(_residue) > Decimal("0.005"):
+                    if _residue > 0:   # payable exceeds cash -> FX gain
+                        lines.append({"account_code": ap_code, "debit_amount": float(_residue),
+                                      "credit_amount": 0.0, "description": f"{inv_ref} — FX clearing"})
+                        lines.append({"account_code": "7100", "debit_amount": 0.0,
+                                      "credit_amount": float(_residue), "description": f"{inv_ref} — FX gain"})
+                    else:
+                        lines.append({"account_code": "7100", "debit_amount": float(-_residue),
+                                      "credit_amount": 0.0, "description": f"{inv_ref} — FX loss"})
+                        lines.append({"account_code": ap_code, "debit_amount": 0.0,
+                                      "credit_amount": float(-_residue), "description": f"{inv_ref} — FX clearing"})
             entry = journal_service.create(
                 db=db,
                 entity_id=bank_entity_id,
