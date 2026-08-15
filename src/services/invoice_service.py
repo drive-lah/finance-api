@@ -1150,7 +1150,19 @@ class InvoiceService:
             t.reconciled_journal_entry_id = entry.id
             t.status = TransactionStatus.RECONCILED
             payment_ids.append(entry.id)
-            self.record_payment(db, invoice.id, abs(float(t.amount)))
+            # amount_paid lives in the INVOICE's currency (record_payment convention). A payment
+            # from a bank in another currency converts at the payment date; when it settles the
+            # invoice (within the 2-cent tolerance), record the FULL invoice total so the header
+            # closes exactly (Gaurav ruling, 2026-08-15).
+            _pay_dec = Decimal(str(abs(float(t.amount))))
+            _txn_ccy = (t.currency or "").upper()
+            _icy = (invoice.currency or "").upper()
+            if _txn_ccy and _icy and _txn_ccy != _icy:
+                _pay_dec, _ = fx_service.to_functional(db, _pay_dec, _txn_ccy, _icy, t.transaction_date)
+            _remaining = Decimal(str(invoice.total_amount)) - Decimal(str(invoice.amount_paid))
+            if abs(_pay_dec - _remaining) <= Decimal("0.02") or _pay_dec > _remaining:
+                _pay_dec = _remaining
+            self.record_payment(db, invoice.id, float(_pay_dec))
         for m in matches:
             m.state = "logged"
         db.commit()
@@ -1590,7 +1602,13 @@ class InvoiceService:
                          AND je.reference_number = :ref"""),
                     {"ap": ap_code, "ent": bank_entity_id, "ref": f"INV-{invoice.id}"}).scalar() or 0))
                 _residue = _ap_open - Decimal(str(abs_amount))  # what this payment leaves behind
-                _paid_native = _native_amt
+                # Settlement is judged in the INVOICE's currency: a payment from a bank in a third
+                # currency converts at the payment date before comparing against the invoice total.
+                _inv_ccy = (invoice.currency or _func_ccy).upper()
+                if _bank_ccy == _inv_ccy:
+                    _paid_native = _native_amt
+                else:
+                    _paid_native, _ = fx_service.to_functional(db, _native_amt, _bank_ccy, _inv_ccy, txn_date)
                 _inv_total = Decimal(str(invoice.total_amount or 0))
                 _fully_paid = abs(_paid_native - _inv_total) <= Decimal("0.02") or _paid_native >= _inv_total
                 if _fully_paid and abs(_residue) > Decimal("0.005"):
