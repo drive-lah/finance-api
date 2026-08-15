@@ -4,7 +4,7 @@
 
 **Last updated:** 2026-08-02
 **2026-08-02:** Revenue+cost re-architecture POSTED LIVE 100% (AUD-12/RA-10 cutover done, Gaurav confirm). Stripe Connect recon PARKED (openings sound; connect closings under-captured — see ▶ Stripe Connect PARKED). **New mega-workstream opened: §2.7 Vendor Payment Reconciliation** (per-vendor Statement of Account / true outstanding).
-**Overall:** Multi-entity (SG + AU) double-entry accounting platform. The **Capture → Classify → Record** core is strong and green; the **last mile** — financial reports (P&L / Balance Sheet / Business-Line Margin), period close, consolidation — is the thin, mostly-unbuilt part. We're ~75% an ingestion engine, ~25% an accounting system. **Active workstream:** the **6-year historical reconciliation** — Stage-1 DECISION-COMPLETE for counterparties (S-2) and rules (S-3); execution blocked on the target-DB call (S-5); corpus persistence (S-4) and RAG wiring remain; then Stage-2 replay.
+**Overall:** Multi-entity (SG + AU) double-entry accounting platform. The **Capture → Classify → Record** core is strong and green; the **last mile** — financial reports (P&L / Balance Sheet / Business-Line Margin), period close, consolidation — is the thin, mostly-unbuilt part. We're ~75% an ingestion engine, ~25% an accounting system. **Active workstream:** the **previous-years reconciliation (2019–2025)** — Stage-1 prep (S-1..S-5 counterparties/rules/corpus) DONE + applied to live (2026-07-24); **Stage-2 execution structure now LOCKED = POL-124 / §2.0c / `wip/HISTORY_RECON_PIPELINE.md`** (year-at-a-time, engine+economic-events, agent lanes, HTML scorecard, re-park, jurisdictional closes).
 
 **Verified ground truth (2026-07-31):** `pytest tests/ --ignore=tests/stripe_sync` = **637 pass / 8 fail** — the 8 are ALL `test_economic_events` (view-map seed missing: "no view map for trip_revenue_accrual"); **proven pre-existing** (fail identically on HEAD~1, untouched by this session). This session's modules green: categorization **138/0**, invoice **21/0**. **Committed locally at 41eb1fe, 2026-07-31** (branch `finance-system-2026-07-31`, unpushed). **DB migrations applied through 050** (`alembic current` == head). Canonical docs: STATUS (state) · IDEAL_STATE (vision) · KNOWLEDGE (business facts).
 
@@ -27,6 +27,8 @@
 ---
 
 ## ▶ Closing Path — LOCKED PLAN (Gaurav, 2026-07-25): H1-26 first, then historical, then future-forward
+
+> **Phase-B "historical" is now SPECCED: POL-124 / §2.0c / `wip/HISTORY_RECON_PIPELINE.md` (2026-08-15).** H1-26 (Phase A) is closed; the mammoth is the active phase.
 
 **Phase A — H1-2026 financial finalisation** (the current goal; "finalised" = TB tie-out + P&L + Balance Sheet + GST summary + consolidated SG+AU in USD, per D5). Steps run in order; 0–6 need nothing from Gaurav. Done: **A-2** (depreciation study → D1 hybrid) · **A-3** (RAG wired into Phase 4D; suite 596/0).
 
@@ -276,7 +278,7 @@ Handles **two GL shapes** (AU GL-CSV with a `Split` contra; SG/Ventures grouped 
 
 **First full run (all 3 entities, 72,837 bank records):** A=776 vendors · B=346 rule-candidates (≥90% purity, ≥5 hits) · C=27,394 transfers/IC · D=2,023 AP · E=138 accrual patterns · F=21 revenue patterns · **G=6,944 corpus residual**. Already surfaced data-quality findings (SG Stripe payouts booked to "Uncategorised Income"; Ventures inflows = investor share capital). **Buckets A (counterparties) + B (rules) fully resolved — final artifacts + state in §2.2.4 (S-1…S-3). Next:** persist the G corpus into `CategorizationRetriever` (S-4), then wire RAG into Phase 4D (§2.2 item 3a).
 
-**Scope:** `CorpusMining` = **Stage 1 only** (read-only GL analysis, runs per-entity + aggregate; reads the ledger, NOT the bank statements — the GL already carries each bank line's shape + COA translation). **Stage 2 (the reconciliation *execution*: import bank statements → categorize → reconcile) is a separate concern — structure DEFERRED (2026-06-01, "decide later").** ⚠️ **Stage-2 requirement (confirmed):** before relying on the Stage-1 rules/corpus, **cross-check raw bank-statement descriptions vs the GL `Memo`** the corpus was trained on — catch QuickBooks-renamed descriptions (drift) so the rules actually fire on import text. Also do a bank↔GL coverage diff (every bank line recorded?).
+**Scope:** `CorpusMining` = **Stage 1 only** (read-only GL analysis, runs per-entity + aggregate; reads the ledger, NOT the bank statements — the GL already carries each bank line's shape + COA translation). **Stage 2 (the reconciliation *execution*) — structure now DECIDED 2026-08-15 = POL-124 / §2.0c / `wip/HISTORY_RECON_PIPELINE.md` (supersedes the 2026-06-01 "decide later").** ⚠️ **Stage-2 requirement (confirmed):** before relying on the Stage-1 rules/corpus, **cross-check raw bank-statement descriptions vs the GL `Memo`** the corpus was trained on — catch QuickBooks-renamed descriptions (drift) so the rules actually fire on import text. Also do a bank↔GL coverage diff (every bank line recorded?).
 
 ### 2.2.4 Historical reconciliation — workstream state (canonical; business facts live in `KNOWLEDGE.md`)
 
