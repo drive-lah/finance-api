@@ -186,7 +186,25 @@ class JournalService:
         all_exist, missing_code = self.validate_accounts_exist(db, entity_id, account_codes)
         if not all_exist:
             raise ValueError(f"Account code '{missing_code}' does not exist for entity {entity_id}")
-        
+
+        # G1 invariant (POL-141/142): a line that DECLARES a foreign currency (currency != the entity's
+        # functional currency) must carry conversion metadata — native_amount AND a real fx_rate != 1 —
+        # so a foreign amount can never be booked at fx=1 unconverted (the recurring defect this rebuild
+        # targets). Lines that omit `currency` are treated as functional (legacy same-ccy callers) and
+        # pass; only an explicit foreign declaration without conversion is rejected.
+        from src.models.entity import FinanceEntity as _FE
+        _entity_row = db.get(_FE, entity_id)
+        _func_ccy = _entity_row.base_currency if _entity_row else None
+        for _ld in lines:
+            _lccy = _ld.get("currency")
+            if _lccy and _func_ccy and _lccy != _func_ccy:
+                _rate = _ld.get("fx_rate")
+                if _ld.get("native_amount") is None or _rate is None or Decimal(str(_rate)) == Decimal("1"):
+                    raise ValueError(
+                        f"JE line declares currency {_lccy} but the entity's functional currency is "
+                        f"{_func_ccy}, with no valid conversion (native_amount + fx_rate != 1). Refusing "
+                        f"to book a foreign amount unconverted (POL-141).")
+
         # Create journal entry
         entry = FinanceJournalEntry(
             entity_id=entity_id,
