@@ -74,6 +74,30 @@ class PayoutService:
             })
         return out
 
+    def _assert_source_balance(self, profile_id: int, ccy: str, amount: float) -> None:
+        """POL-137: pay ONLY out of a same-currency Wise balance — never let Wise auto-convert on the
+        SOURCE side. We pay the payable's own currency (source==target==ccy), so the money must come out
+        of our `ccy` balance. If we hold no `ccy` balance, or not enough of it, BLOCK and tell ops to top
+        up that currency — do not fall back to converting from another balance. (Whatever conversion Wise
+        does at DELIVERY to land it in the vendor's local account is the destination's business, not ours.)"""
+        try:
+            balances = wise_service.get_balances(int(profile_id))
+        except Exception as e:
+            raise BadRequestError(f"Could not read Wise balances to confirm a {ccy} balance: {e}")
+        held = None
+        for b in balances:
+            if (b.get("currency") or "").upper() == (ccy or "").upper():
+                held = float((b.get("amount") or {}).get("value") or 0)
+                break
+        if held is None:
+            raise BadRequestError(
+                f"No {ccy} balance on this Wise profile. We pay in the payable's currency and never "
+                f"auto-convert — top up the {ccy} balance before paying.")
+        if held + 1e-9 < float(amount):
+            raise BadRequestError(
+                f"Insufficient {ccy} balance: holding {held:.2f} {ccy}, need {float(amount):.2f} {ccy}. "
+                f"Top up the {ccy} balance — we never convert from another currency to fund a payout.")
+
     # ── create + send (the "Pay" action) ────────────────────────────────────────
     def create_payout(self, db, invoice_id: int, bank_account_id, actor: dict,
                       amount: float = None) -> FinanceVendorPayout:
@@ -253,6 +277,9 @@ class PayoutService:
                 # falling back to the legacy ENTITY_WISE_PROFILE + embedded recipient when the new
                 # tables/rows aren't present (keeps the un-migrated prod instance working).
                 profile_id, recipient_id = self._resolve_pay_target(db, payout)
+                # POL-137: confirm we hold enough of the payable's OWN currency before anything moves —
+                # source==target==payable ccy, funded from that balance, no source-side conversion.
+                self._assert_source_balance(int(profile_id), payout.currency, float(payout.amount))
                 q = wise_service.create_quote(int(profile_id), payout.currency,
                                               payout.currency, float(payout.amount))
                 payout.wise_quote_id = str(q.get("id"))
