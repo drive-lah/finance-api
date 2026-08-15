@@ -75,7 +75,8 @@ class PayoutService:
         return out
 
     # ── create + send (the "Pay" action) ────────────────────────────────────────
-    def create_payout(self, db, invoice_id: int, bank_account_id, actor: dict) -> FinanceVendorPayout:
+    def create_payout(self, db, invoice_id: int, bank_account_id, actor: dict,
+                      amount: float = None) -> FinanceVendorPayout:
         inv = db.get(FinanceInvoice, invoice_id)
         if not inv:
             raise NotFoundError(f"Invoice {invoice_id} not found")
@@ -101,7 +102,11 @@ class PayoutService:
         if not inv.entity_id or inv.entity_id not in ENTITY_WISE_PROFILE:
             raise BadRequestError(f"Invoice entity {inv.entity_id} has no Wise profile.")
 
-        amount = round(remaining, 2)
+        # Partial payments (POL-136): the caller may pay a LOWER amount than the balance. Default = full
+        # remaining; an override must be > 0 and ≤ remaining. On pairing, amount < total → partially_paid.
+        amount = round(float(amount), 2) if amount is not None else round(remaining, 2)
+        if amount <= 0 or amount - remaining > 0.01:
+            raise BadRequestError(f"Payout amount {amount} must be > 0 and ≤ the remaining balance {remaining:.2f}.")
         ccy = inv.currency or "SGD"
         amount_sgd = _to_sgd(amount, ccy)
         requires_checker = amount_sgd is not None and Decimal(str(amount_sgd)) >= CHECKER_THRESHOLD_SGD

@@ -115,7 +115,7 @@ def create_payout():
         raise BadRequestError("invoice_id is required")
     with db_session() as db:
         p = payout_service.create_payout(
-            db, int(invoice_id), body.get("bank_account_id"), _actor())
+            db, int(invoice_id), body.get("bank_account_id"), _actor(), amount=body.get("amount"))
         db.flush()
         return jsonify(p.to_dict()), 201
 

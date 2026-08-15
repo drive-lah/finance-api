@@ -865,21 +865,42 @@ class InvoiceService:
         db.refresh(invoice)
         return invoice
 
-    def mark_paid_already(self, db: Session, invoice_id: int, actor: Optional[str] = None) -> FinanceInvoice:
-        """POL-132/135: 'paid outside the system'. Move an APPROVED payable into the reconciliation arm
-        (`reconcile`), where the categorization engine pairs the real bank payment and posts the knock-off
-        → `paid`. Does NOT jump to `paid` (paid <=> a matched transaction). The bill JE stays posted (the
-        expense is real); only the payment side awaits matching. Displays as "Paid (reconciling)" to users."""
+    def mark_paid_already(self, db: Session, invoice_id: int, *, amount: Optional[float] = None,
+                          source_bank_account_id: Optional[int] = None, reference: Optional[str] = None,
+                          actor: Optional[str] = None) -> FinanceInvoice:
+        """POL-135: 'paid outside the system'. Captures WHICH of our bank accounts it was paid from, the
+        EXACT amount (can be a PARTIAL, ≤ remaining), and an OPTIONAL reference (no txn id — the operator
+        won't have one). Moves the payable into the reconciliation arm (`reconcile`), where the
+        categorization engine pairs the real bank payment (aided by the captured amount + account) and
+        posts the knock-off → `paid`/`partially_paid`. Does NOT set amount_paid (paid <=> a matched txn).
+        Every field is written to the append-only audit (POL-125). Displays as "Paid (reconciling)"."""
+        from src.utils.errors import ConflictError, BadRequestError
         invoice = self.get_by_id(db, invoice_id)
-        if invoice.status != InvoiceStatus.APPROVED.value:
-            from src.utils.errors import ConflictError
+        if invoice.status not in (InvoiceStatus.APPROVED.value, InvoiceStatus.PARTIALLY_PAID.value):
             raise ConflictError(
-                f"Only an approved payable can be marked paid-already (is '{invoice.status}').")
+                f"Only an approved / partially-paid payable can be marked paid-already (is '{invoice.status}').")
+        remaining = float(invoice.total_amount) - float(invoice.amount_paid or 0)
+        amt = float(amount) if amount is not None else remaining
+        if amt <= 0 or amt - remaining > 0.01:
+            raise BadRequestError(f"Amount {amt} must be > 0 and ≤ the remaining balance {remaining:.2f}.")
+
+        prior_status = invoice.status
         invoice.status = InvoiceStatus.RECONCILE.value
+        # Full audit of the capture (source account / exact amount / optional reference). This is part of
+        # the deliverable — the operator asked for a complete audit trail — so a failed audit ABORTS the
+        # mark-paid rather than silently succeeding without a record.
+        from src.models.payout_channels import FinancePayoutReferenceAudit
+        db.add(FinancePayoutReferenceAudit(
+            target_type="invoice_mark_paid", target_id=invoice_id, action="mark_paid",
+            before={"status": prior_status, "amount_paid": float(invoice.amount_paid or 0)},
+            after={"amount": amt, "source_bank_account_id": source_bank_account_id,
+                   "reference": reference, "remaining_before": round(remaining, 2)},
+            actor=actor, reason="paid outside the system"))
         from src.services.task_service import task_service
         from src.models.task import TaskStatus
         task_service.close_for_source(db, f"invoice:{invoice_id}", TaskStatus.RETURNED.value,
-                                      acted_by=actor, action="approve", notes="marked paid outside the system")
+                                      acted_by=actor, action="approve",
+                                      notes=f"marked paid outside: {amt} from acct {source_bank_account_id}")
         db.commit(); db.refresh(invoice)
         return invoice
 
