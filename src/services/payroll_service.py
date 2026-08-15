@@ -70,6 +70,90 @@ class PayrollService:
         db.flush()
         return run
 
+    def get_approval_view(self, db: Session, run_id: int) -> dict:
+        """PR-3 approval view (best-practice consolidated-per-group, Gaurav): for each salary-account
+        group, the total + headcount + approver/status AND the per-employee lines AND the change-summary
+        vs the prior run (new joiners / salary changes / leavers) — so an approver drills in but signs
+        once, reviewing by exception."""
+        from src.services.hr_payroll_service import hr_payroll_service
+        from src.models.hr_payroll import HrPayrollItem
+        from src.models.hr_employee import HrEmployee
+        from src.models.counterparty import FinanceCounterparty
+        from src.models.payroll_approval import FinancePayrollApproval
+        from src.utils.errors import NotFoundError
+        run = db.get(FinancePayrollRun, run_id)
+        if not run:
+            raise NotFoundError(f"Payroll run {run_id} not found")
+
+        def _name(emp):
+            cp = (db.query(FinanceCounterparty)
+                  .filter(FinanceCounterparty.external_system == "employee",
+                          FinanceCounterparty.external_id == str(emp.user_id)).first())
+            return (cp.name if cp else None) or emp.designation or f"user {emp.user_id}"
+
+        # prior run for this entity (the most recent posted/paid one before this run_date)
+        prior = (db.query(FinancePayrollRun)
+                 .filter(FinancePayrollRun.entity_id == run.entity_id,
+                         FinancePayrollRun.id != run_id,
+                         FinancePayrollRun.status.in_(["POSTED", "PAYMENT_INITIATED", "PAID"]),
+                         FinancePayrollRun.run_date <= run.run_date)
+                 .order_by(FinancePayrollRun.run_date.desc(), FinancePayrollRun.id.desc()).first())
+        prior_gross = {}   # employee_id -> gross in the prior run
+        if prior:
+            for pi in db.query(HrPayrollItem).filter(HrPayrollItem.finance_payroll_run_id == prior.id).all():
+                prior_gross[pi.employee_id] = float(pi.gross_amount)
+
+        items = db.query(HrPayrollItem).filter(HrPayrollItem.finance_payroll_run_id == run_id).all()
+        approvals = {a.salary_account_code: a for a in
+                     db.query(FinancePayrollApproval).filter(FinancePayrollApproval.run_id == run_id).all()}
+        groups: dict[str, dict] = {}
+        seen_emp = set()
+        for it in items:
+            emp = db.get(HrEmployee, it.employee_id)
+            if not emp:
+                continue
+            code = hr_payroll_service._resolve_salary_code(db, emp, it.currency)
+            seen_emp.add(it.employee_id)
+            g = groups.setdefault(code, {"salary_account_code": code, "lines": [], "leavers": [],
+                                         "total": 0.0, "headcount": 0})
+            gross = float(it.gross_amount)
+            prev = prior_gross.get(it.employee_id)
+            change = "new" if prev is None else ("changed" if abs(prev - gross) > 0.01 else "same")
+            g["lines"].append({"employee_id": it.employee_id, "name": _name(emp), "gross": gross,
+                               "net": float(it.net_amount), "change": change, "prev_gross": prev})
+            g["total"] += gross
+            g["headcount"] += 1
+        # leavers: anyone paid in the prior run but not in this one (attributed to their salary group)
+        if prior:
+            for pi in db.query(HrPayrollItem).filter(HrPayrollItem.finance_payroll_run_id == prior.id).all():
+                if pi.employee_id in seen_emp:
+                    continue
+                emp = db.get(HrEmployee, pi.employee_id)
+                if not emp:
+                    continue
+                code = hr_payroll_service._resolve_salary_code(db, emp, pi.currency)
+                if code in groups:
+                    groups[code]["leavers"].append({"employee_id": pi.employee_id, "name": _name(emp),
+                                                    "prev_gross": float(pi.gross_amount)})
+        out_groups = []
+        for code, g in groups.items():
+            a = approvals.get(code)
+            g["approver"] = a.approver if a else None
+            g["status"] = a.status if a else "pending"
+            g["changes_summary"] = {
+                "new": sum(1 for l in g["lines"] if l["change"] == "new"),
+                "changed": sum(1 for l in g["lines"] if l["change"] == "changed"),
+                "leavers": len(g["leavers"])}
+            g["total"] = round(g["total"], 2)
+            out_groups.append(g)
+        return {
+            "run": {"id": run.id, "status": run.status, "entity_id": run.entity_id,
+                    "run_date": run.run_date.isoformat() if run.run_date else None,
+                    "period": [run.payroll_period_start.isoformat(), run.payroll_period_end.isoformat()]},
+            "prior_run_id": prior.id if prior else None,
+            "groups": out_groups,
+        }
+
     def submit_for_approval(self, db: Session, run_id: int, actor=None) -> dict:
         """PR-3 (POL-140): submit a DRAFT run for SEGMENTED approval. Builds the balanced JE as a DRAFT
         (posted only on full approval — the draft-JE benefit), groups the payslip lines by salary account,

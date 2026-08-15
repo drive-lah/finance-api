@@ -383,6 +383,15 @@ def submit_payroll_for_approval(run_id: int):
         return jsonify(payroll_service.submit_for_approval(db, run_id, _actor()))
 
 
+@hr_bp.route("/payroll-runs/<int:run_id>/approval-view", methods=["GET"])
+def payroll_approval_view(run_id: int):
+    """PR-3: consolidated-per-group approval view — each salary-account group's total + per-employee
+    lines + change-summary vs the prior run (new/changed/leavers). Approvers review by exception."""
+    from src.services.payroll_service import payroll_service
+    with db_session() as db:
+        return jsonify(payroll_service.get_approval_view(db, run_id))
+
+
 @hr_bp.route("/payroll-runs/<int:run_id>/approve-group", methods=["POST"])
 def decide_payroll_group(run_id: int):
     """PR-3: record one salary-account group's decision. `salary_account_code` + `decision`
