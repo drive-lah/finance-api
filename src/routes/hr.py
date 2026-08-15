@@ -383,6 +383,14 @@ def submit_payroll_for_approval(run_id: int):
         return jsonify(payroll_service.submit_for_approval(db, run_id, _actor()))
 
 
+@hr_bp.route("/payroll-runs/<int:run_id>/fan-out", methods=["POST"])
+def fan_out_payroll(run_id: int):
+    """PR-4: fan a POSTED run out into the payout register (per-employee net + statutory payables)."""
+    from src.services.payroll_service import payroll_service
+    with db_session() as db:
+        return jsonify(payroll_service.fan_out_to_register(db, run_id, _actor()))
+
+
 @hr_bp.route("/payroll-runs/<int:run_id>/approval-view", methods=["GET"])
 def payroll_approval_view(run_id: int):
     """PR-3: consolidated-per-group approval view — each salary-account group's total + per-employee

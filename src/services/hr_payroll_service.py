@@ -382,11 +382,15 @@ class HrPayrollService:
                              f"Set the salary COA on their counterparty (default_account_code).")
         return salary_code
 
-    def _build_je_lines_and_groups(self, db, fin_run, items, bank_account):
+    def _build_je_lines_and_groups(self, db, fin_run, items, bank_account, net_to_account=None):
         """Build the balanced payroll JE lines from the payslip items AND the per-salary-account groups
         (PR-3 segmented approval). Returns (lines, groups, je_description) where
         groups = {salary_code: {"total": float (gross), "headcount": int}}. Single source of truth for
-        both the legacy submit_run (posts directly) and the new approval flow (draft JE)."""
+        both the legacy submit_run (posts directly) and the new approval flow (draft JE).
+
+        PR-4: `net_to_account` chooses where the NET credit lands. None = credit the BANK directly (legacy
+        pay-immediately model). A code like '2304' = credit Salaries Payable (accrue-then-pay model), so
+        the net can be fanned out into the register and settled Dr 2304 / Cr bank per employee."""
         debit_map: dict[str, Decimal] = {}
         credit_map: dict[str, Decimal] = {}
         groups: dict[str, dict] = {}
@@ -415,7 +419,8 @@ class HrPayrollService:
         for code, amount in debit_map.items():
             lines.append({"account_code": code, "debit_amount": float(amount),
                           "credit_amount": 0.0, "description": je_description})
-        lines.append({"account_code": bank_account.coa_account_code, "debit_amount": 0.0,
+        net_credit_code = net_to_account or bank_account.coa_account_code
+        lines.append({"account_code": net_credit_code, "debit_amount": 0.0,
                       "credit_amount": float(total_net), "description": je_description})
         for code, amount in credit_map.items():
             lines.append({"account_code": code, "debit_amount": 0.0,

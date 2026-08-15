@@ -50,6 +50,9 @@ def _entity_short(name: str) -> str:
 SALARY_ACCOUNT = "6000"        # Salaries & Wages
 CPF_EMPLOYER_ACCOUNT = "6001"  # Employer CPF
 CPF_PAYABLE_ACCOUNT = "2300"   # CPF Payable
+SALARIES_PAYABLE_ACCOUNT = "2304"  # Net salaries payable (PR-4 accrue-then-pay)
+# Statutory payable account → the authority counterparty it's paid to (PR-4 fan-out). Matched by name.
+STATUTORY_AUTHORITY = {"2300": "CPF", "2302": "superannuation", "2305": "tax office"}
 
 
 class PayrollService:
@@ -177,7 +180,10 @@ class PayrollService:
         if not items:
             raise BadRequestError("Run has no payroll items.")
         bank = db.get(FinanceBankAccount, run.bank_account_id)
-        lines, groups, desc = hr_payroll_service._build_je_lines_and_groups(db, run, items, bank)
+        # PR-4: accrue the net to Salaries Payable (2304) rather than crediting bank directly, so the net
+        # can be fanned out into the register and settled per employee (Dr 2304 / Cr bank).
+        lines, groups, desc = hr_payroll_service._build_je_lines_and_groups(
+            db, run, items, bank, net_to_account=SALARIES_PAYABLE_ACCOUNT)
         # DRAFT JE — the approver reviews the literal entry; posted only when all groups sign off.
         je = journal_service.create(db=db, entity_id=run.entity_id, entry_date=run.run_date,
                                     description=desc, lines=lines,
@@ -256,6 +262,66 @@ class PayrollService:
             self.transition_run(db, run, "POSTED", actor=actor)
         return {"run_id": run_id, "status": run.status, "group": a.to_dict(),
                 "groups_remaining": remaining}
+
+    def fan_out_to_register(self, db: Session, run_id: int, actor=None) -> dict:
+        """PR-4 (POL-139/140): fan a POSTED run OUT into the payout register — one net-salary payable per
+        employee (payee = the employee counterparty) + one statutory payable per accrued authority account
+        (CPF 2300 / super 2302 / PAYG 2305 → the CPF Board / super fund / tax office counterparty). Each
+        row is a `payable_type='payroll'` payout awaiting payment (settled Dr <liability> / Cr bank later).
+        Idempotent: re-running skips employees/statutory already fanned out."""
+        from src.models.hr_payroll import HrPayrollItem
+        from src.models.hr_employee import HrEmployee
+        from src.models.counterparty import FinanceCounterparty
+        from src.models.vendor_payout import FinancePayout, PayoutState
+        from src.services.payout_service import DRY_RUN
+        from src.utils.errors import BadRequestError, NotFoundError
+        from datetime import datetime
+        run = db.get(FinancePayrollRun, run_id)
+        if not run:
+            raise NotFoundError(f"Payroll run {run_id} not found")
+        if run.status not in ("POSTED", "PAYMENT_INITIATED"):
+            raise BadRequestError(f"Run must be POSTED to fan out (is {run.status}).")
+        existing = {(p.payable_type, p.payable_id, p.counterparty_id) for p in
+                    db.query(FinancePayout).filter(FinancePayout.payable_type == "payroll",
+                                                   FinancePayout.payable_id == run_id).all()}
+        items = db.query(HrPayrollItem).filter(HrPayrollItem.finance_payroll_run_id == run_id).all()
+        net_payouts, statutory = [], {}
+        for it in items:
+            emp = db.get(HrEmployee, it.employee_id)
+            cp = (db.query(FinanceCounterparty)
+                  .filter(FinanceCounterparty.external_system == "employee",
+                          FinanceCounterparty.external_id == str(emp.user_id)).first()) if emp else None
+            if cp and ("payroll", run_id, cp.id) not in existing:
+                p = FinancePayout(
+                    invoice_id=None, payable_type="payroll", payable_id=run_id, method="system_wise",
+                    counterparty_id=cp.id, entity_id=run.entity_id, amount=round(float(it.net_amount), 2),
+                    currency=it.currency, state=PayoutState.DRAFT.value, is_dry_run=DRY_RUN,
+                    requested_by=(actor or {}).get("user_id"), requested_at=datetime.utcnow())
+                db.add(p); db.flush(); net_payouts.append(p.id)
+            # accrue statutory obligations by credit account (tax_treatment=internal only)
+            if emp and (emp.tax_treatment or "").lower() == "internal":
+                for line in (it.deduction_lines or []):
+                    code = line["coa_credit_code"]
+                    if code in STATUTORY_AUTHORITY:
+                        statutory[code] = statutory.get(code, 0.0) + float(line["amount"])
+        stat_payouts = []
+        for code, amount in statutory.items():
+            if amount <= 0:
+                continue
+            authority = (db.query(FinanceCounterparty)
+                         .filter(FinanceCounterparty.name.ilike(f"%{STATUTORY_AUTHORITY[code]}%")).first())
+            if not authority or ("payroll", run_id, authority.id) in existing:
+                continue
+            p = FinancePayout(
+                invoice_id=None, payable_type="payroll", payable_id=run_id, method="system_wise",
+                counterparty_id=authority.id, entity_id=run.entity_id, amount=round(amount, 2),
+                currency=(items[0].currency if items else "SGD"),
+                external_reference=f"statutory:{code}", state=PayoutState.DRAFT.value, is_dry_run=DRY_RUN,
+                requested_by=(actor or {}).get("user_id"), requested_at=datetime.utcnow())
+            db.add(p); db.flush(); stat_payouts.append({"account": code, "payout_id": p.id, "amount": round(amount, 2)})
+        db.commit()
+        return {"run_id": run_id, "net_payouts": net_payouts, "statutory_payouts": stat_payouts,
+                "net_count": len(net_payouts)}
 
     def create_run(self, db: Session, data: dict) -> FinancePayrollRun:
         """
