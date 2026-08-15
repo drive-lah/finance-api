@@ -405,9 +405,9 @@ PRD: `wip/VENDOR_PAYOUT_MECHANISM_PRD.md`. Branch `260803_finance_payout_mech`. 
 | VP-4 | Routes `/api/finance/payouts/*` + BFF proxies (actor headers forwarded) | ✅ |
 | VP-5 | Deterministic import-pair hook (importer matches `wise_transfer_id` → pair + post knock-off) | ✅ (untested on a real import) |
 | VP-6 | Professional Payouts tab (pick invoice → entity auto-locks → source Wise account → pay; payouts list; audit drawer) | ✅ |
-| VP-7 | SCA keypair generated (`~/.wise_sca`), signing wired + tested. **Blocked on Gaurav: upload PUBLIC key to Wise (2FA).** | 🔄 |
+| VP-7 | SCA keypair generated (`~/.wise_sca`), signing wired + tested. Public key uploaded to Wise. | ✅ done — SCA funding proven on prod (real funded transfers went through, e.g. payout #12 `sent` non-dry-run) |
 | VP-8 | Dedicated `finance.payouts` gate. ✅ DONE 2026-08-04 (= B1/B2/B6): module in canonical registry; Payouts tab `requiredModule='finance.payouts'`; routes gated (read=view · write=raise/cancel · admin=approve → maker-checker). Grants to real people = B4. | ✅ |
-| VP-9 | Arm live: flip `PAYOUT_DRY_RUN=0`, confirm token transfer-scope, send real $1 SGD to Dirk-Jan (recipient 297347886 confirmed, invoice 2487) | 🔄 (awaits VP-7) |
+| VP-9 | Arm live: flip `PAYOUT_DRY_RUN=0`, confirm token transfer-scope, send real payout | ✅ done — live on prod; payouts #11 (bounced_back, caught by webhook) + #12 (`sent`) are real funded transfers |
 | VP-10 | v2 deferred: cross-entity (intercompany 8xxx), cross-currency (FX→7100), payment-confirmation email (entity sender), maker-checker UI polish | ☐ |
 
 **Live-test progress (2026-08-14, branch `260814_payout_module`, instance on 8082/3002/5175 → prod, ARMED):** VP-7 ✅ SCA public key uploaded to Wise. Two real bugs found + fixed on the way to the $1: (a) `customerTransactionId` must be a UUID (was `inv<id>-<ts>`) → `create_transfer` now derives a stable uuid5; (b) old Wise token was read-only → replaced with full-access. Full quote+transfer proven in isolation (real unfunded transfers 2309530592 + 1). VP-9 still open (retry Pended on the AUD/`singapore` transient). **Blocker surfaced: recipient mapping is 1 of 624** → drove the data-model redesign below.
