@@ -70,6 +70,109 @@ class PayrollService:
         db.flush()
         return run
 
+    def submit_for_approval(self, db: Session, run_id: int, actor=None) -> dict:
+        """PR-3 (POL-140): submit a DRAFT run for SEGMENTED approval. Builds the balanced JE as a DRAFT
+        (posted only on full approval — the draft-JE benefit), groups the payslip lines by salary account,
+        and routes each group to that account's approver in the COA matrix (finance_coa_config). Run moves
+        DRAFT → PENDING_APPROVAL. Returns {run, approvals}."""
+        from src.services.hr_payroll_service import hr_payroll_service
+        from src.services.journal_service import journal_service
+        from src.services.task_service import task_service
+        from src.models.hr_payroll import HrPayrollItem
+        from src.models.bank_account import FinanceBankAccount
+        from src.models.coa_config import FinanceCoaConfig
+        from src.models.payroll_approval import FinancePayrollApproval, PayrollApprovalStatus
+        from src.models.journal_entry import JournalEntryStatus
+        from src.utils.errors import BadRequestError, NotFoundError
+        run = db.get(FinancePayrollRun, run_id)
+        if not run:
+            raise NotFoundError(f"Payroll run {run_id} not found")
+        if run.status != "DRAFT":
+            raise BadRequestError(f"Only a DRAFT run can be submitted (is {run.status}).")
+        items = db.query(HrPayrollItem).filter(HrPayrollItem.finance_payroll_run_id == run_id).all()
+        if not items:
+            raise BadRequestError("Run has no payroll items.")
+        bank = db.get(FinanceBankAccount, run.bank_account_id)
+        lines, groups, desc = hr_payroll_service._build_je_lines_and_groups(db, run, items, bank)
+        # DRAFT JE — the approver reviews the literal entry; posted only when all groups sign off.
+        je = journal_service.create(db=db, entity_id=run.entity_id, entry_date=run.run_date,
+                                    description=desc, lines=lines,
+                                    created_by=(actor or {}).get("user_id"),
+                                    status=JournalEntryStatus.DRAFT)
+        je.source = "payroll"
+        run.journal_entry_id = je.id
+        approvals = []
+        for salary_code, g in groups.items():
+            cfg = db.query(FinanceCoaConfig).filter(FinanceCoaConfig.coa_code == salary_code).first()
+            approver = cfg.approver_1 if cfg else None
+            a = FinancePayrollApproval(run_id=run_id, salary_account_code=salary_code,
+                                       group_total=g["total"], group_headcount=g["headcount"],
+                                       approver=approver, status=PayrollApprovalStatus.PENDING.value)
+            db.add(a); db.flush(); approvals.append(a)
+            task_service.enqueue(
+                db, type="payroll-approval", source_ref=f"payroll:{run_id}:{salary_code}",
+                title=f"Approve payroll — account {salary_code} · {run.currency if hasattr(run,'currency') else ''} "
+                      f"{g['total']:,.2f} ({g['headcount']} staff)",
+                summary=f"Payroll run #{run_id} · salary account {salary_code}",
+                body={"run_id": run_id, "salary_account_code": salary_code, "total": g["total"],
+                      "headcount": g["headcount"]},
+                assignee_role=approver or "finance.payroll",
+                created_by=(actor or {}).get("user_id"))
+        self.transition_run(db, run, "PENDING_APPROVAL", actor=actor)
+        return {"run": run.to_dict() if hasattr(run, "to_dict") else {"id": run.id, "status": run.status},
+                "approvals": [a.to_dict() for a in approvals]}
+
+    def decide_group(self, db: Session, run_id: int, salary_account_code: str, decision: str,
+                     actor=None, reason: str = None) -> dict:
+        """PR-3: record one salary-account group's approval decision. A rejection sends the run back to
+        DRAFT (and discards the draft JE). When ALL groups are approved, the run → APPROVED and the draft
+        JE is POSTED (→ POSTED), after which the register fan-out (PR-4) + settlement run."""
+        from src.services.journal_service import journal_service
+        from src.models.payroll_approval import FinancePayrollApproval, PayrollApprovalStatus
+        from src.models.journal_entry import JournalEntryStatus
+        from src.utils.errors import BadRequestError, NotFoundError
+        from datetime import datetime
+        run = db.get(FinancePayrollRun, run_id)
+        if not run:
+            raise NotFoundError(f"Payroll run {run_id} not found")
+        if run.status != "PENDING_APPROVAL":
+            raise BadRequestError(f"Run is {run.status}, not awaiting approval.")
+        a = (db.query(FinancePayrollApproval)
+             .filter(FinancePayrollApproval.run_id == run_id,
+                     FinancePayrollApproval.salary_account_code == salary_account_code).first())
+        if not a:
+            raise NotFoundError(f"No approval group {salary_account_code} on run {run_id}.")
+        if a.status != PayrollApprovalStatus.PENDING.value:
+            raise BadRequestError(f"Group {salary_account_code} already {a.status}.")
+        if decision not in ("approved", "rejected"):
+            raise BadRequestError("decision must be 'approved' or 'rejected'.")
+        a.status = decision
+        a.decided_by = (actor or {}).get("user_id")
+        a.decided_at = datetime.utcnow()
+        a.reason = reason
+        db.flush()
+        if decision == "rejected":
+            # discard the draft JE and send the run back to DRAFT for fixes
+            if run.journal_entry_id:
+                from src.models.journal_entry import FinanceJournalEntry
+                je = db.get(FinanceJournalEntry, run.journal_entry_id)
+                if je and je.status == JournalEntryStatus.DRAFT:
+                    db.delete(je)
+                run.journal_entry_id = None
+            self.transition_run(db, run, "DRAFT", actor=actor)
+            return {"run_id": run_id, "status": run.status, "group": a.to_dict()}
+        # approved — all groups done?
+        remaining = (db.query(FinancePayrollApproval)
+                     .filter(FinancePayrollApproval.run_id == run_id,
+                             FinancePayrollApproval.status != PayrollApprovalStatus.APPROVED.value).count())
+        if remaining == 0:
+            self.transition_run(db, run, "APPROVED", actor=actor)
+            journal_service.post_entry(db, run.journal_entry_id,
+                                       posting_user_id=(actor or {}).get("user_id"))
+            self.transition_run(db, run, "POSTED", actor=actor)
+        return {"run_id": run_id, "status": run.status, "group": a.to_dict(),
+                "groups_remaining": remaining}
+
     def create_run(self, db: Session, data: dict) -> FinancePayrollRun:
         """
         Create a payroll run and immediately post the 4-line JE.

@@ -363,6 +363,66 @@ class HrPayrollService:
     # Payroll run — Step 2: submit (creates JE, posts to accounting)
     # ──────────────────────────────────────────────────────────────────────────
 
+    def _resolve_salary_code(self, db, emp, currency) -> str:
+        """Salary account for an employee (POL-112): counterparty default_account_code first, then the
+        legacy employee column, then rules. Raises if none resolvable."""
+        from src.models.counterparty import FinanceCounterparty
+        cp = db.query(FinanceCounterparty).filter(
+            FinanceCounterparty.external_id == str(emp.user_id),
+            FinanceCounterparty.external_system == "employee").first()
+        salary_code = cp.default_account_code if cp else None
+        if not salary_code and emp.salary_expense_code:
+            salary_code = emp.salary_expense_code
+            logger.warning("Employee %s counterparty has no default_account_code — falling back to the "
+                           "legacy salary_expense_code %s. Backfill the counterparty.", emp.id, salary_code)
+        if not salary_code:
+            salary_code = self._get_salary_account_from_rules(db, emp, currency)
+        if not salary_code:
+            raise ValueError(f"Cannot determine salary account for employee {emp.id}. "
+                             f"Set the salary COA on their counterparty (default_account_code).")
+        return salary_code
+
+    def _build_je_lines_and_groups(self, db, fin_run, items, bank_account):
+        """Build the balanced payroll JE lines from the payslip items AND the per-salary-account groups
+        (PR-3 segmented approval). Returns (lines, groups, je_description) where
+        groups = {salary_code: {"total": float (gross), "headcount": int}}. Single source of truth for
+        both the legacy submit_run (posts directly) and the new approval flow (draft JE)."""
+        debit_map: dict[str, Decimal] = {}
+        credit_map: dict[str, Decimal] = {}
+        groups: dict[str, dict] = {}
+        total_net = Decimal("0")
+        for item in items:
+            emp = db.query(HrEmployee).filter(HrEmployee.id == item.employee_id).first()
+            if not emp:
+                raise ValueError(f"Employee {item.employee_id} not found for payroll item {item.id}")
+            salary_code = self._resolve_salary_code(db, emp, item.currency)
+            gross = Decimal(str(item.gross_amount))
+            debit_map[salary_code] = debit_map.get(salary_code, Decimal("0")) + gross
+            g = groups.setdefault(salary_code, {"total": Decimal("0"), "headcount": 0})
+            g["total"] += gross
+            g["headcount"] += 1
+            total_net += Decimal(str(item.net_amount))
+            for line in (item.deduction_lines or []):
+                amount = Decimal(str(line["amount"]))
+                if not line["employee_bears"]:
+                    dr = line["coa_debit_code"]
+                    debit_map[dr] = debit_map.get(dr, Decimal("0")) + amount
+                cr = line["coa_credit_code"]
+                credit_map[cr] = credit_map.get(cr, Decimal("0")) + amount
+        je_description = fin_run.description or (
+            f"Payroll {fin_run.payroll_period_start} to {fin_run.payroll_period_end}")
+        lines: list[dict] = []
+        for code, amount in debit_map.items():
+            lines.append({"account_code": code, "debit_amount": float(amount),
+                          "credit_amount": 0.0, "description": je_description})
+        lines.append({"account_code": bank_account.coa_account_code, "debit_amount": 0.0,
+                      "credit_amount": float(total_net), "description": je_description})
+        for code, amount in credit_map.items():
+            lines.append({"account_code": code, "debit_amount": 0.0,
+                          "credit_amount": float(amount), "description": je_description})
+        groups = {k: {"total": float(v["total"]), "headcount": v["headcount"]} for k, v in groups.items()}
+        return lines, groups, je_description
+
     def submit_run(
         self,
         db: Session,
@@ -403,80 +463,7 @@ class HrPayrollService:
         if not bank_account or not bank_account.coa_account_code:
             raise ValueError("Bank account has no COA code configured")
 
-        # Aggregate JE lines
-        debit_map: dict[str, Decimal] = {}   # coa_code → amount
-        credit_map: dict[str, Decimal] = {}  # coa_code → amount
-        total_net = Decimal("0")
-
-        for item in items:
-            emp = db.query(HrEmployee).filter(HrEmployee.id == item.employee_id).first()
-            if not emp:
-                raise ValueError(f"Employee {item.employee_id} not found for payroll item {item.id}")
-
-            # Salary account — SINGLE SOURCE OF TRUTH is the employee's COUNTERPARTY
-            # default_account_code (Gaurav 2026-08-07). Fall back to the legacy employee
-            # column only transitionally (pre-backfill) with a warning, then Phase 4A rules.
-            from src.models.counterparty import FinanceCounterparty
-            cp = db.query(FinanceCounterparty).filter(
-                FinanceCounterparty.external_id == str(emp.user_id),
-                FinanceCounterparty.external_system == "employee",
-            ).first()
-            salary_code = cp.default_account_code if cp else None
-            if not salary_code and emp.salary_expense_code:
-                salary_code = emp.salary_expense_code
-                logger.warning(
-                    "Employee %s counterparty has no default_account_code — falling back to the "
-                    "legacy employee salary_expense_code %s. Backfill the counterparty.",
-                    emp.id, salary_code,
-                )
-            if not salary_code:
-                salary_code = self._get_salary_account_from_rules(db, emp, item.currency)
-            if not salary_code:
-                raise ValueError(
-                    f"Cannot determine salary account for employee {item.employee_id}. "
-                    f"Set the salary COA on their counterparty (default_account_code)."
-                )
-
-            gross = Decimal(str(item.gross_amount))
-
-            debit_map[salary_code] = debit_map.get(salary_code, Decimal("0")) + gross
-            total_net += Decimal(str(item.net_amount))
-
-            for line in (item.deduction_lines or []):
-                amount = Decimal(str(line["amount"]))
-                if not line["employee_bears"]:
-                    # Employer contribution: extra debit on employer expense account
-                    dr = line["coa_debit_code"]
-                    debit_map[dr] = debit_map.get(dr, Decimal("0")) + amount
-                # All deductions create a payable credit
-                cr = line["coa_credit_code"]
-                credit_map[cr] = credit_map.get(cr, Decimal("0")) + amount
-
-        je_description = fin_run.description or (
-            f"Payroll {fin_run.payroll_period_start} to {fin_run.payroll_period_end}"
-        )
-        lines: list[dict] = []
-
-        for code, amount in debit_map.items():
-            lines.append({
-                "account_code": code,
-                "debit_amount": float(amount),
-                "credit_amount": 0.0,
-                "description": je_description,
-            })
-        lines.append({
-            "account_code": bank_account.coa_account_code,
-            "debit_amount": 0.0,
-            "credit_amount": float(total_net),
-            "description": je_description,
-        })
-        for code, amount in credit_map.items():
-            lines.append({
-                "account_code": code,
-                "debit_amount": 0.0,
-                "credit_amount": float(amount),
-                "description": je_description,
-            })
+        lines, _groups, je_description = self._build_je_lines_and_groups(db, fin_run, items, bank_account)
 
         je = journal_service.create(
             db=db,

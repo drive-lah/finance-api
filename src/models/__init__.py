@@ -28,6 +28,7 @@ from src.models.sync_run import FinanceSyncRun
 from src.models.invoice import FinanceInvoice, InvoiceStatus
 from src.models.user import User
 from src.models.employee_claim import FinanceEmployeeClaim, ClaimStatus
+from src.models.payroll_approval import FinancePayrollApproval, PayrollApprovalStatus
 from src.models.vendor_payout import (
     FinancePayout, FinancePayoutEvent, FinancePayoutBankAccount,
     FinanceVendorPayout, FinanceVendorPayoutEvent, PayoutState,

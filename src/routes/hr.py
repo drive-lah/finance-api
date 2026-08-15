@@ -370,6 +370,31 @@ def submit_payroll_run(run_id: int):
         return jsonify({"error": str(e)}), 400
 
 
+def _actor():
+    return {"user_id": request.headers.get("X-User-Id") or request.headers.get("X-User-Email") or "ui"}
+
+
+@hr_bp.route("/payroll-runs/<int:run_id>/submit-for-approval", methods=["POST"])
+def submit_payroll_for_approval(run_id: int):
+    """PR-3: submit a DRAFT run for SEGMENTED approval — creates the DRAFT JE + one approval group per
+    salary account (routed to its COA-matrix approver). Run → PENDING_APPROVAL."""
+    from src.services.payroll_service import payroll_service
+    with db_session() as db:
+        return jsonify(payroll_service.submit_for_approval(db, run_id, _actor()))
+
+
+@hr_bp.route("/payroll-runs/<int:run_id>/approve-group", methods=["POST"])
+def decide_payroll_group(run_id: int):
+    """PR-3: record one salary-account group's decision. `salary_account_code` + `decision`
+    (approved|rejected) [+ reason]. All groups approved → run APPROVED + draft JE POSTED."""
+    from src.services.payroll_service import payroll_service
+    body = request.get_json(force=True) or {}
+    with db_session() as db:
+        return jsonify(payroll_service.decide_group(
+            db, run_id, body["salary_account_code"], body.get("decision", "approved"),
+            _actor(), reason=body.get("reason")))
+
+
 # ── Serialization helpers ─────────────────────────────────────────────────────
 
 def _employee_dict(emp, db=None) -> dict:
