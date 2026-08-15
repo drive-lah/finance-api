@@ -285,6 +285,12 @@ class CategorizationService:
         claim_handled_ids: set[int] = self._try_claim_knockoff(db, transactions, results)
         categorized += len(claim_handled_ids)
 
+        # ── Phase 3.6: Payroll register-payout Knock-off (PR-4b, POL-139) ─
+        # A fanned-out payroll payable (net→2304 / statutory→2300/2302/2305) settled by its bank
+        # payment → post Dr <liability> / Cr bank and mark the payout POSTED.
+        payroll_reg_ids: set[int] = self._try_payroll_register_knockoff(db, transactions, results)
+        categorized += len(payroll_reg_ids)
+
         # ── Phase 4: Accounting classification ───────────────────────────
         rules_query = (
             db.query(FinanceCategorizationRule)
@@ -814,6 +820,64 @@ class CategorizationService:
         return handled
 
     # ------------------------------------------------------------------
+    # Phase 3.6: Payroll register-payout Knock-off (PR-4b)
+    # ------------------------------------------------------------------
+
+    def _try_payroll_register_knockoff(self, db, transactions, results) -> set[int]:
+        """Settle fanned-out payroll payables (payable_type='payroll') from matching outgoing payments.
+        The liability to clear is 2304 (net salary) or, for a statutory payout, the code in
+        `external_reference='statutory:<code>'`. Posts Dr <liability> / Cr bank, marks the payout POSTED.
+        Same shape as the claim knock-off; exact amount + same entity."""
+        from src.models.vendor_payout import FinancePayout, PayoutState
+        from src.services.journal_service import journal_service
+        from src.models.journal_entry import JournalEntryStatus
+        handled: set[int] = set()
+        outgoing = [t for t in transactions if t.amount is not None and float(t.amount) < 0
+                    and t.status == TransactionStatus.PENDING]
+        if not outgoing:
+            return handled
+        ba_map = {ba.id: ba for ba in db.query(FinanceBankAccount)
+                  .filter(FinanceBankAccount.id.in_({t.bank_account_id for t in outgoing})).all()}
+        for txn in outgoing:
+            ba = ba_map.get(txn.bank_account_id)
+            if not ba or not ba.entity_id or not ba.coa_account_code:
+                continue
+            abs_amount = abs(float(txn.amount))
+            payout = (db.query(FinancePayout)
+                      .filter(FinancePayout.payable_type == "payroll",
+                              FinancePayout.entity_id == ba.entity_id,
+                              FinancePayout.transaction_id.is_(None),
+                              FinancePayout.state.notin_([PayoutState.CANCELLED.value,
+                                                          PayoutState.FAILED.value, PayoutState.POSTED.value]))
+                      .order_by(FinancePayout.id.asc()).all())
+            match = next((p for p in payout if abs(float(p.amount) - abs_amount) <= 0.01), None)
+            if not match:
+                continue
+            ref = match.external_reference or ""
+            liability = ref.split(":", 1)[1] if ref.startswith("statutory:") else "2304"
+            je = journal_service.create(
+                db=db, entity_id=ba.entity_id, entry_date=txn.transaction_date,
+                description=f"Payroll payout #{match.id} settlement",
+                lines=[{"account_code": liability, "debit_amount": abs_amount, "credit_amount": 0.0,
+                        "description": f"Payroll payout #{match.id}"},
+                       {"account_code": ba.coa_account_code, "debit_amount": 0.0, "credit_amount": abs_amount,
+                        "description": f"Payroll payout #{match.id}"}],
+                status=JournalEntryStatus.POSTED)
+            je.source = "payroll_register_knockoff"
+            match.state = PayoutState.POSTED.value
+            match.transaction_id = txn.id
+            match.journal_entry_id = je.id
+            txn.status = TransactionStatus.MATCHED
+            txn.matched_at = datetime.now(UTC)
+            txn.categorized_by_logic = "payroll_register_knockoff"
+            txn.reconciled_journal_entry_id = je.id
+            db.commit()
+            results.append({"transaction_id": txn.id, "status": "categorized",
+                            "rule_name": f"[payroll_register_knockoff:payout_{match.id}]"})
+            handled.add(txn.id)
+        return handled
+
+    # ------------------------------------------------------------------
     # Phase 3: Payroll Knock-off
     # ------------------------------------------------------------------
 
@@ -871,10 +935,15 @@ class CategorizationService:
             date_high = txn_date + timedelta(days=7)
 
             try:
-                runs = db.query(FinancePayrollRun).filter(
+                # PR-4b: a run that fanned out into register payouts settles via Phase 3.6 (per-payout),
+                # NOT the legacy aggregate net/CPF slots — exclude those runs to avoid double-settlement.
+                from src.models.vendor_payout import FinancePayout
+                fanned = {r[0] for r in db.query(FinancePayout.payable_id)
+                          .filter(FinancePayout.payable_type == "payroll").distinct().all()}
+                runs = [r for r in db.query(FinancePayrollRun).filter(
                     FinancePayrollRun.status == "POSTED",
                     FinancePayrollRun.run_date.between(date_low, date_high),
-                ).all()
+                ).all() if r.id not in fanned]
                 # Prefer the transaction's own entity: a same-entity payroll run
                 # should win over a coincidental amount match in another entity.
                 # Cross-entity is still supported (below), but only when no
