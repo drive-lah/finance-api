@@ -279,6 +279,12 @@ class CategorizationService:
         payroll_handled_ids: set[int] = self._try_payroll_knockoff(db, transactions, results)
         categorized += len(payroll_handled_ids)
 
+        # ── Phase 3.5: Employee-claim Knock-off (POL-139 cat 4) ──────────
+        # An outgoing reimbursement that settles an approved employee claim → post
+        # Dr 2303 / Cr bank and mark the claim PAID, instead of Phase-4 rules.
+        claim_handled_ids: set[int] = self._try_claim_knockoff(db, transactions, results)
+        categorized += len(claim_handled_ids)
+
         # ── Phase 4: Accounting classification ───────────────────────────
         rules_query = (
             db.query(FinanceCategorizationRule)
@@ -750,6 +756,58 @@ class CategorizationService:
                 db.rollback()
                 # Do not add to handled — let Phase 4 handle it normally
 
+        return handled
+
+    # ------------------------------------------------------------------
+    # Phase 3.5: Employee-claim Knock-off (POL-139 cat 4)
+    # ------------------------------------------------------------------
+
+    def _try_claim_knockoff(self, db, transactions, results) -> set[int]:
+        """Settle approved employee claims from matching outgoing reimbursements. Same shape as the
+        payroll knock-off: for each outgoing txn, find an APPROVED, not-yet-paid claim in the SAME entity
+        whose amount matches (exact, tol 0.01) within a ±7-day window; post Dr 2303 / Cr bank via
+        claim_service and mark the claim PAID. Conservative (exact amount + same entity) to avoid
+        mis-settling — the categorization engine stays the sole matcher."""
+        from datetime import timedelta
+        from src.models.employee_claim import FinanceEmployeeClaim, ClaimStatus
+        from src.services.claim_service import claim_service
+        handled: set[int] = set()
+        outgoing = [t for t in transactions if t.amount is not None and float(t.amount) < 0
+                    and t.status == TransactionStatus.PENDING]
+        if not outgoing:
+            return handled
+        ba_ids = {t.bank_account_id for t in outgoing}
+        ba_map = {ba.id: ba for ba in db.query(FinanceBankAccount)
+                  .filter(FinanceBankAccount.id.in_(ba_ids)).all()}
+        for txn in outgoing:
+            ba = ba_map.get(txn.bank_account_id)
+            if not ba or not ba.entity_id:
+                continue
+            abs_amount = abs(float(txn.amount))
+            lo = txn.transaction_date - timedelta(days=7)
+            hi = txn.transaction_date + timedelta(days=7)
+            claim = (db.query(FinanceEmployeeClaim)
+                     .filter(FinanceEmployeeClaim.status == ClaimStatus.APPROVED.value,
+                             FinanceEmployeeClaim.entity_id == ba.entity_id,
+                             FinanceEmployeeClaim.transaction_id.is_(None),
+                             FinanceEmployeeClaim.approved_at.between(lo, hi + timedelta(days=1)))
+                     .order_by(FinanceEmployeeClaim.id.asc()).all())
+            match = next((c for c in claim if abs(float(c.amount) - abs_amount) <= 0.01), None)
+            if not match:
+                continue
+            je = claim_service.create_claim_payment_entries(
+                db=db, bank_account=ba, claim=match, txn_date=txn.transaction_date,
+                abs_amount=abs_amount, source="claim_knockoff",
+                description=f"Reimburse employee claim #{match.id}")
+            txn.status = TransactionStatus.MATCHED
+            txn.matched_at = datetime.now(UTC)
+            txn.categorized_by_logic = "claim_knockoff"
+            txn.reconciled_journal_entry_id = je.id
+            match.transaction_id = txn.id
+            db.commit()
+            results.append({"transaction_id": txn.id, "status": "categorized",
+                            "rule_name": f"[claim_knockoff:claim_{match.id}]"})
+            handled.add(txn.id)
         return handled
 
     # ------------------------------------------------------------------

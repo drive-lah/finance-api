@@ -445,6 +445,17 @@ Context: id-8 phantom (DQ-102) — a payout showed success while Wise `funds_ref
 | SM-6 | **Currency guard (POL-137):** pay in the payable's own currency, funded from the same-currency Wise balance; BLOCK (no auto-convert) if we hold no/insufficient balance in that ccy. `_assert_source_balance` in `_send`. | ✅ done — unit-tested (enough→OK, short→block w/ shortfall, missing→block w/ top-up, case-insensitive); compiles |
 | SM-7 | **Partial-tranche state fix (POL-132+136):** `_send` now moves `{approved, partially_paid} → payment_initiated` (2nd tranche on a partially_paid invoice was previously a silent no-op); failure revert restores PRIOR state (`partially_paid` if `amount_paid>0`, else `approved`) instead of hardcoded `approved`. | ✅ done — clone-tested all 3 paths (partially_paid→payment_initiated; refund w/ amount_paid>0→partially_paid; refund w/ amount_paid=0→approved) |
 
+### 2.8d Finance-payable categories (POL-139) — claims → payroll → guest/host → misc
+
+The five payable categories, all through the one register. Build order: claims, then payroll.
+
+| ID | Item | State |
+|----|------|-------|
+| CL-1 | **Claim settlement (accounting core).** `claim_service.create_claim_payment_entries` (Dr 2303 / Cr bank, claim→PAID, link txn) + `categorization_service._try_claim_knockoff` (Phase 3.5: match an approved-unpaid claim to an outgoing reimbursement by exact amount + same entity + ±7d, mirrors payroll/AP knock-off — Gaurav OK'd adding the block, engine stays sole matcher). | ✅ done — clone-tested E2E: approve posts Dr6014/Cr2303, reimbursement txn → Dr2303/Cr bank balanced, claim PAID, txn MATCHED |
+| CL-2 | **Pay claim through the register:** generalise `create_payout` (or a claim path) so an approved claim is a `payable_type='claim'` row payable via Wise / mark-paid (unified register, PM-7). | ☐ next |
+| CL-3 | **Surface approved claims as payables** in the Payouts queue + FE (pay/mark-paid actions). | ☐ next |
+| CL-4 | Payroll (category 2) — `payroll_service` + `FinancePayrollRun` already exist (create_run posts JE, create_payroll_payment_entries settles via categorization); wire the multi-leg run→payables (net→2304/super→2302/PAYG→2305) into the register. | ☐ after claims |
+
 ### 2.8c ONE payout tab — consolidation + polymorphic payable + actions + paid-labels (LOCKED 2026-08-15)
 
 Gaurav: merge PayQueue + Payouts into ONE tab (keep drag-reorder); per-row detail drawer with the payable's trail + approval chain (polymorphic — invoice now, payroll next round, POL-128); actions Pay / Mark-paid-already / Reject(reason). Reconcile vs paid = display-label problem (POL-135): the STATE stays honest, the UI maps the paid-family to "Paid".

@@ -125,6 +125,33 @@ class ClaimService:
                                       acted_by=caller_user_id, action="approve")
         return c
 
+    def create_claim_payment_entries(self, db, bank_account, claim: FinanceEmployeeClaim,
+                                     txn_date, abs_amount, source: str, description: str):
+        """Settle an approved claim on a matched reimbursement txn (POL-139, category 4). Mirrors
+        invoice AP knock-off / payroll payment entries: posts Dr 2303 Employee Claims Payable / Cr bank
+        (clearing the SAME liability the approval JE credited), flips the claim PAID, links the txn.
+        Same-entity only for v1 (claims are within the employee's entity); cross-entity raises."""
+        from src.models.journal_entry import FinanceJournalEntry
+        if bank_account.entity_id != claim.entity_id:
+            raise BadRequestError(
+                f"Cross-entity claim reimbursement not supported (bank entity {bank_account.entity_id} "
+                f"≠ claim entity {claim.entity_id}).")
+        amt = float(abs_amount)
+        ref = f"CLAIM-{claim.id}"
+        je = journal_service.create(
+            db, entity_id=claim.entity_id, entry_date=txn_date, description=description,
+            lines=[
+                {"account_code": EMPLOYEE_CLAIMS_PAYABLE, "debit_amount": amt, "credit_amount": 0.0,
+                 "description": f"Reimburse employee claim #{claim.id}"},
+                {"account_code": bank_account.coa_account_code, "debit_amount": 0.0, "credit_amount": amt,
+                 "description": f"Reimburse employee claim #{claim.id}"},
+            ],
+            reference_number=ref, status=JournalEntryStatus.POSTED)
+        je.source = source
+        claim.status = ClaimStatus.PAID.value
+        db.flush()
+        return je
+
     def reject(self, db, claim_id, caller_user_id, is_admin, reason: str):
         c = db.get(FinanceEmployeeClaim, claim_id)
         if not c:
