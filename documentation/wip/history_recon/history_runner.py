@@ -175,7 +175,8 @@ def cmd_scorecard(args):
             ai = f"{coa_label(t['ai_coa'])}{conf}<div class=why>{e(t['ai_why'])}</div>"
         need = t["status"] in ("NEEDS_REVIEW", "PENDING", "IMPORTED")
         txn_rows.append(
-            f"<tr data-txn={t['id']} class={'review' if need else 'ok'}>"
+            f"<tr data-txn={t['id']} data-status=\"{e(t['status'])}\" data-route=\"{e(t['route'])}\" "
+            f"data-acct=\"{e(acct_by_ba[t['ba']]['acct'])}\" class={'review' if need else 'ok'}>"
             f"<td>{t['id']}</td><td>{e(str(t['dt']))}</td>"
             f"<td class=n>{format(float(t['amt']), ',.2f')}</td>"
             f"<td>{e(acct_by_ba[t['ba']]['acct'])}</td>"
@@ -235,13 +236,9 @@ function applyF() {{
   const ac=document.getElementById('facct').value, need=document.getElementById('fneed').checked;
   let shown=0;
   document.querySelectorAll('#txntable tbody tr').forEach(tr=>{{
-    const tds=tr.querySelectorAll('td');
-    const text=tr.textContent.toLowerCase();
-    const status=tds[6].textContent.split('\n')[0].trim();
-    const route=(tds[6].querySelector('.why')||{{textContent:''}}).textContent.trim();
-    const acct=tds[3].textContent.trim();
-    let ok=(!q||text.includes(q)) && (!st||status.startsWith(st)) && (!rt||route===rt) && (!ac||acct===ac)
-           && (!need||tr.classList.contains('review'));
+    const ok=(!q||tr.textContent.toLowerCase().includes(q))
+      && (!st||tr.dataset.status===st) && (!rt||tr.dataset.route===rt)
+      && (!ac||tr.dataset.acct===ac) && (!need||tr.classList.contains('review'));
     tr.style.display=ok?'':'none'; if(ok)shown++;
   }});
   document.getElementById('fcount').textContent=shown+' shown';
@@ -249,13 +246,12 @@ function applyF() {{
 window.addEventListener('DOMContentLoaded',()=>{{
   const sts=new Set(), rts=new Set(), acs=new Set();
   document.querySelectorAll('#txntable tbody tr').forEach(tr=>{{
-    const tds=tr.querySelectorAll('td');
-    sts.add(tds[6].textContent.split('\n')[0].trim().split(' ')[0]);
-    const w=tds[6].querySelector('.why'); if(w&&w.textContent.trim())rts.add(w.textContent.trim());
-    acs.add(tds[3].textContent.trim());
+    if(tr.dataset.status)sts.add(tr.dataset.status);
+    if(tr.dataset.route)rts.add(tr.dataset.route);
+    if(tr.dataset.acct)acs.add(tr.dataset.acct);
   }});
   const fill=(id,vals)=>{{const el=document.getElementById(id);
-    [...vals].sort().forEach(v=>{{if(!v)return;const o=document.createElement('option');o.textContent=v;el.appendChild(o)}})}};
+    [...vals].sort().forEach(v=>{{const o=document.createElement('option');o.textContent=v;el.appendChild(o)}})}};
   fill('fstatus',sts); fill('froute',rts); fill('facct',acs); applyF();
 }});
 function exportFb() {{
