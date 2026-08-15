@@ -44,6 +44,35 @@ def score(a: str, b: str) -> float:
     return max(SequenceMatcher(None, na, nb).ratio(), jacc)
 
 
+_LABELS = {
+    "accountNumber": "Account no.", "iban": "IBAN", "IBAN": "IBAN", "bsbCode": "BSB",
+    "sortCode": "Sort code", "swiftCode": "SWIFT/BIC", "BIC": "SWIFT/BIC", "bankCode": "Bank code",
+    "routingNumber": "Routing no.", "branchCode": "Branch code", "bankName": "Bank",
+    "accountType": "Account type", "bankgiroNumber": "Bankgiro", "clabe": "CLABE", "ifscCode": "IFSC",
+    "abartn": "ABA routing", "phoneNumber": "Phone", "city": "City", "postCode": "Post code",
+    "firstLine": "Address", "state": "State", "country": "Country",
+    "bic": "SWIFT/BIC", "email": "Email", "legalType": "Type", "bankName": "Bank",
+}
+# noise / duplicate / PII-not-needed-for-bank-ID keys — hidden from the reviewer
+_SKIP = {"dateOfBirth", "targetProfile", "countryCode"}
+
+
+def _flatten_details(a: dict) -> list:
+    """Every non-empty scalar bank field on the Wise account (details + address), human-labelled, so the
+    reviewer sees the WHOLE account (bank, BSB/SWIFT/IBAN, branch, address), not just the account number."""
+    det = dict(a.get("details") or {})
+    addr = det.pop("address", None)
+    if isinstance(addr, dict):
+        det.update({k: v for k, v in addr.items()})
+    out = []
+    for k, v in det.items():
+        if k in _SKIP:
+            continue
+        if isinstance(v, (str, int, float)) and str(v).strip() not in ("", "None"):
+            out.append([_LABELS.get(k, k), str(v)])
+    return out
+
+
 def main():
     w = WiseService()
     with db_session() as db:
@@ -60,14 +89,14 @@ def main():
         except Exception as e:
             print(f"  {label}: fetch error {str(e)[:80]}"); continue
         for a in accts:
-            det = a.get("details") or {}
             holder = a.get("accountHolderName")
             best = max(((score(holder, nm), cid, nm) for cid, nm in cp_pairs), default=(0, None, None))
             s, cid, nm = best
             recips.append({
                 "channel": label, "profile": pid, "recipient_id": a.get("id"),
                 "holder": holder, "currency": a.get("currency"),
-                "acct": det.get("accountNumber") or det.get("iban") or "",
+                "country": a.get("country"), "type": a.get("type"),
+                "details": _flatten_details(a),   # FULL bank details, not just account number
                 "proposed_id": cid if s >= 0.90 else None,
                 "proposed_name": nm if s >= 0.90 else None,
                 "proposed_score": round(s, 3),
@@ -111,8 +140,14 @@ HTML_TEMPLATE = r"""<!doctype html>
   .ccy{display:inline-block;padding:1px 6px;border-radius:5px;background:#eef2ff;color:#3730a3;font-weight:600;font-size:11.5px}
   .pick{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:7px}
   .cmt{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:7px;margin-top:5px}
-  .hint{font-size:11.5px;color:var(--amber);margin-top:3px}
+  .hint{font-size:11.5px;color:var(--amber);margin-top:3px;display:flex;align-items:center;gap:8px}
+  .okbtn{padding:2px 9px;border:1px solid var(--green);color:var(--green);background:#fff;border-radius:6px;font-size:11.5px;cursor:pointer}
+  .okbtn:hover{background:var(--green);color:#fff}
+  .bank{display:grid;grid-template-columns:auto 1fr;gap:1px 8px;margin-top:4px;font-size:11.5px}
+  .bank .k{color:var(--mut)}
+  .bank .v{font-variant-numeric:tabular-nums}
   tr.done{background:#f0fdf4}
+  tr.review{background:#fffbeb}
   tr.done .holder::after{content:" ✓";color:var(--green)}
   .foot{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);padding:10px 20px;display:flex;gap:10px;align-items:center}
   .foot .note{color:var(--mut);font-size:12px}
@@ -130,7 +165,7 @@ HTML_TEMPLATE = r"""<!doctype html>
     <select id="fCh"><option value="">All channels</option></select>
     <select id="fCcy"><option value="">All currencies</option></select>
     <select id="fSt"><option value="">All rows</option><option value="todo">Unmapped only</option><option value="done">Mapped only</option></select>
-    <span class="prog">Mapped <b id="pDone">0</b> / <span id="pTot">0</span></span>
+    <span class="prog">Mapped <b id="pDone">0</b> / <span id="pTot">0</span> · <span id="pRev" style="color:#b45309">0 to review</span></span>
   </div>
 </header>
 <main>
@@ -162,7 +197,17 @@ function optionsHtml(sel){
 }
 function esc(s){ return (s==null?"":String(s)).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m])); }
 
-function rowDone(r){ const st=state[r.recipient_id]; return st && (st.counterparty_id || st.counterparty_id==="__none"); }
+// effective answer = her explicit pick if any, else the pre-filled suggestion (so an untouched-but-correct
+// suggestion still counts + still exports). reviewed = she acted on it (picked / OK'd / marked no-match).
+function eff(r){ const st=state[r.recipient_id]||{}; if(st.counterparty_id!=null) return st.counterparty_id; return r.proposed_id!=null?String(r.proposed_id):null; }
+function reviewed(r){ const st=state[r.recipient_id]||{}; return st.counterparty_id!=null || st.reviewed===true; }
+function rowDone(r){ return eff(r)!=null; }
+function needsReview(r){ return eff(r)!=null && !reviewed(r); }  // suggested, not yet confirmed
+
+function bankHtml(details){
+  if(!details||!details.length) return "";
+  return '<div class="bank">'+details.map(([k,v])=>`<span class="k">${esc(k)}</span><span class="v">${esc(v)}</span>`).join("")+'</div>';
+}
 
 function render(){
   const q=(document.getElementById("q").value||"").toLowerCase();
@@ -178,30 +223,36 @@ function render(){
     if(q && !hay.includes(q)) continue;
     const st=state[r.recipient_id]||{};
     const sel = st.counterparty_id!=null ? st.counterparty_id : (r.proposed_id!=null?r.proposed_id:"");
-    const tr=document.createElement("tr"); if(done) tr.className="done";
+    const review=needsReview(r);
+    const tr=document.createElement("tr"); tr.className = review?"review":(done?"done":"");
     tr.innerHTML=`
       <td><span class="meta">${esc(r.channel)}</span></td>
       <td><span class="ccy">${esc(r.currency||"?")}</span></td>
       <td><div class="holder">${esc(r.holder||"(no name)")}</div>
-          <div class="meta">acct ${esc(r.acct||"—")} · Wise id ${esc(r.recipient_id)}</div></td>
+          <div class="meta">Wise id ${esc(r.recipient_id)}${r.country?" · "+esc(r.country):""}</div>
+          ${bankHtml(r.details)}</td>
       <td>
         <select class="pick" data-id="${r.recipient_id}">${optionsHtml(sel)}</select>
-        ${r.proposed_id!=null && st.counterparty_id==null ? `<div class="hint">suggested: ${esc(r.proposed_name)} (#${r.proposed_id}, ${r.proposed_score}) — confirm or change</div>`:""}
+        ${review ? `<div class="hint">suggested: <b>${esc(r.proposed_name)}</b> (#${r.proposed_id}) — <button class="okbtn" data-ok="${r.recipient_id}">✓ OK, correct</button> or change above</div>`:""}
         <input class="cmt" data-id="${r.recipient_id}" placeholder="comment (optional — e.g. account is in a different legal name)" value="${esc(st.comment||"")}"/>
       </td>`;
     tb.appendChild(tr);
   }
 }
 function refreshProgress(){
-  const done=DATA.recipients.filter(rowDone).length;
-  document.getElementById("pDone").textContent=done;
+  document.getElementById("pDone").textContent=DATA.recipients.filter(rowDone).length;
   document.getElementById("pTot").textContent=DATA.recipients.length;
+  document.getElementById("pRev").textContent=DATA.recipients.filter(needsReview).length+" to review";
 }
 document.addEventListener("change",e=>{
   if(e.target.classList.contains("pick")){
-    const id=e.target.dataset.id; state[id]=state[id]||{}; state[id].counterparty_id=e.target.value||null;
-    persist(); const tr=e.target.closest("tr"); tr.classList.toggle("done", rowDone({recipient_id:id}));
+    const id=e.target.dataset.id; state[id]=state[id]||{}; state[id].counterparty_id=e.target.value||null; state[id].reviewed=true;
+    persist(); render();
   }
+});
+document.addEventListener("click",e=>{
+  const id=e.target.dataset && e.target.dataset.ok;
+  if(id){ state[id]=state[id]||{}; state[id].reviewed=true; persist(); render(); }  // ✓ OK: accept the suggestion as-is
 });
 document.addEventListener("input",e=>{
   if(e.target.classList.contains("cmt")){ const id=e.target.dataset.id; state[id]=state[id]||{}; state[id].comment=e.target.value; localStorage.setItem(KEY,JSON.stringify(state)); }
@@ -211,12 +262,16 @@ document.addEventListener("input",e=>{
 function buildExport(){
   return DATA.recipients.map(r=>{
     const st=state[r.recipient_id]||{};
-    const cid = st.counterparty_id!=null?st.counterparty_id:null;
+    const e = eff(r);  // her pick, else the suggestion (untouched-but-correct still exports)
+    const noMatch = st.counterparty_id==="__none";
     return {recipient_id:r.recipient_id, channel:r.channel, profile:r.profile, currency:r.currency,
-            holder:r.holder, acct:r.acct,
-            counterparty_id: (cid==="__none"||cid==null)?null:Number(cid),
-            counterparty_name: (cid && cid!=="__none")?cpById[String(cid)]:null,
-            no_match: cid==="__none", comment: st.comment||""};
+            holder:r.holder, details:r.details,
+            counterparty_id: (noMatch||e==null||e==="__none")?null:Number(e),
+            counterparty_name: (e && e!=="__none")?cpById[String(e)]:null,
+            no_match: noMatch,
+            confirmed: reviewed(r),                         // true = she picked/OK'd; false = untouched suggestion
+            from_suggestion: st.counterparty_id==null && r.proposed_id!=null,
+            comment: st.comment||""};
   });
 }
 document.getElementById("exp").onclick=()=>{
