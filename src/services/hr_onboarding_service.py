@@ -386,11 +386,17 @@ class HrOnboardingService:
         country = (entity.country or "SG").upper()
         currency = item.get("currency") or ("AUD" if country == "AU" else "SGD")
 
+        # Pay schedule (POL-140): HR sets it at onboarding; default monthly = paid at month-end.
+        pay_schedule = (item.get("pay_schedule") or "monthly").lower()
+        split_pct = item.get("pay_split_pct")
         db.add(HrCompensation(
             employee_id=emp.id,
             pay_type=item.get("pay_type", "FIXED_SALARY"),
             gross_amount=Decimal(str(gross)),
             currency=currency,
+            pay_schedule=pay_schedule,
+            pay_split_pct=(Decimal(str(split_pct)) if split_pct not in (None, "") else
+                           (Decimal("50") if pay_schedule == "semi_monthly" else None)),
             effective_from=eff,
         ))
 

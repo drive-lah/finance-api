@@ -122,6 +122,16 @@ class HrCompensation(Base):
     currency: Mapped[str] = mapped_column(
         String(3), default="SGD", server_default="SGD", nullable=False,
     )
+    # Pay schedule (POL-140): monthly = paid once at month-end (the 2nd run, the DEFAULT); semi_monthly
+    # = paid in BOTH runs — pay_split_pct on the 15th run, the balance at month-end. Set by HR at onboarding.
+    pay_schedule: Mapped[str] = mapped_column(
+        String(16), default="monthly", server_default="monthly", nullable=False,
+        comment="monthly (paid at month-end, default) | semi_monthly (split across 15th + month-end)",
+    )
+    pay_split_pct: Mapped[Optional[float]] = mapped_column(
+        Numeric(5, 2), nullable=True,
+        comment="semi_monthly only: % paid in the 15th run (default 50); balance at month-end",
+    )
     effective_from: Mapped[date] = mapped_column(Date, nullable=False)
     effective_to: Mapped[Optional[date]] = mapped_column(
         Date, nullable=True, comment="NULL = currently active",

@@ -454,7 +454,17 @@ The five payable categories, all through the one register. Build order: claims, 
 | CL-1 | **Claim settlement (accounting core).** `claim_service.create_claim_payment_entries` (Dr 2303 / Cr bank, claim→PAID, link txn) + `categorization_service._try_claim_knockoff` (Phase 3.5: match an approved-unpaid claim to an outgoing reimbursement by exact amount + same entity + ±7d, mirrors payroll/AP knock-off — Gaurav OK'd adding the block, engine stays sole matcher). | ✅ done — clone-tested E2E: approve posts Dr6014/Cr2303, reimbursement txn → Dr2303/Cr bank balanced, claim PAID, txn MATCHED |
 | CL-2 | **Pay claim through the register.** `payout_service.create_claim_payout` (resolve employee cp POL-112 + its registration on the entity channel → `payable_type='claim'` payout; link `claim.payout_id`; send/checker). `_send`/`apply_wise_status` generalised via `_mark_payable_initiated`/`_revert_payable` (branch invoice vs claim). Claim gains `payment_initiated` state (POL-132 parity): approved→payment_initiated on send, →approved on fail, →paid on settlement. Routes `POST /payouts/claim` + `GET /payouts/claim-payables`; BFF proxies; FE `payClaim`/`getClaimPayables`. | ✅ backend done — clone-tested: create_claim_payout (cp241/Pankaj, payout type=claim, claim.payout_id linked), initiate approved→payment_initiated, revert →approved, settle →paid; tsc-clean |
 | CL-3 | **Surface approved claims as payables** in the Payouts queue UI (pay button). Backend `claim-payables` + `payClaim` ready. | ☐ FE — needs Interceptor (wedged) to browser-verify |
-| CL-4 | Payroll (category 2) — `payroll_service` + `FinancePayrollRun` already exist (create_run posts JE, create_payroll_payment_entries settles via categorization); wire the multi-leg run→payables (net→2304/super→2302/PAYG→2305) into the register. | ☐ after claims |
+| CL-4 | Payroll (category 2) — see PR-* below (builds on the existing HR engine, POL-140). | 🔄 in progress |
+
+**Payroll (POL-140) — builds on existing HR tables (`hr_employees`/`hr_compensation`/`hr_deduction_rules`/`hr_payroll_items`/`finance_payroll_runs` + `hr_payroll_service.create_run`). Segmented approval = `finance_coa_config` (COA matrix). Two runs: 15th + month-end.**
+
+| ID | Item | State |
+|----|------|-------|
+| PR-1 | **Pay schedule** — `hr_compensation.pay_schedule` (monthly=month-end default \| semi_monthly, `pay_split_pct` default 50) + onboarding wiring (mig 062, additive). | ✅ backend done — default logic verified; model maps; **prod apply of 062 pending (supervised — HR tables live on prod, not the clone)**. LEFT: FE onboarding dropdown (needs Interceptor) |
+| PR-2 | **Run state machine** — expand `finance_payroll_runs.status` (DRAFT/POSTED) → draft→calculated→pending_approval→approved→payment_initiated→paid (+reversed). | ☐ next |
+| PR-3 | **Segmented approval** — group run lines by `salary_expense_code`, route each through `finance_coa_config` (approver_1/2 + threshold); run approved when all groups are. | ☐ |
+| PR-4 | **Register fan-out (POL-139):** on approve emit per-employee net payables + (tax_treatment=internal) statutory payables (CPF/super/PAYG → authority) into `finance_payouts`; pay + settle on the claims/invoice machine. | ☐ |
+| PR-5 | **Hourly calc** — `pay_type=HOURLY_RATE` × `hr_payroll_items.hours_worked`; contractors (no statutory). Data-ready. | ☐ phase 2 |
 
 ### 2.8c ONE payout tab — consolidation + polymorphic payable + actions + paid-labels (LOCKED 2026-08-15)
 
