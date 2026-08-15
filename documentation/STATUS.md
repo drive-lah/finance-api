@@ -460,7 +460,7 @@ The five payable categories, all through the one register. Build order: claims, 
 
 | ID | Item | State |
 |----|------|-------|
-| PR-1 | **Pay schedule** — `hr_compensation.pay_schedule` (monthly=month-end default \| semi_monthly, `pay_split_pct` default 50) + onboarding wiring (mig 062, additive). | ✅ backend done — default logic verified; model maps; **prod apply of 062 pending (supervised — HR tables live on prod, not the clone)**. LEFT: FE onboarding dropdown (needs Interceptor) |
+| PR-1 | **Pay schedule** — `hr_compensation.pay_schedule` (monthly=month-end default \| semi_monthly, `pay_split_pct` default 50) + onboarding wiring (mig 062, additive). | ✅ backend done + **062 APPLIED TO PROD 2026-08-15** (prod 061→062; 48 comp rows preserved, all defaulted to `monthly`; column NOT NULL default monthly + pay_split_pct nullable). LEFT: FE onboarding dropdown (needs Interceptor) |
 | PR-2 | **Run state machine** — expand `finance_payroll_runs.status` (DRAFT/POSTED) → draft→calculated→pending_approval→approved→payment_initiated→paid (+reversed). | ☐ next |
 | PR-3 | **Segmented approval** — group run lines by `salary_expense_code`, route each through `finance_coa_config` (approver_1/2 + threshold); run approved when all groups are. | ☐ |
 | PR-4 | **Register fan-out (POL-139):** on approve emit per-employee net payables + (tax_treatment=internal) statutory payables (CPF/super/PAYG → authority) into `finance_payouts`; pay + settle on the claims/invoice machine. | ☐ |
