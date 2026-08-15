@@ -111,6 +111,9 @@ class PayoutService:
         # the paying entity's channel — we do NOT fall back to a different-entity/other-currency account.
         # (The AU failure was the old code grabbing Dirk's SGD account for an AU payout.) An account for
         # the paying channel exists or the payout is BLOCKED with "register one first".
+        # Prefer the NEW channel/registration model (POL-124); the account added via the counterparty
+        # Bank Accounts UI lives there, NOT in the legacy table. Fall back to the legacy account.
+        new_ok = self._has_channel_registration(db, inv.counterparty_id, inv.entity_id)
         recipient = (db.query(FinancePayoutBankAccount)
                      .filter(FinancePayoutBankAccount.counterparty_id == inv.counterparty_id,
                              FinancePayoutBankAccount.status == "active",
@@ -118,7 +121,7 @@ class PayoutService:
                      .order_by(FinancePayoutBankAccount.currency == ccy,  # prefer same-currency
                                FinancePayoutBankAccount.is_default.desc(),
                                FinancePayoutBankAccount.id.asc()).first())
-        if not DRY_RUN and not recipient:
+        if not DRY_RUN and not new_ok and not recipient:
             raise BadRequestError(
                 f"No bank account registered for this vendor on entity {inv.entity_id}'s payout channel. "
                 f"Add a bank account for this channel before paying.")
@@ -182,32 +185,53 @@ class PayoutService:
         self._send(db, payout, actor)
         return payout
 
-    def _resolve_pay_target(self, db, payout):
-        """(profile_id, recipient_id) for this payout. PREFER the channel/registration model
-        (PaymentChannel by our_entity_id → the counterparty's default bank account → its active
-        registration on that channel); FALL BACK to the legacy ENTITY_WISE_PROFILE + the embedded
-        FinancePayoutBankAccount.wise_recipient_id so an un-migrated DB still pays. Guarded: a missing
-        new-model table just triggers the fallback."""
+    def _has_channel_registration(self, db, counterparty_id, entity_id) -> bool:
+        """True if the counterparty has an ACTIVE registration on the paying entity's Wise channel
+        (new model, POL-124). Savepoint-guarded so a pre-059 DB just returns False and the legacy gate
+        applies."""
         try:
             from src.models.payout_channels import (
                 PaymentChannel, CounterpartyBankAccount, PayoutChannelRegistration)
-            # SAVEPOINT: on an un-migrated DB the new tables don't exist; a failed query would abort
-            # the WHOLE payout transaction (InFailedSqlTransaction). begin_nested() confines that failure
-            # to a savepoint so the outer transaction survives and the legacy fallback still works.
+            with db.begin_nested():
+                ch = (db.query(PaymentChannel)
+                      .filter_by(provider="wise", our_entity_id=entity_id, status="active").first())
+                if not ch:
+                    return False
+                return (db.query(PayoutChannelRegistration)
+                        .join(CounterpartyBankAccount,
+                              CounterpartyBankAccount.id == PayoutChannelRegistration.bank_account_id)
+                        .filter(CounterpartyBankAccount.counterparty_id == counterparty_id,
+                                PayoutChannelRegistration.channel_id == ch.id,
+                                PayoutChannelRegistration.status == "active").first() is not None)
+        except Exception:
+            return False
+
+    def _resolve_pay_target(self, db, payout):
+        """(profile_id, recipient_id) for this payout. PREFER the channel/registration model: find the
+        counterparty's ACTIVE registration ON THE PAYING CHANNEL (not the default account — a vendor
+        with an SGD default and a separate AUD account must resolve the AUD one for an AU payout). FALL
+        BACK to the legacy ENTITY_WISE_PROFILE + embedded recipient so an un-migrated DB still pays.
+        Savepoint-guarded so a missing table just triggers the fallback."""
+        try:
+            from src.models.payout_channels import (
+                PaymentChannel, CounterpartyBankAccount, PayoutChannelRegistration)
             with db.begin_nested():
                 ch = (db.query(PaymentChannel)
                       .filter_by(provider="wise", our_entity_id=payout.entity_id, status="active").first())
                 if ch:
                     profile_id = (ch.config or {}).get("profile_id")
-                    ba = (db.query(CounterpartyBankAccount)
-                          .filter_by(counterparty_id=payout.counterparty_id, status="active")
-                          .order_by(CounterpartyBankAccount.is_default.desc(),
-                                    CounterpartyBankAccount.id.asc()).first())
-                    if profile_id and ba:
-                        reg = (db.query(PayoutChannelRegistration)
-                               .filter_by(bank_account_id=ba.id, channel_id=ch.id, status="active").first())
-                        if reg:
-                            return str(profile_id), reg.external_recipient_id
+                    # the registration ON THIS CHANNEL for one of the counterparty's active accounts
+                    reg = (db.query(PayoutChannelRegistration)
+                           .join(CounterpartyBankAccount,
+                                 CounterpartyBankAccount.id == PayoutChannelRegistration.bank_account_id)
+                           .filter(CounterpartyBankAccount.counterparty_id == payout.counterparty_id,
+                                   CounterpartyBankAccount.status == "active",
+                                   PayoutChannelRegistration.channel_id == ch.id,
+                                   PayoutChannelRegistration.status == "active")
+                           .order_by(CounterpartyBankAccount.is_default.desc(),
+                                     PayoutChannelRegistration.id.asc()).first())
+                    if profile_id and reg:
+                        return str(profile_id), reg.external_recipient_id
         except Exception:
             logger.exception("new-model pay-target resolution unavailable; using legacy resolution")
         ba = db.get(FinancePayoutBankAccount, payout.bank_account_id) if payout.bank_account_id else None
