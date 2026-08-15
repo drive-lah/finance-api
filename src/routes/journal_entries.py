@@ -94,6 +94,26 @@ def create_journal_entry():
     lines_data = [line.model_dump() for line in entry_data.lines]
 
     with db_session() as db:
+        # POL-25 guard (2026-08-15, Gaurav currency audit): the ledger books FUNCTIONAL amounts.
+        # If a caller supplies a line in a foreign currency WITHOUT an explicit fx_rate, convert
+        # its amounts at the entry-date monthly rate and stamp native facts. Same-currency or
+        # already-rated lines pass through untouched (caller-converts contract preserved).
+        from decimal import Decimal
+        from src.models.entity import FinanceEntity
+        from src.services.fx_service import fx_service
+        _entity_row = db.get(FinanceEntity, entry_data.entity_id)
+        _func_ccy = _entity_row.base_currency if _entity_row else None
+        for _ld in lines_data:
+            _lccy = _ld.get("currency")
+            if _func_ccy and _lccy and _lccy != _func_ccy and not _ld.get("fx_rate"):
+                for _side in ("debit_amount", "credit_amount"):
+                    _amt = Decimal(str(_ld.get(_side) or 0))
+                    if _amt > 0:
+                        _conv, _rate = fx_service.to_functional(
+                            db, _amt, _lccy, _func_ccy, entry_data.entry_date)
+                        _ld["native_amount"] = _amt
+                        _ld[_side] = float(_conv)
+                        _ld["fx_rate"] = _rate
         # Create journal entry
         try:
             entry = journal_service.create(

@@ -449,6 +449,30 @@ def extract_invoice():
     return jsonify(result), 200
 
 
+@invoices_bp.route("/<int:invoice_id>/post-pairing", methods=["POST"])
+def post_pairing(invoice_id: int):
+    """Post a PAIRED invoice (Mechanism-A posting, Gaurav 2026-08-15): void interim txn JE,
+    book the functional bill, run the payment through create_ap_payment_entries (fx+GST+auto-FX).
+    Body: { "posted_by": "<user>" } — identity also read from X-User-Email (BFF-set)."""
+    body = request.get_json(silent=True) or {}
+    posted_by = request.headers.get("X-User-Email") or body.get("posted_by") or "ui"
+    from src.utils.errors import BadRequestError, ConflictError
+    try:
+        with db_session() as db:
+            result = invoice_service.post_pairing(db, invoice_id, posted_by=posted_by)
+            return jsonify(result), 200
+    except NotFoundError as e:
+        return jsonify({"error": str(e)}), 404
+    except BadRequestError as e:
+        return jsonify({"error": str(e)}), 400
+    except ConflictError as e:
+        return jsonify({"error": str(e)}), 409
+    except ValueError as e:
+        # business refusals from the posting stack (missing FX rate, missing IC codes,
+        # unbalanced JE) — clean 400s, not stack-trace 500s
+        return jsonify({"error": str(e)}), 400
+
+
 @invoices_bp.route("/<int:invoice_id>/match-transaction", methods=["POST"])
 def match_transaction(invoice_id: int):
     """

@@ -1,0 +1,59 @@
+{
+ "year": 2019,
+ "bank_account_ids": [
+  1,
+  18
+ ],
+ "feedback": [
+  {
+   "txn": 88450,
+   "verdict": "Other",
+   "input": "this seems like a refund. Look for incoming payment around this time."
+  },
+  {
+   "txn": 88214,
+   "verdict": "Wrong COA",
+   "input": "Director loan - Dirk-Jan"
+  },
+  {
+   "txn": 88446,
+   "verdict": "Wrong COA",
+   "input": "Upwork is always Marketing asset creation"
+  },
+  {
+   "txn": 88110,
+   "verdict": "OK",
+   "input": ""
+  },
+  {
+   "txn": 88221,
+   "verdict": "Wrong COA",
+   "input": "Director Loa"
+  },
+  {
+   "txn": 88263,
+   "verdict": "Wrong COA",
+   "input": "Director Loa"
+  },
+  {
+   "txn": 88207,
+   "verdict": "Wrong COA",
+   "input": "Misc income"
+  },
+  {
+   "txn": 88323,
+   "verdict": "OK",
+   "input": ""
+  },
+  {
+   "txn": 88182,
+   "verdict": "OK",
+   "input": ""
+  },
+  {
+   "txn": 88368,
+   "verdict": "OK",
+   "input": ""
+  }
+ ]
+}

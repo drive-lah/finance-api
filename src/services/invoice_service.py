@@ -256,7 +256,9 @@ class InvoiceService:
         if is_duplicate is not None:
             query = query.filter(jtext("recon", "duplicate", "is_duplicate") == str(is_duplicate).lower())
         if search:
-            like = f"%{search}%"
+            # escape LIKE wildcards so a literal % or _ in the term stays literal
+            _esc = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            like = f"%{_esc}%"
             conds = [
                 FinanceInvoice.invoice_number.ilike(like),
                 jtext("extraction", "vendor_name").ilike(like),
@@ -682,6 +684,11 @@ class InvoiceService:
             )
 
         total = float(invoice.total_amount)
+        if total <= 0:
+            from src.utils.errors import BadRequestError
+            raise BadRequestError(
+                f"Invoice {invoice_id} has a non-positive total ({total}) — cannot approve; "
+                "fix the extraction first.")
         tax = float(invoice.tax_amount) if invoice.tax_amount else 0.0
         # POL-87: GST posts ONLY for GST-registered entities (entity.gst_rate set).
         # For a non-registered entity (e.g. the SG entities) the GST is non-recoverable
@@ -725,27 +732,44 @@ class InvoiceService:
         # the expense). The GST amount stays recorded on the invoice (invoice.tax_amount)
         # for that claim; `tax`/`net` above are retained for validation/record only.
         # 2-line JE: Dr expense/prepaid (gross) / Cr payable (dedicated liability or 2000 AP).
+        # POL-25 (fixed 2026-08-15, Gaurav audit): the ledger books FUNCTIONAL currency — a
+        # foreign-currency invoice converts at the invoice-date monthly rate, with the native
+        # amount + rate stamped on every line. Previously the raw invoice number booked unconverted.
+        from src.services.fx_service import fx_service
+        _func_ccy = _entity.base_currency if _entity else None
+        _inv_ccy = invoice.currency or _func_ccy
+        _total_native = Decimal(str(total))
+        if _func_ccy and _inv_ccy != _func_ccy:
+            _total_func, _fx_rate = fx_service.to_functional(
+                db, _total_native, _inv_ccy, _func_ccy, invoice.invoice_date)
+        else:
+            _total_func, _fx_rate = _total_native, Decimal("1")
         lines = [
             {
                 "account_code": debit_code,
-                "debit_amount": total,
+                "debit_amount": float(_total_func),
                 "credit_amount": 0.0,
                 "description": inv_ref,
+                "currency": _inv_ccy, "native_amount": _total_native, "fx_rate": _fx_rate,
             },
             {
                 "account_code": credit_code,
                 "debit_amount": 0.0,
-                "credit_amount": total,
+                "credit_amount": float(_total_func),
                 "description": inv_ref,
+                "currency": _inv_ccy, "native_amount": _total_native, "fx_rate": _fx_rate,
             },
         ]
 
+        # Gaurav ruling 2026-08-15: "at approval, the invoice posts, PERIOD" — no draft stage.
+        from src.models.journal_entry import JournalEntryStatus
         entry = journal_service.create(
             db=db,
             entity_id=invoice.entity_id,
             entry_date=invoice.invoice_date,
             description=f"AP Invoice: {invoice.invoice_number or f'#{invoice.id}'}",
             lines=lines,
+            status=JournalEntryStatus.POSTED,
         )
         entry.source = "invoice_approval"
         entry.reference_number = f"INV-{invoice.id}"  # trace JE -> invoice (Gaurav 2026-08-03)
@@ -759,10 +783,13 @@ class InvoiceService:
         # Create amortization schedule if needed
         if needs_amortization:
             months = _months_between(invoice.service_period_start, invoice.service_period_end)
-            monthly_amount = round(total / months, 2)
+            # POL-25 (2026-08-15): the schedule stores FUNCTIONAL amounts — a foreign-currency
+            # invoice's schedule uses the converted total, matching the posted approval JE.
+            _sched_total = float(_total_func)
+            monthly_amount = round(_sched_total / months, 2)
             schedule = FinanceAmortizationSchedule(
                 invoice_id=invoice.id,
-                total_amount=total,
+                total_amount=_sched_total,
                 months=months,
                 monthly_amount=monthly_amount,
                 expense_account_code=invoice.contra_account_code,
@@ -1032,6 +1059,136 @@ class InvoiceService:
             query = query.filter(FinanceInvoice.invoice_date <= transaction_date)
 
         return query.order_by(FinanceInvoice.invoice_date.asc(), FinanceInvoice.id.asc()).all()
+
+    def post_pairing(self, db: Session, invoice_id: int, posted_by: str = "ui") -> dict:
+        """Post a PAIRED (reconcile-arm) invoice — the Mechanism-A posting action (Gaurav, 2026-08-15).
+
+        Algorithm (locked in STATUS I-5 v1):
+          1. invoice must be `paired`; every matched txn must be books-open (>= 2026-01-01) — pre-2026
+             pairings REFUSE (their cash lives in opening balances; the history pipeline books them).
+          2. VOID the txn's interim JE if one exists (categorized/parked; its GST lines unwind with it).
+          3. Bill JE: entity-functional at the invoice-date rate, GROSS (POL-121), POSTED.
+          4. Payment via create_ap_payment_entries — the full stack: payment-date currency conversion,
+             the POL-123 GST claim, auto-FX residue clearing. Posted, txn RECONCILED, match logged.
+        """
+        from datetime import date as _date, datetime as _dt, UTC as _UTC
+        from src.models.transaction import FinanceTransaction, TransactionStatus
+        from src.models.bank_account import FinanceBankAccount
+        from src.models.invoice_payment_match import FinanceInvoicePaymentMatch
+        from src.models.entity import FinanceEntity
+        from src.models.journal_entry import JournalEntryStatus
+        from src.services.fx_service import fx_service
+        from src.utils.errors import BadRequestError
+
+        # Row-lock the invoice so two concurrent post-pairing requests (double-click) serialize:
+        # the second sees the post-transition status and refuses cleanly.
+        invoice = (db.query(FinanceInvoice)
+                   .filter(FinanceInvoice.id == invoice_id)
+                   .with_for_update().first())
+        if invoice is None:
+            raise NotFoundError(f"Invoice {invoice_id} not found.")
+        if invoice.status != InvoiceStatus.PAIRED.value:
+            raise BadRequestError(f"Invoice {invoice_id} is not in paired status (is: {invoice.status}).")
+        if invoice.journal_entry_id is not None:
+            raise BadRequestError(
+                f"Invoice {invoice_id} already carries bill JE {invoice.journal_entry_id} — "
+                "refusing to double-post.")
+        matches = (db.query(FinanceInvoicePaymentMatch)
+                   .filter(FinanceInvoicePaymentMatch.invoice_id == invoice_id).all())
+        if not matches:
+            raise BadRequestError(f"Invoice {invoice_id} has no payment matches.")
+        txns = [db.get(FinanceTransaction, m.transaction_id) for m in matches]
+        if any(t is None for t in txns):
+            raise BadRequestError("A matched transaction no longer exists.")
+        for t in txns:
+            if t.transaction_date < _date(2026, 1, 1):
+                raise BadRequestError(
+                    f"Txn {t.id} is dated {t.transaction_date} (pre-books-open). Pre-2026 pairings are "
+                    "posted by the history pipeline, never here (POL-124/POL-28).")
+
+        # 2) void any interim JEs on the matched txns
+        voided = []
+        for t in txns:
+            if t.reconciled_journal_entry_id:
+                je = journal_service.void_entry(
+                    db, t.reconciled_journal_entry_id,
+                    reason=f"re-routed through AP by post_pairing of invoice {invoice_id}")
+                if je is not None:
+                    voided.append(je.id)
+                t.reconciled_journal_entry_id = None
+
+        # 3) bill JE — functional at invoice-date rate, gross, POSTED
+        entity_row = db.get(FinanceEntity, invoice.entity_id)
+        func_ccy = entity_row.base_currency if entity_row else None
+        inv_ccy = invoice.currency or func_ccy
+        total_native = Decimal(str(invoice.total_amount))
+        if func_ccy and inv_ccy != func_ccy:
+            total_func, fx_rate = fx_service.to_functional(
+                db, total_native, inv_ccy, func_ccy, invoice.invoice_date)
+        else:
+            total_func, fx_rate = total_native, Decimal("1")
+        debit_code = invoice.contra_account_code
+        if not debit_code:
+            raise BadRequestError(f"Invoice {invoice_id} has no expense account (contra_account_code).")
+        credit_code = self._payable_account_for(db, debit_code)
+        inv_ref = f"Invoice {invoice.invoice_number or invoice.id}"
+        meta = {"currency": inv_ccy, "native_amount": total_native, "fx_rate": fx_rate}
+        bill = journal_service.create(
+            db=db, entity_id=invoice.entity_id, entry_date=invoice.invoice_date,
+            description=f"AP Invoice (post-pairing): {invoice.invoice_number or f'#{invoice.id}'}",
+            lines=[
+                {"account_code": debit_code, "debit_amount": float(total_func), "credit_amount": 0.0,
+                 "description": inv_ref, **meta},
+                {"account_code": credit_code, "debit_amount": 0.0, "credit_amount": float(total_func),
+                 "description": inv_ref, **meta},
+            ],
+            status=JournalEntryStatus.POSTED,
+        )
+        bill.source = "pairing_post"
+        bill.reference_number = f"INV-{invoice.id}"
+        db.flush()
+        invoice.journal_entry_id = bill.id
+
+        # 4) payment(s) via the full-stack constructor
+        payment_ids = []
+        for t in txns:
+            bank_account = db.get(FinanceBankAccount, t.bank_account_id)
+            if not bank_account or not bank_account.coa_account_code:
+                raise BadRequestError(f"Bank account for txn {t.id} has no COA code.")
+            entry = self.create_ap_payment_entries(
+                db=db, bank_account=bank_account, invoice=invoice,
+                txn_date=t.transaction_date, abs_amount=abs(float(t.amount)),
+                source="pairing_post",
+                description=f"AP Payment (post-pairing by {posted_by}): {inv_ref}")
+            entry.status = "POSTED"
+            entry.posted_at = _dt.now(_UTC)
+            t.reconciled_journal_entry_id = entry.id
+            t.status = TransactionStatus.RECONCILED
+            payment_ids.append(entry.id)
+            # amount_paid lives in the INVOICE's currency (record_payment convention). A payment
+            # from a bank in another currency converts at the payment date; when it settles the
+            # invoice (within the 2-cent tolerance), record the FULL invoice total so the header
+            # closes exactly (Gaurav ruling, 2026-08-15).
+            _pay_dec = Decimal(str(abs(float(t.amount))))
+            _txn_ccy = (t.currency or "").upper()
+            _icy = (invoice.currency or "").upper()
+            if _txn_ccy and _icy and _txn_ccy != _icy:
+                _pay_dec, _ = fx_service.to_functional(db, _pay_dec, _txn_ccy, _icy, t.transaction_date)
+            _remaining = Decimal(str(invoice.total_amount)) - Decimal(str(invoice.amount_paid))
+            if abs(_pay_dec - _remaining) <= Decimal("0.02") or _pay_dec > _remaining:
+                _pay_dec = _remaining
+            # Apply in-transaction (NOT record_payment — it commits internally, which would strand
+            # a half-posted invoice if a later payment leg raises; the whole action commits once).
+            _new_paid = round(float(invoice.amount_paid) + float(_pay_dec), 2)
+            invoice.amount_paid = _new_paid
+            invoice.status = (InvoiceStatus.PAID.value if _new_paid >= float(invoice.total_amount)
+                              else InvoiceStatus.PARTIALLY_PAID.value)
+        for m in matches:
+            m.state = "logged"
+        db.commit()
+        db.refresh(invoice)
+        return {"invoice_id": invoice.id, "status": invoice.status, "bill_je": bill.id,
+                "payment_jes": payment_ids, "voided_interim_jes": voided}
 
     def match_transaction(
         self,
@@ -1415,6 +1572,21 @@ class InvoiceService:
         bank_coa = bank_account.coa_account_code
         inv_ref = f"Invoice {invoice.invoice_number or invoice.id}"
 
+        # POL-25 (fixed 2026-08-15, Gaurav audit): abs_amount arrives in the BANK ACCOUNT's native
+        # currency; the ledger books functional. Convert at the payment date and stamp native facts.
+        from src.models.entity import FinanceEntity
+        from src.services.fx_service import fx_service
+        _bank_entity = db.get(FinanceEntity, bank_entity_id)
+        _func_ccy = _bank_entity.base_currency if _bank_entity else None
+        _bank_ccy = bank_account.currency or _func_ccy
+        _native_amt = Decimal(str(abs_amount))
+        if _func_ccy and _bank_ccy != _func_ccy:
+            _func_amt, _fx_rate = fx_service.to_functional(db, _native_amt, _bank_ccy, _func_ccy, txn_date)
+            abs_amount = float(_func_amt)
+        else:
+            _fx_rate = Decimal("1")
+        _ccy_meta = {"currency": _bank_ccy, "native_amount": _native_amt, "fx_rate": _fx_rate}
+
         # Clear the SAME liability the approval JE credited — dedicated (e.g. 2302
         # Superannuation Payable) or generic 2000 AP — else the sub-payable never closes.
         ap_code = self._payable_account_for(db, invoice.contra_account_code)
@@ -1423,9 +1595,9 @@ class InvoiceService:
             # ── Same-entity: Dr AP / Cr Bank, plus (PR-1) the cash-time input-GST claim ─────
             lines = [
                 {"account_code": ap_code, "debit_amount": abs_amount, "credit_amount": 0.0,
-                 "description": inv_ref},
+                 "description": inv_ref, **_ccy_meta},
                 {"account_code": bank_coa, "debit_amount": 0.0, "credit_amount": abs_amount,
-                 "description": inv_ref},
+                 "description": inv_ref, **_ccy_meta},
             ]
             # POL-121: the bill was booked GROSS at approval (no 1350). Claim the paid slice's input
             # GST NOW, at cash payment: Dr 1350 / Cr <expense COA>, moving GST out of the gross expense
@@ -1436,6 +1608,40 @@ class InvoiceService:
                               "credit_amount": 0.0, "description": f"{inv_ref} — input GST claimed at payment"})
                 lines.append({"account_code": exp_code, "debit_amount": 0.0, "credit_amount": gst_amt,
                               "description": f"{inv_ref} — expense net of GST (POL-121)"})
+
+            # AUTO-FX CLEARING (Gaurav, 2026-08-15): when this payment settles the invoice in NATIVE
+            # terms, any functional-currency residue on the payable (invoice-date rate vs payment-date
+            # actual) clears to 7100 FX Gains/Losses ON THE SAME JE — a foreign-currency payment can
+            # never strand a residue on AP. Traced via the shared INV-<id> reference.
+            if _bank_ccy != _func_ccy or (invoice.currency and invoice.currency != _func_ccy):
+                from sqlalchemy import text as _text
+                _ap_open = Decimal(str(db.execute(_text(
+                    """SELECT coalesce(sum(l.credit_amount - l.debit_amount), 0)
+                       FROM finance_journal_lines l JOIN finance_journal_entries je ON je.id = l.entry_id
+                       WHERE je.status = 'POSTED' AND l.account_code = :ap AND l.entity_id = :ent
+                         AND je.reference_number = :ref"""),
+                    {"ap": ap_code, "ent": bank_entity_id, "ref": f"INV-{invoice.id}"}).scalar() or 0))
+                _residue = _ap_open - Decimal(str(abs_amount))  # what this payment leaves behind
+                # Settlement is judged in the INVOICE's currency: a payment from a bank in a third
+                # currency converts at the payment date before comparing against the invoice total.
+                _inv_ccy = (invoice.currency or _func_ccy).upper()
+                if _bank_ccy == _inv_ccy:
+                    _paid_native = _native_amt
+                else:
+                    _paid_native, _ = fx_service.to_functional(db, _native_amt, _bank_ccy, _inv_ccy, txn_date)
+                _inv_total = Decimal(str(invoice.total_amount or 0))
+                _fully_paid = abs(_paid_native - _inv_total) <= Decimal("0.02") or _paid_native >= _inv_total
+                if _fully_paid and abs(_residue) > Decimal("0.005"):
+                    if _residue > 0:   # payable exceeds cash -> FX gain
+                        lines.append({"account_code": ap_code, "debit_amount": float(_residue),
+                                      "credit_amount": 0.0, "description": f"{inv_ref} — FX clearing"})
+                        lines.append({"account_code": "7100", "debit_amount": 0.0,
+                                      "credit_amount": float(_residue), "description": f"{inv_ref} — FX gain"})
+                    else:
+                        lines.append({"account_code": "7100", "debit_amount": float(-_residue),
+                                      "credit_amount": 0.0, "description": f"{inv_ref} — FX loss"})
+                        lines.append({"account_code": ap_code, "debit_amount": 0.0,
+                                      "credit_amount": float(-_residue), "description": f"{inv_ref} — FX clearing"})
             entry = journal_service.create(
                 db=db,
                 entity_id=bank_entity_id,
@@ -1470,12 +1676,14 @@ class InvoiceService:
                     "debit_amount": abs_amount,
                     "credit_amount": 0.0,
                     "description": inv_ref,
+                    **_ccy_meta,
                 },
                 {
                     "account_code": bank_coa,
                     "debit_amount": 0.0,
                     "credit_amount": abs_amount,
                     "description": inv_ref,
+                    **_ccy_meta,
                 },
             ],
         )
@@ -1483,7 +1691,19 @@ class InvoiceService:
         bank_entry.reference_number = f"INV-{invoice.id}"  # trace JE -> invoice
         bank_entry.intercompany_group_id = ic_group_id
 
-        # Invoice entity: Dr AP (dedicated liability or 2000) / Cr IC Payable
+        # Invoice entity: Dr AP (dedicated liability or 2000) / Cr IC Payable.
+        # POL-25/27: each entity books in ITS OWN functional currency — the invoice entity may
+        # differ from the bank entity (AU bank paying an SG invoice). Convert the bank-native
+        # cash to the invoice entity's functional at the payment date; same native facts stamped.
+        _inv_entity = db.get(FinanceEntity, invoice_entity_id)
+        _inv_func_ccy = _inv_entity.base_currency if _inv_entity else None
+        if _inv_func_ccy and _bank_ccy and _inv_func_ccy != _bank_ccy:
+            _inv_leg_amt, _inv_fx_rate = fx_service.to_functional(
+                db, _native_amt, _bank_ccy, _inv_func_ccy, txn_date)
+            inv_amount = float(_inv_leg_amt)
+        else:
+            inv_amount, _inv_fx_rate = float(_native_amt), Decimal("1")
+        _inv_ccy_meta = {"currency": _bank_ccy, "native_amount": _native_amt, "fx_rate": _inv_fx_rate}
         inv_entry = journal_service.create(
             db=db,
             entity_id=invoice_entity_id,
@@ -1492,15 +1712,17 @@ class InvoiceService:
             lines=[
                 {
                     "account_code": ap_code,
-                    "debit_amount": abs_amount,
+                    "debit_amount": inv_amount,
                     "credit_amount": 0.0,
                     "description": inv_ref,
+                    **_inv_ccy_meta,
                 },
                 {
                     "account_code": ic_payable,
                     "debit_amount": 0.0,
-                    "credit_amount": abs_amount,
+                    "credit_amount": inv_amount,
                     "description": inv_ref,
+                    **_inv_ccy_meta,
                 },
             ],
         )
