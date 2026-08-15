@@ -461,7 +461,7 @@ The five payable categories, all through the one register. Build order: claims, 
 | ID | Item | State |
 |----|------|-------|
 | PR-1 | **Pay schedule** — `hr_compensation.pay_schedule` (monthly=month-end default \| semi_monthly, `pay_split_pct` default 50) + onboarding wiring (mig 062, additive). | ✅ backend done + **062 APPLIED TO PROD 2026-08-15** (prod 061→062; 48 comp rows preserved, all defaulted to `monthly`; column NOT NULL default monthly + pay_split_pct nullable). LEFT: FE onboarding dropdown (needs Interceptor) |
-| PR-2 | **Run state machine** — expand `finance_payroll_runs.status` (DRAFT/POSTED) → draft→calculated→pending_approval→approved→payment_initiated→paid (+reversed). | ☐ next |
+| PR-2 | **Run state machine** — `PayrollRunStatus` enum + `PAYROLL_TRANSITIONS`/`can_transition` (payroll.py) + `payroll_service.transition_run` (validated). Lifecycle DRAFT→PENDING_APPROVAL→APPROVED→POSTED→PAYMENT_INITIATED→PAID (+VOID); legacy DRAFT/POSTED/VOID strings + meaning preserved (settlement still keys on POSTED); no migration (string col). | ✅ done — transition table verified (legacy path kept, approval can't be skipped, terminals locked, idempotent); compiles |
 | PR-3 | **Segmented approval** — group run lines by `salary_expense_code`, route each through `finance_coa_config` (approver_1/2 + threshold); run approved when all groups are. | ☐ |
 | PR-4 | **Register fan-out (POL-139):** on approve emit per-employee net payables + (tax_treatment=internal) statutory payables (CPF/super/PAYG → authority) into `finance_payouts`; pay + settle on the claims/invoice machine. | ☐ |
 | PR-5 | **Hourly calc** — `pay_type=HOURLY_RATE` × `hr_payroll_items.hours_worked`; contractors (no statutory). Data-ready. | ☐ phase 2 |

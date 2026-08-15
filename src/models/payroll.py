@@ -13,6 +13,7 @@ net_payment_transaction_id and cpf_payment_transaction_id.
 """
 from datetime import datetime, date
 from typing import Optional
+import enum
 
 from sqlalchemy import (
     String, DateTime, Date, Integer, ForeignKey, Numeric, Index,
@@ -22,13 +23,46 @@ from sqlalchemy.orm import Mapped, mapped_column
 from src.database import Base
 
 
+class PayrollRunStatus(str, enum.Enum):
+    """Payroll run lifecycle (PR-2, POL-140). The three legacy values (DRAFT/POSTED/VOID) keep their
+    exact strings + meaning so live HR creation and the categorization settlement (which keys on POSTED)
+    are untouched; the approval-gated states are inserted around them for the new flow."""
+    DRAFT = "DRAFT"                        # HR building the run (calculating payslip items)
+    PENDING_APPROVAL = "PENDING_APPROVAL"  # routed to COA-matrix approvers (finance_coa_config), PR-3
+    APPROVED = "APPROVED"                  # every salary-account group signed off; ready to post
+    POSTED = "POSTED"                      # JE posted; awaiting bank payment settlement (LEGACY key)
+    PAYMENT_INITIATED = "PAYMENT_INITIATED"  # net + statutory payouts raised into the register, PR-4
+    PAID = "PAID"                          # all payments settled (terminal)
+    VOID = "VOID"                          # run voided; JE reversed (terminal)
+
+
+# Allowed transitions. Legacy DRAFT→POSTED is kept (the current HR post path) alongside the new
+# approval-gated route DRAFT→PENDING_APPROVAL→APPROVED→POSTED→PAYMENT_INITIATED→PAID.
+PAYROLL_TRANSITIONS: dict[str, set[str]] = {
+    "DRAFT": {"PENDING_APPROVAL", "POSTED", "VOID"},
+    "PENDING_APPROVAL": {"APPROVED", "DRAFT", "VOID"},
+    "APPROVED": {"POSTED", "PENDING_APPROVAL", "VOID"},
+    "POSTED": {"PAYMENT_INITIATED", "PAID", "VOID"},
+    "PAYMENT_INITIATED": {"PAID", "POSTED", "VOID"},
+    "PAID": set(),
+    "VOID": set(),
+}
+
+
+def can_transition(from_status: str, to_status: str) -> bool:
+    """True if `from_status → to_status` is a legal payroll-run transition (idempotent self-moves allowed)."""
+    if from_status == to_status:
+        return True
+    return to_status in PAYROLL_TRANSITIONS.get(from_status, set())
+
+
 class FinancePayrollRun(Base):
     """
     Model representing a single payroll disbursement run.
 
-    Status:
-        POSTED  — JE created and posted; awaiting bank payment matching.
-        VOID    — Run voided; JE has been reversed.
+    Status: PayrollRunStatus lifecycle (PR-2) — DRAFT → PENDING_APPROVAL → APPROVED → POSTED →
+    PAYMENT_INITIATED → PAID (+ VOID). Legacy DRAFT/POSTED/VOID keep their exact meaning; POSTED is
+    still the JE-posted/awaiting-settlement state the categorization engine keys on.
     """
     __tablename__ = "finance_payroll_runs"
 

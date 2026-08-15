@@ -55,6 +55,21 @@ CPF_PAYABLE_ACCOUNT = "2300"   # CPF Payable
 class PayrollService:
     """Service for managing payroll runs (System 3)."""
 
+    def transition_run(self, db: Session, run, to_status: str, *, actor=None) -> "FinancePayrollRun":
+        """PR-2: move a payroll run to a new status, enforcing the lifecycle (PAYROLL_TRANSITIONS).
+        Raises on an illegal transition so callers can't skip approval or resurrect a paid/void run."""
+        from src.models.payroll import can_transition, PayrollRunStatus
+        from src.utils.errors import BadRequestError
+        valid = {s.value for s in PayrollRunStatus}
+        if to_status not in valid:
+            raise BadRequestError(f"Unknown payroll status '{to_status}'.")
+        if not can_transition(run.status, to_status):
+            raise BadRequestError(
+                f"Illegal payroll transition {run.status} → {to_status}.")
+        run.status = to_status
+        db.flush()
+        return run
+
     def create_run(self, db: Session, data: dict) -> FinancePayrollRun:
         """
         Create a payroll run and immediately post the 4-line JE.
