@@ -133,6 +133,11 @@
 
 ## 2. What's Pending
 
+### 2.0a Bank recon — pre-books park (TEMPORARY, Gaurav 2026-08-15)
+- **BR-1 ✅** Root cause of the sudden bank residuals: the 3-4 Aug vendor-SoA pairing runs (`matcher`/`pairing_skill_v2`/`insurance_ref_pair`, posting_user 'system') booked payment JEs for PRE-2026-paid invoices AT their true 2024/25 dates (Dr Trade & Other Payables / Cr bank) — historically true, but that cash is already inside the Jan-1 opening balances → double-count. CBA: 8 JEs $240,200.44 (incl 3 Penguin Risk ~$218k). Wise AUD: 515 JEs **$2,303,905.09 = the residual to the cent**. Pairing itself was correct; the replays also left phantom pre-2026 Prepayments/1350 legs (1350 already swept by gst_h1_opening).
+- **BR-2 ✅** RULING (Gaurav): keep history true; POST A TEMPORARY PARK against Opening Balance Equity instead of voiding — removed together with the opening JEs when pre-2026 history reconciles. **JE 11477** (2025-12-31, source `pre_books_park`, PARK-AUD-1): Dr Wise AUD 2,303,905.09 + Dr CBA 240,200.44 / Cr 3200 2,544,105.53. **Verified after: Wise AUD residual $0.00**; CBA residual **$2,035.12** = exactly the 13-Aug opening_correction amount → next chase: reconcile the Jan-1 CBA statement figure (107,795.81 per Gaurav) against the imported txn chain (implies 109,830.93); one of the two has a ~$2,035 boundary defect.
+- **BR-3 ⏳** Same park still needed for: Wise SGD (1001, residual $812k), Stripe SG (1017, −$604k = ORPHAN stripe/economic-events JEs — different variant, needs its own diagnosis), OCBC 1000 ($936), dormant Wise 1007/8/9, Stripe AU 1019 (−$4.6k). Also: JE attribution gap (machine-created JEs carry posting_user='system', no operator/run id).
+
 ### 2.0b GST vendor-registration sweep — OPEN ITEMS (Gaurav, 2026-08-14)
 - **VR-SWEEP-1** Registered so far (clone) as AU-GST vendors so the vendor gate claims them (replaces `gst_claim_by_default`): bank-lane payouts 504 Bombora / 310 Linkt / 659 AUTO & GENERAL / 663 PORT MOTOR / 668 Yarra / 673 FCM, plus 438 SafetyCulture / 634 TPG / 329 Uber AU / 385 Didi / 660 Precision Clearing House / 86 Insuret. Foreign stay OUT (63 Cycle & Carriage = SG; SaaS bucket; ASIC/govt).
 - **VR-SWEEP-2 ⏳ ALTIMOBILITY CORP (cp 649) — $71,177 AU spend, UNIDENTIFIED, largest single unregistered vendor. Check what it is (name reads foreign) and rule AU-registered vs foreign. Gaurav: check later.**
