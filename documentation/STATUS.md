@@ -442,6 +442,18 @@ Context: id-8 phantom (DQ-102) — a payout showed success while Wise `funds_ref
 | SM-4 | **Pay-time safety (POL-133):** `create_payout` BLOCKS when no account on the paying entity's channel (wrong-account fallback removed). FE **review-before-pay modal** in PayoutsTab (payee · amount · channel · resolved recipient, or a red block if none). | ✅ done (backend verified; FE tsc-clean) |
 | SM-5 | Reconciliation stays VP-5 only (POL-131). Verify VP-5 fires on a real Wise import (still unproven). | ☐ verify (needs a real import) |
 
+### 2.8c ONE payout tab — consolidation + polymorphic payable + actions + paid-labels (LOCKED 2026-08-15)
+
+Gaurav: merge PayQueue + Payouts into ONE tab (keep drag-reorder); per-row detail drawer with the payable's trail + approval chain (polymorphic — invoice now, payroll next round, POL-128); actions Pay / Mark-paid-already / Reject(reason). Reconcile vs paid = display-label problem (POL-135): the STATE stays honest, the UI maps the paid-family to "Paid".
+
+| ID | Item | State |
+|----|------|-------|
+| PQ-1 | Backend: `invoice_service.mark_paid_already` (approved → `reconcile`, POL-135) + route `POST /invoices/{id}/mark-paid-already`. Reject+JE-reversal (`invoice_service.reject`, POL-111) + reorder + `approvals_log` already exist. | ✅ done, routes registered |
+| PQ-2 | **Paid-family display labels (POL-135):** `payment_initiated`→"Paid (in transit)", `reconcile`/`paired`→"Paid (reconciling)", `paid`→"Paid". State stays honest; label reads paid for users. FE status map. | ☐ |
+| PQ-3 | **One tab:** evolve PayQueueTab into the single Payouts tab (drag-reorder + queue). Fold in the Wise-pay flow (create_payout + review-before-pay modal) as the **Pay** action; add **Mark paid already**; keep **Reject(reason)**. Retire the separate PayoutsTab from the tab nav. | ☐ |
+| PQ-4 | **Detail drawer:** open the payable (invoice; payroll later) with its state history + approval chain (`approvals_log`). Type-aware (`payable_type`). | ☐ |
+| PQ-5 | Payroll payable (`payable_type='payroll'`) — NEXT ROUND; slots into the polymorphic payable + same actions/reversal. | ☐ next round |
+
 ## 2.9 Invoice Ingestion — minimal-friction pipeline (MEGA-TASK, Gaurav 2026-08-03)
 
 One capture surface only: the existing **upload** system (no email intake). Every invoice → **draft**. Design is largely EXISTING behavior + one new gate. Business rules confirmed by Gaurav 2026-08-03.

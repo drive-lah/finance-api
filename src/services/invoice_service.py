@@ -865,6 +865,24 @@ class InvoiceService:
         db.refresh(invoice)
         return invoice
 
+    def mark_paid_already(self, db: Session, invoice_id: int, actor: Optional[str] = None) -> FinanceInvoice:
+        """POL-132/135: 'paid outside the system'. Move an APPROVED payable into the reconciliation arm
+        (`reconcile`), where the categorization engine pairs the real bank payment and posts the knock-off
+        → `paid`. Does NOT jump to `paid` (paid <=> a matched transaction). The bill JE stays posted (the
+        expense is real); only the payment side awaits matching. Displays as "Paid (reconciling)" to users."""
+        invoice = self.get_by_id(db, invoice_id)
+        if invoice.status != InvoiceStatus.APPROVED.value:
+            from src.utils.errors import ConflictError
+            raise ConflictError(
+                f"Only an approved payable can be marked paid-already (is '{invoice.status}').")
+        invoice.status = InvoiceStatus.RECONCILE.value
+        from src.services.task_service import task_service
+        from src.models.task import TaskStatus
+        task_service.close_for_source(db, f"invoice:{invoice_id}", TaskStatus.RETURNED.value,
+                                      acted_by=actor, action="approve", notes="marked paid outside the system")
+        db.commit(); db.refresh(invoice)
+        return invoice
+
     def void(self, db: Session, invoice_id: int, voided_by: Optional[str] = None,
              void_reason: Optional[str] = None) -> FinanceInvoice:
         """Void an invoice. Allowed in any pre-posting state where nothing has hit the ledger:
