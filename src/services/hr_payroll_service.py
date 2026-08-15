@@ -451,6 +451,18 @@ class HrPayrollService:
         PR-4: `net_to_account` chooses where the NET credit lands. None = credit the BANK directly (legacy
         pay-immediately model). A code like '2304' = credit Salaries Payable (accrue-then-pay model), so
         the net can be fanned out into the register and settled Dr 2304 / Cr bank per employee."""
+        # POL-141/142: a payroll run is NOT single-currency — CS salaries run in USD, wages in INR,
+        # inside an SGD/AU entity. Each payslip (item.currency) converts to the entity's functional
+        # currency at the run date BEFORE aggregating, so the JE is wholly in functional currency.
+        from src.models.entity import FinanceEntity
+        from src.services.fx_service import fx_service
+        _func = db.get(FinanceEntity, fin_run.entity_id).base_currency if fin_run.entity_id else None
+        _on = fin_run.run_date
+
+        def _conv(amount, ccy):
+            a, _r = fx_service.to_functional_or_same(db, Decimal(str(amount)), ccy, _func, _on)
+            return a
+
         debit_map: dict[str, Decimal] = {}
         credit_map: dict[str, Decimal] = {}
         groups: dict[str, dict] = {}
@@ -460,14 +472,14 @@ class HrPayrollService:
             if not emp:
                 raise ValueError(f"Employee {item.employee_id} not found for payroll item {item.id}")
             salary_code = self._resolve_salary_code(db, emp, item.currency)
-            gross = Decimal(str(item.gross_amount))
+            gross = _conv(item.gross_amount, item.currency)
             debit_map[salary_code] = debit_map.get(salary_code, Decimal("0")) + gross
             g = groups.setdefault(salary_code, {"total": Decimal("0"), "headcount": 0})
             g["total"] += gross
             g["headcount"] += 1
-            total_net += Decimal(str(item.net_amount))
+            total_net += _conv(item.net_amount, item.currency)
             for line in (item.deduction_lines or []):
-                amount = Decimal(str(line["amount"]))
+                amount = _conv(line["amount"], item.currency)
                 if not line["employee_bears"]:
                     dr = line["coa_debit_code"]
                     debit_map[dr] = debit_map.get(dr, Decimal("0")) + amount
@@ -475,16 +487,21 @@ class HrPayrollService:
                 credit_map[cr] = credit_map.get(cr, Decimal("0")) + amount
         je_description = fin_run.description or (
             f"Payroll {fin_run.payroll_period_start} to {fin_run.payroll_period_end}")
+        # every aggregated amount is now in the entity functional currency
+        _meta = {"currency": _func, "fx_rate": Decimal("1")}
         lines: list[dict] = []
         for code, amount in debit_map.items():
             lines.append({"account_code": code, "debit_amount": float(amount),
-                          "credit_amount": 0.0, "description": je_description})
+                          "credit_amount": 0.0, "description": je_description,
+                          "native_amount": amount, **_meta})
         net_credit_code = net_to_account or bank_account.coa_account_code
         lines.append({"account_code": net_credit_code, "debit_amount": 0.0,
-                      "credit_amount": float(total_net), "description": je_description})
+                      "credit_amount": float(total_net), "description": je_description,
+                      "native_amount": total_net, **_meta})
         for code, amount in credit_map.items():
             lines.append({"account_code": code, "debit_amount": 0.0,
-                          "credit_amount": float(amount), "description": je_description})
+                          "credit_amount": float(amount), "description": je_description,
+                          "native_amount": amount, **_meta})
         groups = {k: {"total": float(v["total"]), "headcount": v["headcount"]} for k, v in groups.items()}
         return lines, groups, je_description
 
