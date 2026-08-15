@@ -2206,6 +2206,7 @@ Return only the JSON object, no explanation."""
         """
         from src.services.invoice_service import _IC_RECEIVABLE_CODES, _IC_PAYABLE_CODES, _entity_short
         from src.models.entity import FinanceEntity
+        from src.services.fx_service import fx_service
 
         if not rule.allocation_entity_id:
             raise ValueError("cross_entity_allocation rule missing allocation_entity_id")
@@ -2240,18 +2241,30 @@ Return only the JSON object, no explanation."""
         je_description = transaction.description or "Cross-entity cost allocation"
         ic_group_id = str(uuid.uuid4())
 
+        # POL-141: each entity books its OWN leg in ITS OWN functional currency (independent booking).
+        # The cash amount is native in the transaction's currency; convert per entity at the txn date.
+        # IC receivable (bank func) and IC payable (alloc func) differ across currencies — that spread
+        # is an intercompany FX item trued at IC reconciliation, not a per-txn plug.
+        from decimal import Decimal as _D
+        _txn_ccy = transaction.currency
+        _native = _D(str(abs_amount))
+        _bank_amt, _bank_rate = fx_service.to_functional_or_same(db, _native, _txn_ccy, bank_entity.base_currency, transaction.transaction_date)
+        _alloc_amt, _alloc_rate = fx_service.to_functional_or_same(db, _native, _txn_ccy, alloc_entity.base_currency, transaction.transaction_date)
+        _bank_meta = {"currency": _txn_ccy, "native_amount": _native, "fx_rate": _bank_rate}
+        _alloc_meta = {"currency": _txn_ccy, "native_amount": _native, "fx_rate": _alloc_rate}
+
         # Bank entity: pays out cash → Dr IC Receivable (asset: they are owed by alloc entity)
         #                             Cr Bank
         bank_lines = [
-            {"account_code": ic_recv_code,               "debit_amount": abs_amount, "credit_amount": 0.0,        "description": je_description},
-            {"account_code": bank_account.coa_account_code, "debit_amount": 0.0,      "credit_amount": abs_amount, "description": je_description},
+            {"account_code": ic_recv_code,               "debit_amount": float(_bank_amt), "credit_amount": 0.0,        "description": je_description, **_bank_meta},
+            {"account_code": bank_account.coa_account_code, "debit_amount": 0.0,      "credit_amount": float(_bank_amt), "description": je_description, **_bank_meta},
         ]
 
         # Allocation entity: bears the cost → Dr Expense (contra_account_code)
         #                                      Cr IC Payable (they owe the bank entity)
         alloc_lines = [
-            {"account_code": rule.contra_account_code, "debit_amount": abs_amount, "credit_amount": 0.0,        "description": je_description},
-            {"account_code": ic_pay_code,              "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
+            {"account_code": rule.contra_account_code, "debit_amount": float(_alloc_amt), "credit_amount": 0.0,        "description": je_description, **_alloc_meta},
+            {"account_code": ic_pay_code,              "debit_amount": 0.0,        "credit_amount": float(_alloc_amt), "description": je_description, **_alloc_meta},
         ]
 
         bank_entry = journal_service.create(
