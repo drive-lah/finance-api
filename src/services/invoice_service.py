@@ -725,27 +725,46 @@ class InvoiceService:
         # the expense). The GST amount stays recorded on the invoice (invoice.tax_amount)
         # for that claim; `tax`/`net` above are retained for validation/record only.
         # 2-line JE: Dr expense/prepaid (gross) / Cr payable (dedicated liability or 2000 AP).
+        # POL-25 (fixed 2026-08-15, Gaurav audit): the ledger books FUNCTIONAL currency — a
+        # foreign-currency invoice converts at the invoice-date monthly rate, with the native
+        # amount + rate stamped on every line. Previously the raw invoice number booked unconverted.
+        from src.models.entity import FinanceEntity
+        from src.services.fx_service import fx_service
+        _entity_row = db.get(FinanceEntity, invoice.entity_id)
+        _func_ccy = _entity_row.base_currency if _entity_row else None
+        _inv_ccy = invoice.currency or _func_ccy
+        _total_native = Decimal(str(total))
+        if _func_ccy and _inv_ccy != _func_ccy:
+            _total_func, _fx_rate = fx_service.to_functional(
+                db, _total_native, _inv_ccy, _func_ccy, invoice.invoice_date)
+        else:
+            _total_func, _fx_rate = _total_native, Decimal("1")
         lines = [
             {
                 "account_code": debit_code,
-                "debit_amount": total,
+                "debit_amount": float(_total_func),
                 "credit_amount": 0.0,
                 "description": inv_ref,
+                "currency": _inv_ccy, "native_amount": _total_native, "fx_rate": _fx_rate,
             },
             {
                 "account_code": credit_code,
                 "debit_amount": 0.0,
-                "credit_amount": total,
+                "credit_amount": float(_total_func),
                 "description": inv_ref,
+                "currency": _inv_ccy, "native_amount": _total_native, "fx_rate": _fx_rate,
             },
         ]
 
+        # Gaurav ruling 2026-08-15: "at approval, the invoice posts, PERIOD" — no draft stage.
+        from src.models.journal_entry import JournalEntryStatus
         entry = journal_service.create(
             db=db,
             entity_id=invoice.entity_id,
             entry_date=invoice.invoice_date,
             description=f"AP Invoice: {invoice.invoice_number or f'#{invoice.id}'}",
             lines=lines,
+            status=JournalEntryStatus.POSTED,
         )
         entry.source = "invoice_approval"
         entry.reference_number = f"INV-{invoice.id}"  # trace JE -> invoice (Gaurav 2026-08-03)
@@ -1415,6 +1434,21 @@ class InvoiceService:
         bank_coa = bank_account.coa_account_code
         inv_ref = f"Invoice {invoice.invoice_number or invoice.id}"
 
+        # POL-25 (fixed 2026-08-15, Gaurav audit): abs_amount arrives in the BANK ACCOUNT's native
+        # currency; the ledger books functional. Convert at the payment date and stamp native facts.
+        from src.models.entity import FinanceEntity
+        from src.services.fx_service import fx_service
+        _bank_entity = db.get(FinanceEntity, bank_entity_id)
+        _func_ccy = _bank_entity.base_currency if _bank_entity else None
+        _bank_ccy = bank_account.currency or _func_ccy
+        _native_amt = Decimal(str(abs_amount))
+        if _func_ccy and _bank_ccy != _func_ccy:
+            _func_amt, _fx_rate = fx_service.to_functional(db, _native_amt, _bank_ccy, _func_ccy, txn_date)
+            abs_amount = float(_func_amt)
+        else:
+            _fx_rate = Decimal("1")
+        _ccy_meta = {"currency": _bank_ccy, "native_amount": _native_amt, "fx_rate": _fx_rate}
+
         # Clear the SAME liability the approval JE credited — dedicated (e.g. 2302
         # Superannuation Payable) or generic 2000 AP — else the sub-payable never closes.
         ap_code = self._payable_account_for(db, invoice.contra_account_code)
@@ -1423,9 +1457,9 @@ class InvoiceService:
             # ── Same-entity: Dr AP / Cr Bank, plus (PR-1) the cash-time input-GST claim ─────
             lines = [
                 {"account_code": ap_code, "debit_amount": abs_amount, "credit_amount": 0.0,
-                 "description": inv_ref},
+                 "description": inv_ref, **_ccy_meta},
                 {"account_code": bank_coa, "debit_amount": 0.0, "credit_amount": abs_amount,
-                 "description": inv_ref},
+                 "description": inv_ref, **_ccy_meta},
             ]
             # POL-121: the bill was booked GROSS at approval (no 1350). Claim the paid slice's input
             # GST NOW, at cash payment: Dr 1350 / Cr <expense COA>, moving GST out of the gross expense
