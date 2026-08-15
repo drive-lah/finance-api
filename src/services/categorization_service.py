@@ -444,7 +444,7 @@ class CategorizationService:
                 continue
 
             counter = self._pick_counter(
-                waiting_txn,
+                db, waiting_txn,
                 [c for c in candidates if c.id not in handled_ids],
             )
             if not counter:
@@ -453,6 +453,16 @@ class CategorizationService:
             # Pair them
             now = datetime.now(UTC)
             je_id = waiting_txn.reconciled_journal_entry_id
+            # Cross-ccy transfer deferred its JE (je_id is None) → mint the FX-plug entry now that both
+            # legs are known (POL-141/142); same-ccy legs share the waiting leg's existing JE.
+            if je_id is None:
+                out_leg, in_leg = ((waiting_txn, counter) if float(waiting_txn.amount) < 0
+                                   else (counter, waiting_txn))
+                je_id = self._create_fx_transfer_je(db, out_leg, in_leg).id
+                waiting_txn.reconciled_journal_entry_id = je_id
+                counter.categorized_by_logic = 'transfer_pairing_fx'
+            else:
+                counter.categorized_by_logic = 'transfer_pairing'
 
             waiting_txn.status = TransactionStatus.MATCHED
             waiting_txn.matched_at = now
@@ -461,7 +471,6 @@ class CategorizationService:
             counter.status = TransactionStatus.MATCHED
             counter.reconciled_journal_entry_id = je_id
             counter.matched_at = now
-            counter.categorized_by_logic = 'transfer_pairing'
             counter.categorization_type = CategorizationType.INTERNAL_TRANSFER
 
             db.commit()
@@ -497,6 +506,7 @@ class CategorizationService:
 
     def _pick_counter(
         self,
+        db: Session,
         waiting_txn: FinanceTransaction,
         candidates: list[FinanceTransaction],
     ) -> Optional[FinanceTransaction]:
@@ -521,7 +531,23 @@ class CategorizationService:
             cand_amount = float(c.amount)
             if waiting_amount * cand_amount >= 0:
                 continue  # same sign — not a counter
-            if abs(abs(cand_amount) - abs_waiting) / abs_waiting > 0.02:
+            # POL-141/142: currency-aware amount match. Same ccy → tight ±2%. Cross-currency (e.g. a USD
+            # leg vs its SGD counterpart) → convert the candidate INTO the waiting leg's currency at the
+            # monthly rate, then a LOOSER ±5% band absorbs the bank spot-vs-our-rate spread.
+            w_ccy = waiting_txn.currency
+            c_ccy = c.currency
+            cand_cmp, tol = abs(cand_amount), 0.02
+            if w_ccy and c_ccy and w_ccy != c_ccy:
+                try:
+                    from src.services.fx_service import fx_service
+                    rate = fx_service.get_monthly_rate(db, c_ccy, w_ccy, c.transaction_date)
+                    if rate is None:
+                        continue  # no rate on file — can't compare across currencies, skip (POL-26)
+                    cand_cmp = abs(cand_amount) * float(rate)
+                    tol = 0.05
+                except Exception:
+                    continue
+            if abs(cand_cmp - abs_waiting) / abs_waiting > tol:
                 continue
             if abs((c.transaction_date - waiting_txn.transaction_date).days) > 5:
                 continue
@@ -595,7 +621,7 @@ class CategorizationService:
             FinanceTransaction.transaction_date.between(date_low, date_high),
         ).all()
 
-        return self._pick_counter(txn, candidates)
+        return self._pick_counter(db, txn, candidates)
 
     def _find_awaiting_mirror_je(
         self,
@@ -621,7 +647,7 @@ class CategorizationService:
             FinanceTransaction.expected_counterpart_ba_id == txn.bank_account_id,
             FinanceTransaction.transaction_date.between(date_low, date_high),
         ).all()
-        return self._pick_counter(txn, candidates)
+        return self._pick_counter(db, txn, candidates)
 
     # ------------------------------------------------------------------
     # Phase 2: AP Knock-off
@@ -1725,9 +1751,17 @@ Return only the JSON object, no explanation."""
                         "journal_entry_id": je_id,
                         "error": None,
                     }
-            journal_entry = self._create_internal_transfer_entries(
-                db, transaction, rule, bank_account, amount, abs_amount
-            )
+            # POL-141/142: a CROSS-CURRENCY intra-entity transfer (source ccy != target ccy) can't be
+            # booked from one leg — the two legs have genuinely different amounts and the FX residual
+            # needs both. DEFER the JE (journal_entry=None) and build the FX-plug entry at pairing.
+            _tgt_ccy, _ = self._bank_ccy(db, rule.target_bank_account_id) if rule.target_bank_account_id else (None, None)
+            _src_ccy = bank_account.currency if bank_account else None
+            if _src_ccy and _tgt_ccy and _src_ccy != _tgt_ccy:
+                journal_entry = None
+            else:
+                journal_entry = self._create_internal_transfer_entries(
+                    db, transaction, rule, bank_account, amount, abs_amount
+                )
         elif rule.category == TransactionCategory.CROSS_ENTITY_ALLOCATION:
             journal_entry = self._create_cross_entity_allocation_entries(
                 db, transaction, rule, bank_account, abs_amount
@@ -1784,6 +1818,7 @@ Return only the JSON object, no explanation."""
         # verified in AGGREGATE at the Stripe-sync tie-out instead.
         if (rule.category == TransactionCategory.INTERNAL_TRANSFER
                 and rule.target_bank_account_id
+                and journal_entry is not None  # cross-ccy defers the JE — can't standalone-match on one leg
                 and self._target_has_no_statement_feed(db, rule.target_bank_account_id)):
             transaction.status = TransactionStatus.MATCHED
             transaction.reconciled_journal_entry_id = journal_entry.id
@@ -1797,28 +1832,36 @@ Return only the JSON object, no explanation."""
                 db, transaction, rule.target_bank_account_id
             )
             if counter_txn:
-                # Pair both sides right now
+                # Pair both sides right now. Cross-ccy (journal_entry is None) → build the FX-plug JE from
+                # BOTH legs now (both amounts known); same-ccy → both share the leg-1 JE.
                 now = datetime.now(UTC)
+                if journal_entry is None:
+                    out_leg, in_leg = ((transaction, counter_txn) if float(transaction.amount) < 0
+                                       else (counter_txn, transaction))
+                    journal_entry = self._create_fx_transfer_je(db, out_leg, in_leg)
+                    counter_txn.categorized_by_logic = 'transfer_pairing_fx'
+                else:
+                    counter_txn.categorized_by_logic = 'transfer_pairing'
                 transaction.status = TransactionStatus.MATCHED
                 transaction.reconciled_journal_entry_id = journal_entry.id
                 transaction.matched_at = now
                 counter_txn.status = TransactionStatus.MATCHED
                 counter_txn.reconciled_journal_entry_id = journal_entry.id
                 counter_txn.matched_at = now
-                counter_txn.categorized_by_logic = 'transfer_pairing'
                 counter_txn.categorization_type = CategorizationType.INTERNAL_TRANSFER
                 logger.info(
                     f"Internal transfer paired: txn {transaction.id} ↔ txn {counter_txn.id} "
                     f"via JE {journal_entry.id}"
                 )
             else:
-                # Counter not yet imported — wait
+                # Counter not yet imported — wait. Cross-ccy leaves reconciled_journal_entry_id NULL
+                # (deferred); the FX-plug JE is minted when the counter arrives (Phase 0).
                 transaction.status = TransactionStatus.AWAITING_MATCH
-                transaction.reconciled_journal_entry_id = journal_entry.id
+                transaction.reconciled_journal_entry_id = journal_entry.id if journal_entry else None
                 transaction.expected_counterpart_ba_id = rule.target_bank_account_id
                 logger.info(
                     f"Internal transfer awaiting counter: txn {transaction.id} "
-                    f"waiting for ba={rule.target_bank_account_id}"
+                    f"waiting for ba={rule.target_bank_account_id} (xccy={journal_entry is None})"
                 )
         else:
             # Normal expense/deposit → MATCHED immediately
@@ -1967,6 +2010,52 @@ Return only the JSON object, no explanation."""
         entry.source = source
         db.flush()
         return entry
+
+    def _to_func(self, db, amount_abs, ccy, functional_ccy, on_date):
+        """(functional_amount, rate). Same-ccy → (amount, 1); else fx_service.to_functional (POL-26)."""
+        from decimal import Decimal
+        from src.services.fx_service import fx_service
+        amt = Decimal(str(amount_abs))
+        if not functional_ccy or (ccy or functional_ccy) == functional_ccy:
+            return amt, Decimal("1")
+        return fx_service.to_functional(db, amt, ccy, functional_ccy, on_date)
+
+    def _bank_ccy(self, db, ba_id):
+        ba = db.query(FinanceBankAccount).filter(FinanceBankAccount.id == ba_id).first()
+        return (ba.currency if ba else None), ba
+
+    def _create_fx_transfer_je(self, db, leg_out, leg_in):
+        """POL-141/142: cross-currency intra-entity internal transfer. Both legs are known (paired), each
+        converts INDEPENDENTLY to the entity's functional currency; the residual plugs to 7100 FX — the
+        invoice pattern applied to two asset accounts. `leg_out` sent (negative), `leg_in` received
+        (positive). Dr received-account (functional) / Cr sent-account (functional) / 7100 plug."""
+        from decimal import Decimal
+        from src.models.entity import FinanceEntity
+        ba_out = db.query(FinanceBankAccount).filter(FinanceBankAccount.id == leg_out.bank_account_id).first()
+        ba_in = db.query(FinanceBankAccount).filter(FinanceBankAccount.id == leg_in.bank_account_id).first()
+        entity_id = ba_out.entity_id
+        func = (db.get(FinanceEntity, entity_id).base_currency) if entity_id else None
+        out_func, out_rate = self._to_func(db, abs(float(leg_out.amount)), leg_out.currency, func, leg_out.transaction_date)
+        in_func, in_rate = self._to_func(db, abs(float(leg_in.amount)), leg_in.currency, func, leg_in.transaction_date)
+        desc = leg_in.description or leg_out.description or "Internal transfer (FX)"
+        lines = [
+            {"account_code": ba_in.coa_account_code, "debit_amount": float(in_func), "credit_amount": 0.0,
+             "description": desc, "currency": leg_in.currency, "native_amount": abs(float(leg_in.amount)), "fx_rate": in_rate},
+            {"account_code": ba_out.coa_account_code, "debit_amount": 0.0, "credit_amount": float(out_func),
+             "description": desc, "currency": leg_out.currency, "native_amount": abs(float(leg_out.amount)), "fx_rate": out_rate},
+        ]
+        diff = in_func - out_func  # Dr side − Cr side
+        if abs(diff) >= Decimal("0.01"):
+            if diff > 0:   # more Dr than Cr → FX GAIN (extra credit)
+                lines.append({"account_code": "7100", "debit_amount": 0.0, "credit_amount": float(diff), "description": "FX gain on internal transfer"})
+            else:          # more Cr than Dr → FX LOSS (extra debit)
+                lines.append({"account_code": "7100", "debit_amount": float(-diff), "credit_amount": 0.0, "description": "FX loss on internal transfer"})
+        from src.models.journal_entry import JournalEntryStatus
+        je = journal_service.create(db=db, entity_id=entity_id, entry_date=leg_in.transaction_date,
+                                    description=desc, lines=lines, status=JournalEntryStatus.POSTED)
+        je.source = "categorization_engine"
+        db.flush()
+        return je
 
     def _create_internal_transfer_entries(
         self,
