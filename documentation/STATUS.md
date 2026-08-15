@@ -418,7 +418,7 @@ Spec: `wip/PAYOUTS_DATA_MODEL.md`. Replaces the flat `finance_payout_bank_accoun
 
 | ID | Item | State |
 |----|------|-------|
-| PM-1 | `counterparty_bank_account` (real account, no recipient id) + `payment_channel` (rails catalog, provider column) + `payout_channel_registration` (account×channel → recipient id) + `finance_payout_reference_audit` (append-only bank-account/registration audit) | ✅ code + migration `059_payout_channels` (additive); **clone-verified**, prod-pending |
+| PM-1 | `counterparty_bank_account` (real account, no recipient id) + `payment_channel` (rails catalog, provider column) + `payout_channel_registration` (account×channel → recipient id) + `finance_payout_reference_audit` (append-only bank-account/registration audit) | ✅ **APPLIED TO PROD 2026-08-15** via `alembic upgrade` 058→059 (additive, zero deletes; legacy tables untouched). Verified: 3 channels, 1 bank acct + 1 registration (Dirk Wise-SG→297347886) migrated, app 200. |
 | PM-2 | Models `payout_channels.py` + registered; recipient resolves via ORM join `(cp, entity)→registration→recipient` (proven cp268/entity2→297347886) | ✅ clone-verified |
 | PM-3 | Bank-account CRUD audit wired (`payee_bank_accounts.py` create/update/delete → reference audit, best-effort) | ✅ clone-verified (3 rows create/update/delete) |
 | PM-4a | Repoint `payout_service` recipient resolution onto the channel/registration model (`_resolve_pay_target`), **with legacy fallback** (ENTITY_WISE_PROFILE + embedded recipient) so an un-migrated DB still pays | ✅ clone-verified: cp268/entity2 → (13811029, 297347886) via NEW model; no-reg → legacy fallback; prod instance stayed 200 |
