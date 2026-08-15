@@ -133,6 +133,9 @@
 
 ## 2. What's Pending
 
+### 2.0c ★ PREVIOUS-YEARS RECONCILIATION (2019–2025) — THE MAMMOTH (Gaurav, 2026-08-15)
+Rulings locked in POL-124; spec `wip/HISTORY_RECON_PIPELINE.md`. Year-at-a-time (chronological), engine+economic-events per year, agent lanes, running-balance tripwire, HTML scorecard → Gaurav feedback → post → re-park → jurisdictional year close. NEXT: build the year-batch runner + scorecard generator; shakedown on the small Wise accounts' earliest year.
+
 ### 2.0a Bank recon — pre-books park (TEMPORARY, Gaurav 2026-08-15)
 - **BR-1 ✅** Root cause of the sudden bank residuals: the 3-4 Aug vendor-SoA pairing runs (`matcher`/`pairing_skill_v2`/`insurance_ref_pair`, posting_user 'system') booked payment JEs for PRE-2026-paid invoices AT their true 2024/25 dates (Dr Trade & Other Payables / Cr bank) — historically true, but that cash is already inside the Jan-1 opening balances → double-count. CBA: 8 JEs $240,200.44 (incl 3 Penguin Risk ~$218k). Wise AUD: 515 JEs **$2,303,905.09 = the residual to the cent**. Pairing itself was correct; the replays also left phantom pre-2026 Prepayments/1350 legs (1350 already swept by gst_h1_opening).
 - **BR-2 ✅** RULING (Gaurav): keep history true; POST A TEMPORARY PARK against Opening Balance Equity instead of voiding — removed together with the opening JEs when pre-2026 history reconciles. **JE 11477** (2025-12-31, source `pre_books_park`, PARK-AUD-1): Dr Wise AUD 2,303,905.09 + Dr CBA 240,200.44 / Cr 3200 2,544,105.53. **Verified after: Wise AUD residual $0.00**; CBA residual **$2,035.12** = exactly the 13-Aug opening_correction amount → next chase: reconcile the Jan-1 CBA statement figure (107,795.81 per Gaurav) against the imported txn chain (implies 109,830.93); one of the two has a ~$2,035 boundary defect.
