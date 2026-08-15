@@ -256,7 +256,9 @@ class InvoiceService:
         if is_duplicate is not None:
             query = query.filter(jtext("recon", "duplicate", "is_duplicate") == str(is_duplicate).lower())
         if search:
-            like = f"%{search}%"
+            # escape LIKE wildcards so a literal % or _ in the term stays literal
+            _esc = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            like = f"%{_esc}%"
             conds = [
                 FinanceInvoice.invoice_number.ilike(like),
                 jtext("extraction", "vendor_name").ilike(like),
@@ -682,6 +684,11 @@ class InvoiceService:
             )
 
         total = float(invoice.total_amount)
+        if total <= 0:
+            from src.utils.errors import BadRequestError
+            raise BadRequestError(
+                f"Invoice {invoice_id} has a non-positive total ({total}) — cannot approve; "
+                "fix the extraction first.")
         tax = float(invoice.tax_amount) if invoice.tax_amount else 0.0
         # POL-87: GST posts ONLY for GST-registered entities (entity.gst_rate set).
         # For a non-registered entity (e.g. the SG entities) the GST is non-recoverable
@@ -728,10 +735,8 @@ class InvoiceService:
         # POL-25 (fixed 2026-08-15, Gaurav audit): the ledger books FUNCTIONAL currency — a
         # foreign-currency invoice converts at the invoice-date monthly rate, with the native
         # amount + rate stamped on every line. Previously the raw invoice number booked unconverted.
-        from src.models.entity import FinanceEntity
         from src.services.fx_service import fx_service
-        _entity_row = db.get(FinanceEntity, invoice.entity_id)
-        _func_ccy = _entity_row.base_currency if _entity_row else None
+        _func_ccy = _entity.base_currency if _entity else None
         _inv_ccy = invoice.currency or _func_ccy
         _total_native = Decimal(str(total))
         if _func_ccy and _inv_ccy != _func_ccy:
@@ -1075,9 +1080,19 @@ class InvoiceService:
         from src.services.fx_service import fx_service
         from src.utils.errors import BadRequestError
 
-        invoice = self.get_by_id(db, invoice_id)
+        # Row-lock the invoice so two concurrent post-pairing requests (double-click) serialize:
+        # the second sees the post-transition status and refuses cleanly.
+        invoice = (db.query(FinanceInvoice)
+                   .filter(FinanceInvoice.id == invoice_id)
+                   .with_for_update().first())
+        if invoice is None:
+            raise NotFoundError(f"Invoice {invoice_id} not found.")
         if invoice.status != InvoiceStatus.PAIRED.value:
             raise BadRequestError(f"Invoice {invoice_id} is not in paired status (is: {invoice.status}).")
+        if invoice.journal_entry_id is not None:
+            raise BadRequestError(
+                f"Invoice {invoice_id} already carries bill JE {invoice.journal_entry_id} — "
+                "refusing to double-post.")
         matches = (db.query(FinanceInvoicePaymentMatch)
                    .filter(FinanceInvoicePaymentMatch.invoice_id == invoice_id).all())
         if not matches:
@@ -1162,7 +1177,12 @@ class InvoiceService:
             _remaining = Decimal(str(invoice.total_amount)) - Decimal(str(invoice.amount_paid))
             if abs(_pay_dec - _remaining) <= Decimal("0.02") or _pay_dec > _remaining:
                 _pay_dec = _remaining
-            self.record_payment(db, invoice.id, float(_pay_dec))
+            # Apply in-transaction (NOT record_payment — it commits internally, which would strand
+            # a half-posted invoice if a later payment leg raises; the whole action commits once).
+            _new_paid = round(float(invoice.amount_paid) + float(_pay_dec), 2)
+            invoice.amount_paid = _new_paid
+            invoice.status = (InvoiceStatus.PAID.value if _new_paid >= float(invoice.total_amount)
+                              else InvoiceStatus.PARTIALLY_PAID.value)
         for m in matches:
             m.state = "logged"
         db.commit()
@@ -1656,12 +1676,14 @@ class InvoiceService:
                     "debit_amount": abs_amount,
                     "credit_amount": 0.0,
                     "description": inv_ref,
+                    **_ccy_meta,
                 },
                 {
                     "account_code": bank_coa,
                     "debit_amount": 0.0,
                     "credit_amount": abs_amount,
                     "description": inv_ref,
+                    **_ccy_meta,
                 },
             ],
         )
@@ -1669,7 +1691,19 @@ class InvoiceService:
         bank_entry.reference_number = f"INV-{invoice.id}"  # trace JE -> invoice
         bank_entry.intercompany_group_id = ic_group_id
 
-        # Invoice entity: Dr AP (dedicated liability or 2000) / Cr IC Payable
+        # Invoice entity: Dr AP (dedicated liability or 2000) / Cr IC Payable.
+        # POL-25/27: each entity books in ITS OWN functional currency — the invoice entity may
+        # differ from the bank entity (AU bank paying an SG invoice). Convert the bank-native
+        # cash to the invoice entity's functional at the payment date; same native facts stamped.
+        _inv_entity = db.get(FinanceEntity, invoice_entity_id)
+        _inv_func_ccy = _inv_entity.base_currency if _inv_entity else None
+        if _inv_func_ccy and _bank_ccy and _inv_func_ccy != _bank_ccy:
+            _inv_leg_amt, _inv_fx_rate = fx_service.to_functional(
+                db, _native_amt, _bank_ccy, _inv_func_ccy, txn_date)
+            inv_amount = float(_inv_leg_amt)
+        else:
+            inv_amount, _inv_fx_rate = float(_native_amt), Decimal("1")
+        _inv_ccy_meta = {"currency": _bank_ccy, "native_amount": _native_amt, "fx_rate": _inv_fx_rate}
         inv_entry = journal_service.create(
             db=db,
             entity_id=invoice_entity_id,
@@ -1678,15 +1712,17 @@ class InvoiceService:
             lines=[
                 {
                     "account_code": ap_code,
-                    "debit_amount": abs_amount,
+                    "debit_amount": inv_amount,
                     "credit_amount": 0.0,
                     "description": inv_ref,
+                    **_inv_ccy_meta,
                 },
                 {
                     "account_code": ic_payable,
                     "debit_amount": 0.0,
-                    "credit_amount": abs_amount,
+                    "credit_amount": inv_amount,
                     "description": inv_ref,
+                    **_inv_ccy_meta,
                 },
             ],
         )
