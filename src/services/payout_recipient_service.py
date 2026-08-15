@@ -23,11 +23,58 @@ logger = logging.getLogger(__name__)
 wise = WiseService()
 
 
+def _get(details: dict, dotted: str):
+    """Read a possibly-nested key ('address.city') from a details dict that may be nested or flat."""
+    if dotted in details:
+        return details[dotted]
+    cur = details
+    for part in dotted.split("."):
+        if isinstance(cur, dict) and part in cur:
+            cur = cur[part]
+        else:
+            return None
+    return cur
+
+
+def _required_keys(type_spec: dict) -> list:
+    """Flatten a Wise account-requirements type into its list of REQUIRED field keys (incl address.*)."""
+    keys = []
+    for field in type_spec.get("fields", []):
+        for grp in field.get("group", []):
+            if grp.get("required") and grp.get("key"):
+                keys.append(grp["key"])
+    return keys
+
+
+def account_requirements(currency: str, source_ccy: str = "AUD") -> list:
+    """PM-6: the Wise recipient forms valid for `currency` (types + fields), for the FE to render."""
+    return wise.get_account_requirements(currency, source_ccy)
+
+
 def _wise_spec(currency: str, *, account_number=None, bank_code=None, bsb_code=None,
-               iban=None, legal_type="PRIVATE") -> tuple[str, dict]:
-    """Map our bank-account fields to Wise (type, details) for the common rails.
-    TODO(robust): drive this from GET /v1/account-requirements instead of hardcoding per currency."""
+               iban=None, legal_type="PRIVATE", account_type=None, details=None) -> tuple[str, dict]:
+    """Map our bank-account fields to Wise (type, details).
+
+    PM-6: for ANY currency the caller can pass an explicit Wise `account_type` (e.g. 'indian',
+    'philippines', 'aba', 'swift_code') + a `details` dict; we VALIDATE it against Wise's live
+    account-requirements for that currency (required fields present) and pass it through — a missing
+    field is a 400 here, not a Wise 500. The SGD/AUD/IBAN fast-paths stay for the common local rails."""
     ccy = (currency or "").upper()
+    # Explicit per-currency path (validated) — covers INR/PHP/MYR/USD/GBP/… beyond the fast-paths.
+    if account_type and details:
+        d = dict(details)
+        d.setdefault("legalType", legal_type)
+        specs = wise.get_account_requirements(ccy)
+        chosen = next((t for t in specs if t.get("type") == account_type), None)
+        if specs and not chosen:
+            valid = ", ".join(sorted({t.get("type") for t in specs if t.get("type")}))
+            raise BadRequestError(f"account_type '{account_type}' is not valid for {ccy}. Valid: {valid}")
+        if chosen:
+            missing = [k for k in _required_keys(chosen) if _get(d, k) in (None, "")]
+            if missing:
+                raise BadRequestError(
+                    f"{ccy} '{account_type}' recipient is missing required field(s): {', '.join(missing)}")
+        return account_type, d
     if ccy == "SGD":
         if not (account_number and bank_code):
             raise BadRequestError("SGD recipient needs account_number + bank_code (4-digit bank code)")
@@ -38,7 +85,8 @@ def _wise_spec(currency: str, *, account_number=None, bank_code=None, bsb_code=N
         return "australian", {"legalType": legal_type, "accountNumber": account_number, "bsbCode": bsb_code}
     if iban:
         return "iban", {"legalType": legal_type, "IBAN": iban}
-    raise BadRequestError(f"unsupported currency/details for {ccy} — provide an IBAN or extend _wise_spec")
+    raise BadRequestError(
+        f"unsupported details for {ccy} — pass account_type + details (see GET account-requirements) or an IBAN")
 
 
 def _audit(db, action, target_type, target_id, before, after, actor=None):
@@ -56,7 +104,8 @@ def _channel(db, channel_id) -> PaymentChannel:
 
 def add_bank_account(db: Session, *, counterparty_id: int, currency: str, account_holder_name: str,
                      channel_id: int, account_number=None, bank_code=None, bsb_code=None, iban=None,
-                     country=None, legal_type="PRIVATE", is_default=False, actor=None) -> dict:
+                     country=None, legal_type="PRIVATE", is_default=False, actor=None,
+                     account_type=None, details=None) -> dict:
     """Master flow: create the real account with us, register it on the channel (create the Wise
     recipient), store the registration, audit both. Returns {bank_account, registration}."""
     if any(c.isdigit() for c in (account_holder_name or "")):
@@ -74,9 +123,10 @@ def add_bank_account(db: Session, *, counterparty_id: int, currency: str, accoun
     db.add(ba); db.flush()
     _audit(db, "create", "bank_account", ba.id, None, ba.to_dict(), actor)
 
-    acct_type, details = _wise_spec(currency, account_number=account_number, bank_code=bank_code,
-                                    bsb_code=bsb_code, iban=iban, legal_type=legal_type)
-    recipient = wise.create_recipient(int(profile_id), currency, account_holder_name, acct_type, details)
+    acct_type, wise_details = _wise_spec(currency, account_number=account_number, bank_code=bank_code,
+                                         bsb_code=bsb_code, iban=iban, legal_type=legal_type,
+                                         account_type=account_type, details=details)
+    recipient = wise.create_recipient(int(profile_id), currency, account_holder_name, acct_type, wise_details)
     recipient_id = str(recipient.get("id"))
 
     reg = PayoutChannelRegistration(bank_account_id=ba.id, channel_id=ch.id,
@@ -105,9 +155,10 @@ def edit_bank_account(db: Session, *, bank_account_id: int, channel_id: int, act
 
     ch = _channel(db, channel_id)
     profile_id = (ch.config or {}).get("profile_id")
-    acct_type, details = _wise_spec(ba.currency, account_number=ba.account_number, bank_code=ba.bank_code,
-                                    bsb_code=ba.bsb_code, iban=ba.iban, legal_type=ba.legal_type or "PRIVATE")
-    recipient = wise.create_recipient(int(profile_id), ba.currency, ba.account_holder_name, acct_type, details)
+    acct_type, wise_details = _wise_spec(ba.currency, account_number=ba.account_number, bank_code=ba.bank_code,
+                                         bsb_code=ba.bsb_code, iban=ba.iban, legal_type=ba.legal_type or "PRIVATE",
+                                         account_type=fields.get("account_type"), details=fields.get("details"))
+    recipient = wise.create_recipient(int(profile_id), ba.currency, ba.account_holder_name, acct_type, wise_details)
 
     old = (db.query(PayoutChannelRegistration)
            .filter_by(bank_account_id=ba.id, channel_id=ch.id, status="active").first())

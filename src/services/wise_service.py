@@ -260,6 +260,16 @@ class WiseService:
         r = self._get(f"/v1/transfers/{transfer_id}")
         return r if isinstance(r, dict) else {}
 
+    def get_account_requirements(self, target_ccy: str, source_ccy: str = "AUD",
+                                 amount: float = 1000) -> list:
+        """PM-6: Wise's per-currency recipient shape. Returns the account TYPES valid for `target_ccy`
+        (e.g. 'indian'/'philippines'/'aba'/'swift_code'), each with its required `fields`, so we can
+        render the right form and validate BEFORE calling create_recipient (a 400 with the missing
+        field, not a Wise 500). No quote needed — the temporary-quote form of the v1 endpoint."""
+        r = self._get("/v1/account-requirements",
+                      {"source": source_ccy, "target": target_ccy, "sourceAmount": amount})
+        return r if isinstance(r, list) else (r.get("content", []) if isinstance(r, dict) else [])
+
     def create_recipient(self, profile_id: int, currency: str, account_holder_name: str,
                          account_type: str, details: dict) -> dict:
         """Register a recipient (bank account) on a Wise profile. Returns the created account incl `id`

@@ -45,9 +45,22 @@ def list_for_counterparty():
         return jsonify(out)
 
 
+@payout_recipients_bp.route("/account-requirements", methods=["GET"])
+def account_requirements():
+    """PM-6: Wise's per-currency recipient forms (types + fields) so the FE renders the right inputs
+    for INR/PHP/MYR/USD/etc. `currency` required; `source` defaults to AUD."""
+    ccy = request.args.get("currency")
+    if not ccy:
+        return jsonify({"error": "currency required"}), 400
+    return jsonify(prs.account_requirements(ccy, request.args.get("source", "AUD")))
+
+
 @payout_recipients_bp.route("", methods=["POST"])
 def add():
     b = request.get_json(force=True) or {}
+    missing = [k for k in ("counterparty_id", "currency", "account_holder_name", "channel_id") if not b.get(k)]
+    if missing:
+        return jsonify({"error": f"missing required field(s): {', '.join(missing)}"}), 400
     with db_session() as db:
         out = prs.add_bank_account(
             db, counterparty_id=int(b["counterparty_id"]), currency=b["currency"],
@@ -55,7 +68,7 @@ def add():
             account_number=b.get("account_number"), bank_code=b.get("bank_code"),
             bsb_code=b.get("bsb_code"), iban=b.get("iban"), country=b.get("country"),
             legal_type=b.get("legal_type", "PRIVATE"), is_default=bool(b.get("is_default", False)),
-            actor=_actor())
+            account_type=b.get("account_type"), details=b.get("details"), actor=_actor())
         db.commit()
         return jsonify(out), 201
 
@@ -64,10 +77,13 @@ def add():
 def edit(bank_account_id):
     b = request.get_json(force=True) or {}
     with db_session() as db:
+        if not b.get("channel_id"):
+            return jsonify({"error": "missing required field(s): channel_id"}), 400
         out = prs.edit_bank_account(db, bank_account_id=bank_account_id,
                                     channel_id=int(b["channel_id"]), actor=_actor(),
                                     **{k: b[k] for k in ("currency", "account_holder_name", "account_number",
-                                       "bank_code", "bsb_code", "iban", "country", "legal_type") if k in b})
+                                       "bank_code", "bsb_code", "iban", "country", "legal_type",
+                                       "account_type", "details") if k in b})
         db.commit()
         return jsonify(out)
 
