@@ -903,7 +903,8 @@ class InvoiceService:
         db.add(FinanceVendorPayout(
             invoice_id=invoice_id, payable_type="invoice", payable_id=invoice_id,
             counterparty_id=invoice.counterparty_id, entity_id=invoice.entity_id,
-            bank_account_id=None,  # our SOURCE account (source_bank_account_id) lives in the audit; this FK is the PAYEE account
+            # our SOURCE account (source_bank_account_id) lives in the audit; the payout register routes
+            # payees via registration_id (NULL here — a manual payment has no system-resolved recipient).
             amount=amt, currency=invoice.currency,
             method="external_manual", external_reference=reference,
             state=PayoutState.AWAITING_IMPORT.value, is_dry_run=False,
