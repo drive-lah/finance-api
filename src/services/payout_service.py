@@ -188,6 +188,77 @@ class PayoutService:
                 created_by=(actor or {}).get("user_id"))
         return payout
 
+    def create_claim_payout(self, db, claim_id: int, actor: dict) -> FinanceVendorPayout:
+        """Pay an APPROVED employee claim through the register (POL-139 cat 4). Same machine as invoices:
+        resolve the employee counterparty (POL-112) + its registration on the entity's Wise channel,
+        raise a `payable_type='claim'` payout, send (or enqueue a checker). On send the claim moves
+        approved → payment_initiated; the categorization engine settles it → paid on the reimbursement."""
+        from src.models.employee_claim import FinanceEmployeeClaim, ClaimStatus
+        from src.models.counterparty import FinanceCounterparty
+        c = db.get(FinanceEmployeeClaim, claim_id)
+        if not c:
+            raise NotFoundError(f"Claim {claim_id} not found")
+        if c.status != ClaimStatus.APPROVED.value:
+            raise BadRequestError(f"Only an approved claim can be paid (status: {c.status}).")
+        existing = (db.query(FinanceVendorPayout)
+                    .filter(FinanceVendorPayout.payable_type == "claim",
+                            FinanceVendorPayout.payable_id == claim_id,
+                            FinanceVendorPayout.state.notin_([PayoutState.CANCELLED.value,
+                                                              PayoutState.FAILED.value])).first())
+        if existing:
+            raise ConflictError(f"Claim already has payout #{existing.id} ({existing.state}).")
+        if not c.entity_id or c.entity_id not in ENTITY_WISE_PROFILE:
+            raise BadRequestError(f"Claim entity {c.entity_id} has no Wise profile.")
+        # Employee = a counterparty (POL-112): external_system='employee', external_id=user_id.
+        emp = (db.query(FinanceCounterparty)
+               .filter(FinanceCounterparty.external_system == "employee",
+                       FinanceCounterparty.external_id == str(c.owner_user_id)).first())
+        if not emp:
+            raise BadRequestError(
+                f"No employee counterparty for user {c.owner_user_id} — cannot resolve a payee.")
+
+        amount = round(float(c.amount), 2)
+        ccy = c.currency or "SGD"
+        amount_sgd = _to_sgd(amount, ccy)
+        requires_checker = amount_sgd is not None and Decimal(str(amount_sgd)) >= CHECKER_THRESHOLD_SGD
+        profile = ENTITY_WISE_PROFILE[c.entity_id]
+        ch, reg = self._resolve_channel_registration(db, emp.id, c.entity_id)
+        if not DRY_RUN and not reg:
+            raise BadRequestError(
+                f"No bank account registered for {emp.name or 'this employee'} on entity {c.entity_id}'s "
+                f"payout channel. Add one, or mark the claim paid outside instead.")
+
+        payout = FinanceVendorPayout(
+            invoice_id=None, payable_type="claim", payable_id=claim_id, method="system_wise",
+            counterparty_id=emp.id, entity_id=c.entity_id,
+            channel_id=ch.id if ch else None, registration_id=reg.id if reg else None,
+            amount=amount, currency=ccy, amount_sgd=amount_sgd, wise_profile_id=profile,
+            idempotency_key=f"claim{claim_id}-{int(datetime.utcnow().timestamp())}",
+            state=PayoutState.DRAFT.value, requires_checker=requires_checker, is_dry_run=DRY_RUN,
+            requested_by=(actor or {}).get("user_id"), requested_at=datetime.utcnow())
+        db.add(payout); db.flush()
+        # link the claim to its payout
+        c.payout_id = payout.id
+        self._event(db, payout, "created", PayoutState.DRAFT.value, actor, snapshot={
+            "claim_id": claim_id, "amount": amount, "currency": ccy, "amount_sgd": amount_sgd,
+            "requires_checker": requires_checker, "dry_run": DRY_RUN, "entity_id": c.entity_id})
+        payout.state = PayoutState.REQUESTED.value
+        self._event(db, payout, "raised", PayoutState.REQUESTED.value, actor)
+        if not requires_checker:
+            self._send(db, payout, actor)
+        else:
+            from src.services.task_service import task_service
+            task_service.enqueue(
+                db, type="payout-approval", source_ref=f"payout:{payout.id}",
+                title=f"Approve claim reimbursement — {emp.name or 'employee'} · {ccy} {amount:,.2f}",
+                summary=f"Claim #{claim_id} · entity {c.entity_id} · SGD {amount_sgd} ≥ threshold "
+                        f"{float(CHECKER_THRESHOLD_SGD)}",
+                body={"payout_id": payout.id, "claim_id": claim_id, "amount": amount, "currency": ccy,
+                      "amount_sgd": amount_sgd, "entity_id": c.entity_id, "dry_run": DRY_RUN},
+                risk="high", amount=Decimal(str(amount)), currency=ccy,
+                assignee_role="finance.payouts", created_by=(actor or {}).get("user_id"))
+        return payout
+
     def approve_and_send(self, db, payout_id: int, actor: dict) -> FinanceVendorPayout:
         payout = db.get(FinanceVendorPayout, payout_id)
         if not payout:
@@ -285,14 +356,11 @@ class PayoutService:
             "dry_run": payout.is_dry_run})
         # SM-3 (POL-132): a real payout puts the invoice into payment_initiated (money on its way).
         # It reaches paid ONLY when the categorization engine pairs the imported txn (VP-5, POL-131).
-        # A tranche can be initiated from an already-partially-paid invoice too (POL-136): the SECOND
-        # payment on a partially_paid payable must also move to payment_initiated (money in transit),
-        # then the categorization engine pairs it back down to partially_paid / paid (POL-131).
+        # Move the payable into payment_initiated (money in transit). Invoice: from approved OR
+        # partially_paid (a 2nd tranche, POL-136). Claim: from approved (POL-139). The categorization
+        # engine pairs it down to paid / partially_paid on settlement (POL-131).
         if not payout.is_dry_run:
-            self._set_invoice_status(db, payout.invoice_id, InvoiceStatus.PAYMENT_INITIATED.value,
-                                     from_states={InvoiceStatus.APPROVED.value,
-                                                  InvoiceStatus.PARTIALLY_PAID.value}, actor=actor,
-                                     reason=f"payout {payout.id} initiated")
+            self._mark_payable_initiated(db, payout, actor)
 
     def _set_invoice_status(self, db, invoice_id, new_status, *, from_states, actor=None, reason=None):
         """Move an invoice into a payout-driven state, only from an allowed prior state (idempotent,
@@ -307,6 +375,47 @@ class PayoutService:
             return True
         return False
 
+    def _set_claim_status(self, db, claim_id, new_status, *, from_states, reason=None):
+        """Claim analog of _set_invoice_status (POL-139 cat 4). Payout machine owns approved↔
+        payment_initiated; the categorization engine owns payment_initiated→paid on settlement."""
+        from src.models.employee_claim import FinanceEmployeeClaim
+        c = db.get(FinanceEmployeeClaim, claim_id) if claim_id else None
+        if c and c.status in from_states:
+            c.status = new_status
+            db.flush()
+            logger.info("claim %s -> %s (%s)", claim_id, new_status, reason)
+            return True
+        return False
+
+    def _mark_payable_initiated(self, db, payout, actor=None):
+        """On a real send, move the payout's payable into payment_initiated (money in transit). Branches
+        on payable_type so invoices and claims share the one machine (POL-139)."""
+        if payout.payable_type == "claim":
+            from src.models.employee_claim import ClaimStatus
+            self._set_claim_status(db, payout.payable_id, ClaimStatus.PAYMENT_INITIATED.value,
+                                   from_states={ClaimStatus.APPROVED.value},
+                                   reason=f"payout {payout.id} initiated")
+        else:
+            self._set_invoice_status(db, payout.invoice_id, InvoiceStatus.PAYMENT_INITIATED.value,
+                                     from_states={InvoiceStatus.APPROVED.value,
+                                                  InvoiceStatus.PARTIALLY_PAID.value}, actor=actor,
+                                     reason=f"payout {payout.id} initiated")
+
+    def _revert_payable(self, db, payout, reason, actor=None):
+        """On a failed send, revert the payable out of payment_initiated to its prior state (POL-139)."""
+        if payout.payable_type == "claim":
+            from src.models.employee_claim import ClaimStatus
+            self._set_claim_status(db, payout.payable_id, ClaimStatus.APPROVED.value,
+                                   from_states={ClaimStatus.PAYMENT_INITIATED.value}, reason=reason)
+        else:
+            from src.models.invoice import FinanceInvoice
+            inv = db.get(FinanceInvoice, payout.invoice_id) if payout.invoice_id else None
+            revert_to = (InvoiceStatus.PARTIALLY_PAID.value
+                         if inv and float(inv.amount_paid or 0) > 0 else InvoiceStatus.APPROVED.value)
+            self._set_invoice_status(db, payout.invoice_id, revert_to,
+                                     from_states={InvoiceStatus.PAYMENT_INITIATED.value}, actor=actor,
+                                     reason=reason)
+
     def apply_wise_status(self, db, payout, wise_status: str, actor=None):
         """SM-2 (POL-130): map a Wise transfer status onto the payout + invoice state machines. Called
         by the Wise webhook / poller (NOT built yet). Reconciliation to `paid` is NOT done here — that
@@ -320,16 +429,10 @@ class PayoutService:
             payout.state = PayoutState.FAILED.value
             payout.failure_reason = f"wise: {s}"
             self._event(db, payout, "failed", PayoutState.FAILED.value, actor, reason=f"wise: {s}")
-            # Revert the invoice out of payment_initiated (POL-132). Restore the PRIOR state: if earlier
-            # tranches were already paired (amount_paid > 0) it goes back to partially_paid, not approved —
-            # a failed 2nd tranche must not wipe out the balance already settled.
-            from src.models.invoice import FinanceInvoice
-            inv = db.get(FinanceInvoice, payout.invoice_id) if payout.invoice_id else None
-            revert_to = (InvoiceStatus.PARTIALLY_PAID.value
-                         if inv and float(inv.amount_paid or 0) > 0 else InvoiceStatus.APPROVED.value)
-            self._set_invoice_status(db, payout.invoice_id, revert_to,
-                                     from_states={InvoiceStatus.PAYMENT_INITIATED.value}, actor=actor,
-                                     reason=f"payout {payout.id} {s}")
+            # Revert the payable out of payment_initiated (POL-132/139). For invoices, restore the PRIOR
+            # state (partially_paid if amount_paid>0, else approved) so a failed 2nd tranche never wipes
+            # out settled balance; for claims, back to approved.
+            self._revert_payable(db, payout, reason=f"payout {payout.id} {s}", actor=actor)
         db.flush()
         return payout.state
 

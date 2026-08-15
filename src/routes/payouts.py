@@ -120,6 +120,43 @@ def create_payout():
         return jsonify(p.to_dict()), 201
 
 
+@payouts_bp.route("/claim", methods=["POST"])
+def create_claim_payout():
+    """Raise (and, under threshold, send) a reimbursement payout for an APPROVED employee claim (POL-139
+    cat 4). Moves the claim approved → payment_initiated; settlement → paid via the categorization engine."""
+    body = request.get_json(force=True) or {}
+    claim_id = body.get("claim_id")
+    if not claim_id:
+        raise BadRequestError("claim_id is required")
+    with db_session() as db:
+        p = payout_service.create_claim_payout(db, int(claim_id), _actor())
+        db.flush()
+        return jsonify(p.to_dict()), 201
+
+
+@payouts_bp.route("/claim-payables", methods=["GET"])
+def claim_payables():
+    """Approved employee claims awaiting reimbursement (finance payment queue). `entity_id` optional."""
+    from src.models.employee_claim import FinanceEmployeeClaim, ClaimStatus
+    from src.models.counterparty import FinanceCounterparty
+    entity_id = request.args.get("entity_id", type=int)
+    with db_session() as db:
+        q = db.query(FinanceEmployeeClaim).filter(
+            FinanceEmployeeClaim.status == ClaimStatus.APPROVED.value)
+        if entity_id:
+            q = q.filter(FinanceEmployeeClaim.entity_id == entity_id)
+        out = []
+        for c in q.order_by(FinanceEmployeeClaim.approved_at.asc()).all():
+            emp = (db.query(FinanceCounterparty)
+                   .filter(FinanceCounterparty.external_system == "employee",
+                           FinanceCounterparty.external_id == str(c.owner_user_id)).first())
+            d = c.to_dict()
+            d["payee_name"] = emp.name if emp else f"user {c.owner_user_id}"
+            d["counterparty_id"] = emp.id if emp else None
+            out.append(d)
+        return jsonify(out)
+
+
 @payouts_bp.route("/<int:payout_id>/approve", methods=["POST"])
 def approve_payout(payout_id):
     """Checker approves an at/above-threshold payout → sends."""
