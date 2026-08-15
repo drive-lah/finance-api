@@ -194,8 +194,8 @@
         <div class="badges"><span class="b posted">POSTED</span><span class="b fxn">FX✗ (assumes fx=1)</span><span class="b warn">DIRECT MODEL ⚠</span></div>
         <div class="trig">STAGED FinanceEconomicEvent + FinanceJETemplate (debit/credit codes) → builds FinanceJournalEntry + lines DIRECTLY. Wired: route <code>project_month</code>. LIVE.</div></div>
       <div class="card a"><h3>Own GST — Lane A</h3><span class="loc">_lane_a_gst :153 (POL-123)</span>
-        <div class="badges"><span class="b warn">2nd GST IMPL ⚠</span></div>
-        <div class="trig">Separate GST path from categorization's gst_service.classify — bank-leg + contra COA flag, 1/11. Two GST implementations to unify.</div></div>
+        <div class="badges"><span class="b posted">BY DESIGN ✓</span></div>
+        <div class="trig">Lane A = CASH-BASIS GST (bank-leg, 1/11, 1350/2500). Distinct from the invoice/accrual Lane B (1355/2505 deferred). Two GST engines by design — NOT merged.</div></div>
     </section>
 
     <!-- STRIPE SYNC (dormant) -->
@@ -274,8 +274,8 @@
         <div class="badges"><span class="ev">EconomicEventPosted</span></div>
         <div class="out">Template (debit/credit codes) → posting layer builds &amp; balances · converted to entity ccy · <b>no more direct FinanceJournalEntry</b></div></div>
       <div class="card b"><div class="when"><b>GST leg</b></div>
-        <div class="badges"><span class="ev">via shared GST decorator</span></div>
-        <div class="out">Lane A (POL-123) folds into the ONE gst_service decorator · two GST impls unified</div></div>
+        <div class="badges"><span class="ev">Lane A stays its own engine</span></div>
+        <div class="out">Cash-basis GST (Lane A, POL-123) is distinct from invoice accrual GST (Lane B) · service carries the engine-computed GST line, does NOT merge them</div></div>
     </section>
 
     <!-- CATEGORIZATION -->

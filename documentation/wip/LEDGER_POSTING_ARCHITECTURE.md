@@ -128,14 +128,18 @@ and routes through the shared posting layer like every other engine — no more 
 count missed; the true posting surface is 23 service calls **plus** the direct-construction
 engines (Economic Events, and dormant Stripe Sync).
 
-**GST is a decorator, not an event — and there are TWO implementations to unify.** `gst_service`
-is a pure decision module (`classify`, `gst_from_gross`) with no `journal_service.create`. The
-posting layer calls it while generating lines for the revenue/expense/bill events (BillRaised,
-SimplePosting, revenue postings) and appends the input/output-GST control line; its `REVIEW`
-verdict holds that line for a human. GST has no JE lifecycle of its own. **But Economic Events
-carries its OWN GST logic** — `_lane_a_gst` (POL-123 "Lane A"): bank-leg + contra-COA flag, 1/11,
-output/input. So two GST decision paths exist in parallel. The target folds Lane A into the single
-`gst_service` decorator so every engine, Economic Events included, shares one GST implementation.
+**GST: TWO engines, deliberately different — NOT to be unified (corrected 2026-08-16, Gaurav).**
+There are two GST treatments by design, and they are fundamentally different tax bases:
+- **Lane A — cash-basis** (economic events / bank lane): `_lane_a_gst` (POL-123). GST fires only
+  when the JE has a bank leg (cash moved); 1/11 of the GST-inclusive cash; accounts **1350** input
+  / **2500** output.
+- **Lane B — accrual / invoiced** (invoice lane, POL-87): the invoice's own `tax_amount` is the
+  truth, and GST on OPEN invoices sits in **deferred** accounts (**1355** input-deferred, **2505**
+  output-deferred) until cash settles.
+These are correct, distinct treatments — different basis, different accounts — already built and
+locked. The posting service does NOT merge them. Each engine keeps its own GST engine; the service
+simply carries whichever GST line the engine already computed. The earlier "unify the two GST
+impls" note was wrong.
 
 **Intercompany is independent per-entity booking (Gaurav ruling 2026-08-16).** There is no paired
 cross-entity JE and no matching at transaction time. Each entity books its own leg from its own
