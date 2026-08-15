@@ -115,12 +115,27 @@ Implement as a SQLAlchemy `before_flush` guard or a hard assertion inside the pr
 | **IntercompanyLegPosted** — cross-entity | Each entity's OWN feed + rule (independent) | ONE leg only: sender Dr IC-Receivable / Cr bank · receiver Dr bank / Cr IC-Payable | that entity's func ccy | DRAFT | posts on that entity's own sight — **no cross-entity matching, no receiver-estimate** |
 | **ICReconciled** — periodic | IC reconciliation job | Trues IC-Receivable vs IC-Payable across entities; books the FX difference | group presentation | DRAFT | at the reconciliation run — **FX → 7100 (realized) or CTA (net-investment)** |
 | **AllocationBooked** / **AmortizationDue** | Cross-entity allocation; amortization scheduler | Dr expense · Cr IC-payable / accumulated | source ccy → entity func | DRAFT | allocation: at match; amort: **at schedule tick (fix the never-posts bug)** |
+| **EconomicEventPosted** | Economic Events `project_month` on STAGED events | Template (debit/credit codes) → posting layer + shared GST decorator | event ccy → entity func (currently fx=1) | DRAFT | at projection — **stops building FinanceJournalEntry directly** |
 
-**GST is a decorator, not an event.** `gst_service` is a pure decision module (`classify`,
-`gst_from_gross`) with no `journal_service.create`. The posting layer calls it while generating
-lines for the revenue/expense/bill events (BillRaised, SimplePosting, and revenue postings) and
-appends the input/output-GST control line. Its `REVIEW` verdict holds that line for a human. GST
-has no JE lifecycle of its own; it rides inside the posting layer for the events above.
+**Economic Events is a SEPARATE posting engine — and it bypasses `journal_service` (found
+2026-08-16).** `economic_events/service.py::project_month` reads STAGED `FinanceEconomicEvent`
+rows, looks up a `FinanceJETemplate` (debit/credit codes) per event type, and builds
+`FinanceJournalEntry` + `FinanceJournalLine` rows **directly**, `status=POSTED`. It is LIVE (wired
+via the Economic Events route/FE tab), template-driven (monthly Stripe/ops rollups), and it
+assumes `fx_rate=1` (a POL-141-class currency gap). In the target it emits **EconomicEventPosted**
+and routes through the shared posting layer like every other engine — no more direct
+`FinanceJournalEntry`. This is a posting path the original "23 `journal_service.create` sites"
+count missed; the true posting surface is 23 service calls **plus** the direct-construction
+engines (Economic Events, and dormant Stripe Sync).
+
+**GST is a decorator, not an event — and there are TWO implementations to unify.** `gst_service`
+is a pure decision module (`classify`, `gst_from_gross`) with no `journal_service.create`. The
+posting layer calls it while generating lines for the revenue/expense/bill events (BillRaised,
+SimplePosting, revenue postings) and appends the input/output-GST control line; its `REVIEW`
+verdict holds that line for a human. GST has no JE lifecycle of its own. **But Economic Events
+carries its OWN GST logic** — `_lane_a_gst` (POL-123 "Lane A"): bank-leg + contra-COA flag, 1/11,
+output/input. So two GST decision paths exist in parallel. The target folds Lane A into the single
+`gst_service` decorator so every engine, Economic Events included, shares one GST implementation.
 
 **Intercompany is independent per-entity booking (Gaurav ruling 2026-08-16).** There is no paired
 cross-entity JE and no matching at transaction time. Each entity books its own leg from its own
@@ -184,6 +199,21 @@ Each phase ships and is verifiable on its own. Nothing requires the whole thing 
 - **34 draft SG↔AU transfers** (28 in 2025, 6 in 2026): re-classify as IntercompanyMoved, pair,
   post. Verified **no overlap** with the 72 (0 exact, 0 fuzzy on date+amount) — so this is pure
   classification recovery, not de-duplication.
+
+## 7b. Stale / duplicate / bypass posting code (2026-08-16 sweep)
+
+Beyond the 23 mapped `journal_service` sites, a reachability sweep found posting code that must be
+inspected, consolidated, or removed. Removal lands as its own reversible commit; nothing deleted
+without sign-off.
+
+| # | Code | Classification | Action |
+|---|------|----------------|--------|
+| 1 | `payroll_service.create_run` (:405) | **Dead** — only `tests/` call it; the live route uses `hr_payroll_service.create_run` | Remove; migrate tests to the live path |
+| 2 | `stripe_sync/sync_service.py::sync_month` (:234) | **Dormant** — builds `FinanceJournalEntry` directly; no route/cron/caller anywhere | Gaurav's call: revive-through-posting-layer or remove |
+| 3 | `hr_payroll_service.submit_run` (:533) vs `payroll_service.submit_for_approval` (:195) | **Duplicate live** — two wired accrual posters (immediate-post vs approval-gated) | Retire the immediate-post one |
+| 4 | `_try_payroll_knockoff` (:910) vs `_try_payroll_register_knockoff` (:884) | **Duplicate live** — both run in the categorize pipeline (lines 279 + 291) | Retire the old (:910 / `create_payroll_payment_entries`) |
+| 5 | `economic_events/service.py::project_month` (:200) | **Live bypass** — posts directly, own GST (Lane A), fx=1 | Fold into posting layer + shared GST decorator (own lane) |
+| 6 | `scripts/vr2_post_{icfx,crossentity,provisional,pairings,xcurrency}.py` | **One-off remediation** (VR-2 invoice pairing, ~Aug 2026: "the 728", "the 102", provisional table) — git-tracked, inherit app `DATABASE_URL` (**prod by default**), only `POST_MODE=pilot\|all`, no prod guard | If VR-2 posting is complete: archive/delete or add a hard clone-only DSN guard (VR-1c footgun class) |
 
 ## 8. Non-goals / risks
 

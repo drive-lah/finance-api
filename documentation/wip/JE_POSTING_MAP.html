@@ -72,7 +72,7 @@
 
   <section id="tab-current" class="tab active">
   <h1>Journal-Entry Posting Mechanisms — Current State</h1>
-  <p class="sub">23 physical <code>journal_service.create()</code> calls · 19 logical mechanisms (4 are paired = 2 JEs each) · bucketed by domain. Read on branch <code>260814_payout_module</code>, 2026-08-16.</p>
+  <p class="sub">23 <code>journal_service.create()</code> calls (19 logical mechanisms, 4 paired) <b>+ 2 engines that bypass the service</b> (Economic Events, Stripe Sync — direct <code>FinanceJournalEntry(...)</code>). Bucketed by domain. Read on branch <code>260814_payout_module</code>, 2026-08-16.</p>
 
   <div class="legend">
     <span class="chip"><span class="dot" style="background:var(--green)"></span><b>Healthy</b> — posts right + FX applied</span>
@@ -186,6 +186,27 @@
         <div class="trig">Scheduler bumps months_posted but never calls post_entry — JE stuck DRAFT (bug)</div></div>
     </section>
 
+    <!-- ECONOMIC EVENTS -->
+    <section class="bucket">
+      <h2>⚡ Economic Events <span class="tag">bypasses journal_service</span></h2>
+      <p class="bmeta">economic_events/service.py — template-driven, staged events → JEs</p>
+      <div class="card a"><h3>project_month() → posts JEs</h3><span class="loc">economic_events/service.py:200</span>
+        <div class="badges"><span class="b posted">POSTED</span><span class="b fxn">FX✗ (assumes fx=1)</span><span class="b warn">DIRECT MODEL ⚠</span></div>
+        <div class="trig">STAGED FinanceEconomicEvent + FinanceJETemplate (debit/credit codes) → builds FinanceJournalEntry + lines DIRECTLY. Wired: route <code>project_month</code>. LIVE.</div></div>
+      <div class="card a"><h3>Own GST — Lane A</h3><span class="loc">_lane_a_gst :153 (POL-123)</span>
+        <div class="badges"><span class="b warn">2nd GST IMPL ⚠</span></div>
+        <div class="trig">Separate GST path from categorization's gst_service.classify — bank-leg + contra COA flag, 1/11. Two GST implementations to unify.</div></div>
+    </section>
+
+    <!-- STRIPE SYNC (dormant) -->
+    <section class="bucket">
+      <h2>💳 Stripe Sync <span class="tag">dormant</span></h2>
+      <p class="bmeta">stripe_sync/sync_service.py</p>
+      <div class="card r"><h3>sync_month() → posts JEs</h3><span class="loc">stripe_sync/sync_service.py:234</span>
+        <div class="badges"><span class="b posted">POSTED</span><span class="b legacy">NO CALLER ⚠</span><span class="b warn">DIRECT MODEL</span></div>
+        <div class="trig">Builds FinanceJournalEntry directly, bypasses journal_service. No route / cron / caller anywhere — dead or paused. Gaurav's call: revive-through-posting-layer or remove.</div></div>
+    </section>
+
   </div>
   </section>
 
@@ -245,6 +266,18 @@
         <div class="out">Dr 2303 / Cr bank · FX residue → 7100</div></div>
     </section>
 
+    <!-- ECONOMIC EVENTS -->
+    <section class="bucket">
+      <h2>⚡ Economic Events engine</h2>
+      <p class="bmeta">template-driven monthly rollups (Stripe/ops views)</p>
+      <div class="card b"><div class="when"><b>project_month</b> on STAGED events</div>
+        <div class="badges"><span class="ev">EconomicEventPosted</span></div>
+        <div class="out">Template (debit/credit codes) → posting layer builds &amp; balances · converted to entity ccy · <b>no more direct FinanceJournalEntry</b></div></div>
+      <div class="card b"><div class="when"><b>GST leg</b></div>
+        <div class="badges"><span class="ev">via shared GST decorator</span></div>
+        <div class="out">Lane A (POL-123) folds into the ONE gst_service decorator · two GST impls unified</div></div>
+    </section>
+
     <!-- CATEGORIZATION -->
     <section class="bucket" style="grid-column:span 2;min-width:0">
       <h2>⚙️ Categorization engine</h2>
@@ -294,7 +327,7 @@
     <div class="flow">
       <div class="node"><div class="nt">Engine</div><div class="ns">invoice · payroll · claim · categorization · manual</div></div>
       <span class="arrow">→</span>
-      <div class="node evt"><div class="nt">Economic Event</div><div class="ns">BillRaised · PayableSettled · PayrollAccrued · TransferPaired · IntercompanyLegPosted · AllocationBooked · ICReconciled</div></div>
+      <div class="node evt"><div class="nt">Economic Event</div><div class="ns">BillRaised · PayableSettled · PayrollAccrued · TransferPaired · IntercompanyLegPosted · AllocationBooked · ICReconciled · EconomicEventPosted</div></div>
       <span class="arrow">→</span>
       <div class="node post"><div class="nt">Posting layer</div><div class="ns">converts each leg → entity ccy · <b style="color:var(--violet)">GST decorator</b> (gst_service.classify) adds input/output GST line, REVIEW → human · generates lines · balances · 7100 residue</div></div>
       <span class="arrow">→</span>
