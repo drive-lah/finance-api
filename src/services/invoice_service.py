@@ -778,10 +778,13 @@ class InvoiceService:
         # Create amortization schedule if needed
         if needs_amortization:
             months = _months_between(invoice.service_period_start, invoice.service_period_end)
-            monthly_amount = round(total / months, 2)
+            # POL-25 (2026-08-15): the schedule stores FUNCTIONAL amounts — a foreign-currency
+            # invoice's schedule uses the converted total, matching the posted approval JE.
+            _sched_total = float(_total_func)
+            monthly_amount = round(_sched_total / months, 2)
             schedule = FinanceAmortizationSchedule(
                 invoice_id=invoice.id,
-                total_amount=total,
+                total_amount=_sched_total,
                 months=months,
                 monthly_amount=monthly_amount,
                 expense_account_code=invoice.contra_account_code,
