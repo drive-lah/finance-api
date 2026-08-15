@@ -14,7 +14,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from src.models.vendor_payout import (
-    FinanceVendorPayout, FinanceVendorPayoutEvent, FinancePayoutBankAccount, PayoutState,
+    FinancePayout as FinanceVendorPayout, FinancePayoutEvent as FinanceVendorPayoutEvent, PayoutState,
 )
 from src.models.invoice import FinanceInvoice, InvoiceStatus
 from src.models.counterparty import FinanceCounterparty
@@ -136,30 +136,21 @@ class PayoutService:
         requires_checker = amount_sgd is not None and Decimal(str(amount_sgd)) >= CHECKER_THRESHOLD_SGD
         profile = ENTITY_WISE_PROFILE[inv.entity_id]
 
-        # Resolve the RECIPIENT for the PAYING CHANNEL. SM-4 (POL-133): the recipient MUST belong to
-        # the paying entity's channel — we do NOT fall back to a different-entity/other-currency account.
-        # (The AU failure was the old code grabbing Dirk's SGD account for an AU payout.) An account for
-        # the paying channel exists or the payout is BLOCKED with "register one first".
-        # Prefer the NEW channel/registration model (POL-124); the account added via the counterparty
-        # Bank Accounts UI lives there, NOT in the legacy table. Fall back to the legacy account.
-        new_ok = self._has_channel_registration(db, inv.counterparty_id, inv.entity_id)
-        recipient = (db.query(FinancePayoutBankAccount)
-                     .filter(FinancePayoutBankAccount.counterparty_id == inv.counterparty_id,
-                             FinancePayoutBankAccount.status == "active",
-                             FinancePayoutBankAccount.entity_id == inv.entity_id)
-                     .order_by(FinancePayoutBankAccount.currency == ccy,  # prefer same-currency
-                               FinancePayoutBankAccount.is_default.desc(),
-                               FinancePayoutBankAccount.id.asc()).first())
-        if not DRY_RUN and not new_ok and not recipient:
+        # Resolve the RECIPIENT for the PAYING CHANNEL (channel/registration model, POL-124). SM-4
+        # (POL-133): the registration MUST belong to the paying entity's channel — we do NOT fall back to
+        # a different-entity/other-currency account (the AU failure was the old code grabbing Dirk's SGD
+        # account for an AU payout). A registration on the paying channel exists or the payout is BLOCKED.
+        ch, reg = self._resolve_channel_registration(db, inv.counterparty_id, inv.entity_id)
+        if not DRY_RUN and not reg:
             raise BadRequestError(
                 f"No bank account registered for this vendor on entity {inv.entity_id}'s payout channel. "
                 f"Add a bank account for this channel before paying.")
-        resolved_bank_account_id = recipient.id if recipient else bank_account_id
 
         payout = FinanceVendorPayout(
             invoice_id=invoice_id, payable_type="invoice", payable_id=invoice_id, method="system_wise",
             counterparty_id=inv.counterparty_id, entity_id=inv.entity_id,
-            bank_account_id=resolved_bank_account_id, amount=amount, currency=ccy, amount_sgd=amount_sgd,
+            channel_id=ch.id if ch else None, registration_id=reg.id if reg else None,
+            amount=amount, currency=ccy, amount_sgd=amount_sgd,
             wise_profile_id=profile, idempotency_key=f"inv{invoice_id}-{int(datetime.utcnow().timestamp())}",
             state=PayoutState.DRAFT.value, requires_checker=requires_checker, is_dry_run=DRY_RUN,
             requested_by=(actor or {}).get("user_id"), requested_at=datetime.utcnow())
@@ -215,57 +206,43 @@ class PayoutService:
         self._send(db, payout, actor)
         return payout
 
-    def _has_channel_registration(self, db, counterparty_id, entity_id) -> bool:
-        """True if the counterparty has an ACTIVE registration on the paying entity's Wise channel
-        (new model, POL-124). Savepoint-guarded so a pre-059 DB just returns False and the legacy gate
-        applies."""
-        try:
-            from src.models.payout_channels import (
-                PaymentChannel, CounterpartyBankAccount, PayoutChannelRegistration)
-            with db.begin_nested():
-                ch = (db.query(PaymentChannel)
-                      .filter_by(provider="wise", our_entity_id=entity_id, status="active").first())
-                if not ch:
-                    return False
-                return (db.query(PayoutChannelRegistration)
-                        .join(CounterpartyBankAccount,
-                              CounterpartyBankAccount.id == PayoutChannelRegistration.bank_account_id)
-                        .filter(CounterpartyBankAccount.counterparty_id == counterparty_id,
-                                PayoutChannelRegistration.channel_id == ch.id,
-                                PayoutChannelRegistration.status == "active").first() is not None)
-        except Exception:
-            return False
+    def _resolve_channel_registration(self, db, counterparty_id, entity_id):
+        """(channel, registration) for a counterparty on the paying entity's Wise channel (POL-124), or
+        (channel|None, None). Resolves the registration ON THIS CHANNEL for one of the counterparty's
+        ACTIVE accounts — NOT the default account (a vendor with an SGD default + a separate AUD account
+        must resolve the AUD one for an AU payout). PM-4b: this is the sole source of pay-routing; the
+        legacy finance_payout_bank_accounts fallback is gone."""
+        from src.models.payout_channels import (
+            PaymentChannel, CounterpartyBankAccount, PayoutChannelRegistration)
+        ch = (db.query(PaymentChannel)
+              .filter_by(provider="wise", our_entity_id=entity_id, status="active").first())
+        if not ch:
+            return None, None
+        reg = (db.query(PayoutChannelRegistration)
+               .join(CounterpartyBankAccount,
+                     CounterpartyBankAccount.id == PayoutChannelRegistration.bank_account_id)
+               .filter(CounterpartyBankAccount.counterparty_id == counterparty_id,
+                       CounterpartyBankAccount.status == "active",
+                       PayoutChannelRegistration.channel_id == ch.id,
+                       PayoutChannelRegistration.status == "active")
+               .order_by(CounterpartyBankAccount.is_default.desc(),
+                         PayoutChannelRegistration.id.asc()).first())
+        return ch, reg
 
     def _resolve_pay_target(self, db, payout):
-        """(profile_id, recipient_id) for this payout. PREFER the channel/registration model: find the
-        counterparty's ACTIVE registration ON THE PAYING CHANNEL (not the default account — a vendor
-        with an SGD default and a separate AUD account must resolve the AUD one for an AU payout). FALL
-        BACK to the legacy ENTITY_WISE_PROFILE + embedded recipient so an un-migrated DB still pays.
-        Savepoint-guarded so a missing table just triggers the fallback."""
-        try:
-            from src.models.payout_channels import (
-                PaymentChannel, CounterpartyBankAccount, PayoutChannelRegistration)
-            with db.begin_nested():
-                ch = (db.query(PaymentChannel)
-                      .filter_by(provider="wise", our_entity_id=payout.entity_id, status="active").first())
-                if ch:
-                    profile_id = (ch.config or {}).get("profile_id")
-                    # the registration ON THIS CHANNEL for one of the counterparty's active accounts
-                    reg = (db.query(PayoutChannelRegistration)
-                           .join(CounterpartyBankAccount,
-                                 CounterpartyBankAccount.id == PayoutChannelRegistration.bank_account_id)
-                           .filter(CounterpartyBankAccount.counterparty_id == payout.counterparty_id,
-                                   CounterpartyBankAccount.status == "active",
-                                   PayoutChannelRegistration.channel_id == ch.id,
-                                   PayoutChannelRegistration.status == "active")
-                           .order_by(CounterpartyBankAccount.is_default.desc(),
-                                     PayoutChannelRegistration.id.asc()).first())
-                    if profile_id and reg:
-                        return str(profile_id), reg.external_recipient_id
-        except Exception:
-            logger.exception("new-model pay-target resolution unavailable; using legacy resolution")
-        ba = db.get(FinancePayoutBankAccount, payout.bank_account_id) if payout.bank_account_id else None
-        return payout.wise_profile_id, (ba.wise_recipient_id if ba else None)
+        """(profile_id, recipient_id) for this payout, from the channel/registration model (POL-124).
+        Prefer the registration captured on the payout row; else re-resolve on the paying channel."""
+        from src.models.payout_channels import PaymentChannel, PayoutChannelRegistration
+        ch = reg = None
+        if payout.registration_id:
+            reg = db.get(PayoutChannelRegistration, payout.registration_id)
+        if payout.channel_id:
+            ch = db.get(PaymentChannel, payout.channel_id)
+        if not reg:
+            ch, reg = self._resolve_channel_registration(db, payout.counterparty_id, payout.entity_id)
+        profile_id = (ch.config or {}).get("profile_id") if ch else None
+        return (str(profile_id) if profile_id else payout.wise_profile_id,
+                reg.external_recipient_id if reg else None)
 
     def _send(self, db, payout, actor):
         """Create the Wise transfer + fund it (real), or simulate (dry-run). Approve=send."""

@@ -85,24 +85,31 @@ class FinancePayoutBankAccount(Base):
         }
 
 
-class FinanceVendorPayout(Base):
-    __tablename__ = "finance_vendor_payouts"
+class FinancePayout(Base):
+    __tablename__ = "finance_payouts"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     # PM-7: how the payout was made. system_wise = Wise-initiated; external_manual = paid outside + recorded.
     method: Mapped[str] = mapped_column(String(20), default="system_wise", nullable=False)
     external_reference: Mapped[str | None] = mapped_column(String(120), nullable=True)  # manual ref (no txn id)
-    # PM-8: polymorphic payable (invoice now, payroll next). invoice_id kept for back-compat until PM-4b.
+    # PM-8: polymorphic payable (invoice now, payroll next). invoice_id kept as the TYPED FK for invoice
+    # payouts (nullable — payroll/other rows carry payable_type/payable_id and leave invoice_id NULL).
     payable_type: Mapped[str] = mapped_column(String(16), default="invoice", nullable=False)
     payable_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    invoice_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("finance_invoices.id"), nullable=False)
+    invoice_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("finance_invoices.id"), nullable=True)
     counterparty_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("finance_counterparties.id"), nullable=False)
     entity_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("finance_entities.id"), nullable=False)
-    bank_account_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("finance_payout_bank_accounts.id"), nullable=True)
+    # PM-4b: payee routing now lives in the channel/registration model (POL-124). channel_id +
+    # registration_id capture WHO/WHERE we pay. The legacy finance_payout_bank_accounts table is NO
+    # LONGER read by the payout engine, but is kept for the HR employee-bank-account UI until that
+    # migrates to counterparty_bank_account (employees are counterparties — separate HR task).
+    channel_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("payment_channel.id"), nullable=True)
+    registration_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("payout_channel_registration.id"), nullable=True)
 
     amount: Mapped[float] = mapped_column(Numeric(precision=15, scale=2), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), nullable=False)
@@ -144,7 +151,8 @@ class FinanceVendorPayout(Base):
             "id": self.id, "invoice_id": self.invoice_id, "counterparty_id": self.counterparty_id,
             "method": self.method, "external_reference": self.external_reference,
             "payable_type": self.payable_type, "payable_id": self.payable_id,
-            "entity_id": self.entity_id, "bank_account_id": self.bank_account_id,
+            "entity_id": self.entity_id,
+            "channel_id": self.channel_id, "registration_id": self.registration_id,
             "amount": float(self.amount) if self.amount is not None else None,
             "currency": self.currency,
             "amount_sgd": float(self.amount_sgd) if self.amount_sgd is not None else None,
@@ -163,13 +171,13 @@ class FinanceVendorPayout(Base):
         }
 
 
-class FinanceVendorPayoutEvent(Base):
+class FinancePayoutEvent(Base):
     """Append-only audit log. Never UPDATE or DELETE — corrections are new rows."""
-    __tablename__ = "finance_vendor_payout_events"
+    __tablename__ = "finance_payout_events"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     payout_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("finance_vendor_payouts.id", ondelete="CASCADE"), nullable=False)
+        Integer, ForeignKey("finance_payouts.id", ondelete="CASCADE"), nullable=False)
     seq: Mapped[int] = mapped_column(Integer, nullable=False)
     event: Mapped[str] = mapped_column(String(32), nullable=False)
     from_state: Mapped[str | None] = mapped_column(String(20), nullable=True)
@@ -194,3 +202,9 @@ class FinanceVendorPayoutEvent(Base):
             "payload_snapshot": self.payload_snapshot,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+
+
+# PM-4b back-compat aliases: tables renamed vendor_payouts→payouts and the classes with them.
+# Existing imports of the old names keep working (same mapped class).
+FinanceVendorPayout = FinancePayout
+FinanceVendorPayoutEvent = FinancePayoutEvent

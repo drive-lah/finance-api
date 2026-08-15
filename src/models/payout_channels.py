@@ -15,8 +15,8 @@ each holding that channel's own recipient id:
   FinancePayoutReferenceAudit — append-only trail of every add/update/delete of the above (money-
                               routing data, so mutations are logged immutably — corrections are new rows).
 
-Design: documentation/wip/PAYOUTS_DATA_MODEL.md. Additive — the legacy table + FinanceVendorPayout are
-untouched until the Phase-2 cutover (rename finance_vendor_payouts -> finance_payouts, repoint the service).
+Design: documentation/wip/PAYOUT_MODEL.md. PM-4b cutover done (migration 061): the payout register is
+`finance_payouts`, and it routes via `channel_id`/`registration_id` here — no legacy embedded recipient.
 """
 from datetime import datetime
 

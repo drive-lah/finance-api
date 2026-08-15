@@ -56,7 +56,7 @@ def create_app(config=None):
     from src.routes.jobs import jobs_bp
     from src.routes.economic_events import economic_events_bp
     from src.routes.payouts import payouts_bp
-    from src.routes.payee_bank_accounts import payee_bank_accounts_bp
+    from src.routes.payee_bank_accounts import payee_bank_accounts_bp  # legacy: HR employee bank accounts (not payout engine)
     from src.routes.payout_recipients import payout_recipients_bp
     from src.routes.claims import claims_bp
     from src.routes.tasks import tasks_bp

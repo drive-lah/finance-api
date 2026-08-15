@@ -6,7 +6,7 @@ from flask import Blueprint, request, jsonify
 from src.database import db_session
 from src.services.payout_service import payout_service, ENTITY_WISE_PROFILE
 from src.models.vendor_payout import (
-    FinanceVendorPayout, FinanceVendorPayoutEvent, FinancePayoutBankAccount,
+    FinanceVendorPayout, FinanceVendorPayoutEvent,
 )
 from src.models.invoice import FinanceInvoice, InvoiceStatus
 from src.models.counterparty import FinanceCounterparty

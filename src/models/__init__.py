@@ -29,7 +29,8 @@ from src.models.invoice import FinanceInvoice, InvoiceStatus
 from src.models.user import User
 from src.models.employee_claim import FinanceEmployeeClaim, ClaimStatus
 from src.models.vendor_payout import (
-    FinancePayoutBankAccount, FinanceVendorPayout, FinanceVendorPayoutEvent, PayoutState,
+    FinancePayout, FinancePayoutEvent, FinancePayoutBankAccount,
+    FinanceVendorPayout, FinanceVendorPayoutEvent, PayoutState,
 )
 from src.models.payout_channels import (
     PaymentChannel, CounterpartyBankAccount, PayoutChannelRegistration, FinancePayoutReferenceAudit,
