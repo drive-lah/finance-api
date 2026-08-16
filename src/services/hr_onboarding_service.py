@@ -27,10 +27,15 @@ logger = logging.getLogger(__name__)
 # (produces balanced JEs). employee_bears=True reduces net pay; =False is an
 # employer cost debited to its own expense account on top of gross.
 DEDUCTION_COA = {
-    "CPF_EMPLOYEE":   {"employee_bears": True,  "coa_debit_code": "6000", "coa_credit_code": "2300", "cap": 6000},
-    "CPF_EMPLOYER":   {"employee_bears": False, "coa_debit_code": "6001", "coa_credit_code": "2300", "cap": 6000},
-    "SUPERANNUATION": {"employee_bears": False, "coa_debit_code": "6001", "coa_credit_code": "2310", "cap": None},
-    "INCOME_TAX":     {"employee_bears": True,  "coa_debit_code": "6000", "coa_credit_code": "2320", "cap": None},
+    # coa_credit_code MUST be a real payable in the chart of accounts (finance_accounts):
+    # 2300 CPF Payable (SG) · 2301 PAYG Withholding Payable (AU) · 2302 Superannuation Payable (AU) ·
+    # 2305 Income Tax Payable. (Previously super→2310 and income_tax→2320 pointed at accounts that do
+    # not exist — fixed 2026-08-16.)
+    "CPF_EMPLOYEE":     {"employee_bears": True,  "coa_debit_code": "6000", "coa_credit_code": "2300", "cap": 6000},
+    "CPF_EMPLOYER":     {"employee_bears": False, "coa_debit_code": "6001", "coa_credit_code": "2300", "cap": 6000},
+    "SUPERANNUATION":   {"employee_bears": False, "coa_debit_code": "6001", "coa_credit_code": "2302", "cap": None},
+    "PAYG_WITHHOLDING": {"employee_bears": True,  "coa_debit_code": "6000", "coa_credit_code": "2301", "cap": None},
+    "INCOME_TAX":       {"employee_bears": True,  "coa_debit_code": "6000", "coa_credit_code": "2305", "cap": None},
 }
 # Statutory defaults applied per region when no explicit default_deductions given.
 REGION_DEFAULT_DEDUCTIONS = {
