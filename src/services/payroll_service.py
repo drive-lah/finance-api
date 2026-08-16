@@ -116,6 +116,14 @@ class PayrollService:
         items = db.query(HrPayrollItem).filter(HrPayrollItem.finance_payroll_run_id == run_id).all()
         approvals = {a.salary_account_code: a for a in
                      db.query(FinancePayrollApproval).filter(FinancePayrollApproval.run_id == run_id).all()}
+        # Per-line amounts are NATIVE (the employee's salary currency); the GROUP total is a functional
+        # roll-up (a group can mix USD/INR/SGD, so a raw native sum would be meaningless — same rule as
+        # the run total, POL-142). FX at the run date is safe here: the DRAFT JE was already built at
+        # submit-for-approval, so the rates exist.
+        from src.models.entity import FinanceEntity
+        from src.services.fx_service import fx_service
+        from decimal import Decimal as _D
+        _func = db.get(FinanceEntity, run.entity_id).base_currency if run.entity_id else None
         groups: dict[str, dict] = {}
         seen_emp = set()
         for it in items:
@@ -125,14 +133,16 @@ class PayrollService:
             code = hr_payroll_service._resolve_salary_code(db, emp, it.currency)
             seen_emp.add(it.employee_id)
             g = groups.setdefault(code, {"salary_account_code": code, "lines": [], "leavers": [],
-                                         "total": 0.0, "headcount": 0})
+                                         "total": 0.0, "currency": _func, "headcount": 0})
             gross = float(it.gross_amount)
             prev = prior_gross.get(it.employee_id)
             change = "new" if prev is None else ("changed" if abs(prev - gross) > 0.01 else "same")
             g["lines"].append({"employee_id": it.employee_id, "name": _name(emp), "gross": gross,
-                               "net": float(it.net_amount), "change": change, "prev_gross": prev,
-                               "adjustments": adj_by_emp.get(it.employee_id, [])})
-            g["total"] += gross
+                               "net": float(it.net_amount), "currency": it.currency, "change": change,
+                               "prev_gross": prev, "adjustments": adj_by_emp.get(it.employee_id, [])})
+            # group total accumulates in the entity functional currency
+            g["total"] += float(fx_service.to_functional_or_same(
+                db, _D(str(it.gross_amount)), it.currency, _func, run.run_date)[0])
             g["headcount"] += 1
         # leavers: anyone paid in the prior run but not in this one (attributed to their salary group)
         if prior:
