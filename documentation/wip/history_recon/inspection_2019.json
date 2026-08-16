@@ -1,0 +1,40 @@
+{
+ "year": 2019,
+ "entity_ids": [
+  2
+ ],
+ "exceptions": [
+  {
+   "rule": "INSP-1",
+   "severity": "HIGH",
+   "txn": 88207,
+   "date": "2019-08-19",
+   "amount": 608.8,
+   "counterparty": "",
+   "description": "MAYBANK SG LTD CHQ455741 CHEQUE DEPOSIT",
+   "booked_to": "7003 Other Income - Miscellaneous",
+   "route": "needs_review_resolution",
+   "question": "Incoming money credited to a REVENUE account \u2014 genuine customer receipt, or a transfer/loan/refund wearing a revenue costume?"
+  },
+  {
+   "rule": "INSP-2",
+   "severity": "HIGH",
+   "account": "1023 Stripe Connect Reserve",
+   "book_balance": -122.5,
+   "truth": null,
+   "truth_source": "Stripe balance transactions",
+   "diff": null,
+   "question": "Ledger carries a balance but no source-of-truth is available for this account \u2014 how do we verify it?"
+  },
+  {
+   "rule": "INSP-2",
+   "severity": "HIGH",
+   "account": "1017 Stripe Platform ",
+   "book_balance": 9564.46,
+   "truth": 7151.96,
+   "truth_source": "Stripe balance transactions",
+   "diff": 2412.5,
+   "question": "Books disagree with the account's own truth \u2014 which lane is missing or double-counting?"
+  }
+ ]
+}

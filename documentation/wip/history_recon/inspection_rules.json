@@ -1,0 +1,28 @@
+{
+  "description": "Accounts Inspection knowledge base (Gaurav, 2026-08-16). Each rule = a deterministic anomaly check the inspector runs after every year pass / before every scorecard. Exceptions go to Gaurav; every ruling he makes on an exception sharpens a rule or adds one. Append-only ids.",
+  "rules": [
+    {
+      "id": "INSP-1",
+      "name": "Incoming bank money booked as revenue",
+      "severity": "HIGH",
+      "enabled": true,
+      "rationale": "Gaurav 2026-08-16: incoming transfers (especially large ones) mis-booked as revenue is the classic failure mode. Proven the same day: S$36,500 of Dirk-Jan director loans sat in 4025 Incidentals Revenue - Other via a catch-all rule.",
+      "params": {
+        "min_amount": 500,
+        "note": "Flags every incoming statement-account txn whose journal credits a REVENUE account, with booking route + counterparty for judgment. Legitimate customer receipts will appear — the judgment pass clears them; repeated legit patterns earn allowlist entries here.",
+        "allowlist_counterparty_contains": []
+      }
+    },
+    {
+      "id": "INSP-2",
+      "name": "Book balance vs source-of-truth balance, every account",
+      "severity": "HIGH",
+      "enabled": true,
+      "rationale": "Gaurav 2026-08-16: our books must tie to the bank's truth per account. Statement accounts tie to the statement running balance; Stripe pockets tie to Stripe's own balance-transaction sums (platform table for Platform; connected-accounts table filtered to the own-accounts registry for Connect/Held-Funds).",
+      "params": {
+        "tolerance": 0.02,
+        "note": "First live catch: 1017 Bank - Stripe Platform end-2019 ledger 9,564.46 vs Stripe truth 7,151.96 (gap 2,412.50, under decomposition)."
+      }
+    }
+  ]
+}
