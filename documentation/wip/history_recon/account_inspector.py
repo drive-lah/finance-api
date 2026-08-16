@@ -100,6 +100,9 @@ def _truth_stripe(db, ba, as_of, ch):
     return row.get("bal") if row else None
 
 
+BALANCE_TABLE = []  # side product of insp_2: every account's trusted-vs-computed row
+
+
 def insp_2(db, year, ent_ids, params):
     from src.models.bank_account import FinanceBankAccount
     try:
@@ -130,6 +133,9 @@ def insp_2(db, year, ent_ids, params):
             truth = _truth_statement(db, ba.id, as_of)
             src = "statement running balance"
         if truth is None:
+            BALANCE_TABLE.append({"account": f"{ba.coa_account_code} {ba.account_name}",
+                                  "truth": None, "book": book, "diff": None, "source": src,
+                                  "ok": abs(book) <= tol})
             if abs(book) > tol:  # a balance with NO truth source is itself an exception
                 out.append({"account": f"{ba.coa_account_code} {ba.account_name}",
                             "book_balance": book, "truth": None, "truth_source": src,
@@ -139,6 +145,9 @@ def insp_2(db, year, ent_ids, params):
             continue
         truth = round(float(truth), 2)
         diff = round(book - truth, 2)
+        BALANCE_TABLE.append({"account": f"{ba.coa_account_code} {ba.account_name}",
+                              "truth": truth, "book": book, "diff": diff, "source": src,
+                              "ok": abs(diff) <= tol})
         if abs(diff) > tol:
             out.append({"account": f"{ba.coa_account_code} {ba.account_name}",
                         "book_balance": book, "truth": truth, "truth_source": src,
@@ -269,7 +278,27 @@ def insp_5(db, year, ent_ids, params):
     return out
 
 
-CHECKS = {"INSP-1": insp_1, "INSP-2": insp_2, "INSP-3": insp_3, "INSP-4": insp_4, "INSP-5": insp_5}
+# ── INSP-6: sentinel / impossible journal dates ──────────────────────────────
+
+def insp_6(db, year, ent_ids, params):
+    epoch = params.get("epoch", "2016-01-01")
+    out = []
+    for r in db.execute(text("""
+        SELECT je.source, je.entry_date, count(DISTINCT je.id) AS n,
+               round(sum(l.debit_amount)::numeric,2) AS total_dr, min(je.id) AS example_id
+        FROM finance_journal_entries je JOIN finance_journal_lines l ON l.entry_id=je.id
+        WHERE je.entry_date < :epoch AND je.status IN ('POSTED','DRAFT')
+        GROUP BY je.source, je.entry_date"""), {"epoch": epoch}).mappings():
+        out.append({"source": r["source"], "entry_date": str(r["entry_date"]), "journals": r["n"],
+                    "total_dr": float(r["total_dr"]), "example_id": r["example_id"],
+                    "question": f"{r['n']} journal(s) dated {r['entry_date']} (before the {epoch} epoch) — "
+                                "sentinel dates pollute every as-of figure (retained earnings, "
+                                "balance sheet) while period reports exclude them."})
+    return out
+
+
+CHECKS = {"INSP-1": insp_1, "INSP-2": insp_2, "INSP-3": insp_3, "INSP-4": insp_4,
+          "INSP-5": insp_5, "INSP-6": insp_6}
 
 
 def main():
@@ -277,6 +306,7 @@ def main():
     ap.add_argument("--year", type=int, required=True)
     ap.add_argument("--entity-ids", required=True)
     ap.add_argument("--json", help="also write exceptions to this path")
+    ap.add_argument("--html", help="also write the inspection scorecard HTML to this path")
     args = ap.parse_args()
     ent_ids = [int(x) for x in args.entity_ids.split(",")]
     url = os.getenv("DATABASE_URL", "")
@@ -300,6 +330,74 @@ def main():
     if args.json:
         json.dump(report, open(args.json, "w"), indent=1, default=str)
         print(f"written -> {args.json}")
+    if args.html:
+        write_html(args.html, args.year, ent_ids, report)
+        print(f"scorecard -> {args.html}")
+
+
+def write_html(path, year, ent_ids, report):
+    import html as _h
+    from datetime import datetime
+    rules = {r["id"]: r for r in load_rules()}
+    by_rule = {}
+    for e in report["exceptions"]:
+        by_rule.setdefault(e["rule"], []).append(e)
+
+    bal_rows = ""
+    for r in sorted(BALANCE_TABLE, key=lambda x: x["account"]):
+        mark = "✅" if r["ok"] else "❌"
+        t = "—" if r["truth"] is None else f"{r['truth']:,.2f}"
+        d = "—" if r["diff"] is None else f"{r['diff']:,.2f}"
+        cls = "ok" if r["ok"] else "bad"
+        bal_rows += (f"<tr class={cls}><td>{_h.escape(r['account'])}</td>"
+                     f"<td class=n>{t}</td><td class=n>{r['book']:,.2f}</td>"
+                     f"<td class=n>{d}</td><td>{_h.escape(r['source'])}</td><td>{mark}</td></tr>")
+
+    sections = ""
+    for rid in sorted(rules):
+        rule = rules[rid]
+        if not rule.get("enabled", True):
+            continue
+        excs = by_rule.get(rid, [])
+        badge = (f"<span class=badge-bad>{len(excs)} exception(s)</span>" if excs
+                 else "<span class=badge-ok>CLEAN</span>")
+        rows = ""
+        for e in excs:
+            detail = {k: v for k, v in e.items() if k not in ("rule", "severity", "question")}
+            rows += (f"<tr><td class=descr>{_h.escape(json.dumps(detail, default=str))}</td>"
+                     f"<td>{_h.escape(e.get('question',''))}</td></tr>")
+        table = (f"<table><thead><tr><th>finding</th><th>the question for Gaurav</th></tr></thead>"
+                 f"<tbody>{rows}</tbody></table>" if excs else "")
+        sections += (f"<h2>{rid} — {_h.escape(rule['name'])} {badge}</h2>"
+                     f"<p class=note>{_h.escape(rule['rationale'])}</p>{table}")
+
+    n_exc = len(report["exceptions"])
+    doc = f"""<!doctype html><html><head><meta charset="utf-8">
+<title>Accounts Inspection — {year}</title>
+<style>
+ body{{font-family:-apple-system,Segoe UI,sans-serif;margin:24px;color:#1a202c;max-width:1100px}}
+ h1{{font-size:20px;margin-bottom:2px}} h2{{font-size:15px;margin-top:28px;border-bottom:2px solid #e2e8f0;padding-bottom:4px}}
+ table{{border-collapse:collapse;font-size:12.5px;margin-top:8px;width:100%}}
+ th{{background:#f7fafc;text-align:left;padding:5px 8px;border-bottom:2px solid #cbd5e0}}
+ td{{padding:4px 8px;border-bottom:1px solid #edf2f7;vertical-align:top}}
+ td.n{{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}}
+ td.descr{{max-width:560px;font-family:ui-monospace,monospace;font-size:11.5px;word-break:break-all}}
+ tr.bad{{background:#fff5f5}} tr.ok td{{color:#2d3748}}
+ .note{{color:#718096;font-size:12.5px}}
+ .badge-ok{{background:#c6f6d5;color:#22543d;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;margin-left:8px}}
+ .badge-bad{{background:#fed7d7;color:#742a2a;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;margin-left:8px}}
+ .hero{{font-size:13px;background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;margin-top:10px}}
+</style></head><body>
+<h1>Accounts Inspection — {year}</h1>
+<p class=note>Entities {ent_ids} · generated {datetime.now().strftime('%Y-%m-%d %H:%M')} · the inspector HIGHLIGHTS, it never fixes.
+Every exception is a question for Gaurav; every ruling sharpens a rule in inspection_rules.json.</p>
+<div class=hero><b>{n_exc} exception(s)</b> across {sum(1 for r in rules.values() if r.get('enabled', True))} rules.</div>
+<h2>Bank &amp; Stripe balances — the bank's truth vs our books (every account)</h2>
+<table><thead><tr><th>account</th><th>trusted balance (bank/Stripe)</th><th>our computed balance</th>
+<th>difference</th><th>truth source</th><th></th></tr></thead><tbody>{bal_rows}</tbody></table>
+{sections}
+</body></html>"""
+    open(path, "w").write(doc)
 
 
 if __name__ == "__main__":

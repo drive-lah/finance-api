@@ -55,6 +55,16 @@
       "params": {
         "min_abs": 50
       }
+    },
+    {
+      "id": "INSP-6",
+      "name": "Sentinel / impossible journal dates",
+      "severity": "HIGH",
+      "enabled": true,
+      "rationale": "Gaurav's retained-earnings question, 2026-08-16: 21 invoice-approval journals (S$33,410.91 of expense) sit at entry_date 1900-01-01 because the invoices carry a sentinel invoice_date. They pollute EVERY as-of computation \u2014 retained earnings, balance-sheet liabilities, any cumulative P&L \u2014 while correctly-windowed period reports exclude them, so the statements silently disagree with each other.",
+      "params": {
+        "epoch": "2016-01-01"
+      }
     }
   ]
 }

@@ -37,17 +37,6 @@
    "question": "Books disagree with the account's own truth \u2014 which lane is missing or double-counting?"
   },
   {
-   "rule": "INSP-4",
-   "severity": "HIGH",
-   "kind": "balance_sheet_equation",
-   "assets": 16356.31,
-   "liabilities": 116994.6,
-   "equity": 21403.6,
-   "cumulative_pnl": -109664.62,
-   "residual": -12377.27,
-   "question": "Assets != Liabilities + Equity + cumulative P&L \u2014 a report or the ledger is dropping something."
-  },
-  {
    "rule": "INSP-5",
    "severity": "MEDIUM",
    "account": "2120 Host Payables",
@@ -55,6 +44,16 @@
    "normal_balance": "CREDIT",
    "balance": 17709.15,
    "question": "LIABILITY account sits 17,709.15 AGAINST its natural CREDIT side \u2014 double-booking, missing lane, or timing?"
+  },
+  {
+   "rule": "INSP-6",
+   "severity": "HIGH",
+   "source": "invoice_approval",
+   "entry_date": "1900-01-01",
+   "journals": 21,
+   "total_dr": 33410.91,
+   "example_id": 10756,
+   "question": "21 journal(s) dated 1900-01-01 (before the 2016-01-01 epoch) \u2014 sentinel dates pollute every as-of figure (retained earnings, balance sheet) while period reports exclude them."
   }
  ]
 }
