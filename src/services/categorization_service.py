@@ -988,44 +988,87 @@ class CategorizationService:
         return None
 
     def _settle_payroll_payout(self, db, payout, txn, ba) -> Optional[int]:
-        """FX-aware payroll settlement: Dr the accrued liability (2304 net, or statutory:<code>) at the
-        functional amount that was accrued, Cr bank at the payment converted at the payment date, plug
-        the spread to 7100. The accrued functional is payout.amount (native) converted at the run date."""
+        """FX-aware payroll settlement. The accrued liability (2304 net, or statutory:<code>) is cleared
+        at the functional amount that was accrued (payout.amount native converted at the run date).
+
+        SAME entity: Dr liability / Cr bank at the payment converted at pay date, spread -> 7100.
+        CROSS entity (bank entity != payroll entity): two internally-balanced paired JEs, each in ITS
+        functional currency (POL-141 independent booking) — payroll entity Dr liability / Cr IC-payable;
+        bank entity Dr IC-receivable / Cr bank. The IC balances differ across currencies and are trued
+        at IC reconciliation (no 7100 plug here)."""
         from decimal import Decimal as _D
         from src.models.entity import FinanceEntity
         from src.models.payroll import FinancePayrollRun
         from src.services.fx_service import fx_service
         from src.models.journal_entry import JournalEntryStatus
-        func = db.get(FinanceEntity, ba.entity_id).base_currency if ba.entity_id else None
         run = db.get(FinancePayrollRun, payout.payable_id)
         accr_date = run.run_date if run else txn.transaction_date
-        payable_func, _ = fx_service.to_functional_or_same(db, _D(str(payout.amount)), payout.currency, func, accr_date)
         native_pay = _D(str(abs(float(txn.amount))))
-        bank_func, rate = fx_service.to_functional_or_same(db, native_pay, txn.currency, func, txn.transaction_date)
         ref = payout.external_reference or ""
         liability = ref.split(":", 1)[1] if ref.startswith("statutory:") else "2304"
-        lines = [
-            {"account_code": liability, "debit_amount": float(payable_func), "credit_amount": 0.0,
-             "description": f"Payroll payout #{payout.id} settlement",
-             "currency": func, "native_amount": payable_func, "fx_rate": _D("1")},
-            {"account_code": ba.coa_account_code, "debit_amount": 0.0, "credit_amount": float(bank_func),
-             "description": f"Payroll payout #{payout.id} settlement",
-             "currency": txn.currency, "native_amount": native_pay, "fx_rate": rate},
-        ]
-        residue = payable_func - bank_func
-        if abs(residue) >= _D("0.01"):
-            if residue > 0:
-                lines.append({"account_code": "7100", "debit_amount": 0.0, "credit_amount": float(residue),
-                              "description": f"FX gain on payroll payout #{payout.id}"})
-            else:
-                lines.append({"account_code": "7100", "debit_amount": float(-residue), "credit_amount": 0.0,
-                              "description": f"FX loss on payroll payout #{payout.id}"})
-        je = journal_service.create(db=db, entity_id=ba.entity_id, entry_date=txn.transaction_date,
-                                    description=f"Payroll payout #{payout.id} settlement",
-                                    lines=lines, status=JournalEntryStatus.POSTED)
-        je.source = "transfer_id_knockoff"
+        payroll_entity_id = payout.entity_id
+        bank_entity_id = ba.entity_id
+
+        if payroll_entity_id == bank_entity_id or not payroll_entity_id:
+            # Same entity — single JE, FX spread to 7100
+            func = db.get(FinanceEntity, bank_entity_id).base_currency if bank_entity_id else None
+            payable_func, _ = fx_service.to_functional_or_same(db, _D(str(payout.amount)), payout.currency, func, accr_date)
+            bank_func, rate = fx_service.to_functional_or_same(db, native_pay, txn.currency, func, txn.transaction_date)
+            lines = [
+                {"account_code": liability, "debit_amount": float(payable_func), "credit_amount": 0.0,
+                 "description": f"Payroll payout #{payout.id} settlement",
+                 "currency": func, "native_amount": payable_func, "fx_rate": _D("1")},
+                {"account_code": ba.coa_account_code, "debit_amount": 0.0, "credit_amount": float(bank_func),
+                 "description": f"Payroll payout #{payout.id} settlement",
+                 "currency": txn.currency, "native_amount": native_pay, "fx_rate": rate},
+            ]
+            residue = payable_func - bank_func
+            if abs(residue) >= _D("0.01"):
+                if residue > 0:
+                    lines.append({"account_code": "7100", "debit_amount": 0.0, "credit_amount": float(residue),
+                                  "description": f"FX gain on payroll payout #{payout.id}"})
+                else:
+                    lines.append({"account_code": "7100", "debit_amount": float(-residue), "credit_amount": 0.0,
+                                  "description": f"FX loss on payroll payout #{payout.id}"})
+            je = journal_service.create(db=db, entity_id=bank_entity_id, entry_date=txn.transaction_date,
+                                        description=f"Payroll payout #{payout.id} settlement",
+                                        lines=lines, status=JournalEntryStatus.POSTED)
+            je.source = "transfer_id_knockoff"
+            db.flush()
+            return je.id
+
+        # Cross entity — paired IC JEs, each in its own functional currency
+        from src.services.invoice_service import invoice_service
+        ic_codes = invoice_service._get_ic_codes(db, bank_entity_id, payroll_entity_id)
+        if not ic_codes:
+            raise ValueError(f"No IC codes for entity pair (bank {bank_entity_id}, payroll {payroll_entity_id})")
+        ic_receivable, ic_payable = ic_codes
+        pf = db.get(FinanceEntity, payroll_entity_id).base_currency
+        bf = db.get(FinanceEntity, bank_entity_id).base_currency
+        payable_pf, _pr = fx_service.to_functional_or_same(db, _D(str(payout.amount)), payout.currency, pf, accr_date)
+        bank_bf, _br = fx_service.to_functional_or_same(db, native_pay, txn.currency, bf, txn.transaction_date)
+        import uuid as _uuid
+        grp = str(_uuid.uuid4())
+        desc = f"Payroll payout #{payout.id} settlement (IC)"
+        # Payroll entity: Dr liability / Cr IC-payable (in payroll func)
+        pe = journal_service.create(db=db, entity_id=payroll_entity_id, entry_date=txn.transaction_date, description=desc,
+            lines=[{"account_code": liability, "debit_amount": float(payable_pf), "credit_amount": 0.0, "description": desc,
+                    "currency": pf, "native_amount": payable_pf, "fx_rate": _D("1")},
+                   {"account_code": ic_payable, "debit_amount": 0.0, "credit_amount": float(payable_pf), "description": desc,
+                    "currency": pf, "native_amount": payable_pf, "fx_rate": _D("1")}],
+            status=JournalEntryStatus.POSTED)
+        pe.source = "transfer_id_knockoff"; pe.intercompany_group_id = grp
+        # Bank entity: Dr IC-receivable / Cr bank (in bank func)
+        be = journal_service.create(db=db, entity_id=bank_entity_id, entry_date=txn.transaction_date, description=desc,
+            lines=[{"account_code": ic_receivable, "debit_amount": float(bank_bf), "credit_amount": 0.0, "description": desc,
+                    "currency": txn.currency, "native_amount": native_pay, "fx_rate": _br},
+                   {"account_code": ba.coa_account_code, "debit_amount": 0.0, "credit_amount": float(bank_bf), "description": desc,
+                    "currency": txn.currency, "native_amount": native_pay, "fx_rate": _br}],
+            status=JournalEntryStatus.POSTED)
+        be.source = "transfer_id_knockoff"; be.intercompany_group_id = grp
         db.flush()
-        return je.id
+        # link the txn to the bank-entity JE (that's where the cash moved)
+        return be.id
 
     # ------------------------------------------------------------------
     # Phase 3: Payroll Knock-off
