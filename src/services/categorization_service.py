@@ -280,12 +280,11 @@ class CategorizationService:
         ap_handled_ids: set[int] = self._try_ap_knockoff(db, transactions, results, categorized)
         categorized += len(ap_handled_ids)
 
-        # ── Phase 3: Payroll Knock-off ──────────────────────────────────
-        # Check whether any outgoing transaction matches an unmatched line in
-        # a posted payroll JE (net salary or CPF payment). If so, link the
-        # transaction to the payroll JE instead of running Phase 4 rules.
-        payroll_handled_ids: set[int] = self._try_payroll_knockoff(db, transactions, results)
-        categorized += len(payroll_handled_ids)
+        # ── Phase 3: Payroll Knock-off — RETIRED (item 3, 2026-08-16) ────
+        # The old run-based amount match (_try_payroll_knockoff) is superseded: system-paid payroll
+        # settles via Rung 1 (transfer-id, incl. cross-entity), and the outside-system same-entity
+        # fallback is the register knock-off (Phase 3.6). One payroll knock-off, not two.
+        payroll_handled_ids: set[int] = set()
 
         # ── Phase 3.5: Employee-claim Knock-off (POL-139 cat 4) ──────────
         # An outgoing reimbursement that settles an approved employee claim → post
