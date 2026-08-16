@@ -393,6 +393,19 @@ def submit_payroll_run(run_id: int):
         return jsonify({"error": str(e)}), 400
 
 
+@hr_bp.route("/payroll-runs/<int:run_id>/void", methods=["POST"])
+def void_payroll_run(run_id: int):
+    """Void a payroll run (and its JE) so the cycle can be re-run. Refused once payments are in flight."""
+    data = request.get_json() or {}
+    try:
+        with db_session() as db:
+            run = hr_payroll_service.void_run(db, run_id, reason=data.get("reason", ""))
+            hr_audit(db, "void_payroll_run", detail={"run_id": run_id, "reason": data.get("reason", "")})
+            return jsonify(_run_dict(run))
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
 def _actor():
     return {"user_id": request.headers.get("X-User-Id") or request.headers.get("X-User-Email") or "ui"}
 
@@ -512,6 +525,8 @@ def _rule_dict(rule) -> dict:
 
 
 def _run_dict(run) -> dict:
+    # Run totals are the functional roll-up, NULL on a mixed-currency DRAFT until submit fills them.
+    _f = lambda v: float(v) if v is not None else None
     return {
         "id": run.id,
         "entity_id": run.entity_id,
@@ -521,11 +536,11 @@ def _run_dict(run) -> dict:
         "run_type": run.run_type,
         "currency": run.currency,
         "headcount": run.headcount,
-        "gross_amount": float(run.gross_amount),
-        "employer_contributions": float(run.employer_cpf_amount),
-        "employee_deductions": float(run.employee_cpf_amount),
-        "net_amount": float(run.net_amount),
-        "total_payable": float(run.cpf_payable_amount),
+        "gross_amount": _f(run.gross_amount),
+        "employer_contributions": _f(run.employer_cpf_amount),
+        "employee_deductions": _f(run.employee_cpf_amount),
+        "net_amount": _f(run.net_amount),
+        "total_payable": _f(run.cpf_payable_amount),
         "bank_account_id": run.bank_account_id,
         "description": run.description,
         "status": run.status,

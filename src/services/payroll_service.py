@@ -192,6 +192,8 @@ class PayrollService:
         # can be fanned out into the register and settled per employee (Dr 2304 / Cr bank).
         lines, groups, desc = hr_payroll_service._build_je_lines_and_groups(
             db, run, items, bank, net_to_account=SALARIES_PAYABLE_ACCOUNT)
+        # FX happens HERE (draft JE at submit-for-approval), not at draft creation: fill functional totals.
+        hr_payroll_service.set_functional_totals(db, run, items)
         # DRAFT JE — the approver reviews the literal entry; posted only when all groups sign off.
         je = journal_service.create(db=db, entity_id=run.entity_id, entry_date=run.run_date,
                                     description=desc, lines=lines,

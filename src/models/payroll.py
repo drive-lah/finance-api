@@ -79,25 +79,27 @@ class FinancePayrollRun(Base):
     run_date: Mapped[date] = mapped_column(Date, nullable=False)
     headcount: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
-    # Payroll amounts
-    gross_amount: Mapped[float] = mapped_column(
-        Numeric(15, 2), nullable=False,
-        comment="Total gross salaries — Dr 6000",
+    # Payroll amounts. NULLABLE: a DRAFT run does no FX, so a mixed-currency run's functional roll-up is
+    # unknown until the DRAFT JE is built at submit (single-currency drafts carry their native sum). See
+    # create_run (native tally) and submit_for_approval/submit_run (functional roll-up). Migration 069.
+    gross_amount: Mapped[float | None] = mapped_column(
+        Numeric(15, 2), nullable=True,
+        comment="Total gross salaries — Dr 6000 (functional roll-up; NULL on a mixed-ccy draft)",
     )
-    employer_cpf_amount: Mapped[float] = mapped_column(
-        Numeric(15, 2), nullable=False,
+    employer_cpf_amount: Mapped[float | None] = mapped_column(
+        Numeric(15, 2), nullable=True,
         comment="Employer CPF contribution — Dr 6001",
     )
-    employee_cpf_amount: Mapped[float] = mapped_column(
-        Numeric(15, 2), nullable=False,
+    employee_cpf_amount: Mapped[float | None] = mapped_column(
+        Numeric(15, 2), nullable=True,
         comment="Employee CPF deduction withheld from gross",
     )
-    net_amount: Mapped[float] = mapped_column(
-        Numeric(15, 2), nullable=False,
-        comment="Net bank payout = gross - employee_cpf — Cr bank",
+    net_amount: Mapped[float | None] = mapped_column(
+        Numeric(15, 2), nullable=True,
+        comment="Net = gross - employee deductions — Cr 2304 (functional roll-up; NULL on a mixed-ccy draft)",
     )
-    cpf_payable_amount: Mapped[float] = mapped_column(
-        Numeric(15, 2), nullable=False,
+    cpf_payable_amount: Mapped[float | None] = mapped_column(
+        Numeric(15, 2), nullable=True,
         comment="Total CPF payable = employer_cpf + employee_cpf — Cr 2300",
     )
     # POL-142: the run-level totals are a FUNCTIONAL-currency roll-up of the per-payslip native amounts

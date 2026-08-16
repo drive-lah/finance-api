@@ -427,17 +427,14 @@ class HrPayrollService:
         if not employees:
             raise ValueError(f"No active employees found for entity {entity_id}")
 
-        # Calculate totals across all employees
-        total_gross = Decimal("0")
-        total_employee_ded = Decimal("0")
-        total_employer_contrib = Decimal("0")
-        total_net = Decimal("0")
-        # POL-142: run totals are a FUNCTIONAL-currency roll-up. Payslips can be mixed-currency (USD/INR),
-        # so each item converts to the entity's functional currency BEFORE it's added to a run total — the
-        # per-employee native amount still lives on the payslip. Never sum raw mixed-currency natives.
+        # A DRAFT run does NO currency conversion — no JE exists yet, and every payslip is shown in the
+        # employee's OWN salary currency. FX happens later, only when the DRAFT JE is built at submit
+        # (submit_for_approval / submit_run), dated on the run date. Here we just tally NATIVE amounts
+        # per currency; if the run is single-currency the run-level total is that native sum, and if it
+        # is mixed-currency the run total is left NULL (deferred) until the functional roll-up at submit.
         from src.models.entity import FinanceEntity
-        from src.services.fx_service import fx_service
         _run_func = db.get(FinanceEntity, entity_id).base_currency if entity_id else None
+        native_by_ccy: dict[str, dict] = {}
 
         # Build items before committing the run (so we can populate run totals)
         item_data_list: list[dict] = []
@@ -489,11 +486,11 @@ class HrPayrollService:
                 "currency": comp.currency,
                 "deduction_lines": deduction_lines,
             })
-            # add each payslip to the run totals in FUNCTIONAL currency (POL-142)
-            total_gross += fx_service.to_functional_or_same(db, gross, comp.currency, _run_func, run_date)[0]
-            total_employee_ded += fx_service.to_functional_or_same(db, emp_ded, comp.currency, _run_func, run_date)[0]
-            total_employer_contrib += fx_service.to_functional_or_same(db, emp_contrib, comp.currency, _run_func, run_date)[0]
-            total_net += fx_service.to_functional_or_same(db, net, comp.currency, _run_func, run_date)[0]
+            # tally NATIVE amounts per currency — NO conversion at draft
+            _b = native_by_ccy.setdefault(comp.currency, {"gross": Decimal("0"),
+                 "emp_ded": Decimal("0"), "employer": Decimal("0"), "net": Decimal("0")})
+            _b["gross"] += gross; _b["emp_ded"] += emp_ded
+            _b["employer"] += emp_contrib; _b["net"] += net
 
         if not item_data_list:
             raise ValueError(
@@ -507,6 +504,16 @@ class HrPayrollService:
             f"Payroll {period_start} to {period_end}"
         )
 
+        # Run-level totals: native sum if the run is single-currency; NULL (deferred to the submit-time
+        # functional roll-up) if mixed. currency = that single ccy, or the entity functional as the label.
+        if len(native_by_ccy) == 1:
+            _c, _t = next(iter(native_by_ccy.items()))
+            _run_gross, _run_emp_ded = _t["gross"], _t["emp_ded"]
+            _run_employer, _run_net, _run_ccy = _t["employer"], _t["net"], _c
+        else:
+            _run_gross = _run_emp_ded = _run_employer = _run_net = None
+            _run_ccy = _run_func
+
         # Create the finance_payroll_run as DRAFT (no JE yet)
         fin_run = FinancePayrollRun(
             entity_id=entity_id,
@@ -514,12 +521,13 @@ class HrPayrollService:
             payroll_period_end=period_end,
             run_date=run_date,
             headcount=len(item_data_list),
-            gross_amount=total_gross,
-            employer_cpf_amount=total_employer_contrib,
-            employee_cpf_amount=total_employee_ded,
-            net_amount=total_net,
-            cpf_payable_amount=total_employer_contrib + total_employee_ded,
-            currency=_run_func,
+            gross_amount=_run_gross,
+            employer_cpf_amount=_run_employer,
+            employee_cpf_amount=_run_emp_ded,
+            net_amount=_run_net,
+            cpf_payable_amount=((_run_employer + _run_emp_ded)
+                                if _run_employer is not None else None),
+            currency=_run_ccy,
             run_type=run_type,
             bank_account_id=data.get("bank_account_id"),
             description=description,
@@ -571,6 +579,28 @@ class HrPayrollService:
             raise ValueError(f"Cannot determine salary account for employee {emp.id}. "
                              f"Set the salary COA on their counterparty (default_account_code).")
         return salary_code
+
+    def set_functional_totals(self, db, fin_run, items):
+        """Populate the run-level FUNCTIONAL roll-up (POL-142) from the per-payslip natives, converting at
+        the run date. This is the ONLY place a run's totals are converted — called at SUBMIT, when the
+        DRAFT JE is built, NOT at draft creation. Sets gross/net/employer/employee/cpf_payable + currency
+        to the entity functional so a mixed-currency run finally has one meaningful total."""
+        from src.models.entity import FinanceEntity
+        from src.services.fx_service import fx_service
+        _func = db.get(FinanceEntity, fin_run.entity_id).base_currency if fin_run.entity_id else None
+        _on = fin_run.run_date
+        g = ded = emp_con = net = Decimal("0")
+        for it in items:
+            g += fx_service.to_functional_or_same(db, Decimal(str(it.gross_amount)), it.currency, _func, _on)[0]
+            ded += fx_service.to_functional_or_same(db, Decimal(str(it.employee_deductions)), it.currency, _func, _on)[0]
+            emp_con += fx_service.to_functional_or_same(db, Decimal(str(it.employer_contributions)), it.currency, _func, _on)[0]
+            net += fx_service.to_functional_or_same(db, Decimal(str(it.net_amount)), it.currency, _func, _on)[0]
+        fin_run.gross_amount = g
+        fin_run.employee_cpf_amount = ded
+        fin_run.employer_cpf_amount = emp_con
+        fin_run.net_amount = net
+        fin_run.cpf_payable_amount = emp_con + ded
+        fin_run.currency = _func
 
     def _build_je_lines_and_groups(self, db, fin_run, items, bank_account, net_to_account=None):
         """Build the balanced payroll JE lines from the payslip items AND the per-salary-account groups
@@ -677,6 +707,8 @@ class HrPayrollService:
 
         lines, _groups, je_description = self._build_je_lines_and_groups(
             db, fin_run, items, bank_account, net_to_account=SALARIES_PAYABLE)
+        # FX happens HERE (at submit / JE build), never at draft: fill the functional roll-up totals.
+        self.set_functional_totals(db, fin_run, items)
 
         je = journal_service.create(
             db=db,
@@ -709,6 +741,30 @@ class HrPayrollService:
     def get_run(self, db: Session, run_id: int) -> Optional[FinancePayrollRun]:
         return db.query(FinancePayrollRun).filter(FinancePayrollRun.id == run_id).first()
 
+    def void_run(self, db: Session, run_id: int, reason: str = "", actor=None) -> FinancePayrollRun:
+        """Void a payroll run so the cycle can be re-run. Voids the run's JE (draft or posted) if one
+        exists, then marks the run VOID (terminal). Allowed pre-payment (DRAFT / PENDING_APPROVAL /
+        APPROVED / POSTED); a run that has been paid or already fanned out to the register is refused —
+        a paid run must be reversed through the payout rails, not silently voided."""
+        run = db.get(FinancePayrollRun, run_id)
+        if not run:
+            raise ValueError(f"Payroll run {run_id} not found")
+        if run.status in ("VOID", "PAID", "PAYMENT_INITIATED"):
+            raise ValueError(f"Run {run_id} is {run.status} — a paid/settling run can't be voided; "
+                             f"reverse it through the payout rails instead.")
+        # refuse if it has already fanned out into the payout register (payments in flight)
+        from src.models.vendor_payout import FinancePayout
+        if db.query(FinancePayout).filter(FinancePayout.payable_type == "payroll",
+                                          FinancePayout.payable_id == run_id).first():
+            raise ValueError(f"Run {run_id} has payouts in the register — settle or void those first.")
+        if run.journal_entry_id:
+            journal_service.void_entry(db, run.journal_entry_id, reason or f"Payroll run {run_id} voided")
+            run.journal_entry_id = None
+        run.status = "VOID"
+        db.commit()
+        db.refresh(run)
+        return run
+
     def get_runs(
         self,
         db: Session,
@@ -729,13 +785,21 @@ class HrPayrollService:
             .filter(HrPayrollItem.finance_payroll_run_id == run_id)
             .all()
         )
+        from sqlalchemy import text as _text
         result = []
         for item in items:
             emp = db.query(HrEmployee).filter(HrEmployee.id == item.employee_id).first()
+            # name lives on the shared users row; surface it so HR reviews people, not row ids
+            emp_name = None
+            if emp:
+                _r = db.execute(_text("SELECT name, email FROM users WHERE id=:u"),
+                                {"u": emp.user_id}).first()
+                emp_name = (_r[0] or _r[1]) if _r else None
             result.append({
                 "id": item.id,
                 "employee_id": item.employee_id,
                 "user_id": emp.user_id if emp else None,
+                "employee_name": emp_name,
                 "hours_worked": float(item.hours_worked) if item.hours_worked else None,
                 "gross_amount": float(item.gross_amount),
                 "employee_deductions": float(item.employee_deductions),
