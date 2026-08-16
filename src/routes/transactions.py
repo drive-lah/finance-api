@@ -124,6 +124,22 @@ def approve_transaction(transaction_id: int):
         return jsonify(TransactionResponse.model_validate(transaction).model_dump()), 200
 
 
+@transactions_bp.route('/<int:transaction_id>/manual-knockoff', methods=['POST'])
+def manual_knockoff(transaction_id: int):
+    """Human-driven knock-off: pair this outgoing transaction to a payout (invoice/claim/payroll)
+    and post the FX-aware settlement. Body: {"payout_id": <int>, "actor": <optional str>}.
+    The override the automated ladder can't do (outside-system, cross-currency, ambiguous)."""
+    from src.services.categorization_service import categorization_service
+    data = request.get_json(silent=True) or {}
+    payout_id = data.get("payout_id")
+    if not payout_id:
+        raise BadRequestError("payout_id is required")
+    with db_session() as db:
+        result = categorization_service.manual_knockoff(
+            db, transaction_id, int(payout_id), actor=data.get("actor"))
+        return jsonify(result), 200
+
+
 @transactions_bp.route('/<int:transaction_id>/reject', methods=['POST'])
 def reject_transaction(transaction_id: int):
     """

@@ -1071,6 +1071,46 @@ class CategorizationService:
         return be.id
 
     # ------------------------------------------------------------------
+    # Manual knock-off (human-driven) — item 5
+    # ------------------------------------------------------------------
+    def manual_knockoff(self, db, txn_id: int, payout_id: int, actor: Optional[str] = None) -> dict:
+        """Human-driven knock-off: an operator explicitly pairs a bank transaction to a payout
+        (invoice / claim / payroll) and posts the SAME FX-aware settlement the automated ladder would.
+        The override for cases the ladder can't match on its own — a payment made outside the system,
+        a cross-currency amount that doesn't line up, or an ambiguous match. No transfer-id or state
+        guard: the human is asserting the pairing. Idempotency + basic safety are still enforced."""
+        from src.models.vendor_payout import FinancePayout, PayoutState
+        from src.utils.errors import NotFoundError, BadRequestError
+        txn = db.get(FinanceTransaction, txn_id)
+        if not txn:
+            raise NotFoundError(f"Transaction {txn_id} not found")
+        if txn.status == TransactionStatus.MATCHED:
+            raise BadRequestError(f"Transaction {txn_id} is already matched")
+        if txn.amount is None or float(txn.amount) >= 0:
+            raise BadRequestError("Manual knock-off only applies to an outgoing (negative) payment")
+        payout = db.get(FinancePayout, payout_id)
+        if not payout:
+            raise NotFoundError(f"Payout {payout_id} not found")
+        if payout.transaction_id is not None or payout.state == PayoutState.POSTED.value:
+            raise BadRequestError(f"Payout {payout_id} is already settled")
+        je_id = self._settle_payout_by_type(db, payout, txn)
+        if je_id is None:
+            raise BadRequestError(f"Could not settle payout {payout_id} (unsupported type or missing data)")
+        payout.transaction_id = txn.id
+        payout.journal_entry_id = je_id
+        payout.state = PayoutState.POSTED.value
+        if txn.status != TransactionStatus.MATCHED:
+            txn.status = TransactionStatus.MATCHED
+            txn.matched_at = datetime.now(UTC)
+            txn.reconciled_journal_entry_id = je_id
+        txn.categorized_by_logic = f"manual_knockoff:{actor or 'admin'}"
+        db.commit()
+        logger.info("Manual knock-off: txn %s ↔ payout %s (%s) by %s → JE %s",
+                    txn.id, payout.id, payout.payable_type, actor, je_id)
+        return {"transaction_id": txn.id, "payout_id": payout.id, "payable_type": payout.payable_type,
+                "journal_entry_id": je_id, "status": "matched"}
+
+    # ------------------------------------------------------------------
     # Phase 3: Payroll Knock-off
     # ------------------------------------------------------------------
 
