@@ -10,7 +10,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = "066_payroll_run_currency"
-down_revision = "065_drop_payout_amount_sgd"
+down_revision = "064_payroll_adjustments"
 branch_labels = None
 depends_on = None
 
