@@ -11,6 +11,10 @@ def chk(c,m): print(("  PASS" if c else "  FAIL"),m); (fails.append(m) if not c 
 
 with db_session() as db:
     # Configure the demo employees: Ravi = semi_monthly 50/50 (USD); Chloe = mid-Aug joiner (monthly)
+    from src.models.fx_rate import FinanceFxRate
+    from decimal import Decimal as _D
+    if not db.query(FinanceFxRate).filter_by(year_month="2026-08", from_currency="USD", to_currency="SGD").first():
+        db.add(FinanceFxRate(year_month="2026-08", from_currency="USD", to_currency="SGD", rate=_D("1.35"))); db.flush()
     db.execute(text("UPDATE hr_compensation c SET pay_schedule='semi_monthly', pay_split_pct=50 FROM hr_employees e WHERE c.employee_id=e.id AND e.user_id=950002"))
     db.execute(text("UPDATE hr_compensation c SET pay_schedule='monthly' FROM hr_employees e WHERE c.employee_id=e.id AND e.user_id IN (950001,950003)"))
     db.execute(text("UPDATE users SET date_of_joining='2026-08-14' WHERE id=950003"))  # Chloe joins mid-period
