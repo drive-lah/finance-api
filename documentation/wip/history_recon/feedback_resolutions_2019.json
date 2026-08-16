@@ -144,5 +144,21 @@
       "counterparty_id": 561,
       "note": "JPMorgan inflow = RETURN of Nov-29 Journey Horizon TT (bounced, re-sent Dec-26) -> Cr 1710"
     }
-  ]
+  ],
+  "round2": {
+    "source_feedback": "scorecard_feedback_2019_round2.json",
+    "date": "2026-08-16",
+    "resolutions": [
+      {
+        "txn": 88182,
+        "account_code": "6700",
+        "note": "Gaurav: 'Technology' \u2014 WHBSOFT PayPal charge moved 6701 Software Subscriptions -> 6700 Technology - Infrastructure (flagged: 6700 chosen as closest to the bare word; redirect if 6702 meant)"
+      },
+      {
+        "txn": 88450,
+        "action": "confirmed_no_change",
+        "note": "Gaurav: 'likely a refund, got cancelled \u2014 check'. VERIFIED: Nov-29 TT out S$16,042.15 Dr 1710 -> bounced -> Dec-24 JPMorgan return S$15,573.22 Cr 1710 (this txn) -> Dec-26 re-sent S$15,887.38 Dr 1710. The booking already treats it as the cancelled TT's refund against the same asset. Residual ~S$469 of FX/fees sits in 1710 (tiny, 2019 \u2014 left)."
+      }
+    ]
+  }
 }
