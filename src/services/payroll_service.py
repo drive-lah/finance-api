@@ -96,10 +96,16 @@ class PayrollService:
                 {"field": a.field, "old": a.old_value, "new": a.new_value, "reason": a.reason})
 
         def _name(emp):
+            # The employee's NAME lives on the users row. NEVER fall back to emp.designation — that is a
+            # JOB TITLE ("Customer Service Executive"), not a name (bug fix 2026-08-16).
+            from sqlalchemy import text as _text
+            urow = db.execute(_text("SELECT name FROM users WHERE id=:u"), {"u": emp.user_id}).first()
+            if urow and urow[0]:
+                return urow[0]
             cp = (db.query(FinanceCounterparty)
                   .filter(FinanceCounterparty.external_system == "employee",
                           FinanceCounterparty.external_id == str(emp.user_id)).first())
-            return (cp.name if cp else None) or emp.designation or f"user {emp.user_id}"
+            return (cp.name if cp else None) or f"user {emp.user_id}"
 
         # prior run for this entity (the most recent posted/paid one before this run_date)
         prior = (db.query(FinancePayrollRun)
