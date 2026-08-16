@@ -12,6 +12,7 @@ import os
 import logging
 from datetime import datetime
 from decimal import Decimal
+from typing import Optional
 
 from src.models.vendor_payout import (
     FinancePayout as FinanceVendorPayout, FinancePayoutEvent as FinanceVendorPayoutEvent, PayoutState,
