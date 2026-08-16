@@ -148,7 +148,55 @@ def insp_2(db, year, ent_ids, params):
     return out
 
 
-CHECKS = {"INSP-1": insp_1, "INSP-2": insp_2}
+# ── INSP-3: finalized year — EVERYTHING in terminal state ────────────────────
+# (Gaurav, 2026-08-16): a finalized year means every object finished its lifecycle:
+# journals POSTED (or VOIDED), bank transactions RECONCILED (human-confirmed — MATCHED
+# is only the system's best guess), economic events POSTED, register payouts terminal.
+
+def insp_3(db, year, ent_ids, params):
+    if year not in params.get("finalized_years", []):
+        return []
+    y0, y1 = date(year, 1, 1), date(year, 12, 31)
+    out = []
+    # a) journals not POSTED/VOIDED
+    for r in db.execute(text("""
+        SELECT je.status, count(DISTINCT je.id) AS n, min(je.id) AS first_id
+        FROM finance_journal_entries je JOIN finance_journal_lines l ON l.entry_id=je.id
+        WHERE l.entity_id = ANY(:ents) AND je.entry_date BETWEEN :y0 AND :y1
+          AND je.status NOT IN ('POSTED','VOIDED','VOID')
+        GROUP BY je.status"""), {"ents": ent_ids, "y0": y0, "y1": y1}).mappings():
+        out.append({"object": "journal_entries", "state": r["status"], "count": r["n"],
+                    "example_id": r["first_id"],
+                    "question": f"Finalized {year}: {r['n']} journal(s) still {r['status']} — post them."})
+    # b) bank transactions not RECONCILED
+    for r in db.execute(text("""
+        SELECT t.status, count(*) AS n, min(t.id) AS first_id
+        FROM finance_transactions t
+        JOIN finance_bank_accounts ba ON ba.id=t.bank_account_id AND ba.entity_id = ANY(:ents)
+        WHERE t.transaction_date BETWEEN :y0 AND :y1 AND upper(t.status) != 'RECONCILED'
+        GROUP BY t.status"""), {"ents": ent_ids, "y0": y0, "y1": y1}).mappings():
+        out.append({"object": "bank_transactions", "state": r["status"], "count": r["n"],
+                    "example_id": r["first_id"],
+                    "question": f"Finalized {year}: {r['n']} txn(s) in '{r['status']}' — terminal is RECONCILED."})
+    # c) economic events not POSTED
+    for r in db.execute(text("""
+        SELECT status, count(*) AS n FROM finance_economic_events
+        WHERE entity_id = ANY(:ents) AND period BETWEEN :y0 AND :y1 AND status != 'POSTED'
+        GROUP BY status"""), {"ents": ent_ids, "y0": y0, "y1": y1}).mappings():
+        out.append({"object": "economic_events", "state": r["status"], "count": r["n"],
+                    "question": f"Finalized {year}: {r['n']} event(s) still {r['status']} — project/post them."})
+    # d) register payouts (internally-paid) not terminal
+    for r in db.execute(text("""
+        SELECT state, count(*) AS n FROM finance_payouts
+        WHERE created_at BETWEEN :y0 AND :y1
+          AND state NOT IN ('posted','cancelled','failed')
+        GROUP BY state"""), {"y0": y0, "y1": y1}).mappings():
+        out.append({"object": "register_payouts", "state": r["state"], "count": r["n"],
+                    "question": f"Finalized {year}: {r['n']} payout(s) in '{r['state']}' — terminal is posted/cancelled/failed."})
+    return out
+
+
+CHECKS = {"INSP-1": insp_1, "INSP-2": insp_2, "INSP-3": insp_3}
 
 
 def main():

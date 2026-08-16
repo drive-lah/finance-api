@@ -9,7 +9,7 @@
       "rationale": "Gaurav 2026-08-16: incoming transfers (especially large ones) mis-booked as revenue is the classic failure mode. Proven the same day: S$36,500 of Dirk-Jan director loans sat in 4025 Incidentals Revenue - Other via a catch-all rule.",
       "params": {
         "min_amount": 500,
-        "note": "Flags every incoming statement-account txn whose journal credits a REVENUE account, with booking route + counterparty for judgment. Legitimate customer receipts will appear — the judgment pass clears them; repeated legit patterns earn allowlist entries here.",
+        "note": "Flags every incoming statement-account txn whose journal credits a REVENUE account, with booking route + counterparty for judgment. Legitimate customer receipts will appear \u2014 the judgment pass clears them; repeated legit patterns earn allowlist entries here.",
         "allowlist_counterparty_contains": []
       }
     },
@@ -22,6 +22,18 @@
       "params": {
         "tolerance": 0.02,
         "note": "First live catch: 1017 Bank - Stripe Platform end-2019 ledger 9,564.46 vs Stripe truth 7,151.96 (gap 2,412.50, under decomposition)."
+      }
+    },
+    {
+      "id": "INSP-3",
+      "name": "Finalized year: EVERYTHING in terminal state",
+      "severity": "HIGH",
+      "enabled": true,
+      "rationale": "Gaurav 2026-08-16 (broadened same day): a finalized year means every object finished its lifecycle \u2014 journals POSTED (or VOIDED), bank transactions RECONCILED (MATCHED is only the system's best guess; the year sign-off IS the human approval), economic events POSTED, internally-paid register payouts in a terminal state (posted/cancelled/failed). Drafts in a closed year also vanish from posted-basis reports (the FY2019 'missing salaries' confusion).",
+      "params": {
+        "finalized_years": [
+          2019
+        ]
       }
     }
   ]
