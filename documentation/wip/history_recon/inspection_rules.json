@@ -75,6 +75,16 @@
       "params": {
         "note": "enable once the AU invoice-GST design is ruled"
       }
+    },
+    {
+      "id": "INSP-8",
+      "name": "Foreign-currency handling: everything converted to the entity's functional currency",
+      "severity": "HIGH",
+      "enabled": true,
+      "rationale": "Gaurav 2026-08-16: every journal amount in an entity's books must be the entity's FUNCTIONAL currency; nothing may pass through 1:1 unconverted (POL-25/26/141/142 lineage \u2014 the transfer/allocation blocks once booked raw native as functional). Two deterministic teeth: (a) a foreign-currency transaction whose functional booking exactly equals its native amount (implied rate 1.0 for a non-same currency) is a 1:1 suspect; (b) journal lines carrying a foreign currency tag but missing native_amount or fx_rate metadata break the native-side ledger and its tie-outs.",
+      "params": {
+        "min_abs": 20
+      }
     }
   ]
 }

@@ -297,8 +297,54 @@ def insp_6(db, year, ent_ids, params):
     return out
 
 
+# ── INSP-8: FX handling — functional currency everywhere, no 1:1 pass-throughs ─
+
+def insp_8(db, year, ent_ids, params):
+    min_abs = params.get("min_abs", 20)
+    y0, y1 = date(year, 1, 1), date(year, 12, 31)
+    out = []
+    # (a) foreign-ccy transactions booked 1:1 (functional leg == native amount exactly)
+    for r in db.execute(text("""
+        SELECT t.id, t.currency AS txn_ccy, e.base_currency AS functional,
+               round(abs(t.amount)::numeric,2) AS native_amt, l.account_code,
+               round((l.debit_amount + l.credit_amount)::numeric,2) AS je_amt
+        FROM finance_transactions t
+        JOIN finance_bank_accounts ba ON ba.id = t.bank_account_id
+        JOIN finance_entities e ON e.id = ba.entity_id AND e.id = ANY(:ents)
+        JOIN finance_journal_entries je ON je.id = t.reconciled_journal_entry_id
+             AND je.status IN ('POSTED','DRAFT')
+        JOIN finance_journal_lines l ON l.entry_id = je.id AND l.account_code = ba.coa_account_code
+        WHERE t.transaction_date BETWEEN :y0 AND :y1
+          AND t.currency IS NOT NULL AND t.currency != e.base_currency
+          AND abs(t.amount) >= :min_abs
+          AND round(abs(t.amount)::numeric,2) = round((l.debit_amount + l.credit_amount)::numeric,2)
+        """), {"ents": ent_ids, "y0": y0, "y1": y1, "min_abs": min_abs}).mappings():
+        out.append({"kind": "one_to_one_suspect", "txn": r["id"],
+                    "txn_currency": r["txn_ccy"], "functional": r["functional"],
+                    "amount": float(r["native_amt"]), "booked_functional": float(r["je_amt"]),
+                    "question": f"{r['txn_ccy']} {r['native_amt']:,.2f} booked as "
+                                f"{r['functional']} {r['je_amt']:,.2f} — implied rate 1.0 for a "
+                                f"non-identical currency. Missing conversion?"})
+    # (b) foreign-tagged journal lines with incomplete FX metadata
+    for r in db.execute(text("""
+        SELECT l.account_code, l.currency, count(*) AS n,
+               round(sum(l.debit_amount + l.credit_amount)::numeric,2) AS total
+        FROM finance_journal_lines l
+        JOIN finance_journal_entries je ON je.id = l.entry_id AND je.status IN ('POSTED','DRAFT')
+        JOIN finance_entities e ON e.id = l.entity_id AND e.id = ANY(:ents)
+        WHERE je.entry_date BETWEEN :y0 AND :y1
+          AND l.currency IS NOT NULL AND l.currency != e.base_currency
+          AND (l.native_amount IS NULL OR l.fx_rate IS NULL)
+        GROUP BY 1, 2"""), {"ents": ent_ids, "y0": y0, "y1": y1}).mappings():
+        out.append({"kind": "fx_metadata_missing", "account_code": r["account_code"],
+                    "line_currency": r["currency"], "lines": r["n"], "total": float(r["total"]),
+                    "question": "Foreign-tagged journal lines missing native_amount/fx_rate — the "
+                                "native-side ledger and its tie-outs are blind here."})
+    return out
+
+
 CHECKS = {"INSP-1": insp_1, "INSP-2": insp_2, "INSP-3": insp_3, "INSP-4": insp_4,
-          "INSP-5": insp_5, "INSP-6": insp_6}
+          "INSP-5": insp_5, "INSP-6": insp_6, "INSP-8": insp_8}
 
 
 def main():
