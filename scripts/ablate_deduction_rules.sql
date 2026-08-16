@@ -14,18 +14,35 @@
 -- UNDO (if anything looks wrong afterwards):
 --   INSERT INTO hr_deduction_rules SELECT * FROM hr_deduction_rules_backup_20260816;
 
+-- ON_ERROR_STOP + a single transaction: if ANY statement fails (esp. the backup CREATE), psql aborts
+-- and the whole transaction rolls back, so the DELETE can NEVER run without a good backup in place.
+\set ON_ERROR_STOP on
+BEGIN;
+
 \echo '== before: current deduction-rule counts =='
 SELECT deduction_type, coa_credit_code, count(*) FROM hr_deduction_rules GROUP BY 1,2 ORDER BY 1;
-SELECT count(*) AS total_before FROM hr_deduction_rules;
 
 \echo '== 1. snapshot (undo path) =='
 DROP TABLE IF EXISTS hr_deduction_rules_backup_20260816;
 CREATE TABLE hr_deduction_rules_backup_20260816 AS SELECT * FROM hr_deduction_rules;
-SELECT count(*) AS backed_up FROM hr_deduction_rules_backup_20260816;
 
-\echo '== 2. delete all rules (team re-enters manually) =='
+\echo '== 2. HARD ASSERT the snapshot captured every row BEFORE deleting (aborts the txn if not) =='
+DO $$
+DECLARE live int; backed int;
+BEGIN
+  SELECT count(*) INTO live FROM hr_deduction_rules;
+  SELECT count(*) INTO backed FROM hr_deduction_rules_backup_20260816;
+  IF backed <> live OR live = 0 THEN
+    RAISE EXCEPTION 'Backup mismatch (live=%, backed=%) — aborting before DELETE', live, backed;
+  END IF;
+END $$;
+
+\echo '== 3. delete all rules (team re-enters manually) =='
 DELETE FROM hr_deduction_rules;
 
-\echo '== 3. verify: table empty, backup holds everything =='
+\echo '== 4. verify: table empty, backup holds everything =='
 SELECT count(*) AS rules_after FROM hr_deduction_rules;                 -- expect 0
-SELECT count(*) AS backup_rows FROM hr_deduction_rules_backup_20260816; -- expect = total_before
+SELECT count(*) AS backup_rows FROM hr_deduction_rules_backup_20260816; -- expect = original count
+
+COMMIT;
+\echo '== committed. undo: INSERT INTO hr_deduction_rules SELECT * FROM hr_deduction_rules_backup_20260816; =='

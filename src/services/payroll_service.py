@@ -247,7 +247,7 @@ class PayrollService:
         from src.models.payroll_approval import FinancePayrollApproval, PayrollApprovalStatus
         from src.models.journal_entry import JournalEntryStatus
         from src.utils.errors import BadRequestError, NotFoundError
-        from datetime import datetime
+        from datetime import datetime, UTC
         run = db.get(FinancePayrollRun, run_id)
         if not run:
             raise NotFoundError(f"Payroll run {run_id} not found")
@@ -264,7 +264,7 @@ class PayrollService:
             raise BadRequestError("decision must be 'approved' or 'rejected'.")
         a.status = decision
         a.decided_by = (actor or {}).get("user_id")
-        a.decided_at = datetime.utcnow()
+        a.decided_at = datetime.now(UTC)
         a.reason = reason
         db.flush()
         if decision == "rejected":
@@ -282,6 +282,9 @@ class PayrollService:
                      .filter(FinancePayrollApproval.run_id == run_id,
                              FinancePayrollApproval.status != PayrollApprovalStatus.APPROVED.value).count())
         if remaining == 0:
+            if not run.journal_entry_id:
+                raise BadRequestError(
+                    f"Run {run_id} has no draft JE to post (a prior step failed) — resubmit for approval.")
             self.transition_run(db, run, "APPROVED", actor=actor)
             journal_service.post_entry(db, run.journal_entry_id,
                                        posting_user_id=(actor or {}).get("user_id"))
@@ -301,7 +304,7 @@ class PayrollService:
         from src.models.vendor_payout import FinancePayout, PayoutState
         from src.services.payout_service import DRY_RUN
         from src.utils.errors import BadRequestError, NotFoundError
-        from datetime import datetime
+        from datetime import datetime, UTC
         run = db.get(FinancePayrollRun, run_id)
         if not run:
             raise NotFoundError(f"Payroll run {run_id} not found")
@@ -322,14 +325,19 @@ class PayrollService:
                     invoice_id=None, payable_type="payroll", payable_id=run_id, method="system_wise",
                     counterparty_id=cp.id, entity_id=run.entity_id, amount=round(float(it.net_amount), 2),
                     currency=it.currency, state=PayoutState.DRAFT.value, is_dry_run=DRY_RUN,
-                    requested_by=(actor or {}).get("user_id"), requested_at=datetime.utcnow())
+                    requested_by=(actor or {}).get("user_id"), requested_at=datetime.now(UTC))
                 db.add(p); db.flush(); net_payouts.append(p.id)
-            # accrue statutory obligations by credit account (tax_treatment=internal only)
-            if emp and (emp.tax_treatment or "").lower() == "internal":
+            # accrue statutory obligations by credit account — ONLY where WE withhold their tax.
+            # The flag is EMPLOYER_WITHHOLD, never the legacy 'internal' string (model/schema/UI all use
+            # EMPLOYER_WITHHOLD | SELF_MANAGED). The old 'internal' check silently produced ZERO statutory
+            # payouts for every real employee — CPF/super/PAYG never entered the register.
+            if emp and (emp.tax_treatment or "").upper() == "EMPLOYER_WITHHOLD":
                 for line in (it.deduction_lines or []):
                     code = line["coa_credit_code"]
                     if code in STATUTORY_AUTHORITY:
-                        statutory[code] = statutory.get(code, 0.0) + float(line["amount"])
+                        # Decimal accumulation: float drift would desync the payout from the accrual JE
+                        # credit and emit a spurious 7100 FX line on same-currency payroll.
+                        statutory[code] = statutory.get(code, Decimal("0")) + Decimal(str(line["amount"]))
         stat_payouts = []
         for code, amount in statutory.items():
             if amount <= 0:
@@ -343,7 +351,7 @@ class PayrollService:
                 counterparty_id=authority.id, entity_id=run.entity_id, amount=round(amount, 2),
                 currency=(items[0].currency if items else "SGD"),
                 external_reference=f"statutory:{code}", state=PayoutState.DRAFT.value, is_dry_run=DRY_RUN,
-                requested_by=(actor or {}).get("user_id"), requested_at=datetime.utcnow())
+                requested_by=(actor or {}).get("user_id"), requested_at=datetime.now(UTC))
             db.add(p); db.flush(); stat_payouts.append({"account": code, "payout_id": p.id, "amount": round(amount, 2)})
         db.commit()
         return {"run_id": run_id, "net_payouts": net_payouts, "statutory_payouts": stat_payouts,

@@ -21,9 +21,11 @@ def load_rates():
         with db_session() as db:
             result = fx_loader_service.load_month(db, month)
         return jsonify(result), 200
-    except Exception as e:  # network / upstream / data errors surface as 400 with the reason
-        logger.warning("FX load failed for %s: %s", month, e, exc_info=True)
+    except ValueError as e:  # expected, actionable (e.g. no entity functional currencies)
         return jsonify({"error": str(e)}), 400
+    except Exception as e:  # network / upstream / bug — a real 502, logged, NOT flattened to a 400
+        logger.error("FX load failed for %s: %s", month, e, exc_info=True)
+        return jsonify({"error": "FX rate load failed — upstream/server error, retry."}), 502
 
 
 @fx_rates_bp.route("/status", methods=["GET"])
@@ -44,5 +46,8 @@ def upsert_manual_rate():
     try:
         with db_session() as db:
             return jsonify(fx_loader_service.upsert_manual(db, month, frm, to, rate)), 200
-    except (ValueError, Exception) as e:
+    except ValueError as e:  # bad rate / bad input — client error
         return jsonify({"error": str(e)}), 400
+    except Exception as e:  # unexpected — log and 500, don't masquerade as a validation error
+        logger.error("FX manual upsert failed (%s %s->%s): %s", month, frm, to, e, exc_info=True)
+        return jsonify({"error": "Failed to save FX rate — server error."}), 500

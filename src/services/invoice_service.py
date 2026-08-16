@@ -907,7 +907,10 @@ class InvoiceService:
             # payees via registration_id (NULL here — a manual payment has no system-resolved recipient).
             amount=amt, currency=invoice.currency,
             method="external_manual", external_reference=reference,
-            state=PayoutState.AWAITING_IMPORT.value, is_dry_run=False,
+            # RECONCILE (not AWAITING_IMPORT): a paid-outside payout has no wise_transfer_id, so Rung 1
+            # can't pair it. RECONCILE is what the amount-fallback phase (3.7) settles against — mirrors
+            # the claim/payroll reconcile lane. AWAITING_IMPORT left it unmatchable forever.
+            state=PayoutState.RECONCILE.value, is_dry_run=False,
             requested_by=actor, requested_at=datetime.now(UTC), settled_at=datetime.now(UTC)))
         from src.services.task_service import task_service
         from src.models.task import TaskStatus
@@ -1272,7 +1275,10 @@ class InvoiceService:
         if not txn:
             raise NotFoundError(f"Transaction with ID {transaction_id} not found")
 
-        open_statuses = (InvoiceStatus.APPROVED.value, InvoiceStatus.PARTIALLY_PAID.value)
+        # RECONCILE included: a paid-outside invoice (mark_paid_already) settles here when the bank line
+        # arrives, via the Phase 3.7 register knock-off. Without it, paid-outside invoices could never pair.
+        open_statuses = (InvoiceStatus.APPROVED.value, InvoiceStatus.PARTIALLY_PAID.value,
+                         InvoiceStatus.RECONCILE.value)
         if invoice.status not in open_statuses:
             raise BadRequestError(
                 f"Invoice {invoice_id} is not open for payment (status: {invoice.status})."

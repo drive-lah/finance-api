@@ -298,6 +298,13 @@ class CategorizationService:
         payroll_reg_ids: set[int] = self._try_payroll_register_knockoff(db, transactions, results)
         categorized += len(payroll_reg_ids)
 
+        # ── Phase 3.7: Invoice register-payout Knock-off (paid-outside AP) ─
+        # A paid-OUTSIDE invoice (mark_paid_already → RECONCILE payout) settled by its bank line →
+        # settle via the FX-aware AP path and mark the payout POSTED. Without this, paid-outside
+        # invoices accumulate unmatched bank lines forever.
+        invoice_reg_ids: set[int] = self._try_invoice_register_knockoff(db, transactions, results)
+        categorized += len(invoice_reg_ids)
+
         # ── Phase 4: Accounting classification ───────────────────────────
         rules_query = (
             db.query(FinanceCategorizationRule)
@@ -552,7 +559,9 @@ class CategorizationService:
                         continue  # no rate on file — can't compare across currencies, skip (POL-26)
                     cand_cmp = abs(cand_amount) * float(rate)
                     tol = 0.05
-                except Exception:
+                except Exception as e:
+                    # a DB/rate-lookup error must not SILENTLY drop this candidate for every pair — log it
+                    logger.warning("cross-currency rate lookup failed (%s->%s): %s", c_ccy, w_ccy, e)
                     continue
             if abs(cand_cmp - abs_waiting) / abs_waiting > tol:
                 continue
@@ -938,6 +947,9 @@ class CategorizationService:
             try:
                 je_id = self._settle_payout_by_type(db, payout, txn)
             except Exception as e:
+                # ROLL BACK the partially-flushed JE (VR-1c): without this, the orphaned lines ride the
+                # NEXT iteration's db.commit() as a stray POSTED entry.
+                db.rollback()
                 logger.error("transfer-id knock-off failed for txn %s / payout %s: %s", txn.id, payout.id, e)
                 continue
             if je_id is None:
@@ -954,6 +966,62 @@ class CategorizationService:
             results.append({"transaction_id": txn.id, "status": "categorized",
                             "rule_name": f"[transfer_id_knockoff:{payout.payable_type}_{payout.id}]",
                             "journal_entry_id": je_id})
+            handled.add(txn.id)
+        return handled
+
+    # ------------------------------------------------------------------
+    # Phase 3.7: Invoice register-payout Knock-off (paid-outside AP)
+    # ------------------------------------------------------------------
+
+    def _try_invoice_register_knockoff(self, db, transactions, results) -> set[int]:
+        """Phase 3.7: settle a paid-OUTSIDE invoice payout (payable_type='invoice', state=RECONCILE, no
+        wise_transfer_id) against the matching outgoing bank line. mark_paid_already captured the exact
+        amount, so we amount-match and settle via the FX-aware AP path (_settle_payout_by_type → invoice
+        match_transaction, whose status gate now admits RECONCILE). Guarded on RECONCILE so a stray
+        payment can't auto-settle an invoice that wasn't marked paid-outside. Mirrors the payroll/claim
+        register phases; fixes paid-outside invoices accumulating unmatched bank lines forever."""
+        from src.models.vendor_payout import FinancePayout, PayoutState
+        handled: set[int] = set()
+        outgoing = [t for t in transactions if t.amount is not None and float(t.amount) < 0
+                    and t.status == TransactionStatus.PENDING]
+        if not outgoing:
+            return handled
+        ba_map = {ba.id: ba for ba in db.query(FinanceBankAccount)
+                  .filter(FinanceBankAccount.id.in_({t.bank_account_id for t in outgoing})).all()}
+        for txn in outgoing:
+            ba = ba_map.get(txn.bank_account_id)
+            if not ba or not ba.entity_id:
+                continue
+            abs_amount = abs(float(txn.amount))
+            payouts = (db.query(FinancePayout)
+                       .filter(FinancePayout.payable_type == "invoice",
+                               FinancePayout.entity_id == ba.entity_id,
+                               FinancePayout.transaction_id.is_(None),
+                               FinancePayout.state == PayoutState.RECONCILE.value)
+                       .order_by(FinancePayout.id.asc()).all())
+            match = next((p for p in payouts if abs(float(p.amount) - abs_amount) <= 0.01), None)
+            if not match:
+                continue
+            try:
+                je_id = self._settle_payout_by_type(db, match, txn)
+            except Exception as e:
+                db.rollback()   # VR-1c: never let a partial JE ride the next commit
+                logger.error("invoice register knock-off failed for txn %s / payout %s: %s",
+                             txn.id, match.id, e)
+                continue
+            if je_id is None:
+                continue
+            match.state = PayoutState.POSTED.value
+            match.transaction_id = txn.id
+            match.journal_entry_id = je_id
+            if txn.status != TransactionStatus.MATCHED:
+                txn.status = TransactionStatus.MATCHED
+                txn.matched_at = datetime.now(UTC)
+                txn.reconciled_journal_entry_id = je_id
+            txn.categorized_by_logic = "invoice_register_knockoff"
+            db.commit()
+            results.append({"transaction_id": txn.id, "status": "categorized",
+                            "rule_name": f"[invoice_register_knockoff:payout_{match.id}]"})
             handled.add(txn.id)
         return handled
 

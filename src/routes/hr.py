@@ -54,8 +54,8 @@ def hr_audit(db=None, action=None, target_user_id=None, target_employee_id=None,
                  "te": target_employee_id,
                  "detail": _json.dumps(detail, default=str) if detail else None})
     except Exception:
-        logging.getLogger(__name__).warning(
-            "hr_audit write failed (action=%s user=%s)", action, target_user_id, exc_info=True)
+        logging.getLogger(__name__).error(
+            "AUDIT WRITE FAILED (alert): hr_audit (action=%s user=%s)", action, target_user_id, exc_info=True)
 
 
 # ── Inline Pydantic schemas (kept here — not in shared schemas.py) ────────────
@@ -148,6 +148,8 @@ def create_employee():
     try:
         with db_session() as db:
             emp = hr_payroll_service.create_employee(db, payload.model_dump())
+            hr_audit(db, "create_employee", target_user_id=getattr(emp, "user_id", None),
+                     target_employee_id=emp.id, detail=payload.model_dump())
             return jsonify(_employee_dict(emp, db)), 201
     except ValueError as e:
         return jsonify({"error": str(e)}), 400

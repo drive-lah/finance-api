@@ -37,11 +37,9 @@ DEDUCTION_COA = {
     "PAYG_WITHHOLDING": {"employee_bears": True,  "coa_debit_code": "6000", "coa_credit_code": "2301", "cap": None},
     "INCOME_TAX":       {"employee_bears": True,  "coa_debit_code": "6000", "coa_credit_code": "2305", "cap": None},
 }
-# Statutory defaults applied per region when no explicit default_deductions given.
-REGION_DEFAULT_DEDUCTIONS = {
-    "SG": [("CPF_EMPLOYEE", "PERCENTAGE", 0.20), ("CPF_EMPLOYER", "PERCENTAGE", 0.17)],
-    "AU": [("SUPERANNUATION", "PERCENTAGE", 0.115)],
-}
+# NOTE: the old REGION_DEFAULT_DEDUCTIONS auto-apply map was REMOVED (2026-08-16). Deductions are now
+# entered MANUALLY per employee (it used to blanket-apply SG CPF to everyone, incl. offshore staff).
+# DEDUCTION_COA above is still used to DERIVE the COA/who-bears when a deduction is added by hand.
 
 
 class HrOnboardingService:

@@ -332,10 +332,19 @@ class HrPayrollService:
                                              new_value=(str(nv) if nv is not None else None),
                                              reason=reason.strip(), actor=(actor or {}).get("user_id"))
                 db.add(a); db.flush(); audits.append(a.to_dict())
-        # keep the run totals in sync
+        # keep the run totals in sync — NATIVE per currency, same rule as create_run (POL-142). A raw
+        # sum across mixed currencies is meaningless, so leave the functional roll-up NULL when the run
+        # spans >1 currency (submit's set_functional_totals fills it). Only collapse to a native total
+        # when the whole run is single-currency.
         items = db.query(HrPayrollItem).filter(HrPayrollItem.finance_payroll_run_id == run.id).all()
-        run.gross_amount = sum(Decimal(str(i.gross_amount)) for i in items)
-        run.net_amount = sum(Decimal(str(i.net_amount)) for i in items)
+        _ccys = {i.currency for i in items}
+        if len(_ccys) == 1:
+            run.gross_amount = sum(Decimal(str(i.gross_amount)) for i in items)
+            run.net_amount = sum(Decimal(str(i.net_amount)) for i in items)
+            run.currency = next(iter(_ccys))
+        else:
+            run.gross_amount = None
+            run.net_amount = None
         db.commit()
         return {"item_id": item.id, "gross": float(item.gross_amount), "net": float(item.net_amount),
                 "adjustments": audits}

@@ -60,23 +60,22 @@ class FxLoaderService:
         (rates_dict, rate_date)."""
         if not symbols:
             return {}, on
-        url = f"{FRANKFURTER}/{on}?base={base}&symbols={','.join(sorted(symbols))}"
+        from urllib.parse import urlencode
+        url = f"{FRANKFURTER}/{on}?{urlencode({'base': base, 'symbols': ','.join(sorted(symbols))})}"
         req = urllib.request.Request(url, headers={"User-Agent": "drivelah-finance-api"})
         with urllib.request.urlopen(req, timeout=_TIMEOUT) as r:
             data = json.loads(r.read().decode())
         return data.get("rates", {}) or {}, data.get("date", on)
 
     def _upsert(self, db: Session, ym: str, frm: str, to: str, rate: Decimal, source: str) -> None:
-        existing = db.execute(text(
-            "SELECT id FROM finance_fx_rates WHERE year_month=:ym AND from_currency=:f AND to_currency=:t"),
-            {"ym": ym, "f": frm, "t": to}).first()
-        if existing:
-            db.execute(text("UPDATE finance_fx_rates SET rate=:r, source=:s WHERE id=:id"),
-                       {"r": rate, "s": source, "id": existing[0]})
-        else:
-            db.execute(text("INSERT INTO finance_fx_rates (year_month, from_currency, to_currency, rate, "
-                            "source, created_at) VALUES (:ym,:f,:t,:r,:s, now())"),
-                       {"ym": ym, "f": frm, "t": to, "r": rate, "s": source})
+        # Atomic upsert on the uq_fx_rates_month_pair unique constraint — no check-then-act race between
+        # the cron rerun and a manual /load.
+        db.execute(text("""
+            INSERT INTO finance_fx_rates (year_month, from_currency, to_currency, rate, source, created_at)
+            VALUES (:ym, :f, :t, :r, :s, now())
+            ON CONFLICT (year_month, from_currency, to_currency)
+            DO UPDATE SET rate = EXCLUDED.rate, source = EXCLUDED.source
+        """), {"ym": ym, "f": frm, "t": to, "r": rate, "s": source})
 
     def load_month(self, db: Session, year_month: str | None = None) -> dict:
         """Load/refresh all required pairs for `year_month` (YYYY-MM; default current month) from ECB.
@@ -89,11 +88,17 @@ class FxLoaderService:
         if not func:
             raise ValueError("No entity functional currencies found — cannot determine required rates.")
 
-        loaded, unsupported, rate_date = [], set(), on
+        loaded, unsupported, fetch_failed, rate_date = [], set(), [], on
         for f in sorted(func):
             targets = [o for o in oper if o != f]
-            # ask ECB for f->targets; whatever it omits is unsupported (e.g. BDT, PKR)
-            rates, rate_date = self._fetch(f, targets, on)
+            # ask ECB for f->targets; a network/upstream blip on ONE base must NOT abort the whole month —
+            # isolate it, keep what the others loaded, and report the failed base distinctly.
+            try:
+                rates, rate_date = self._fetch(f, targets, on)
+            except Exception as e:  # noqa: BLE001 — urllib/JSON/timeout are not SQLAlchemyError
+                logger.warning("FX fetch failed for base=%s on %s: %s", f, on, e)
+                fetch_failed.append(f)
+                continue
             for o in targets:
                 if o not in rates:
                     unsupported.add(o)
@@ -104,7 +109,7 @@ class FxLoaderService:
                 self._upsert(db, year_month, o, f,
                              (Decimal("1") / r_fo).quantize(Decimal("0.000001"), ROUND_HALF_UP), src)  # O->F
                 loaded.append(f"{f}->{o}"); loaded.append(f"{o}->{f}")
-        db.commit()
+        db.commit()  # persist everything that succeeded (partial months are better than an empty one)
 
         # which required pairs are STILL missing after the load (the manual-entry worklist)
         have = {(r[0], r[1]) for r in db.execute(text(
@@ -115,6 +120,7 @@ class FxLoaderService:
             "month": year_month, "rate_date": rate_date,
             "loaded_count": len(loaded), "loaded": sorted(set(loaded)),
             "unsupported": sorted(unsupported),
+            "fetch_failed": sorted(fetch_failed),   # ECB bases that errored — retry needed, distinct from unsupported
             "missing_after": missing,
         }
 

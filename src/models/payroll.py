@@ -111,11 +111,13 @@ class FinancePayrollRun(Base):
     # 'end_of_month' (27th, a 27→27 period) pays monthly employees in full + semi-monthly the balance.
     run_type: Mapped[str | None] = mapped_column(String(16), nullable=True)
 
-    # Bank account net salary is paid from
-    bank_account_id: Mapped[int] = mapped_column(
+    # Bank account net salary is paid from. NULLABLE (migration 068): a run is an accrual and needs no
+    # bank until payment; create_run writes None. `Mapped[int]`/nullable=False was a lie vs the real
+    # schema and broke create_all-based tests exercising a no-bank draft.
+    bank_account_id: Mapped[Optional[int]] = mapped_column(
         Integer,
         ForeignKey("finance_bank_accounts.id", ondelete="RESTRICT"),
-        nullable=False,
+        nullable=True,
     )
 
     description: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)

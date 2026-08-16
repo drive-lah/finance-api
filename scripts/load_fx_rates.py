@@ -27,6 +27,8 @@ def main() -> int:
         res = fx_loader_service.load_month(db, month)
     print(f"[fx-load] month={res['month']} rate_date={res['rate_date']} "
           f"loaded={res['loaded_count']} pairs")
+    if res.get("fetch_failed"):
+        print(f"[fx-load] ECB FETCH FAILED for bases (retry): {', '.join(res['fetch_failed'])}")
     if res["unsupported"]:
         print(f"[fx-load] UNSUPPORTED by ECB (enter manually): {', '.join(res['unsupported'])}")
     if res["missing_after"]:
