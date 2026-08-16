@@ -1780,9 +1780,16 @@ Return only the JSON object, no explanation."""
             if not _text_matches(transaction.transaction_type, rule.transaction_type_operator, rule.transaction_type_value):
                 return False
 
-        # 6. Counterparty name (from raw bank CSV)
+        # 6. Counterparty name — POL-125: rules see the RESOLVED identity. The raw CSV name is
+        # primary; when it's blank but enrichment linked a counterparty_id, match against the
+        # resolved counterparty's canonical name (2019 re-shakedown find: Tokio Marine txn with
+        # counterparty_id set + blank name silently missed the insurer rule).
         if rule.counterparty_operator is not None and rule.counterparty_value is not None:
-            if not _text_matches(transaction.counterparty_name, rule.counterparty_operator, rule.counterparty_value):
+            _cp_name = transaction.counterparty_name
+            if not _cp_name and transaction.counterparty_id and cp_map:
+                _cp = cp_map.get(transaction.counterparty_id)
+                _cp_name = _cp.name if _cp is not None else None
+            if not _text_matches(_cp_name, rule.counterparty_operator, rule.counterparty_value):
                 return False
 
         # 7. Currency

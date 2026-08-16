@@ -116,6 +116,117 @@ def cmd_check(args):
                   f"{r['ledger']:>13,.2f} {r['diff']:>11,.2f}{flag}")
 
 
+def cmd_apply_feedback(args):
+    """Replay Gaurav's rulings from a feedback_resolutions_<year>.json onto THIS clone.
+    CONFIG (rules/aliases/accounts/defaults) is idempotent and runs BEFORE the engine;
+    RESOLUTIONS apply AFTER the engine run, only to txns still in NEEDS_REVIEW
+    (rows the upgraded rules already caught are skipped and reported)."""
+    import json as _json
+    cfg = _json.load(open(args.file))
+    with db_session() as db:
+        conf = cfg.get("config", {})
+        # rule updates (partial: only the keys present in the JSON change)
+        for ru in conf.get("rules_update", []):
+            sets = {k: v for k, v in ru.items() if k != "id"}
+            assign = ", ".join(f"{k} = :{k}" for k in sets)
+            db.execute(text(f"UPDATE finance_categorization_rules SET {assign}, updated_at = now() "
+                            f"WHERE id = :id"), {**sets, "id": ru["id"]})
+            print(f"  rule {ru['id']} updated ({', '.join(sets)})")
+        # rule inserts (explicit ids; skipped when present)
+        for ri in conf.get("rules_insert", []):
+            exists = db.execute(text("SELECT 1 FROM finance_categorization_rules WHERE id=:id"),
+                                {"id": ri["id"]}).scalar()
+            if exists:
+                print(f"  rule {ri['id']} already present — skipped")
+                continue
+            cols = ", ".join(ri)
+            vals = ", ".join(f":{k}" for k in ri)
+            db.execute(text(f"INSERT INTO finance_categorization_rules ({cols}, created_at, updated_at) "
+                            f"VALUES ({vals}, now(), now())"), ri)
+            print(f"  rule {ri['id']} inserted: {ri['name']}")
+        db.execute(text("SELECT setval(pg_get_serial_sequence('finance_categorization_rules','id'), "
+                        "(SELECT max(id) FROM finance_categorization_rules))"))
+        for acc in conf.get("ensure_accounts", []):
+            exists = db.execute(text("SELECT 1 FROM finance_accounts WHERE code=:code AND entity_id IS NULL"),
+                                {"code": acc["code"]}).scalar()
+            if not exists:
+                db.execute(text(
+                    "INSERT INTO finance_accounts (code, name, account_type, normal_balance, category, "
+                    "description, status, created_at, updated_at) VALUES (:code, :name, :account_type, "
+                    ":normal_balance, :category, :description, 'ACTIVE', now(), now())"),
+                    {**acc,
+                     "normal_balance": acc.get("normal_balance", "CREDIT" if acc["account_type"] == "REVENUE" else "DEBIT"),
+                     "category": acc.get("category"), "description": acc.get("description")})
+                print(f"  account {acc['code']} {acc['name']} created")
+            else:
+                print(f"  account {acc['code']} already present")
+        for al in conf.get("add_aliases", []):
+            cur = db.execute(text("SELECT aliases FROM finance_counterparties WHERE id=:id"),
+                             {"id": al["counterparty_id"]}).scalar() or []
+            if al["alias"] not in cur:
+                db.execute(text("UPDATE finance_counterparties SET aliases = (coalesce(aliases::jsonb, '[]'::jsonb) "
+                                "|| to_jsonb(ARRAY[:a]))::json, updated_at = now() WHERE id=:id"),
+                           {"a": al["alias"], "id": al["counterparty_id"]})
+                print(f"  alias '{al['alias']}' added to counterparty {al['counterparty_id']}")
+            else:
+                print(f"  alias '{al['alias']}' already present on {al['counterparty_id']}")
+        for dv in conf.get("set_defaults", []):
+            db.execute(text("UPDATE finance_counterparties SET default_account_code=:c, updated_at=now() "
+                            "WHERE id=:id"), {"c": dv["default_account_code"], "id": dv["counterparty_id"]})
+            print(f"  counterparty {dv['counterparty_id']} default -> {dv['default_account_code']}")
+        db.commit()
+
+        if args.config_only:
+            print("config applied (resolutions skipped: --config-only)")
+            return
+        from src.services.transaction_service import transaction_service
+        from src.models.transaction import FinanceTransaction, TransactionStatus
+        applied, skipped = 0, 0
+        for res in cfg.get("resolutions", []):
+            t = db.get(FinanceTransaction, res["txn"])
+            if t is None:
+                print(f"  txn {res['txn']}: NOT FOUND — investigate"); continue
+            if t.status != TransactionStatus.NEEDS_REVIEW:
+                print(f"  txn {res['txn']}: {t.status.value} via {t.categorized_by_logic} — skipped (already handled)")
+                skipped += 1
+                continue
+            transaction_service.resolve_needs_review(
+                db, res["txn"], account_code=res["account_code"],
+                counterparty_id=res.get("counterparty_id"), resolved_by="apply_feedback")
+            print(f"  txn {res['txn']}: resolved -> {res['account_code']}")
+            applied += 1
+        db.commit()
+        print(f"resolutions: {applied} applied, {skipped} already handled by rules/defaults")
+
+
+def cmd_stage_events(args):
+    """Stage the economic-events lane for a whole year (POL-124 ruling 4): stage_month for each
+    entity x month. STAGED rows only — projection/posting comes at the year's posting step."""
+    from src.services.economic_events.service import economic_event_service
+    ent_ids = [int(x) for x in args.entity_ids.split(",")]
+    with db_session() as db:
+        for ent in ent_ids:
+            for m in range(1, 13):
+                period = date(args.year, m, 1)
+                r = economic_event_service.stage_month(db, ent, period)
+                n = len(r["staged"])
+                errs = len(r.get("query_errors") or [])
+                if n or errs:
+                    print(f"  entity {ent} {period:%Y-%m}: {n} staged"
+                          + (f", {errs} view errors" if errs else ""))
+        db.commit()
+
+
+def gather_events(db, year, ent_ids):
+    return [dict(zip(("entity", "period", "event_type", "amount", "ccy", "status"), r))
+            for r in db.execute(text("""
+        SELECT e.name, ev.period, ev.event_type, round(ev.amount::numeric,2), ev.currency, ev.status
+        FROM finance_economic_events ev JOIN finance_entities e ON e.id = ev.entity_id
+        WHERE ev.entity_id = ANY(:ents) AND ev.period BETWEEN :y0 AND :y1
+        ORDER BY ev.entity_id, ev.period, ev.event_type"""),
+        {"ents": ent_ids, "y0": date(year, 1, 1), "y1": date(year, 12, 31)}).fetchall()]
+
+
 def gather_scorecard(db, year, ba_ids):
     y0, y1 = year_window(year)
     p = {"ba": ba_ids, "y0": y0, "y1": y1}
@@ -142,6 +253,10 @@ def cmd_scorecard(args):
     with db_session() as db:
         header, coa_names, txns = gather_scorecard(db, args.year, ba_ids)
         inv = gather_check(db, args.year, ba_ids)
+        ent_ids = [r[0] for r in db.execute(text(
+            "SELECT DISTINCT entity_id FROM finance_bank_accounts WHERE id = ANY(:ba)"),
+            {"ba": ba_ids}).fetchall()]
+        events = gather_events(db, args.year, ent_ids)
     e = html.escape
 
     def coa_label(code):
@@ -218,6 +333,16 @@ then click <b>Export my feedback</b> (top right) and send me the file — I appl
 A ⚠ means the year isn't fully booked yet at that date (usually the unresolved rows below).</p>
 <table><thead><tr><th>account</th><th>month-end</th><th>bank statement</th><th>our books</th><th>difference</th><th></th></tr></thead>
 <tbody>{inv_rows}</tbody></table>
+<h2>Economic events staged for {args.year} (accrual lane — ClickHouse)</h2>
+<p class=note>These are the platform-derived monthly aggregates (revenue, host costs, Stripe activity) staged
+for the same year, per POL-124 ruling 4 — a year only closes when both lanes are booked. STAGED = awaiting
+your sign-off before projection/posting. Stripe cash accounts get their history from THIS lane; no bank
+statements exist for them pre-2026.</p>
+{('<table><thead><tr><th>entity</th><th>month</th><th>event type</th><th>amount</th><th>ccy</th><th>status</th></tr></thead><tbody>'
+  + ''.join(f"<tr><td>{e(r['entity'])}</td><td>{r['period']:%Y-%m}</td><td>{e(r['event_type'])}</td>"
+            f"<td class=n>{format(float(r['amount']), ',.2f')}</td><td>{e(r['ccy'])}</td><td>{e(r['status'])}</td></tr>"
+            for r in events)
+  + '</tbody></table>') if events else '<p class=note><b>None staged.</b> Run the stage-events step, or ClickHouse has no data for this year/entity.</p>'}
 <h2>Every transaction ({len(txns)}) — booked account, AI recommendation, and your verdict</h2>
 <div id=filters style="margin:8px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px">
  <input id=fsearch placeholder="search description / counterparty / account…" size=34 oninput=applyF()>
@@ -292,12 +417,20 @@ def main():
         if name == "scorecard":
             s.add_argument("--out", required=True)
         s.set_defaults(fn=fn)
+    s = sub.add_parser("apply-feedback")
+    s.add_argument("--file", required=True)
+    s.add_argument("--config-only", action="store_true")
+    s.set_defaults(fn=cmd_apply_feedback)
+    s = sub.add_parser("stage-events")
+    s.add_argument("--year", type=int, required=True)
+    s.add_argument("--entity-ids", required=True)
+    s.set_defaults(fn=cmd_stage_events)
     args = ap.parse_args()
     url = os.getenv("DATABASE_URL", "")
     tgt = "LOCAL-CLONE" if ("localhost" in url or "127.0.0.1" in url) else "PROD"
     print(f"[history_runner] target={tgt}")
-    if args.cmd == "run" and tgt == "PROD":
-        print("REFUSING: shadow runs happen on the CLONE (POL-124/VR-1c). Set DATABASE_URL to finance_local.")
+    if args.cmd in ("run", "apply-feedback", "stage-events") and tgt == "PROD":
+        print("REFUSING: shadow work happens on the CLONE (POL-124/VR-1c). Point DATABASE_URL at the dated clone.")
         return
     args.fn(args)
 
