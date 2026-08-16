@@ -196,7 +196,80 @@ def insp_3(db, year, ent_ids, params):
     return out
 
 
-CHECKS = {"INSP-1": insp_1, "INSP-2": insp_2, "INSP-3": insp_3}
+# ── INSP-4: report coverage + statement consistency ──────────────────────────
+
+def insp_4(db, year, ent_ids, params):
+    tol = params.get("tolerance", 0.02)
+    y1 = date(year, 12, 31)
+    out = []
+    # (a) journal lines whose account is missing from the COA or has no known type
+    for r in db.execute(text("""
+        SELECT l.account_code, count(*) AS n, round(sum(l.debit_amount - l.credit_amount)::numeric,2) AS net
+        FROM finance_journal_lines l
+        JOIN finance_journal_entries je ON je.id=l.entry_id AND je.status IN ('POSTED','DRAFT')
+        LEFT JOIN finance_accounts a ON a.code=l.account_code AND (a.entity_id IS NULL OR a.entity_id = ANY(:ents))
+        WHERE l.entity_id = ANY(:ents) AND je.entry_date <= :y1
+          AND (a.code IS NULL OR a.account_type IS NULL)
+        GROUP BY l.account_code"""), {"ents": ent_ids, "y1": y1}).mappings():
+        out.append({"kind": "orphan_account", "account_code": r["account_code"], "lines": r["n"],
+                    "net": float(r["net"]),
+                    "question": "Journal lines reference an account with no COA row / no type — "
+                                "it is INVISIBLE to every report."})
+    # (b) balance-sheet equation at year end: assets - (liabilities + equity + cumulative P&L) = 0
+    bal = {r["t"]: float(r["s"]) for r in db.execute(text("""
+        SELECT a.account_type AS t, coalesce(sum(l.debit_amount - l.credit_amount),0) AS s
+        FROM finance_journal_lines l
+        JOIN finance_journal_entries je ON je.id=l.entry_id AND je.status IN ('POSTED','DRAFT')
+        JOIN LATERAL (
+            SELECT account_type FROM finance_accounts a
+            WHERE a.code = l.account_code AND (a.entity_id = ANY(:ents) OR a.entity_id IS NULL)
+            ORDER BY a.entity_id NULLS LAST LIMIT 1
+        ) a ON true
+        WHERE l.entity_id = ANY(:ents) AND je.entry_date <= :y1
+        GROUP BY a.account_type"""), {"ents": ent_ids, "y1": y1}).mappings()}
+    assets = bal.get("ASSET", 0.0)
+    liabs = -bal.get("LIABILITY", 0.0)
+    equity = -bal.get("EQUITY", 0.0)
+    pnl_cum = -(bal.get("REVENUE", 0.0) + bal.get("EXPENSE", 0.0) + bal.get("COST_OF_SALES", 0.0))
+    resid = round(assets - (liabs + equity + pnl_cum), 2)
+    if abs(resid) > tol:
+        out.append({"kind": "balance_sheet_equation", "assets": round(assets,2),
+                    "liabilities": round(liabs,2), "equity": round(equity,2),
+                    "cumulative_pnl": round(pnl_cum,2), "residual": resid,
+                    "question": "Assets != Liabilities + Equity + cumulative P&L — a report or "
+                                "the ledger is dropping something."})
+    return out
+
+
+# ── INSP-5: oddity scan — balances against their natural sign ────────────────
+
+def insp_5(db, year, ent_ids, params):
+    min_abs = params.get("min_abs", 50)
+    y1 = date(year, 12, 31)
+    out = []
+    for r in db.execute(text("""
+        SELECT l.account_code, a.name, a.account_type, a.normal_balance,
+               round(sum(l.debit_amount - l.credit_amount)::numeric,2) AS bal
+        FROM finance_journal_lines l
+        JOIN finance_journal_entries je ON je.id=l.entry_id AND je.status IN ('POSTED','DRAFT')
+        JOIN finance_accounts a ON a.code=l.account_code AND a.entity_id IS NULL
+        WHERE l.entity_id = ANY(:ents) AND je.entry_date <= :y1
+          AND je.source NOT IN ('opening_balance','opening_correction','pre_books_park','gst_h1_opening')
+        GROUP BY 1,2,3,4
+        HAVING abs(sum(l.debit_amount - l.credit_amount)) >= :min_abs"""),
+        {"ents": ent_ids, "y1": y1, "min_abs": min_abs}).mappings():
+        bal, nb = float(r["bal"]), (r["normal_balance"] or "")
+        odd = (nb == "DEBIT" and bal < 0) or (nb == "CREDIT" and bal > 0)
+        if odd:
+            out.append({"account": f"{r['account_code']} {r['name']}",
+                        "account_type": r["account_type"], "normal_balance": nb,
+                        "balance": bal,
+                        "question": f"{r['account_type']} account sits {abs(bal):,.2f} AGAINST its "
+                                    f"natural {nb} side — double-booking, missing lane, or timing?"})
+    return out
+
+
+CHECKS = {"INSP-1": insp_1, "INSP-2": insp_2, "INSP-3": insp_3, "INSP-4": insp_4, "INSP-5": insp_5}
 
 
 def main():

@@ -35,6 +35,26 @@
           2019
         ]
       }
+    },
+    {
+      "id": "INSP-4",
+      "name": "Report coverage: every account represented, statements consistent",
+      "severity": "HIGH",
+      "enabled": true,
+      "rationale": "Gaurav 2026-08-16: are the report builders covering ALL accounts \u2014 assets, liabilities, equity, every section? Deterministic form: (a) every journal line's account exists in the COA with a known type (an unknown/missing type silently drops from every report); (b) the balance-sheet equation holds: assets = liabilities + equity + cumulative P&L; (c) period P&L net equals the P&L accounts' movement in the trial balance.",
+      "params": {
+        "tolerance": 0.02
+      }
+    },
+    {
+      "id": "INSP-5",
+      "name": "Oddity scan: balances against their natural sign",
+      "severity": "MEDIUM",
+      "enabled": true,
+      "rationale": "Gaurav 2026-08-16: 'what looks odd' on the statements \u2014 e.g. host payables NEGATIVE. Deterministic core: any account whose closing balance contradicts its normal_balance (asset in credit, liability/revenue in debit) beyond tolerance is an exception for judgment. The LLM layer reasons over each flag.",
+      "params": {
+        "min_abs": 50
+      }
     }
   ]
 }

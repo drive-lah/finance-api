@@ -30,11 +30,31 @@
    "rule": "INSP-2",
    "severity": "HIGH",
    "account": "1017 Stripe Platform ",
-   "book_balance": 9564.46,
+   "book_balance": 7064.46,
    "truth": 7151.96,
    "truth_source": "Stripe balance transactions",
-   "diff": 2412.5,
+   "diff": -87.5,
    "question": "Books disagree with the account's own truth \u2014 which lane is missing or double-counting?"
+  },
+  {
+   "rule": "INSP-4",
+   "severity": "HIGH",
+   "kind": "balance_sheet_equation",
+   "assets": 16356.31,
+   "liabilities": 116994.6,
+   "equity": 21403.6,
+   "cumulative_pnl": -109664.62,
+   "residual": -12377.27,
+   "question": "Assets != Liabilities + Equity + cumulative P&L \u2014 a report or the ledger is dropping something."
+  },
+  {
+   "rule": "INSP-5",
+   "severity": "MEDIUM",
+   "account": "2120 Host Payables",
+   "account_type": "LIABILITY",
+   "normal_balance": "CREDIT",
+   "balance": 17709.15,
+   "question": "LIABILITY account sits 17,709.15 AGAINST its natural CREDIT side \u2014 double-booking, missing lane, or timing?"
   }
  ]
 }
