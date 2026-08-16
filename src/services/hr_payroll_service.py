@@ -204,20 +204,33 @@ class HrPayrollService:
     # ──────────────────────────────────────────────────────────────────────────
 
     def add_deduction_rule(self, db: Session, employee_id: int, data: dict) -> HrDeductionRule:
+        """Manually add one deduction rule to an employee. The team supplies the TYPE, the calc
+        (PERCENTAGE/FIXED_AMOUNT) and the value; the accounting metadata (who bears it, the debit/credit
+        COA, and any wage cap) is DERIVED from DEDUCTION_COA by type, so the team never types COA codes.
+        An explicit coa_*/employee_bears/cap in `data` still wins (for a bespoke OTHER deduction)."""
         emp = db.query(HrEmployee).filter(HrEmployee.id == employee_id).first()
         if not emp:
             raise ValueError(f"Employee {employee_id} not found")
+        from src.services.hr_onboarding_service import DEDUCTION_COA
+        dtype = data["deduction_type"]
+        meta = DEDUCTION_COA.get(dtype, {})
+        coa_debit = data.get("coa_debit_code") or meta.get("coa_debit_code")
+        coa_credit = data.get("coa_credit_code") or meta.get("coa_credit_code")
+        if not coa_debit or not coa_credit:
+            raise ValueError(f"Deduction type '{dtype}' has no COA mapping — pass coa_debit_code and "
+                             f"coa_credit_code explicitly, or use a known type ({', '.join(DEDUCTION_COA)}).")
+        _cap = data.get("ordinary_wage_cap", meta.get("cap"))
         rule = HrDeductionRule(
             employee_id=employee_id,
-            deduction_type=data["deduction_type"],
-            label=data.get("label") or data["deduction_type"].replace("_", " ").title(),
+            deduction_type=dtype,
+            label=data.get("label") or dtype.replace("_", " ").title(),
             calculation_type=data["calculation_type"],
             rate=data.get("rate"),
             fixed_amount=data.get("fixed_amount"),
-            ordinary_wage_cap=data.get("ordinary_wage_cap"),
-            employee_bears=data.get("employee_bears", True),
-            coa_debit_code=data["coa_debit_code"],
-            coa_credit_code=data["coa_credit_code"],
+            ordinary_wage_cap=_cap,
+            employee_bears=data.get("employee_bears", meta.get("employee_bears", True)),
+            coa_debit_code=str(coa_debit),
+            coa_credit_code=str(coa_credit),
             effective_from=data["effective_from"],
             effective_to=data.get("effective_to"),
         )
@@ -225,6 +238,17 @@ class HrPayrollService:
         db.commit()
         db.refresh(rule)
         return rule
+
+    def delete_deduction_rule(self, db: Session, employee_id: int, rule_id: int) -> None:
+        """Remove a deduction rule (manual correction). Scoped to the employee so a stray id can't
+        delete another employee's rule."""
+        rule = (db.query(HrDeductionRule)
+                .filter(HrDeductionRule.id == rule_id, HrDeductionRule.employee_id == employee_id)
+                .first())
+        if not rule:
+            raise ValueError(f"Deduction rule {rule_id} not found for employee {employee_id}")
+        db.delete(rule)
+        db.commit()
 
     def get_deduction_rules(
         self, db: Session, employee_id: int

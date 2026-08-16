@@ -408,8 +408,13 @@ class HrOnboardingService:
             effective_from=eff,
         ))
 
+        # Deductions are MANUAL for now (Gaurav, 2026-08-16): the team enters each employee's deductions
+        # explicitly (per entity + whether we handle their tax), through the deductions editor. Onboarding
+        # NO LONGER auto-applies a region default — that blanket-applied SG CPF to everyone, including
+        # offshore self-managed staff. Only an explicit `default_deductions` payload is honored (a caller
+        # deliberately supplying them); absent that, a new hire starts with ZERO deductions.
         raw = item.get("default_deductions")
-        specs = self._parse_deductions(raw) if raw else REGION_DEFAULT_DEDUCTIONS.get(country, [])
+        specs = self._parse_deductions(raw) if raw else []
         for dtype, calc, value in specs:
             meta = DEDUCTION_COA.get(
                 dtype,

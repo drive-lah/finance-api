@@ -90,15 +90,16 @@ class CompensationCreate(BaseModel):
     effective_to: Optional[date] = None
 
 class DeductionRuleCreate(BaseModel):
-    deduction_type: str   # CPF_EMPLOYEE | CPF_EMPLOYER | SUPERANNUATION | INCOME_TAX | OTHER
+    deduction_type: str   # CPF_EMPLOYEE | CPF_EMPLOYER | SUPERANNUATION | PAYG_WITHHOLDING | INCOME_TAX | OTHER
     label: Optional[str] = None
     calculation_type: str  # PERCENTAGE | FIXED_AMOUNT
     rate: Optional[Decimal] = None
     fixed_amount: Optional[Decimal] = None
     ordinary_wage_cap: Optional[Decimal] = None
-    employee_bears: bool = True
-    coa_debit_code: str
-    coa_credit_code: str
+    # COA + who-bears are DERIVED from deduction_type (DEDUCTION_COA); pass them only for a bespoke type.
+    employee_bears: Optional[bool] = None
+    coa_debit_code: Optional[str] = None
+    coa_credit_code: Optional[str] = None
     effective_from: date
     effective_to: Optional[date] = None
 
@@ -321,7 +322,9 @@ def add_deduction_rule(employee_id: int):
         return jsonify({"error": e.errors()}), 400
     try:
         with db_session() as db:
-            rule = hr_payroll_service.add_deduction_rule(db, employee_id, payload.model_dump())
+            # exclude_none so unset COA/who-bears/cap are DERIVED from the type, not nulled
+            rule = hr_payroll_service.add_deduction_rule(db, employee_id, payload.model_dump(exclude_none=True))
+            hr_audit(db, "add_deduction_rule", target_employee_id=employee_id, detail=payload.model_dump())
             return jsonify(_rule_dict(rule)), 201
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
@@ -332,6 +335,19 @@ def get_deduction_rules(employee_id: int):
     with db_session() as db:
         rules = hr_payroll_service.get_deduction_rules(db, employee_id)
         return jsonify([_rule_dict(r) for r in rules])
+
+
+@hr_bp.route("/employees/<int:employee_id>/deduction-rules/<int:rule_id>", methods=["DELETE"])
+def delete_deduction_rule(employee_id: int, rule_id: int):
+    """Remove a deduction rule (manual correction). Audited."""
+    try:
+        with db_session() as db:
+            hr_payroll_service.delete_deduction_rule(db, employee_id, rule_id)
+            hr_audit(db, "delete_deduction_rule", target_employee_id=employee_id,
+                     detail={"rule_id": rule_id})
+            return jsonify({"deleted": rule_id}), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
 
 
 # ── Payroll run endpoints ─────────────────────────────────────────────────────
