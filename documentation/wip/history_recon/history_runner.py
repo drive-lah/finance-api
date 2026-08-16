@@ -182,19 +182,43 @@ def cmd_apply_feedback(args):
         from src.services.transaction_service import transaction_service
         from src.models.transaction import FinanceTransaction, TransactionStatus
         applied, skipped = 0, 0
+        # Later rounds OVERRIDE earlier ones for the same txn (Gaurav's newest verdict wins):
+        # dedupe by txn id, round2 entries replacing round1.
+        by_txn = {}
         for res in cfg.get("resolutions", []):
-            t = db.get(FinanceTransaction, res["txn"])
+            by_txn[res["txn"]] = res
+        for res in cfg.get("round2", {}).get("resolutions", []):
+            if res.get("account_code"):  # confirmed_no_change entries carry no action
+                by_txn[res["txn"]] = res
+        from src.services.journal_service import journal_service
+        for txn_id, res in sorted(by_txn.items()):
+            t = db.get(FinanceTransaction, txn_id)
             if t is None:
-                print(f"  txn {res['txn']}: NOT FOUND — investigate"); continue
-            if t.status != TransactionStatus.NEEDS_REVIEW:
-                print(f"  txn {res['txn']}: {t.status.value} via {t.categorized_by_logic} — skipped (already handled)")
+                print(f"  txn {txn_id}: NOT FOUND — investigate"); continue
+            if t.status == TransactionStatus.NEEDS_REVIEW:
+                transaction_service.resolve_needs_review(
+                    db, txn_id, account_code=res["account_code"],
+                    counterparty_id=res.get("counterparty_id"), resolved_by="apply_feedback")
+                print(f"  txn {txn_id}: resolved -> {res['account_code']}")
+                applied += 1
+            elif t.coa_account_code == res["account_code"]:
+                print(f"  txn {txn_id}: already on {res['account_code']} via {t.categorized_by_logic} — ok")
                 skipped += 1
-                continue
-            transaction_service.resolve_needs_review(
-                db, res["txn"], account_code=res["account_code"],
-                counterparty_id=res.get("counterparty_id"), resolved_by="apply_feedback")
-            print(f"  txn {res['txn']}: resolved -> {res['account_code']}")
-            applied += 1
+            else:
+                # booked to a DIFFERENT account than the ruling — the ruling wins (a verdict that
+                # fails to apply is a defect, per the 2026-08-16 process rule). Re-book.
+                if t.reconciled_journal_entry_id:
+                    journal_service.void_entry(db, t.reconciled_journal_entry_id,
+                        reason=f"apply_feedback override: Gaurav ruled {res['account_code']} (was {t.coa_account_code})")
+                _was = t.coa_account_code
+                t.status = TransactionStatus.NEEDS_REVIEW
+                t.reconciled_journal_entry_id = None
+                db.flush()
+                transaction_service.resolve_needs_review(
+                    db, txn_id, account_code=res["account_code"],
+                    counterparty_id=res.get("counterparty_id"), resolved_by="apply_feedback")
+                print(f"  txn {txn_id}: OVERRIDE {_was or '?'} -> {res['account_code']}")
+                applied += 1
         db.commit()
         print(f"resolutions: {applied} applied, {skipped} already handled by rules/defaults")
 
@@ -268,6 +292,71 @@ def cmd_import_payouts(args):
                     print(f"  entity {ent} {args.year}-{m:02d}: platform {p['lines']} lines "
                           f"({p['created']} new) · own-accounts {o['lines']} lines ({o['created']} new)")
         db.commit()
+
+
+def cmd_pair_stripe_payouts(args):
+    """Identity pairing for Stripe sweeps (official pipeline step, replaces the one-off script):
+    every unmatched imported payout line (platform or own-account) finds its bank arrival by
+    abs-amount within ±5 days on the entity's statement accounts, books ONE transfer JE
+    Dr <arrival bank> / Cr <source pocket>, marks both MATCHED. Handles variable payout
+    destinations (2019: platform settled to BOTH OCBC accounts) that fixed-target rules can't."""
+    from datetime import datetime as _dt, timedelta, UTC as _UTC
+    from src.services.journal_service import journal_service
+    from src.models.transaction import FinanceTransaction, TransactionStatus
+    from src.models.bank_account import FinanceBankAccount
+    y0, y1 = year_window(args.year)
+    ent_ids = [int(x) for x in args.entity_ids.split(",")]
+    with db_session() as db:
+        lines = (db.query(FinanceTransaction)
+                 .join(FinanceBankAccount, FinanceBankAccount.id == FinanceTransaction.bank_account_id)
+                 .filter(FinanceTransaction.source.in_(["stripe_payout_import", "stripe_own_payout_import"]),
+                         FinanceTransaction.status.in_([TransactionStatus.IMPORTED, TransactionStatus.PENDING,
+                                                        TransactionStatus.AWAITING_MATCH]),
+                         FinanceTransaction.transaction_date.between(y0, y1),
+                         FinanceBankAccount.entity_id.in_(ent_ids)).all())
+        stmt_bas = {ba.id: ba for ba in db.query(FinanceBankAccount)
+                    .filter(FinanceBankAccount.entity_id.in_(ent_ids),
+                            FinanceBankAccount.bank_name != "Stripe",
+                            FinanceBankAccount.coa_account_code.isnot(None)).all()}
+        paired = unpaired = 0
+        for line in lines:
+            pocket_ba = db.get(FinanceBankAccount, line.bank_account_id)
+            amt = abs(float(line.amount))
+            cands = (db.query(FinanceTransaction)
+                     .filter(FinanceTransaction.bank_account_id.in_(list(stmt_bas)),
+                             FinanceTransaction.status.in_([TransactionStatus.IMPORTED, TransactionStatus.PENDING]),
+                             FinanceTransaction.amount > 0,
+                             FinanceTransaction.transaction_date.between(
+                                 line.transaction_date - timedelta(days=5),
+                                 line.transaction_date + timedelta(days=10))).all())
+            match = [c for c in cands if abs(abs(float(c.amount)) - amt) <= 0.005]
+            if not match:
+                unpaired += 1
+                print(f"  line {line.id} ({amt:.2f} {line.transaction_date}): NO arrival — left for review")
+                continue
+            # several same-amount arrivals in the window (e.g. four S$500 deposit sweeps in one
+            # December): assign the NEAREST-dated one; candidates already claimed by earlier
+            # lines are MATCHED and fell out of the query, so greedy-by-date is one-to-one.
+            match.sort(key=lambda c: (abs((c.transaction_date - line.transaction_date).days), c.id))
+            bk = match[0]
+            bank_ba = stmt_bas[bk.bank_account_id]
+            je = journal_service.create(
+                db=db, entity_id=bank_ba.entity_id, entry_date=bk.transaction_date,
+                description=f"Stripe sweep {pocket_ba.account_name} -> {bank_ba.account_name} "
+                            f"(identity-paired: txn {line.id} <-> {bk.id})",
+                lines=[{"account_code": bank_ba.coa_account_code, "debit_amount": amt, "credit_amount": 0.0},
+                       {"account_code": pocket_ba.coa_account_code, "debit_amount": 0.0, "credit_amount": amt}])
+            je.source = "categorization_engine"
+            db.flush()
+            now = _dt.now(_UTC)
+            for t, logic in ((line, "transfer_rule"), (bk, "transfer_pairing")):
+                t.status = TransactionStatus.MATCHED
+                t.reconciled_journal_entry_id = je.id
+                t.matched_at = now
+                t.categorized_by_logic = logic
+            paired += 1
+        db.commit()
+        print(f"paired {paired}, unpaired {unpaired}")
 
 
 def gather_events(db, year, ent_ids):
@@ -485,11 +574,15 @@ def main():
     s.add_argument("--year", type=int, required=True)
     s.add_argument("--entity-ids", required=True)
     s.set_defaults(fn=cmd_import_payouts)
+    s = sub.add_parser("pair-stripe-payouts")
+    s.add_argument("--year", type=int, required=True)
+    s.add_argument("--entity-ids", required=True)
+    s.set_defaults(fn=cmd_pair_stripe_payouts)
     args = ap.parse_args()
     url = os.getenv("DATABASE_URL", "")
     tgt = "LOCAL-CLONE" if ("localhost" in url or "127.0.0.1" in url) else "PROD"
     print(f"[history_runner] target={tgt}")
-    if args.cmd in ("run", "apply-feedback", "stage-events", "load-own-accounts", "import-payouts") and tgt == "PROD":
+    if args.cmd in ("run", "apply-feedback", "stage-events", "load-own-accounts", "import-payouts", "pair-stripe-payouts") and tgt == "PROD":
         print("REFUSING: shadow work happens on the CLONE (POL-124/VR-1c). Point DATABASE_URL at the dated clone.")
         return
     args.fn(args)

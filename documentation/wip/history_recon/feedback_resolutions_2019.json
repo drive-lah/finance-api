@@ -158,6 +158,11 @@
         "txn": 88450,
         "action": "confirmed_no_change",
         "note": "Gaurav: 'likely a refund, got cancelled \u2014 check'. VERIFIED: Nov-29 TT out S$16,042.15 Dr 1710 -> bounced -> Dec-24 JPMorgan return S$15,573.22 Cr 1710 (this txn) -> Dec-26 re-sent S$15,887.38 Dr 1710. The booking already treats it as the cancelled TT's refund against the same asset. Residual ~S$469 of FX/fees sits in 1710 (tiny, 2019 \u2014 left)."
+      },
+      {
+        "txn": 88448,
+        "account_code": "7001",
+        "note": "S$14 ccy-conversion revaluation credit \u2014 AI booked 7001 on the final scorecard, Gaurav reviewed without objection (implicit OK); pinned as a resolution because AI was nondeterministic across runs (7100 first run, 7001 second, open on clean replay)"
       }
     ]
   }
