@@ -264,6 +264,14 @@ class CategorizationService:
         # ── Phase 1: Counterparty enrichment ──────────────────────────────
         self._enrich_counterparties(db, transactions)
 
+        # ── Rung 1: Transfer-ID knock-off (unified, deterministic, FX-aware) ──
+        # Anything we paid THROUGH OUR SYSTEM carries a wise_transfer_id that pairs to an
+        # awaiting_import payout (invoice/claim/payroll alike). Settle it deterministically and
+        # currency-agnostically BEFORE the amount-based fallbacks below.
+        transfer_id_handled: set[int] = self._try_transfer_id_knockoff(db, transactions, results)
+        categorized += len(transfer_id_handled)
+        transactions = [t for t in transactions if t.id not in transfer_id_handled]
+
         # ── Phase 2: AP Knock-off ────────────────────────────────────────
         # For any transaction whose counterparty was just enriched, check
         # whether it matches an open AP invoice. If so, create the payment
@@ -902,6 +910,122 @@ class CategorizationService:
                             "rule_name": f"[payroll_register_knockoff:payout_{match.id}]"})
             handled.add(txn.id)
         return handled
+
+    # ------------------------------------------------------------------
+    # Rung 1: Transfer-ID knock-off (unified, deterministic, FX-aware)
+    # ------------------------------------------------------------------
+    def _try_transfer_id_knockoff(self, db, transactions, results) -> set[int]:
+        """Rung 1 of the ladder: a bank txn we paid THROUGH OUR SYSTEM carries a wise_transfer_id that
+        matches an AWAITING_IMPORT payout in the register. Deterministic (no fuzzy match), currency-
+        AGNOSTIC (matches on the id, so an SGD payable settles against a USD payment), and FX-aware.
+        One rung for every payable type — invoice / claim / payroll — dispatched by payout.payable_type.
+        Runs before the amount-based fallbacks so system-paid settlements never depend on amounts."""
+        from src.models.vendor_payout import FinancePayout, PayoutState
+        handled: set[int] = set()
+        outgoing = [t for t in transactions
+                    if t.amount is not None and float(t.amount) < 0
+                    and t.status == TransactionStatus.PENDING
+                    and getattr(t, "wise_transfer_id", None)]
+        if not outgoing:
+            return handled
+        for txn in outgoing:
+            tid = str(txn.wise_transfer_id)
+            payout = (db.query(FinancePayout)
+                      .filter(FinancePayout.wise_transfer_id == tid,
+                              FinancePayout.state == PayoutState.AWAITING_IMPORT.value,
+                              FinancePayout.transaction_id.is_(None))
+                      .first())
+            if not payout:
+                continue
+            try:
+                je_id = self._settle_payout_by_type(db, payout, txn)
+            except Exception as e:
+                logger.error("transfer-id knock-off failed for txn %s / payout %s: %s", txn.id, payout.id, e)
+                continue
+            if je_id is None:
+                continue
+            payout.transaction_id = txn.id
+            payout.journal_entry_id = je_id
+            payout.state = PayoutState.POSTED.value
+            if txn.status != TransactionStatus.MATCHED:
+                txn.status = TransactionStatus.MATCHED
+                txn.matched_at = datetime.now(UTC)
+                txn.reconciled_journal_entry_id = je_id
+            txn.categorized_by_logic = "transfer_id_knockoff"
+            db.commit()
+            results.append({"transaction_id": txn.id, "status": "categorized",
+                            "rule_name": f"[transfer_id_knockoff:{payout.payable_type}_{payout.id}]",
+                            "journal_entry_id": je_id})
+            handled.add(txn.id)
+        return handled
+
+    def _settle_payout_by_type(self, db, payout, txn) -> Optional[int]:
+        """Post the FX-aware settlement JE for a payout matched by transfer id, dispatched by
+        payable_type. Returns the JE id. invoice → the existing FX-aware AP match; claim → the FX-aware
+        claim reimbursement (F2); payroll → clear 2304/statutory (functional payable) vs the converted
+        bank payment, residue → 7100."""
+        ba = db.query(FinanceBankAccount).filter(FinanceBankAccount.id == txn.bank_account_id).first()
+        if not ba or not ba.coa_account_code:
+            return None
+        ptype = payout.payable_type
+        if ptype == "invoice":
+            inv_id = payout.invoice_id or payout.payable_id
+            from src.services.invoice_service import invoice_service
+            res = invoice_service.match_transaction(db, inv_id, txn.id, matched_by="transfer_id")
+            return res.get("journal_entry_id") if isinstance(res, dict) else txn.reconciled_journal_entry_id
+        if ptype == "claim":
+            from src.models.employee_claim import FinanceEmployeeClaim
+            claim = db.get(FinanceEmployeeClaim, payout.payable_id)
+            if not claim:
+                return None
+            from src.services.claim_service import claim_service
+            je = claim_service.create_claim_payment_entries(
+                db, ba, claim, txn.transaction_date, abs(float(txn.amount)),
+                source="transfer_id_knockoff", description=f"Claim #{claim.id} settlement (transfer {payout.wise_transfer_id})")
+            return je.id
+        if ptype == "payroll":
+            return self._settle_payroll_payout(db, payout, txn, ba)
+        return None
+
+    def _settle_payroll_payout(self, db, payout, txn, ba) -> Optional[int]:
+        """FX-aware payroll settlement: Dr the accrued liability (2304 net, or statutory:<code>) at the
+        functional amount that was accrued, Cr bank at the payment converted at the payment date, plug
+        the spread to 7100. The accrued functional is payout.amount (native) converted at the run date."""
+        from decimal import Decimal as _D
+        from src.models.entity import FinanceEntity
+        from src.models.payroll import FinancePayrollRun
+        from src.services.fx_service import fx_service
+        from src.models.journal_entry import JournalEntryStatus
+        func = db.get(FinanceEntity, ba.entity_id).base_currency if ba.entity_id else None
+        run = db.get(FinancePayrollRun, payout.payable_id)
+        accr_date = run.run_date if run else txn.transaction_date
+        payable_func, _ = fx_service.to_functional_or_same(db, _D(str(payout.amount)), payout.currency, func, accr_date)
+        native_pay = _D(str(abs(float(txn.amount))))
+        bank_func, rate = fx_service.to_functional_or_same(db, native_pay, txn.currency, func, txn.transaction_date)
+        ref = payout.external_reference or ""
+        liability = ref.split(":", 1)[1] if ref.startswith("statutory:") else "2304"
+        lines = [
+            {"account_code": liability, "debit_amount": float(payable_func), "credit_amount": 0.0,
+             "description": f"Payroll payout #{payout.id} settlement",
+             "currency": func, "native_amount": payable_func, "fx_rate": _D("1")},
+            {"account_code": ba.coa_account_code, "debit_amount": 0.0, "credit_amount": float(bank_func),
+             "description": f"Payroll payout #{payout.id} settlement",
+             "currency": txn.currency, "native_amount": native_pay, "fx_rate": rate},
+        ]
+        residue = payable_func - bank_func
+        if abs(residue) >= _D("0.01"):
+            if residue > 0:
+                lines.append({"account_code": "7100", "debit_amount": 0.0, "credit_amount": float(residue),
+                              "description": f"FX gain on payroll payout #{payout.id}"})
+            else:
+                lines.append({"account_code": "7100", "debit_amount": float(-residue), "credit_amount": 0.0,
+                              "description": f"FX loss on payroll payout #{payout.id}"})
+        je = journal_service.create(db=db, entity_id=ba.entity_id, entry_date=txn.transaction_date,
+                                    description=f"Payroll payout #{payout.id} settlement",
+                                    lines=lines, status=JournalEntryStatus.POSTED)
+        je.source = "transfer_id_knockoff"
+        db.flush()
+        return je.id
 
     # ------------------------------------------------------------------
     # Phase 3: Payroll Knock-off
