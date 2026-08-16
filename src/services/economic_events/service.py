@@ -388,5 +388,109 @@ class EconomicEventService:
                 "created": result.get("transactions_created"),
                 "duplicates": result.get("duplicates_skipped")}
 
+    # ------------------------------------------------------------------
+    # OWN-ACCOUNT (connect / held-funds) payout lines
+    # ------------------------------------------------------------------
+
+    def import_own_account_payout_lines(self, db: Session, entity_id: int,
+                                        period: Optional[date] = None) -> dict[str, Any]:
+        """Import the payout lines LEAVING our own Stripe connected accounts (Connect pool /
+        Customer Held Funds) as transactions on the mapped finance bank accounts.
+
+        Registry = finance_stripe_own_accounts (ENT-7/ENT-8/DQ-48; seeded from
+        OUR_CONNECT_ACCOUNTS.csv): only rows with import_payouts=true and a bank mapping
+        participate. Source table = z_mysql_{mkt}_balance_transactions_for_connected_accounts
+        (type='payout'), deduped on the Stripe balance-transaction id. These lines are the
+        KNOWING side of the sweep corridor: a per-account transfer rule books
+        Dr <receiving bank> / Cr <Stripe pocket> and the bank arrival pairs in Phase 0 —
+        replacing the blind bank-text rules that could not tell the Connect pool from the
+        Held-Funds pocket (2019 find: five deposit sweeps credited to the Connect pool).
+        """
+        from src.models.sync_run import start_run, finish_run
+        run = start_run(db, "stripe_own_payouts", entity_id=entity_id)
+        try:
+            result = self._import_own_account_payout_lines_inner(db, entity_id, period)
+        except Exception as e:
+            finish_run(db, run, error=e)
+            raise
+        finish_run(db, run, fetched=result["lines"], created=result["created"],
+                   duplicates=result["duplicates"])
+        return result
+
+    def _import_own_account_payout_lines_inner(self, db: Session, entity_id: int,
+                                               period: Optional[date] = None) -> dict[str, Any]:
+        from sqlalchemy import text as _text
+        from src.services.transaction_service import transaction_service
+        from src.services.csv_adapters.base import NormalizedRow
+        from src.models.bank_account import FinanceBankAccount as _BA
+
+        entity = db.get(FinanceEntity, entity_id)
+        if entity is None:
+            raise ValueError(f"Unknown entity {entity_id}")
+        region = _region_for_entity(entity)
+        bt_table = ("z_mysql_sg_balance_transactions_for_connected_accounts" if region == "SG"
+                    else "z_mysql_au_balance_transactions_for_connected_accounts")
+
+        # registry: our accounts for this market, grouped by target finance bank account
+        rows = db.execute(_text(
+            """SELECT stripe_account_id, finance_bank_account_id
+               FROM finance_stripe_own_accounts
+               WHERE market = :mkt AND import_payouts AND finance_bank_account_id IS NOT NULL"""),
+            {"mkt": region}).fetchall()
+        by_ba: dict[int, list[str]] = {}
+        for acct, ba_id in rows:
+            by_ba.setdefault(ba_id, []).append(acct)
+        if not by_ba:
+            return {"entity_id": entity_id, "window": None, "lines": 0, "created": 0,
+                    "duplicates": 0, "note": "no own accounts registered for import"}
+
+        if period is not None:
+            start = period.replace(day=1)
+            window = (f"AND created >= '{start}' AND created < ('{start}'::Date + INTERVAL 1 MONTH)")
+            window_label = start.strftime("%Y-%m")
+        else:
+            from datetime import timedelta
+            since = date.today() - timedelta(days=90)
+            window = f"AND created >= '{since}'"
+            window_label = f"since {since}"
+
+        total_lines = total_created = total_dupes = 0
+        for ba_id, accts in sorted(by_ba.items()):
+            ba = db.get(_BA, ba_id)
+            if ba is None or not ba.coa_account_code:
+                logger.warning(f"own-payout import: bank account {ba_id} missing/unmapped — skipped")
+                continue
+            ids = "','".join(accts)
+            ch_rows = self.ch.execute_many(
+                f"SELECT id, created, amount, net, description, connected_account_id "
+                f"FROM {bt_table} WHERE type = 'payout' "
+                f"AND connected_account_id IN ('{ids}') {window} ORDER BY created")
+            normalized = []
+            for r in ch_rows:
+                btx = r.get("id")
+                amt = r.get("amount")
+                if not btx or amt in (None, ""):
+                    continue
+                normalized.append(NormalizedRow(
+                    transaction_date=date.fromisoformat(str(r.get("created"))[:10]),
+                    description=(f"Stripe own-account payout {btx} [{r.get('connected_account_id')}]"
+                                 + (f" — {r.get('description')}" if r.get("description") else "")),
+                    amount=Decimal(str(amt)) / Decimal("100"),
+                    currency=entity.base_currency,
+                    source_id=str(btx),
+                ))
+            result = transaction_service.import_from_rows(
+                db=db, bank_account=ba, normalized_rows=normalized,
+                fingerprint_fn=lambda row: [row.source_id or ""],
+                import_batch_id=f"stripe-own-payouts-{region}-ba{ba_id}-{window_label}",
+                source="stripe_own_payout_import", auto_categorize=False)
+            total_lines += len(normalized)
+            total_created += result.get("transactions_created") or 0
+            total_dupes += result.get("duplicates_skipped") or 0
+
+        db.commit()
+        return {"entity_id": entity_id, "window": window_label, "lines": total_lines,
+                "created": total_created, "duplicates": total_dupes}
+
 
 economic_event_service = EconomicEventService()

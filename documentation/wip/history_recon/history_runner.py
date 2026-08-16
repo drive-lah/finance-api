@@ -217,6 +217,55 @@ def cmd_stage_events(args):
         db.commit()
 
 
+def cmd_load_own_accounts(args):
+    """Seed finance_stripe_own_accounts from OUR_CONNECT_ACCOUNTS.csv (idempotent upsert).
+    Mapping (ENT-7/ENT-8): RMS/Flex+/caretaker -> the market's Stripe Connect bank account;
+    held-funds -> the market's Customer Held Funds account. TEST/ADMIN/UNKNOWN rows load
+    with NO bank mapping and import_payouts=false (visible, never imported)."""
+    import csv as _csv
+    BA = {("SG", "connect"): 20, ("SG", "held"): 1657, ("AU", "connect"): 22, ("AU", "held"): 1658}
+    with db_session() as db, open(args.csv) as f:
+        n = 0
+        for r in _csv.DictReader(f):
+            cat = r["Category"].strip()
+            mkt = r["Market"].strip()
+            group = ("held" if "held-funds" in cat.lower() or "deposit" in cat.lower()
+                     else "connect" if cat in ("RMS", "Flex+", "caretaker") else None)
+            ba_id = BA.get((mkt, group)) if group else None
+            db.execute(text("""
+                INSERT INTO finance_stripe_own_accounts
+                  (stripe_account_id, market, email, category, finance_bank_account_id, import_payouts, notes)
+                VALUES (:id, :mkt, :email, :cat, :ba, :imp, :notes)
+                ON CONFLICT (stripe_account_id) DO UPDATE SET
+                  market=:mkt, email=:email, category=:cat, finance_bank_account_id=:ba,
+                  import_payouts=:imp, updated_at=now()"""),
+                {"id": r["Stripe acct id"].strip(), "mkt": mkt, "email": r["Email"].strip(),
+                 "cat": cat, "ba": ba_id, "imp": ba_id is not None,
+                 "notes": f"seeded from OUR_CONNECT_ACCOUNTS.csv (created {r['Created']})"})
+            n += 1
+        db.commit()
+        importable = db.execute(text(
+            "SELECT market, finance_bank_account_id, count(*) FROM finance_stripe_own_accounts "
+            "WHERE import_payouts GROUP BY 1,2 ORDER BY 1,2")).fetchall()
+    print(f"{n} accounts upserted; importable groups: {[tuple(r) for r in importable]}")
+
+
+def cmd_import_payouts(args):
+    """History backfill: import own-account payout lines for a whole year, month by month
+    (explicit periods — the sync button's 90-day default never reaches history)."""
+    from src.services.economic_events.service import economic_event_service
+    ent_ids = [int(x) for x in args.entity_ids.split(",")]
+    with db_session() as db:
+        for ent in ent_ids:
+            for m in range(1, 13):
+                r = economic_event_service.import_own_account_payout_lines(
+                    db, ent, date(args.year, m, 1))
+                if r["lines"]:
+                    print(f"  entity {ent} {args.year}-{m:02d}: {r['lines']} lines, "
+                          f"{r['created']} created, {r['duplicates']} dupes")
+        db.commit()
+
+
 def gather_events(db, year, ent_ids):
     return [dict(zip(("entity", "period", "event_type", "amount", "ccy", "status"), r))
             for r in db.execute(text("""
@@ -425,11 +474,18 @@ def main():
     s.add_argument("--year", type=int, required=True)
     s.add_argument("--entity-ids", required=True)
     s.set_defaults(fn=cmd_stage_events)
+    s = sub.add_parser("load-own-accounts")
+    s.add_argument("--csv", default="documentation/wip/OUR_CONNECT_ACCOUNTS.csv")
+    s.set_defaults(fn=cmd_load_own_accounts)
+    s = sub.add_parser("import-payouts")
+    s.add_argument("--year", type=int, required=True)
+    s.add_argument("--entity-ids", required=True)
+    s.set_defaults(fn=cmd_import_payouts)
     args = ap.parse_args()
     url = os.getenv("DATABASE_URL", "")
     tgt = "LOCAL-CLONE" if ("localhost" in url or "127.0.0.1" in url) else "PROD"
     print(f"[history_runner] target={tgt}")
-    if args.cmd in ("run", "apply-feedback", "stage-events") and tgt == "PROD":
+    if args.cmd in ("run", "apply-feedback", "stage-events", "load-own-accounts", "import-payouts") and tgt == "PROD":
         print("REFUSING: shadow work happens on the CLONE (POL-124/VR-1c). Point DATABASE_URL at the dated clone.")
         return
     args.fn(args)

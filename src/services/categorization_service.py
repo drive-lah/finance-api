@@ -2189,10 +2189,18 @@ Return only the JSON object, no explanation."""
         in aggregate at the Stripe-sync tie-out instead (Gaurav, 2026-07-25).
         Transfers into these targets complete as MATCHED standalone — the second
         statement line does not exist by design.
+
+        DYNAMIC since the own-account payout importer (Gaurav, 2026-08-16): once a
+        Connect/Held-Funds account HAS imported lines (stripe_own_payout_import), it
+        has a real feed and pairing applies — standalone-matching would double-book.
         """
         ba = db.get(FinanceBankAccount, target_ba_id)
-        return bool(ba and ba.bank_name == "Stripe"
-                    and "connect" in (ba.account_name or "").lower())
+        if not (ba and ba.bank_name == "Stripe"
+                and "connect" in (ba.account_name or "").lower()):
+            return False
+        has_feed = db.query(FinanceTransaction.id).filter(
+            FinanceTransaction.bank_account_id == target_ba_id).limit(1).scalar()
+        return not has_feed
 
     # ------------------------------------------------------------------
     # Journal entry creation
