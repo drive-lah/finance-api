@@ -85,6 +85,14 @@
       "params": {
         "min_abs": 20
       }
+    },
+    {
+      "id": "INSP-9",
+      "name": "Prepaid amortization: every spread invoice's releases posted for the year",
+      "severity": "HIGH",
+      "enabled": true,
+      "rationale": "Gaurav 2026-08-17: 169 invoice-linked amortization schedules park expenses into 1300 Prepayments but NO release engine ever existed \u2014 S$1.36M parked, zero released, P&L overstated since 2023. The inspector must check, for every inspected year, each schedule with release months falling in that year: due releases must be POSTED. Also flags schedules whose spread total mismatches the parked (net) amount (56 gross-vs-net defects found 2026-08-17 \u2014 releasing gross from a net asset would drive 1300 negative). Fixed year by year as part of each year pass.",
+      "params": {}
     }
   ]
 }

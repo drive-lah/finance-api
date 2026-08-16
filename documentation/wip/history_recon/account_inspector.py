@@ -343,8 +343,53 @@ def insp_8(db, year, ent_ids, params):
     return out
 
 
+# ── INSP-9: prepaid amortization releases due in the year must be posted ─────
+
+def insp_9(db, year, ent_ids, params):
+    out = []
+    # per expense account: schedules with release months inside the year, the amount due
+    # in-year, and (entries_posted==0 today means nothing has ever released anywhere)
+    for r in db.execute(text("""
+        WITH sched AS (
+          SELECT s.id, s.invoice_id, s.expense_account_code, s.monthly_amount, s.entries_posted,
+                 s.start_month, (s.start_month + (s.months || ' months')::interval - interval '1 day')::date AS end_month,
+                 GREATEST(s.start_month, make_date(:yr,1,1)) AS win_start,
+                 LEAST((s.start_month + (s.months || ' months')::interval - interval '1 day')::date,
+                       make_date(:yr,12,31)) AS win_end
+          FROM finance_amortization_schedules s)
+        SELECT sc.expense_account_code, a.name, count(*) AS schedules,
+               round(sum(sc.monthly_amount *
+                 (1 + (date_part('year', sc.win_end)*12 + date_part('month', sc.win_end))
+                    - (date_part('year', sc.win_start)*12 + date_part('month', sc.win_start))))::numeric, 2) AS due_in_year,
+               sum(sc.entries_posted) AS entries_posted
+        FROM sched sc
+        LEFT JOIN finance_accounts a ON a.code = sc.expense_account_code AND a.entity_id IS NULL
+        WHERE sc.win_start <= sc.win_end
+        GROUP BY 1, 2 ORDER BY due_in_year DESC"""), {"yr": year}).mappings():
+        if (r["entries_posted"] or 0) == 0 and float(r["due_in_year"]) > 0:
+            out.append({"kind": "releases_due_unposted", "expense_account": f"{r['expense_account_code']} {r['name']}",
+                        "schedules": r["schedules"], "due_in_year": float(r["due_in_year"]),
+                        "question": f"{year}: {r['schedules']} schedule(s) owe {r['due_in_year']:,.2f} of "
+                                    "releases into this account — none posted. P&L understated by this."})
+    # gross-vs-net spread totals (would over-release GST from a net asset)
+    r = db.execute(text("""
+        SELECT count(*) AS n, round(sum(s.total_amount - l.debit_amount)::numeric,2) AS excess
+        FROM finance_amortization_schedules s
+        JOIN finance_invoices i ON i.id = s.invoice_id
+        JOIN finance_journal_lines l ON l.entry_id = i.journal_entry_id
+             AND l.account_code = s.prepaid_account_code
+        WHERE round(s.total_amount::numeric,2) != round(l.debit_amount::numeric,2)""")).mappings().first()
+    if r and (r["n"] or 0) > 0:
+        out.append({"kind": "spread_total_gross_not_net", "schedules": r["n"],
+                    "excess_over_parked": float(r["excess"]),
+                    "question": f"{r['n']} schedule(s) plan to release MORE than was parked "
+                                f"(gross incl. GST vs net) — {r['excess']:,.2f} of over-release "
+                                "waiting to happen. Fix totals to net before any engine runs."})
+    return out
+
+
 CHECKS = {"INSP-1": insp_1, "INSP-2": insp_2, "INSP-3": insp_3, "INSP-4": insp_4,
-          "INSP-5": insp_5, "INSP-6": insp_6, "INSP-8": insp_8}
+          "INSP-5": insp_5, "INSP-6": insp_6, "INSP-8": insp_8, "INSP-9": insp_9}
 
 
 def main():
