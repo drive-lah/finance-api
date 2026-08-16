@@ -1,0 +1,1557 @@
+[
+ {
+  "id": 77,
+  "is_employee": false,
+  "name": "Jen Reyes",
+  "address": "",
+  "country": "Philippines",
+  "date_of_joining": "2021-10-12",
+  "org_role": "Senior Host Experience Lead",
+  "manager_id": 6,
+  "phone_number": "",
+  "region": "australia",
+  "teams": [
+   "host"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 13,
+  "is_employee": false,
+  "name": "Drive lah/ Drive mate Finance",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 14,
+  "is_employee": false,
+  "name": "Gaurav Singhal",
+  "address": null,
+  "country": "Australia",
+  "date_of_joining": "2019-01-01",
+  "org_role": "Co-founder",
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "founders"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 15,
+  "is_employee": false,
+  "name": "Gem Antonio",
+  "address": "",
+  "country": "Philippines",
+  "date_of_joining": "2023-06-20",
+  "org_role": "Customer Service Executive",
+  "manager_id": 27,
+  "phone_number": "",
+  "region": "global",
+  "teams": [
+   "core",
+   "verification"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 110,
+  "is_employee": false,
+  "name": "Jabez Jun Jie Lim",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 21,
+  "is_employee": false,
+  "name": "Jay Balan",
+  "address": null,
+  "country": "Singapore",
+  "date_of_joining": "2022-05-01",
+  "org_role": "Operations Manager - SG",
+  "manager_id": 27,
+  "phone_number": null,
+  "region": "singapore",
+  "teams": [
+   "fleet ops"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 1,
+  "is_employee": false,
+  "name": "Drive lah Admin",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "tech"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 29,
+  "is_employee": false,
+  "name": "Myrna Lynne Alcala",
+  "address": "",
+  "country": "Philippines",
+  "date_of_joining": "2024-08-29",
+  "org_role": "Fleet Admin - Sg",
+  "manager_id": 27,
+  "phone_number": "",
+  "region": "singapore",
+  "teams": [
+   "host"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 8,
+  "is_employee": false,
+  "name": "Doris Eto",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 30,
+  "is_employee": false,
+  "name": "Naitik Padsala",
+  "address": null,
+  "country": "India",
+  "date_of_joining": "2024-09-20",
+  "org_role": "Mobile App Developer",
+  "manager_id": 43,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "tech"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 31,
+  "is_employee": false,
+  "name": "Bhalani Nimesh Himmatbhai",
+  "address": null,
+  "country": "India",
+  "date_of_joining": "2024-01-10",
+  "org_role": "Software Development Engineer",
+  "manager_id": 43,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "tech"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 32,
+  "is_employee": false,
+  "name": "Drive lah Admin",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 35,
+  "is_employee": false,
+  "name": "Drive lah HR",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 46,
+  "is_employee": false,
+  "name": "Seca Bugash",
+  "address": "",
+  "country": "Philippines",
+  "date_of_joining": "2021-10-13",
+  "org_role": "Customer support",
+  "manager_id": 27,
+  "phone_number": "",
+  "region": "global",
+  "teams": [
+   "core",
+   "verification"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 66,
+  "is_employee": false,
+  "name": "Cindy Smith",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 111,
+  "is_employee": false,
+  "name": "Craig Anthony Letters",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 68,
+  "is_employee": false,
+  "name": "Diana Kelly",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 16,
+  "is_employee": false,
+  "name": "Gurjeet Singh Sodhi",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 17,
+  "is_employee": false,
+  "name": "Drive lah Customer team",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 22,
+  "is_employee": false,
+  "name": "Jennifer Esguerra Gajudo",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 18,
+  "is_employee": false,
+  "name": "Drive lah Investor Relations",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 19,
+  "is_employee": false,
+  "name": "Drive lah IT",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 20,
+  "is_employee": false,
+  "name": "Izzah Lorraine Carandang Dela Cruz",
+  "address": null,
+  "country": "Philippines",
+  "date_of_joining": "2024-05-14",
+  "org_role": "Resolution Specialist",
+  "manager_id": 99,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "resolutions"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 2,
+  "is_employee": true,
+  "name": "Aakash Chavda",
+  "address": "",
+  "country": "India",
+  "date_of_joining": "2024-06-21",
+  "org_role": "Head of Data",
+  "manager_id": 3,
+  "phone_number": "",
+  "region": "global",
+  "teams": [
+   "data"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 4,
+  "is_employee": false,
+  "name": "Ankish Mody",
+  "address": "",
+  "country": "India",
+  "date_of_joining": "2021-12-14",
+  "org_role": "Product Manager",
+  "manager_id": 3,
+  "phone_number": "",
+  "region": "global",
+  "teams": [
+   "product"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 6,
+  "is_employee": false,
+  "name": "Dirk-Jan Ter Horst",
+  "address": null,
+  "country": "Australia",
+  "date_of_joining": "2019-01-01",
+  "org_role": "Co-founder",
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "founders"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 9,
+  "is_employee": false,
+  "name": "Edelyn Reyes",
+  "address": "",
+  "country": "Philippines",
+  "date_of_joining": "2023-12-06",
+  "org_role": "Customer Service Executive",
+  "manager_id": 27,
+  "phone_number": "",
+  "region": "global",
+  "teams": [
+   "core",
+   "verification"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 11,
+  "is_employee": false,
+  "name": "emmanuel Joseph Reyes Jacobo",
+  "address": "",
+  "country": "Philippines",
+  "date_of_joining": "2025-04-10",
+  "org_role": "Customer Service Executive",
+  "manager_id": 27,
+  "phone_number": "",
+  "region": "global",
+  "teams": [
+   "core",
+   "verification"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 73,
+  "is_employee": false,
+  "name": "Gabriel John Limjoco",
+  "address": "",
+  "country": "Philippines",
+  "date_of_joining": "2024-03-15",
+  "org_role": "Host Experience - Au",
+  "manager_id": 27,
+  "phone_number": "",
+  "region": "global",
+  "teams": [
+   "core",
+   "verification"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 81,
+  "is_employee": false,
+  "name": "Julie Ann Macuha Cenedoza",
+  "address": "",
+  "country": "Philippines",
+  "date_of_joining": "2025-04-01",
+  "org_role": "Claims & Security Specialist",
+  "manager_id": 87,
+  "phone_number": "",
+  "region": "global",
+  "teams": [
+   "c&s"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 83,
+  "is_employee": false,
+  "name": "Kate Smith",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 88,
+  "is_employee": false,
+  "name": "Mary Rose Bernal Yap",
+  "address": "",
+  "country": "Philippines",
+  "date_of_joining": "2025-03-08",
+  "org_role": "Customer Service Executive",
+  "manager_id": 54,
+  "phone_number": "",
+  "region": "global",
+  "teams": [
+   "core",
+   "verification"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 38,
+  "is_employee": false,
+  "name": "Drive lah Resolutions",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 39,
+  "is_employee": false,
+  "name": "Rosemarie Timbol Basilio",
+  "address": "",
+  "country": "Philippines",
+  "date_of_joining": "2024-10-07",
+  "org_role": "Resolution Specialist",
+  "manager_id": 99,
+  "phone_number": "",
+  "region": "global",
+  "teams": [
+   "resolutions"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 41,
+  "is_employee": false,
+  "name": "Sagar Mahesh Prasad",
+  "address": null,
+  "country": "India",
+  "date_of_joining": "2025-10-01",
+  "org_role": "Quality Assurance Engineer",
+  "manager_id": 43,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "tech"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 42,
+  "is_employee": false,
+  "name": "Sandeep Postbox",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 3,
+  "is_employee": false,
+  "name": "Aman Yadav",
+  "address": null,
+  "country": "India",
+  "date_of_joining": "2020-10-05",
+  "org_role": "Product Lead",
+  "manager_id": 14,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "product",
+   "tech",
+   "data"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 10,
+  "is_employee": false,
+  "name": "Edgar Edgar",
+  "address": "",
+  "country": "Philippines",
+  "date_of_joining": "2021-12-06",
+  "org_role": "Host experience - SG",
+  "manager_id": 27,
+  "phone_number": "",
+  "region": "global",
+  "teams": [
+   "core",
+   "verification"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 44,
+  "is_employee": false,
+  "name": "Sarahh Letchumenan",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 27,
+  "is_employee": false,
+  "name": "Lai Mei T",
+  "address": "",
+  "country": "Philippines",
+  "date_of_joining": "2021-03-24",
+  "org_role": "Head of Host Community Sg",
+  "manager_id": 6,
+  "phone_number": "",
+  "region": "global",
+  "teams": [
+   "host",
+   "core"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 36,
+  "is_employee": false,
+  "name": "Rahul Moitra",
+  "address": null,
+  "country": "India",
+  "date_of_joining": "2023-07-13",
+  "org_role": "Human Resources",
+  "manager_id": 14,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "hr"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 37,
+  "is_employee": false,
+  "name": "Ralph Efrenson Eronga",
+  "address": null,
+  "country": "Philippines",
+  "date_of_joining": "2022-07-04",
+  "org_role": "Host Acquisition - SG",
+  "manager_id": 27,
+  "phone_number": null,
+  "region": "singapore",
+  "teams": [
+   "host"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 109,
+  "is_employee": false,
+  "name": "Fiona Smith",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 43,
+  "is_employee": false,
+  "name": "Sanjay Kumar",
+  "address": null,
+  "country": "India",
+  "date_of_joining": "2020-12-01",
+  "org_role": "Senior Sofware Engineer",
+  "manager_id": 3,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "tech"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 49,
+  "is_employee": false,
+  "name": "Pyiee Thin Nwe",
+  "address": null,
+  "country": "Mynnamar",
+  "date_of_joining": "2025-10-01",
+  "org_role": "Head of Finance",
+  "manager_id": 6,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "finance"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 50,
+  "is_employee": false,
+  "name": "Drive lah Support",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 54,
+  "is_employee": false,
+  "name": "Trixie trixie",
+  "address": "",
+  "country": "Philippines",
+  "date_of_joining": "2022-08-29",
+  "org_role": "Customer Service Executive",
+  "manager_id": 27,
+  "phone_number": "",
+  "region": "global",
+  "teams": [
+   "core",
+   "verification"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 55,
+  "is_employee": false,
+  "name": "Vigneshsuran So Dhevan",
+  "address": null,
+  "country": "Singapore",
+  "date_of_joining": "2022-09-14",
+  "org_role": "Customer Operations Executive",
+  "manager_id": 27,
+  "phone_number": null,
+  "region": "singapore",
+  "teams": [
+   "fleet ops"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 70,
+  "is_employee": false,
+  "name": "Ernie Javines Biason",
+  "address": "",
+  "country": "Philippines",
+  "date_of_joining": "2025-03-11",
+  "org_role": "Claims & Security Specialist",
+  "manager_id": 87,
+  "phone_number": "",
+  "region": "global",
+  "teams": [
+   "c&s"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 52,
+  "is_employee": false,
+  "name": "Thummanapally Tilak",
+  "address": null,
+  "country": "India",
+  "date_of_joining": "2025-03-01",
+  "org_role": "Software Development Engineer",
+  "manager_id": 43,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "tech"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 71,
+  "is_employee": false,
+  "name": "Evelyn Chua Aquino",
+  "address": null,
+  "country": "Philippines",
+  "date_of_joining": "2024-12-19",
+  "org_role": "Resolution Specialist",
+  "manager_id": 99,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "resolutions"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 101,
+  "is_employee": false,
+  "name": "Xyron Bunquin Manongsong",
+  "address": "",
+  "country": "Philippines",
+  "date_of_joining": "2025-01-06",
+  "org_role": "Customer Service Executive",
+  "manager_id": 27,
+  "phone_number": "",
+  "region": "global",
+  "teams": [
+   "core",
+   "verification"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 75,
+  "is_employee": false,
+  "name": "Drive mate team",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 7,
+  "is_employee": false,
+  "name": "Dom Drive lah",
+  "address": "",
+  "country": "Philippines",
+  "date_of_joining": "2020-03-07",
+  "org_role": "Guest management - Au",
+  "manager_id": 27,
+  "phone_number": "",
+  "region": "australia",
+  "teams": [
+   "host"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 56,
+  "is_employee": false,
+  "name": "Nashruk Mohammed Wasik Ataher",
+  "address": null,
+  "country": "Bangladesh",
+  "date_of_joining": "2025-05-19",
+  "org_role": "Quality Assurance Engineer",
+  "manager_id": 43,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "tech"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 57,
+  "is_employee": false,
+  "name": "Yash Mimani",
+  "address": null,
+  "country": "India",
+  "date_of_joining": "2025-03-01",
+  "org_role": "Software Development Engineer",
+  "manager_id": 43,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "tech"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 58,
+  "is_employee": false,
+  "name": "Zilla Marie",
+  "address": null,
+  "country": "Philippines",
+  "date_of_joining": "2020-05-26",
+  "org_role": "Finance Associate",
+  "manager_id": 49,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "finance"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 59,
+  "is_employee": false,
+  "name": "Accounts Drive mate",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 61,
+  "is_employee": false,
+  "name": "Annabelle Gayda Luching",
+  "address": "",
+  "country": "Philippines",
+  "date_of_joining": "2024-10-21",
+  "org_role": "Admin Support - Au",
+  "manager_id": 87,
+  "phone_number": "",
+  "region": "australia",
+  "teams": [
+   "fleet ops"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 62,
+  "is_employee": false,
+  "name": "Anas Ashfaq",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 63,
+  "is_employee": false,
+  "name": "Au Host",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 60,
+  "is_employee": false,
+  "name": "Alexcess Libiran Car",
+  "address": "",
+  "country": "Philippines",
+  "date_of_joining": "2024-10-01",
+  "org_role": "Claims & Security Lead",
+  "manager_id": 76,
+  "phone_number": "",
+  "region": "global",
+  "teams": [
+   "c&s"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 65,
+  "is_employee": false,
+  "name": "BYOD Drive mate",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 74,
+  "is_employee": false,
+  "name": "Godielou Petipet Quero",
+  "address": null,
+  "country": "Philippines",
+  "date_of_joining": "2025-05-26",
+  "org_role": "Resolution Specialist",
+  "manager_id": 99,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "resolutions"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 87,
+  "is_employee": false,
+  "name": "Matheus Johannes van der Kooi",
+  "address": "",
+  "country": "",
+  "date_of_joining": "2025-10-01",
+  "org_role": "",
+  "manager_id": 6,
+  "phone_number": "",
+  "region": "global",
+  "teams": [
+   "fleet ops",
+   "flexplus",
+   "c&s"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 89,
+  "is_employee": false,
+  "name": "DM Melbourne Ops",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 90,
+  "is_employee": false,
+  "name": "Melvin Verona Magro",
+  "address": "",
+  "country": "Philippines",
+  "date_of_joining": "2024-12-23",
+  "org_role": "Customer Service Executive",
+  "manager_id": 27,
+  "phone_number": "",
+  "region": "global",
+  "teams": [
+   "core",
+   "verification"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 91,
+  "is_employee": false,
+  "name": "Drive mate no-reply",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 92,
+  "is_employee": false,
+  "name": "Drive mate Ops",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 93,
+  "is_employee": false,
+  "name": "Patrick Leonard Mojica",
+  "address": "",
+  "country": "Philippines",
+  "date_of_joining": "2025-03-18",
+  "org_role": "Claims & Security Specialist",
+  "manager_id": 87,
+  "phone_number": "",
+  "region": "global",
+  "teams": [
+   "c&s"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 96,
+  "is_employee": false,
+  "name": "Drive mate Resolutions",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 97,
+  "is_employee": false,
+  "name": "Resya Satya Pradhana Harahap",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 98,
+  "is_employee": false,
+  "name": "Rheazel Martinez Adolfo",
+  "address": "",
+  "country": "Philippines",
+  "date_of_joining": "2024-12-23",
+  "org_role": "Customer Service Executive",
+  "manager_id": 27,
+  "phone_number": "",
+  "region": "global",
+  "teams": [
+   "core",
+   "verification"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 78,
+  "is_employee": false,
+  "name": "Jennilyn Palacol Labajos",
+  "address": "",
+  "country": "Philippines",
+  "date_of_joining": "2025-02-12",
+  "org_role": "Claims & Security Specialist",
+  "manager_id": 87,
+  "phone_number": "",
+  "region": "global",
+  "teams": [
+   "c&s"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 84,
+  "is_employee": false,
+  "name": "Drive mate Legal",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 86,
+  "is_employee": false,
+  "name": "Mark Manson",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 99,
+  "is_employee": false,
+  "name": "Riezel Basilio Villanueva",
+  "address": null,
+  "country": "Philippines",
+  "date_of_joining": "2024-11-20",
+  "org_role": "Team Leader - Resolutions",
+  "manager_id": 106,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "resolutions"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 108,
+  "is_employee": false,
+  "name": "Rose Ann Ferrer Naredo",
+  "address": "",
+  "country": "",
+  "date_of_joining": "2025-10-20",
+  "org_role": "Claims & Security Specialist",
+  "manager_id": 87,
+  "phone_number": "",
+  "region": "global",
+  "teams": [
+   "c&s"
+  ],
+  "slack_id": "",
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 102,
+  "is_employee": false,
+  "name": "Stella Jones",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 103,
+  "is_employee": false,
+  "name": "Drive mate Support",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ },
+ {
+  "id": 105,
+  "is_employee": false,
+  "name": "Drive mate Tolls Management",
+  "address": null,
+  "country": null,
+  "date_of_joining": null,
+  "org_role": null,
+  "manager_id": null,
+  "phone_number": null,
+  "region": "global",
+  "teams": [
+   "na"
+  ],
+  "slack_id": null,
+  "employee_type": null,
+  "bank_account_number": null,
+  "bank_code": null
+ }
+]

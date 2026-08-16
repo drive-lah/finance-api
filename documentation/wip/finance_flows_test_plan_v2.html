@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Finance Flows — Test Plan v2 (corrected)</title>
+<style>
+  body{font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:940px;margin:24px auto;padding:0 20px;color:#1f2937}
+  h1{font-size:22px} h2{font-size:17px;margin-top:26px;border-bottom:2px solid #e5e7eb;padding-bottom:6px}
+  .env{background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:12px 16px;font-size:14px}
+  .env code{background:#fff;padding:1px 5px;border-radius:4px;border:1px solid #ddd}
+  .tc{border:1px solid #e5e7eb;border-radius:8px;padding:12px 16px;margin:12px 0;background:#fff}
+  .tc h3{margin:0 0 6px;font-size:15px}
+  .steps{margin:6px 0} .exp{color:#065f46;background:#ecfdf5;border-radius:6px;padding:6px 10px;margin:6px 0;font-size:14px}
+  .res label{font-size:13px;color:#6b7280}
+  .res textarea{width:100%;min-height:44px;border:1px solid #d1d5db;border-radius:6px;padding:6px;font:14px sans-serif;box-sizing:border-box}
+  .pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;background:#eef2ff;color:#4338ca;margin-left:6px}
+  .note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 14px;font-size:13px}
+  ol{padding-left:20px} .k{font-family:ui-monospace,monospace;background:#f3f4f6;padding:1px 5px;border-radius:4px}
+  #status{position:fixed;top:10px;right:14px;background:#111827;color:#fff;font-size:12px;padding:5px 12px;border-radius:999px;opacity:0;transition:opacity .3s}
+  #banner{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:8px;padding:8px 14px;font-size:13px;margin:10px 0;display:none}
+</style>
+</head>
+<body>
+<div id="status">saved ✓</div>
+<h1>Finance Flows — Test Plan v2 (corrected)</h1>
+<div id="banner">⚠ Auto-save sink not reachable on :4545 — notes kept in this browser only.</div>
+<p><b>Type freely — every keystroke auto-saves.</b> Log in at <a href="http://localhost:5173">localhost:5173</a> with <span class="k">gauravs@drivelah.sg</span> + any password.</p>
+<div class="env" style="background:#fef2f2;border-color:#fecaca"><b>⚠ Now running against the PROD DB</b> — you'll see real counterparties (ComfortDelGro, Home &amp; Away…), real entities, real trips. Test uploads write <b>real draft rows</b>; approving posts <b>real JEs</b>. Be deliberate — use <b>Void</b> (Flow 7) to clean up any test drafts you create.</div>
+<div class="env"><b>Real anchors for live-resolution tests:</b> trip code <span class="k">TA86350485</span> (AU) resolves to a real trip; a transaction UUID like <span class="k">687c7e14-7e63-423e-9ca9-a1c4ff0773cb</span> also resolves (historical format); ticket <span class="k">19307007</span> is real. Home &amp; Away invoice <b>id 236</b> (needs_fix) is a good Void target.</div>
+
+<div class="note">The real Flow-2 entry is <b>Accounting → Invoices → Upload</b> (extraction runs, then you ratify). Extraction needs live keys and may be limited locally, so this plan tests the <b>ratify + gates + vendor + approval</b> behaviour on the seeded draft invoices — the parts that matter. Where you can upload a PDF, do; otherwise open a seeded draft and Edit.</div>
+
+<h2>Flow 1 · COA config <span class="pill">Settings</span></h2>
+<div class="tc">
+<div class="steps">Accounting → <b>Settings</b>. Edit a row.</div>
+<div class="exp">Expected: <b>Approver 1/2 are dropdowns of onboarded employees</b> (no free typing); setting Approver 2 = Approver 1 is <b>rejected</b>; header stays visible when scrolling; there's a <b>Ticket</b> column (not "intercom"), and <b>no "Other required" column</b>.</div>
+<div class="res"><label>Result</label><textarea data-id="f1"></textarea></div>
+</div>
+
+<h2>Flow 2 · Upload → ratify → submit <span class="pill">Invoices</span></h2>
+<div class="tc">
+<h3>2a. Duplicate is blocked at upload</h3>
+<div class="steps">Accounting → Invoices → <b>Upload</b> a PDF. Then upload the <b>same file again</b>.</div>
+<div class="exp">Expected: the second upload is <b>rejected</b> ("Duplicate invoice — byte-identical file already on invoice #…"). It is not added.</div>
+<div class="res"><label>Result</label><textarea data-id="f2a"></textarea></div>
+</div>
+<div class="tc">
+<h3>2b. Ratify — required anchors appear per COA</h3>
+<div class="steps">Open a seeded draft (Acme) → <b>Edit</b>. Set the expense account to <b>6701</b>.</div>
+<div class="exp">Expected: a <b>"Supporting info required"</b> panel appears with a <b>Ticket number *</b> field (because 6701 requires it). Set it to <b>5021</b> instead → it asks for <b>Trip ID + Ticket number</b>. Fill them, Save.</div>
+<div class="res"><label>Result</label><textarea data-id="f2b"></textarea></div>
+</div>
+<div class="tc">
+<h3>2c. Submit gate + routing</h3>
+<div class="steps">On a draft with COA 6701, try to <b>Submit</b> with the ticket <b>empty</b>, then with it <b>filled</b>.</div>
+<div class="exp">Expected: empty → parked in <b>needs_fix</b> ("COA 6701 requires: ticket number"); filled → moves to <b>pending_approval</b>, and an approval task lands in <b>your</b> task inbox (6701's approver).</div>
+<div class="res"><label>Result</label><textarea data-id="f2c"></textarea></div>
+</div>
+
+<h2>Flow 3 · New vendor — no auto-activation <span class="pill">Invoices → Edit</span></h2>
+<div class="tc">
+<div class="steps">Open a draft → Edit → in the vendor area use <b>quick-add a counterparty</b> (name may be prefilled from the extracted invoice). Add it as a vendor.</div>
+<div class="exp">Expected: the vendor is created <b>pending</b> (it does <b>not</b> become active); a <b>"Approve new vendor"</b> task appears in the task inbox. The invoice <b>stays in draft</b> if you try to submit ("Held in draft — vendor awaiting finance approval"). Approve the vendor task → the invoice <b>auto-submits</b> to pending_approval.</div>
+<div class="res"><label>Result</label><textarea data-id="f3"></textarea></div>
+</div>
+
+<h2>Flow 4 · Approve in the task inbox <span class="pill">Tasks</span></h2>
+<div class="tc">
+<h3>4a. 1-step (6701 → you)</h3>
+<div class="steps">Task inbox → the "Approve invoice — Acme…" task (with the AI card) → <b>Approve</b>.</div>
+<div class="exp">Expected: single-step COA → fully approved, task closes. No separate Approvals tab — it all lives in the task inbox.</div>
+<div class="res"><label>Result</label><textarea data-id="f4a"></textarea></div>
+</div>
+<div class="tc">
+<h3>4b. 2-step (5021)</h3>
+<div class="steps">A 5021 invoice's approval task → first approver clicks <b>Approve</b>.</div>
+<div class="exp">Expected: the task <b>stays open and moves to the second approver</b>; the invoice is still pending (not posted) until the second sign-off.</div>
+<div class="res"><label>Result</label><textarea data-id="f4b"></textarea></div>
+</div>
+
+<h2>Flow 5 · Document preview beside the form <span class="pill">Upload / Edit</span></h2>
+<div class="tc">
+<div class="steps">Requests → <b>Raise</b> → Upload an invoice (PDF or image). After extraction, look at the modal. Then open a draft → <b>Edit</b>.</div>
+<div class="exp">Expected: the modal is <b>two-pane</b> — the document renders on the <b>left</b>, next to the ratify form on the right. Images get zoom controls; PDFs render inline. (Upload uses the file you just picked, so it shows even if S3 isn't wired locally.)</div>
+<div class="res"><label>Result</label><textarea data-id="f5"></textarea></div>
+</div>
+
+<h2>Flow 6 · Live trip / ticket resolution <span class="pill">Upload anchors</span></h2>
+<div class="tc">
+<div class="steps">On an upload with a COA that needs a trip/ticket (e.g. 5021), type into the anchor fields.</div>
+<div class="exp">Expected, as you type (debounced): <b>Trip ID</b> <span class="k">TA86350485</span> → green ✓ with <b>vehicle · host · guest · window</b>; a transaction <b>UUID</b> also resolves (historical format); a bad code → red ✗ "not found". <b>…or Vehicle rego</b> (trip is optional — for towing etc.): <span class="k">1AI5RR</span> or <span class="k">smh 7616g</span> (case/space-insensitive) → ✓ vehicle · host (delisted cars still resolve). <b>Ticket number(s)</b> accepts <b>comma-separated</b> (<span class="k">19307007, 123076693</span>) and shows ✓/✗ per ticket with its title — note <span class="k">123076693</span> is a 9-digit Receivables ticket (resolves, just a beat slower).</div>
+<div class="res"><label>Result</label><textarea data-id="f6"></textarea></div>
+</div>
+
+<h2>Flow 7 · Void <span class="pill">Counterparty modal</span></h2>
+<div class="tc">
+<div class="steps">Open Home &amp; Away's counterparty → find invoice <b>id 236</b> (needs_fix) → <b>Void</b> it (reason prompt). Then try to void a <b>paid</b> invoice.</div>
+<div class="exp">Expected: a <b>needs_fix</b> (or draft / pending_approval / rejected) invoice <b>voids</b> cleanly; a <b>paid / approved</b> invoice is <b>blocked</b> ("Cannot void invoice in 'paid' status"). Use this to clean up any test drafts you created above.</div>
+<div class="res"><label>Result</label><textarea data-id="f7"></textarea></div>
+</div>
+
+<h2>Flow 8 · Track = my requests <span class="pill">Requests → Track</span></h2>
+<div class="tc">
+<div class="steps">Requests → <b>Track (my requests)</b>. Look at what you've raised. On a <b>draft</b> row, click <b>Edit</b>.</div>
+<div class="exp">Expected: a live table of <b>your own</b> invoices/claims with status + <b>who it's with</b> (draft = you; pending = the approver). Only <b>draft</b> rows have Edit → opens the ratify modal → you can ratify + submit; non-draft is read-only.</div>
+<div class="res"><label>Result</label><textarea data-id="f8"></textarea></div>
+</div>
+
+<h2>Flow 9 · Admin — see everyone's tasks <span class="pill">My Tasks</span></h2>
+<div class="tc">
+<div class="steps">My Tasks → toggle <b>My tasks</b> / <b>All tasks</b> (admin only).</div>
+<div class="exp">Expected: <b>All tasks</b> shows every open task across the company, each tagged <b>"with {person}"</b> (whose queue it's in), and you can act on any as admin. <b>My tasks</b> stays own-scoped.</div>
+<div class="res"><label>Result</label><textarea data-id="f9"></textarea></div>
+</div>
+
+<script>
+const SINK='http://localhost:4545';
+const areas=[...document.querySelectorAll('textarea[data-id]')];
+const statusEl=document.getElementById('status'), banner=document.getElementById('banner');
+let t; function collect(){const o={};areas.forEach(a=>o[a.dataset.id]=a.value);return o;}
+function flash(){statusEl.style.opacity=1;clearTimeout(t);t=setTimeout(()=>statusEl.style.opacity=0,900);}
+async function save(){try{const r=await fetch(SINK+'/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(collect())});if(r.ok){flash();banner.style.display='none';}}catch(e){banner.style.display='block';}}
+async function load(){try{const r=await fetch(SINK+'/load');if(r.ok){const d=await r.json();areas.forEach(a=>{if(d[a.dataset.id]!=null)a.value=d[a.dataset.id];});}}catch(e){banner.style.display='block';}}
+let deb;areas.forEach(a=>a.addEventListener('input',()=>{clearTimeout(deb);deb=setTimeout(save,400);}));
+load();
+</script>
+</body>
+</html>

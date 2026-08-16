@@ -1,0 +1,4376 @@
+[
+ {
+  "inv_id": 348,
+  "gst": 969.14,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 270,
+  "gst": 25.0,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 286,
+  "gst": 35.0,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 293,
+  "gst": 104.82,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 294,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 316,
+  "gst": 35.16,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 317,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 318,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": null,
+  "gst": 311.05,
+  "status": null,
+  "accr_q": "2026-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 328,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 329,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 332,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 333,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 334,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 335,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 338,
+  "gst": 272.73,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 339,
+  "gst": 249.82,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 341,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 352,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 359,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 360,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 365,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 367,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 368,
+  "gst": 95.0,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 370,
+  "gst": 1299.47,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 371,
+  "gst": 1045.65,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 372,
+  "gst": 7.5,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 373,
+  "gst": 345.6,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 379,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 380,
+  "gst": 40.0,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 385,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 386,
+  "gst": 18.0,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 388,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 394,
+  "gst": 180.0,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": null,
+  "gst": 65.21,
+  "status": null,
+  "accr_q": "2026-Q1",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 400,
+  "gst": 65.21,
+  "status": "partially_paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 401,
+  "gst": 15.8,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 408,
+  "gst": 976.56,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 411,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 426,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 431,
+  "gst": 82.5,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 436,
+  "gst": 355.4,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 438,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 445,
+  "gst": 600.0,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 446,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 448,
+  "gst": 454.55,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 453,
+  "gst": 688.54,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 454,
+  "gst": 878.14,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 455,
+  "gst": 258.28,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 460,
+  "gst": 181.82,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 463,
+  "gst": 534.3,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 464,
+  "gst": 497.25,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 465,
+  "gst": 483.28,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 470,
+  "gst": 1227.0,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 471,
+  "gst": 1107.7,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 472,
+  "gst": 281.11,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 475,
+  "gst": 113.85,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 479,
+  "gst": 114.15,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 480,
+  "gst": 9.96,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 481,
+  "gst": 349.78,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 484,
+  "gst": 160.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 487,
+  "gst": 37.4,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 488,
+  "gst": 37.4,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 489,
+  "gst": 36.57,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 490,
+  "gst": 35.34,
+  "status": "paid",
+  "accr_q": "2024-Q2",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 500,
+  "gst": 181.82,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 502,
+  "gst": 80.0,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 503,
+  "gst": 105.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 504,
+  "gst": 82.5,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 505,
+  "gst": 130.0,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 509,
+  "gst": 10.0,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 510,
+  "gst": 499.2,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 511,
+  "gst": 196.06,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 512,
+  "gst": 60.0,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 515,
+  "gst": 29.17,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 516,
+  "gst": 19.5,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 517,
+  "gst": 1130.57,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 518,
+  "gst": 189.0,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 521,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 522,
+  "gst": 16.5,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 523,
+  "gst": 35.0,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 524,
+  "gst": 35.0,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 525,
+  "gst": 35.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 529,
+  "gst": 181.82,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 531,
+  "gst": 45.0,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 542,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 543,
+  "gst": 46.73,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 547,
+  "gst": 104.0,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 548,
+  "gst": 84.0,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 553,
+  "gst": 145.65,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 561,
+  "gst": 100.0,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 569,
+  "gst": 15.91,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 584,
+  "gst": 484.32,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 588,
+  "gst": 682.5,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 589,
+  "gst": 356.55,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 590,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 591,
+  "gst": 70.08,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 592,
+  "gst": 418.3,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 594,
+  "gst": 84.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 598,
+  "gst": 682.5,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 599,
+  "gst": 143.36,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 600,
+  "gst": 190.17,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 604,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 605,
+  "gst": 139.96,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 606,
+  "gst": 107.16,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 607,
+  "gst": 70.77,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 618,
+  "gst": 51.62,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 619,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 620,
+  "gst": 187.2,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 623,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 625,
+  "gst": 454.55,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 626,
+  "gst": 181.82,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 627,
+  "gst": 1949.08,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 633,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 636,
+  "gst": 210.6,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 637,
+  "gst": 43.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 638,
+  "gst": 107.5,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 640,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 643,
+  "gst": 38.85,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 663,
+  "gst": 84.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 664,
+  "gst": 200.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 665,
+  "gst": 167.6,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 666,
+  "gst": 325.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 675,
+  "gst": 60.13,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 679,
+  "gst": 100.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 680,
+  "gst": 82.5,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 681,
+  "gst": 160.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 682,
+  "gst": 200.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 688,
+  "gst": 122.73,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 692,
+  "gst": 181.82,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 694,
+  "gst": 103.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 700,
+  "gst": 191.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 701,
+  "gst": 80.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 702,
+  "gst": 209.48,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 719,
+  "gst": 320.13,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 732,
+  "gst": 148.26,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 733,
+  "gst": 2404.65,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 734,
+  "gst": 2314.04,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 735,
+  "gst": 2279.27,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 736,
+  "gst": 2401.55,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 737,
+  "gst": 4439.53,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 738,
+  "gst": 4377.63,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 739,
+  "gst": 4344.51,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 740,
+  "gst": 4370.47,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 741,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 742,
+  "gst": 3893.02,
+  "status": "paid",
+  "accr_q": "2024-Q3",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 743,
+  "gst": 3835.64,
+  "status": "paid",
+  "accr_q": "2024-Q3",
+  "pay_q": "2024-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 744,
+  "gst": 3821.24,
+  "status": "paid",
+  "accr_q": "2024-Q3",
+  "pay_q": "2024-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 747,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 753,
+  "gst": 114.36,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 754,
+  "gst": 682.5,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 755,
+  "gst": 38.67,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 756,
+  "gst": 50.57,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 764,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 767,
+  "gst": 181.82,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 770,
+  "gst": 40.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 779,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 782,
+  "gst": 161.2,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 783,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 784,
+  "gst": 165.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 785,
+  "gst": 183.75,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 786,
+  "gst": 1964.85,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 788,
+  "gst": 682.5,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 789,
+  "gst": 324.82,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 793,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 798,
+  "gst": 105.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 800,
+  "gst": 33.8,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 804,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 806,
+  "gst": 454.55,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 815,
+  "gst": 118.93,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 817,
+  "gst": 76.23,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 818,
+  "gst": 86.01,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 819,
+  "gst": 1843.55,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 822,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 834,
+  "gst": 250.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 853,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 854,
+  "gst": 75.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 856,
+  "gst": 100.78,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 857,
+  "gst": 200.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 858,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 859,
+  "gst": 188.18,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 862,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 865,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 869,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 873,
+  "gst": 165.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 874,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 875,
+  "gst": 27.27,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 876,
+  "gst": 682.5,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 886,
+  "gst": 100.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 889,
+  "gst": 360.9,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 891,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 892,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 894,
+  "gst": 110.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 895,
+  "gst": 100.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 896,
+  "gst": 82.5,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 897,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 901,
+  "gst": 256.87,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 908,
+  "gst": 224.4,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 916,
+  "gst": 49.41,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 917,
+  "gst": 60.15,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 919,
+  "gst": 2016.56,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 920,
+  "gst": 682.5,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 921,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 922,
+  "gst": 76.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 933,
+  "gst": 74.03,
+  "status": "paid",
+  "accr_q": "2023-Q4",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 934,
+  "gst": 280.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 935,
+  "gst": 40.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 939,
+  "gst": 264.36,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 940,
+  "gst": 43.64,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 941,
+  "gst": 36.36,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 942,
+  "gst": 555.98,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 943,
+  "gst": 18.18,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 944,
+  "gst": 187.73,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 945,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 957,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 962,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 966,
+  "gst": 270.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 972,
+  "gst": 250.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 975,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 976,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 977,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 978,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 979,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 980,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 981,
+  "gst": 327.27,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 988,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 991,
+  "gst": 998.41,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1002,
+  "gst": 88.66,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1003,
+  "gst": 349.7,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1004,
+  "gst": 60.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1005,
+  "gst": 108.95,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1029,
+  "gst": 129.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1032,
+  "gst": 50.2,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1034,
+  "gst": 30.64,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1040,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1043,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1044,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1045,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1046,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1048,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1051,
+  "gst": 100.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1054,
+  "gst": 60.3,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1057,
+  "gst": 1701.4,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1060,
+  "gst": 682.5,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1061,
+  "gst": 1728.13,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1073,
+  "gst": 76.82,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1075,
+  "gst": 256.37,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1076,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1080,
+  "gst": 38.7,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1085,
+  "gst": 62.69,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1086,
+  "gst": 238.73,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1088,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1090,
+  "gst": 74.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1091,
+  "gst": 80.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1093,
+  "gst": 268.18,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1101,
+  "gst": 682.5,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1105,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1108,
+  "gst": 161.82,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1113,
+  "gst": 682.5,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1119,
+  "gst": 104.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1123,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1124,
+  "gst": 800.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1125,
+  "gst": 800.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1127,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1138,
+  "gst": 252.3,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1139,
+  "gst": 344.32,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1140,
+  "gst": 356.65,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1141,
+  "gst": 9.09,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1142,
+  "gst": 375.91,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1143,
+  "gst": 268.64,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1144,
+  "gst": 253.04,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1145,
+  "gst": 66.53,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1146,
+  "gst": 86.4,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1147,
+  "gst": 165.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1149,
+  "gst": 33.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1156,
+  "gst": 1705.33,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1159,
+  "gst": 236.38,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1160,
+  "gst": 54.46,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1163,
+  "gst": 38.49,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1165,
+  "gst": 440.93,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1179,
+  "gst": 130.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1180,
+  "gst": 330.5,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1181,
+  "gst": 355.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1184,
+  "gst": 28.18,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1185,
+  "gst": 49.36,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1188,
+  "gst": 427.57,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1189,
+  "gst": 520.49,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1190,
+  "gst": 103.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1193,
+  "gst": 90.3,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1195,
+  "gst": 215.83,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1206,
+  "gst": 180.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1209,
+  "gst": 126.5,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1210,
+  "gst": 165.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1211,
+  "gst": 298.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1218,
+  "gst": 290.92,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1219,
+  "gst": 42.78,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1220,
+  "gst": 83.01,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1221,
+  "gst": 682.5,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1224,
+  "gst": 320.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1228,
+  "gst": 110.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1236,
+  "gst": 150.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1240,
+  "gst": 122.55,
+  "status": "partially_paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1247,
+  "gst": 103.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1248,
+  "gst": 1597.19,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1254,
+  "gst": 800.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1260,
+  "gst": 13.5,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1264,
+  "gst": 90.87,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1273,
+  "gst": 117.02,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1274,
+  "gst": 695.48,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1276,
+  "gst": 300.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1277,
+  "gst": 73.14,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1279,
+  "gst": 140.76,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1280,
+  "gst": 445.46,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1281,
+  "gst": 772.5,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1282,
+  "gst": 103.34,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1285,
+  "gst": 1196.9,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1292,
+  "gst": 103.25,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1293,
+  "gst": 60.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1296,
+  "gst": 93.18,
+  "status": "paid",
+  "accr_q": "2024-Q3",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1297,
+  "gst": 98.18,
+  "status": "paid",
+  "accr_q": "2024-Q3",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1298,
+  "gst": 43.64,
+  "status": "paid",
+  "accr_q": "2024-Q3",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1303,
+  "gst": 57.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1304,
+  "gst": 27.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1305,
+  "gst": 64.0,
+  "status": "paid",
+  "accr_q": "2024-Q3",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1308,
+  "gst": 93.5,
+  "status": "paid",
+  "accr_q": "2024-Q3",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1324,
+  "gst": 84.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1328,
+  "gst": 999.7,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1332,
+  "gst": 114.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1347,
+  "gst": 93.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1348,
+  "gst": 102.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1366,
+  "gst": 45.0,
+  "status": "paid",
+  "accr_q": "2024-Q3",
+  "pay_q": "2024-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1371,
+  "gst": 47.4,
+  "status": "paid",
+  "accr_q": "2024-Q3",
+  "pay_q": "2024-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1372,
+  "gst": 45.0,
+  "status": "paid",
+  "accr_q": "2024-Q3",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1376,
+  "gst": 230.0,
+  "status": "paid",
+  "accr_q": "2024-Q3",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1394,
+  "gst": 821.67,
+  "status": "paid",
+  "accr_q": "2024-Q3",
+  "pay_q": "2024-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1417,
+  "gst": 474.55,
+  "status": "paid",
+  "accr_q": "2024-Q2",
+  "pay_q": "2024-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1440,
+  "gst": 599.7,
+  "status": "paid",
+  "accr_q": "2024-Q3",
+  "pay_q": "2024-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1449,
+  "gst": 35.0,
+  "status": "paid",
+  "accr_q": "2024-Q2",
+  "pay_q": "2024-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1457,
+  "gst": 31.79,
+  "status": "paid",
+  "accr_q": "2024-Q1",
+  "pay_q": "2024-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1458,
+  "gst": 47.23,
+  "status": "paid",
+  "accr_q": "2024-Q1",
+  "pay_q": "2024-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1459,
+  "gst": 74.54,
+  "status": "paid",
+  "accr_q": "2024-Q2",
+  "pay_q": "2024-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1462,
+  "gst": 100.0,
+  "status": "paid",
+  "accr_q": "2024-Q2",
+  "pay_q": "2024-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1478,
+  "gst": 45.55,
+  "status": "paid",
+  "accr_q": "2024-Q2",
+  "pay_q": "2024-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1482,
+  "gst": 21.82,
+  "status": "paid",
+  "accr_q": "2024-Q2",
+  "pay_q": "2024-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1484,
+  "gst": 74.74,
+  "status": "paid",
+  "accr_q": "2024-Q2",
+  "pay_q": "2024-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1501,
+  "gst": 73.35,
+  "status": "paid",
+  "accr_q": "2024-Q2",
+  "pay_q": "2024-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1521,
+  "gst": 107.5,
+  "status": "paid",
+  "accr_q": "2024-Q2",
+  "pay_q": "2024-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1525,
+  "gst": 68.94,
+  "status": "paid",
+  "accr_q": "2024-Q1",
+  "pay_q": "2024-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1549,
+  "gst": 455.4,
+  "status": "paid",
+  "accr_q": "2024-Q1",
+  "pay_q": "2024-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1554,
+  "gst": 64.7,
+  "status": "paid",
+  "accr_q": "2024-Q1",
+  "pay_q": "2024-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1556,
+  "gst": 80.0,
+  "status": "paid",
+  "accr_q": "2024-Q1",
+  "pay_q": "2024-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1568,
+  "gst": 203.65,
+  "status": "paid",
+  "accr_q": "2024-Q1",
+  "pay_q": "2024-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1580,
+  "gst": 12.0,
+  "status": "paid",
+  "accr_q": "2024-Q1",
+  "pay_q": "2024-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1603,
+  "gst": 35.0,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1607,
+  "gst": 10.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1609,
+  "gst": 1327.5,
+  "status": "paid",
+  "accr_q": "2024-Q1",
+  "pay_q": "2024-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1621,
+  "gst": 74.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1626,
+  "gst": 75.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1627,
+  "gst": 18.18,
+  "status": "paid",
+  "accr_q": "2023-Q4",
+  "pay_q": "2024-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1644,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1645,
+  "gst": 90.0,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1648,
+  "gst": 70.0,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1649,
+  "gst": 22.73,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1652,
+  "gst": 10.91,
+  "status": "paid",
+  "accr_q": "2023-Q4",
+  "pay_q": "2024-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1657,
+  "gst": 2421.5,
+  "status": "paid",
+  "accr_q": "2024-Q1",
+  "pay_q": "2024-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1658,
+  "gst": 40.0,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1659,
+  "gst": 110.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1661,
+  "gst": 71.55,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1662,
+  "gst": 2283.86,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1664,
+  "gst": 28.18,
+  "status": "paid",
+  "accr_q": "2023-Q4",
+  "pay_q": "2024-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1666,
+  "gst": 18.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1679,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1681,
+  "gst": 2224.36,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1682,
+  "gst": 272.73,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1687,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1688,
+  "gst": 82.5,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1696,
+  "gst": 3083.49,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1697,
+  "gst": 40.0,
+  "status": "paid",
+  "accr_q": "2023-Q4",
+  "pay_q": "2024-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1698,
+  "gst": 43.0,
+  "status": "paid",
+  "accr_q": "2023-Q4",
+  "pay_q": "2024-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1699,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1700,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1703,
+  "gst": 42.0,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1705,
+  "gst": 93.0,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1706,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1710,
+  "gst": 43.0,
+  "status": "paid",
+  "accr_q": "2023-Q4",
+  "pay_q": "2024-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1716,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1720,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1722,
+  "gst": 100.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1725,
+  "gst": 8.33,
+  "status": "paid",
+  "accr_q": "2024-Q1",
+  "pay_q": "2024-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1730,
+  "gst": 2275.82,
+  "status": "partially_paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1734,
+  "gst": 15.91,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1739,
+  "gst": 9.09,
+  "status": "paid",
+  "accr_q": "2023-Q3",
+  "pay_q": "2024-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1740,
+  "gst": 87.06,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1743,
+  "gst": 110.0,
+  "status": "partially_paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1744,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1753,
+  "gst": 280.0,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1754,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1758,
+  "gst": 181.82,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1761,
+  "gst": 40.91,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1765,
+  "gst": 480.0,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1767,
+  "gst": 2193.55,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2026-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1770,
+  "gst": 1000.0,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1773,
+  "gst": 135.42,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1780,
+  "gst": 172.6,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2026-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1786,
+  "gst": 187.5,
+  "status": "paid",
+  "accr_q": "2024-Q1",
+  "pay_q": "2024-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1788,
+  "gst": 9.09,
+  "status": "paid",
+  "accr_q": "2024-Q1",
+  "pay_q": "2024-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1792,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1796,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1797,
+  "gst": 250.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1799,
+  "gst": 207.5,
+  "status": "paid",
+  "accr_q": "2024-Q3",
+  "pay_q": "2024-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1805,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1810,
+  "gst": 30.0,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1812,
+  "gst": 181.82,
+  "status": "paid",
+  "accr_q": "2025-Q4",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1813,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1837,
+  "gst": 1176.29,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 757,
+  "gst": 1873.12,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 879,
+  "gst": 1867.22,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 973,
+  "gst": 1860.32,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1067,
+  "gst": 1896.85,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1068,
+  "gst": 1132.94,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1251,
+  "gst": 1590.09,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1252,
+  "gst": 1656.23,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2024-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 790,
+  "gst": 1863.12,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 343,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 576,
+  "gst": 6960.13,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 629,
+  "gst": 566.2,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 995,
+  "gst": 6960.13,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 971,
+  "gst": 6950.13,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 839,
+  "gst": 6950.1,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 674,
+  "gst": 6950.11,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 672,
+  "gst": 6950.1,
+  "status": "paid",
+  "accr_q": "2025-Q3",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 673,
+  "gst": 6950.1,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1071,
+  "gst": 1287.28,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1084,
+  "gst": 66.5,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 760,
+  "gst": 20.0,
+  "status": "paid",
+  "accr_q": "2025-Q2",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 358,
+  "gst": 6078.91,
+  "status": "paid",
+  "accr_q": "2026-Q1",
+  "pay_q": "2026-Q2",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 994,
+  "gst": 6950.13,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q4",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 1055,
+  "gst": 5378.78,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 749,
+  "gst": 15.0,
+  "status": "paid",
+  "accr_q": "2025-Q1",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1623,
+  "gst": 4424.3,
+  "status": "paid",
+  "accr_q": "2024-Q4",
+  "pay_q": "2025-Q1",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 302,
+  "gst": 473.12,
+  "status": "paid",
+  "accr_q": "2026-Q2",
+  "pay_q": "2026-Q3",
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 246,
+  "gst": 56.13,
+  "status": "approved",
+  "accr_q": "2026-Q3",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 252,
+  "gst": 20.0,
+  "status": "approved",
+  "accr_q": "2026-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 261,
+  "gst": 124.0,
+  "status": "approved",
+  "accr_q": "2026-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 268,
+  "gst": 1376.55,
+  "status": "approved",
+  "accr_q": "2026-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 269,
+  "gst": 1504.67,
+  "status": "approved",
+  "accr_q": "2026-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 276,
+  "gst": 100.0,
+  "status": "approved",
+  "accr_q": "2026-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 277,
+  "gst": 93.0,
+  "status": "approved",
+  "accr_q": "2026-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 280,
+  "gst": 35.0,
+  "status": "approved",
+  "accr_q": "2026-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 281,
+  "gst": 84.0,
+  "status": "approved",
+  "accr_q": "2026-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 284,
+  "gst": 743.64,
+  "status": "approved",
+  "accr_q": "2026-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 290,
+  "gst": 30.0,
+  "status": "partially_paid",
+  "accr_q": "2026-Q2",
+  "pay_q": null,
+  "action": "RE-DATE\u2192payment",
+  "moves_quarter": true
+ },
+ {
+  "inv_id": 301,
+  "gst": 127.27,
+  "status": "approved",
+  "accr_q": "2026-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 303,
+  "gst": 145.0,
+  "status": "approved",
+  "accr_q": "2026-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 304,
+  "gst": 20.0,
+  "status": "approved",
+  "accr_q": "2026-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 319,
+  "gst": 1568.99,
+  "status": "approved",
+  "accr_q": "2026-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 324,
+  "gst": 746.12,
+  "status": "approved",
+  "accr_q": "2026-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 404,
+  "gst": 689.32,
+  "status": "approved",
+  "accr_q": "2026-Q1",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 405,
+  "gst": 720.52,
+  "status": "approved",
+  "accr_q": "2025-Q4",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 410,
+  "gst": 30.0,
+  "status": "approved",
+  "accr_q": "2026-Q1",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 415,
+  "gst": 354.43,
+  "status": "approved",
+  "accr_q": "2025-Q4",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 416,
+  "gst": 326.94,
+  "status": "approved",
+  "accr_q": "2025-Q4",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 418,
+  "gst": 463.28,
+  "status": "approved",
+  "accr_q": "2025-Q4",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 420,
+  "gst": 231.64,
+  "status": "approved",
+  "accr_q": "2025-Q3",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 586,
+  "gst": 376.1,
+  "status": "approved",
+  "accr_q": "2025-Q3",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 608,
+  "gst": 208.65,
+  "status": "approved",
+  "accr_q": "2025-Q3",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 642,
+  "gst": 60.0,
+  "status": "approved",
+  "accr_q": "2025-Q3",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 773,
+  "gst": 25.45,
+  "status": "approved",
+  "accr_q": "2024-Q4",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 799,
+  "gst": 403.46,
+  "status": "approved",
+  "accr_q": "2025-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 846,
+  "gst": 175.0,
+  "status": "approved",
+  "accr_q": "2025-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 847,
+  "gst": 226.7,
+  "status": "approved",
+  "accr_q": "2025-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 918,
+  "gst": 318.19,
+  "status": "approved",
+  "accr_q": "2025-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 961,
+  "gst": 82.6,
+  "status": "approved",
+  "accr_q": "2024-Q4",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 320,
+  "gst": 20.0,
+  "status": "approved",
+  "accr_q": "2026-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 292,
+  "gst": 220.0,
+  "status": "approved",
+  "accr_q": "2026-Q1",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 429,
+  "gst": 39.9,
+  "status": "approved",
+  "accr_q": "2025-Q4",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1065,
+  "gst": 20.0,
+  "status": "approved",
+  "accr_q": "2025-Q1",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1591,
+  "gst": 2405.45,
+  "status": "approved",
+  "accr_q": "2025-Q4",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1601,
+  "gst": 2345.38,
+  "status": "approved",
+  "accr_q": "2025-Q4",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1727,
+  "gst": 69.0,
+  "status": "approved",
+  "accr_q": "2025-Q3",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1791,
+  "gst": 2460.29,
+  "status": "approved",
+  "accr_q": "2025-Q4",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 1808,
+  "gst": 15.0,
+  "status": "approved",
+  "accr_q": "2025-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 2490,
+  "gst": 602.88,
+  "status": "approved",
+  "accr_q": "2026-Q1",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 2491,
+  "gst": 426.4,
+  "status": "approved",
+  "accr_q": "2026-Q1",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 2492,
+  "gst": 247.0,
+  "status": "approved",
+  "accr_q": "2026-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ },
+ {
+  "inv_id": 2493,
+  "gst": 335.72,
+  "status": "approved",
+  "accr_q": "2026-Q2",
+  "pay_q": null,
+  "action": "RECLASS\u21921355",
+  "moves_quarter": false
+ }
+]

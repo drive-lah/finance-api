@@ -1,0 +1,13 @@
+{"id":251,"status":"paid","total_amount":10000.00,"amount_paid":0.00,"updated_at":"2026-08-08T06:32:53.417796"}
+{"id":285,"status":"paid","total_amount":10000.00,"amount_paid":0.00,"updated_at":"2026-08-06T05:11:08.928734"}
+{"id":321,"status":"partially_paid","total_amount":3421.60,"amount_paid":0.00,"updated_at":"2026-08-03T08:53:09.063547"}
+{"id":325,"status":"paid","total_amount":10000.00,"amount_paid":0.00,"updated_at":"2026-08-06T05:11:18.905392"}
+{"id":345,"status":"paid","total_amount":338.80,"amount_paid":0.00,"updated_at":"2026-08-08T06:58:34.133377"}
+{"id":349,"status":"paid","total_amount":10000.00,"amount_paid":0.00,"updated_at":"2026-08-10T03:36:44.472197"}
+{"id":384,"status":"partially_paid","total_amount":385.00,"amount_paid":0.00,"updated_at":"2026-08-01T02:32:45.580408"}
+{"id":403,"status":"paid","total_amount":10000.00,"amount_paid":0.00,"updated_at":"2026-08-03T10:15:53.662296"}
+{"id":427,"status":"paid","total_amount":3149.01,"amount_paid":0.00,"updated_at":"2026-08-10T03:49:41.061052"}
+{"id":444,"status":"paid","total_amount":10000.00,"amount_paid":0.00,"updated_at":"2026-08-04T12:57:22.032782"}
+{"id":451,"status":"partially_paid","total_amount":4360.00,"amount_paid":0.00,"updated_at":"2026-08-01T02:32:45.580434"}
+{"id":485,"status":"paid","total_amount":3261.99,"amount_paid":0.00,"updated_at":"2026-08-04T13:26:45.662161"}
+{"id":2355,"status":"paid","total_amount":220.00,"amount_paid":0.00,"updated_at":"2026-08-10T02:24:20.572407"}

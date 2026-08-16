@@ -1,0 +1,7 @@
+account,name,type,amount,bas,source_sheet
+2500,GST Payable Output realized,liability,75775.38,in Q2 BAS (1A),gst_q2_all_lines.csv gst_account=2500 bucket=REALIZED
+1350,GST Receivable Input realized,asset,91357.19,in Q2 BAS (1B),gst_q2_all_lines.csv gst_account=1350 bucket=REALIZED
+2505,GST Payable Deferred (uncollected sales),liability,49341.89,NOT in BAS,gst_q2_all_lines.csv gst_account=2505 bucket=DEFERRED
+1355,GST Receivable Deferred (unpaid purchases),asset,20601.99,NOT in BAS,gst_q2_all_lines.csv gst_account=1355 bucket=DEFERRED
+net,Q2 BAS net = 2500 minus 1350,,-15581.81,REFUND,realized output minus realized input
+net,Balance-sheet GST net @30Jun = (2500+2505) minus (1350+1355),,13158.09,net position,Q2 realized + deferred both sides

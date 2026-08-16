@@ -1,0 +1,66 @@
+[
+ {
+  "id": 1,
+  "user_id": 49,
+  "module": "finance",
+  "access_level": "admin",
+  "granted_by": 1,
+  "granted_at": "2025-10-20 01:45:52.015200"
+ },
+ {
+  "id": 4,
+  "user_id": 6,
+  "module": "finance",
+  "access_level": "admin",
+  "granted_by": 1,
+  "granted_at": "2025-10-20 02:06:48.828847"
+ },
+ {
+  "id": 85,
+  "user_id": 2,
+  "module": "finance",
+  "access_level": "admin",
+  "granted_by": 14,
+  "granted_at": "2025-10-22 05:49:11.834591"
+ },
+ {
+  "id": 18,
+  "user_id": 36,
+  "module": "finance",
+  "access_level": "admin",
+  "granted_by": 14,
+  "granted_at": "2025-10-22 05:49:11.834591"
+ },
+ {
+  "id": 137,
+  "user_id": 58,
+  "module": "finance",
+  "access_level": "admin",
+  "granted_by": 14,
+  "granted_at": "2025-10-22 05:49:11.834591"
+ },
+ {
+  "id": 168,
+  "user_id": 3,
+  "module": "finance",
+  "access_level": "admin",
+  "granted_by": 14,
+  "granted_at": "2025-10-22 05:49:11.834591"
+ },
+ {
+  "id": 240,
+  "user_id": 76,
+  "module": "finance",
+  "access_level": "admin",
+  "granted_by": 14,
+  "granted_at": "2025-10-22 05:49:11.834591"
+ },
+ {
+  "id": 343,
+  "user_id": 14,
+  "module": "finance",
+  "access_level": "admin",
+  "granted_by": 1,
+  "granted_at": "2026-02-26 03:02:17.139869"
+ }
+]

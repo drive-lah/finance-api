@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Finance Cutover — Local Test Plan</title>
+<style>
+  body{font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:900px;margin:24px auto;padding:0 20px;color:#1f2937}
+  h1{font-size:22px} h2{font-size:17px;margin-top:28px;border-bottom:2px solid #e5e7eb;padding-bottom:6px}
+  .env{background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:12px 16px;font-size:14px}
+  .env code{background:#fff;padding:1px 5px;border-radius:4px;border:1px solid #ddd}
+  .tc{border:1px solid #e5e7eb;border-radius:8px;padding:12px 16px;margin:12px 0;background:#fff}
+  .tc h3{margin:0 0 6px;font-size:15px}
+  .tc .steps{margin:6px 0} .tc .exp{color:#065f46;background:#ecfdf5;border-radius:6px;padding:6px 10px;margin:6px 0;font-size:14px}
+  .res{margin-top:8px} .res label{font-size:13px;color:#6b7280}
+  .res textarea{width:100%;min-height:44px;border:1px solid #d1d5db;border-radius:6px;padding:6px;font:14px sans-serif;box-sizing:border-box}
+  .pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;background:#eef2ff;color:#4338ca;margin-left:6px}
+  .warn{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:14px}
+  ol{padding-left:20px} .k{font-family:ui-monospace,monospace;background:#f3f4f6;padding:1px 5px;border-radius:4px}
+  #status{position:fixed;top:10px;right:14px;background:#111827;color:#fff;font-size:12px;padding:5px 12px;border-radius:999px;opacity:0;transition:opacity .3s}
+  #banner{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:8px;padding:8px 14px;font-size:13px;margin:10px 0;display:none}
+</style>
+</head>
+<body>
+<div id="status">saved ✓</div>
+<h1>Finance Cutover — Local Test Plan</h1>
+<div id="banner">⚠ Auto-save sink not reachable on :4545 — notes kept in this browser only. Tell Pickle to start the sink, then reload.</div>
+<p>Local database (never prod). <b>Type freely — every keystroke auto-saves to disk</b> (I read it live). No button needed.</p>
+
+<div class="env">
+<b>Stack:</b> UI → <a href="http://localhost:5173">http://localhost:5173</a> &nbsp;•&nbsp; BFF :3001 &nbsp;•&nbsp; finance-api :8081 &nbsp;•&nbsp; local DB <code>finance_aw2_local</code>
+</div>
+
+<h2>0 · Log in</h2>
+<div class="tc">
+<div class="steps"><ol>
+<li>Open <a href="http://localhost:5173">http://localhost:5173</a>.</li>
+<li>Enter email <span class="k">gauravs@drivelah.sg</span> + <b>any</b> password → submit (dev login).</li>
+</ol></div>
+<div class="exp">Expected: you're in as admin. (If tabs vanish after a browser <b>reload</b>, log in again — local-only token-refresh quirk.)</div>
+<div class="res"><label>What happened?</label><textarea data-id="login"></textarea></div>
+</div>
+
+<h2>1 · Finance Settings — COA config <span class="pill">AW-2</span></h2>
+<div class="tc">
+<h3>1a. Tab loads with the full chart of accounts</h3>
+<div class="steps">Go to <b>Finance → Accounting → Settings</b>.</div>
+<div class="exp">Expected: ~136 accounts; <b>5021</b> and <b>6701</b> pre-configured.</div>
+<div class="res"><label>What happened?</label><textarea data-id="1a"></textarea></div>
+</div>
+<div class="tc">
+<h3>1b. Edit a row + save</h3>
+<div class="steps">Pick a blank COA (e.g. <span class="k">6100 Marketing – Digital Advertising</span>) → pencil → Approver 1 = <span class="k">gauravs@drivelah.sg</span>, Threshold = <span class="k">1000</span>, tick <b>Trip</b> → save.</div>
+<div class="exp">Expected: saves, persists on reload.</div>
+<div class="res"><label>What happened?</label><textarea data-id="1b"></textarea></div>
+</div>
+<div class="tc">
+<h3>1c. Audit history</h3>
+<div class="steps">Click the history (clock) icon on that row.</div>
+<div class="exp">Expected: each change as <span class="k">&#8709; &#8594; value</span> + your email + time; a no-op re-save adds nothing.</div>
+<div class="res"><label>What happened?</label><textarea data-id="1c"></textarea></div>
+</div>
+
+<h2>2 · Approvals — scoped queue <span class="pill">AW-7</span></h2>
+<div class="tc">
+<h3>2a. You see only YOUR queue</h3>
+<div class="steps">Go to <b>Finance → Accounting → Approvals</b>.</div>
+<div class="exp">Expected: exactly <b>2</b> — <span class="k">INV-SOFTWARE-01</span> ($1,200) + <span class="k">INV-SOFTWARE-02</span> ($450), COA 6701. <span class="k">INV-DAMAGE-01</span> NOT here (scoping).</div>
+<div class="res"><label>What happened?</label><textarea data-id="2a"></textarea></div>
+</div>
+<div class="tc">
+<h3>2b. Approve advances it off your queue</h3>
+<div class="steps">Approve INV-SOFTWARE-01.</div>
+<div class="exp">Expected: disappears (1-step → approved → posts JE); queue shows 1.</div>
+<div class="res"><label>What happened?</label><textarea data-id="2b"></textarea></div>
+</div>
+<div class="tc">
+<h3>2c. Return with a reason</h3>
+<div class="steps">Return INV-SOFTWARE-02 → type reason → confirm.</div>
+<div class="exp">Expected: reason required; on confirm leaves queue (&#8594; needs_fix).</div>
+<div class="res"><label>What happened?</label><textarea data-id="2c"></textarea></div>
+</div>
+
+<h2>3 · Requests — claims relocation <span class="pill">RS-4</span></h2>
+<div class="tc">
+<h3>3a. My Claims under Requests</h3>
+<div class="steps">Open <b>Requests</b> → sub-tabs <b>Track · My Claims · Raise</b>.</div>
+<div class="exp">Expected: My Claims renders; Track works; Raise shows "coming next".</div>
+<div class="res"><label>What happened?</label><textarea data-id="3a"></textarea></div>
+</div>
+
+<div class="warn"><b>Parked (not testable):</b> Raise-a-request (RS-3) + incident sub-ledger (056). Prod has only 054/055.</div>
+
+<script>
+const SINK = 'http://localhost:4545';
+const areas = [...document.querySelectorAll('textarea[data-id]')];
+const statusEl = document.getElementById('status'), banner = document.getElementById('banner');
+let t;
+function collect(){ const o={}; areas.forEach(a=>o[a.dataset.id]=a.value); return o; }
+function flash(){ statusEl.style.opacity=1; clearTimeout(t); t=setTimeout(()=>statusEl.style.opacity=0,900); }
+async function save(){
+  try{ const r=await fetch(SINK+'/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(collect())}); if(r.ok){ flash(); banner.style.display='none'; } }
+  catch(e){ banner.style.display='block'; }
+}
+async function load(){
+  try{ const r=await fetch(SINK+'/load'); if(r.ok){ const d=await r.json(); areas.forEach(a=>{ if(d[a.dataset.id]!=null) a.value=d[a.dataset.id]; }); } }
+  catch(e){ banner.style.display='block'; }
+}
+let deb; areas.forEach(a=>a.addEventListener('input',()=>{ clearTimeout(deb); deb=setTimeout(save,400); }));
+load();
+</script>
+</body>
+</html>

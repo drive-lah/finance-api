@@ -1,0 +1,587 @@
+{
+ "ts": "2026-08-14T00:11:23.901924+00:00",
+ "before": {
+  "bals": {
+   "1350": 204315.54,
+   "3200": 15045.64
+  },
+  "expense": 2848625.48
+ },
+ "bills": [
+  {
+   "je_id": 8796,
+   "line_1350_id": 17606,
+   "gst": 969.14,
+   "expense_line_id": 17605,
+   "expense_dr": 9691.36,
+   "expense_code": "1300",
+   "ap_cr": 10660.5
+  },
+  {
+   "je_id": 8803,
+   "line_1350_id": 17621,
+   "gst": 25.0,
+   "expense_line_id": 17620,
+   "expense_dr": 250.0,
+   "expense_code": "5032",
+   "ap_cr": 275.0
+  },
+  {
+   "je_id": 8810,
+   "line_1350_id": 17636,
+   "gst": 35.0,
+   "expense_line_id": 17635,
+   "expense_dr": 350.0,
+   "expense_code": "5032",
+   "ap_cr": 385.0
+  },
+  {
+   "je_id": 8812,
+   "line_1350_id": 17641,
+   "gst": 104.82,
+   "expense_line_id": 17640,
+   "expense_dr": 1048.28,
+   "expense_code": "1300",
+   "ap_cr": 1153.1
+  },
+  {
+   "je_id": 8814,
+   "line_1350_id": 17646,
+   "gst": 20.0,
+   "expense_line_id": 17645,
+   "expense_dr": 200.0,
+   "expense_code": "5034",
+   "ap_cr": 220.0
+  },
+  {
+   "je_id": 8824,
+   "line_1350_id": 17667,
+   "gst": 35.16,
+   "expense_line_id": 17666,
+   "expense_dr": 351.59,
+   "expense_code": "5032",
+   "ap_cr": 386.75
+  },
+  {
+   "je_id": 8826,
+   "line_1350_id": 17672,
+   "gst": 30.0,
+   "expense_line_id": 17671,
+   "expense_dr": 300.0,
+   "expense_code": "5034",
+   "ap_cr": 330.0
+  },
+  {
+   "je_id": 8828,
+   "line_1350_id": 17677,
+   "gst": 15.0,
+   "expense_line_id": 17676,
+   "expense_dr": 150.0,
+   "expense_code": "5034",
+   "ap_cr": 165.0
+  },
+  {
+   "je_id": 8834,
+   "line_1350_id": 17691,
+   "gst": 20.0,
+   "expense_line_id": 17690,
+   "expense_dr": 200.0,
+   "expense_code": "5034",
+   "ap_cr": 220.0
+  },
+  {
+   "je_id": 8836,
+   "line_1350_id": 17696,
+   "gst": 20.0,
+   "expense_line_id": 17695,
+   "expense_dr": 200.0,
+   "expense_code": "5034",
+   "ap_cr": 220.0
+  },
+  {
+   "je_id": 8838,
+   "line_1350_id": 17701,
+   "gst": 20.0,
+   "expense_line_id": 17700,
+   "expense_dr": 200.0,
+   "expense_code": "5034",
+   "ap_cr": 220.0
+  },
+  {
+   "je_id": 8840,
+   "line_1350_id": 17706,
+   "gst": 15.0,
+   "expense_line_id": 17705,
+   "expense_dr": 150.0,
+   "expense_code": "5034",
+   "ap_cr": 165.0
+  },
+  {
+   "je_id": 8842,
+   "line_1350_id": 17711,
+   "gst": 30.0,
+   "expense_line_id": 17710,
+   "expense_dr": 300.0,
+   "expense_code": "5034",
+   "ap_cr": 330.0
+  },
+  {
+   "je_id": 8844,
+   "line_1350_id": 17716,
+   "gst": 30.0,
+   "expense_line_id": 17715,
+   "expense_dr": 300.0,
+   "expense_code": "5034",
+   "ap_cr": 330.0
+  },
+  {
+   "je_id": 8848,
+   "line_1350_id": 17725,
+   "gst": 272.73,
+   "expense_line_id": 17724,
+   "expense_dr": 2727.27,
+   "expense_code": "5032",
+   "ap_cr": 3000.0
+  },
+  {
+   "je_id": 8850,
+   "line_1350_id": 17730,
+   "gst": 249.82,
+   "expense_line_id": 17729,
+   "expense_dr": 2498.18,
+   "expense_code": "5032",
+   "ap_cr": 2748.0
+  },
+  {
+   "je_id": 8852,
+   "line_1350_id": 17735,
+   "gst": 30.0,
+   "expense_line_id": 17734,
+   "expense_dr": 300.0,
+   "expense_code": "5034",
+   "ap_cr": 330.0
+  },
+  {
+   "je_id": 8856,
+   "line_1350_id": 17744,
+   "gst": 15.0,
+   "expense_line_id": 17743,
+   "expense_dr": 150.0,
+   "expense_code": "5034",
+   "ap_cr": 165.0
+  },
+  {
+   "je_id": 8864,
+   "line_1350_id": 17761,
+   "gst": 30.0,
+   "expense_line_id": 17760,
+   "expense_dr": 300.0,
+   "expense_code": "5034",
+   "ap_cr": 330.0
+  },
+  {
+   "je_id": 8866,
+   "line_1350_id": 17766,
+   "gst": 15.0,
+   "expense_line_id": 17765,
+   "expense_dr": 150.0,
+   "expense_code": "5034",
+   "ap_cr": 165.0
+  },
+  {
+   "je_id": 8874,
+   "line_1350_id": 17783,
+   "gst": 30.0,
+   "expense_line_id": 17782,
+   "expense_dr": 300.0,
+   "expense_code": "5034",
+   "ap_cr": 330.0
+  },
+  {
+   "je_id": 8878,
+   "line_1350_id": 17792,
+   "gst": 20.0,
+   "expense_line_id": 17791,
+   "expense_dr": 200.0,
+   "expense_code": "5034",
+   "ap_cr": 220.0
+  },
+  {
+   "je_id": 8880,
+   "line_1350_id": 17797,
+   "gst": 95.0,
+   "expense_line_id": 17796,
+   "expense_dr": 950.0,
+   "expense_code": "5001",
+   "ap_cr": 1045.0
+  },
+  {
+   "je_id": 8884,
+   "line_1350_id": 17806,
+   "gst": 1299.47,
+   "expense_line_id": 17805,
+   "expense_dr": 12994.65,
+   "expense_code": "1300",
+   "ap_cr": 14294.12
+  },
+  {
+   "je_id": 8886,
+   "line_1350_id": 17811,
+   "gst": 1045.65,
+   "expense_line_id": 17810,
+   "expense_dr": 10456.45,
+   "expense_code": "5030",
+   "ap_cr": 11502.1
+  },
+  {
+   "je_id": 8888,
+   "line_1350_id": 17816,
+   "gst": 7.5,
+   "expense_line_id": 17815,
+   "expense_dr": 75.0,
+   "expense_code": "5034",
+   "ap_cr": 82.5
+  },
+  {
+   "je_id": 8890,
+   "line_1350_id": 17821,
+   "gst": 345.6,
+   "expense_line_id": 17820,
+   "expense_dr": 3456.0,
+   "expense_code": "5032",
+   "ap_cr": 3801.6
+  },
+  {
+   "je_id": 8896,
+   "line_1350_id": 17834,
+   "gst": 30.0,
+   "expense_line_id": 17833,
+   "expense_dr": 300.0,
+   "expense_code": "5034",
+   "ap_cr": 330.0
+  },
+  {
+   "je_id": 8898,
+   "line_1350_id": 17839,
+   "gst": 40.0,
+   "expense_line_id": 17838,
+   "expense_dr": 400.0,
+   "expense_code": "5032",
+   "ap_cr": 440.0
+  },
+  {
+   "je_id": 8900,
+   "line_1350_id": 17844,
+   "gst": 30.0,
+   "expense_line_id": 17843,
+   "expense_dr": 300.0,
+   "expense_code": "5034",
+   "ap_cr": 330.0
+  },
+  {
+   "je_id": 8902,
+   "line_1350_id": 17849,
+   "gst": 18.0,
+   "expense_line_id": 17848,
+   "expense_dr": 180.0,
+   "expense_code": "5001",
+   "ap_cr": 198.0
+  },
+  {
+   "je_id": 8904,
+   "line_1350_id": 17854,
+   "gst": 30.0,
+   "expense_line_id": 17853,
+   "expense_dr": 300.0,
+   "expense_code": "5034",
+   "ap_cr": 330.0
+  },
+  {
+   "je_id": 8908,
+   "line_1350_id": 17863,
+   "gst": 180.0,
+   "expense_line_id": 17862,
+   "expense_dr": 1800.0,
+   "expense_code": "5032",
+   "ap_cr": 1980.0
+  },
+  {
+   "je_id": 8916,
+   "line_1350_id": 17881,
+   "gst": 65.21,
+   "expense_line_id": 17880,
+   "expense_dr": 652.1,
+   "expense_code": "1300",
+   "ap_cr": 717.31
+  },
+  {
+   "je_id": 8918,
+   "line_1350_id": 17886,
+   "gst": 15.8,
+   "expense_line_id": 17885,
+   "expense_dr": 157.95,
+   "expense_code": "5032",
+   "ap_cr": 173.75
+  },
+  {
+   "je_id": 8924,
+   "line_1350_id": 17899,
+   "gst": 976.56,
+   "expense_line_id": 17898,
+   "expense_dr": 9765.64,
+   "expense_code": "5030",
+   "ap_cr": 10742.2
+  },
+  {
+   "je_id": 8926,
+   "line_1350_id": 17904,
+   "gst": 15.0,
+   "expense_line_id": 17903,
+   "expense_dr": 150.0,
+   "expense_code": "5034",
+   "ap_cr": 165.0
+  },
+  {
+   "je_id": 8934,
+   "line_1350_id": 17921,
+   "gst": 15.0,
+   "expense_line_id": 17920,
+   "expense_dr": 150.0,
+   "expense_code": "5034",
+   "ap_cr": 165.0
+  },
+  {
+   "je_id": 8936,
+   "line_1350_id": 17926,
+   "gst": 82.5,
+   "expense_line_id": 17925,
+   "expense_dr": 825.0,
+   "expense_code": "1300",
+   "ap_cr": 907.5
+  },
+  {
+   "je_id": 8938,
+   "line_1350_id": 17931,
+   "gst": 355.4,
+   "expense_line_id": 17930,
+   "expense_dr": 3553.9,
+   "expense_code": "5032",
+   "ap_cr": 3909.3
+  },
+  {
+   "je_id": 8940,
+   "line_1350_id": 17936,
+   "gst": 15.0,
+   "expense_line_id": 17935,
+   "expense_dr": 150.0,
+   "expense_code": "5034",
+   "ap_cr": 165.0
+  },
+  {
+   "je_id": 8948,
+   "line_1350_id": 17953,
+   "gst": 600.0,
+   "expense_line_id": 17952,
+   "expense_dr": 6000.0,
+   "expense_code": "5032",
+   "ap_cr": 6600.0
+  },
+  {
+   "je_id": 8950,
+   "line_1350_id": 17958,
+   "gst": 15.0,
+   "expense_line_id": 17957,
+   "expense_dr": 150.0,
+   "expense_code": "5034",
+   "ap_cr": 165.0
+  },
+  {
+   "je_id": 8952,
+   "line_1350_id": 17963,
+   "gst": 454.55,
+   "expense_line_id": 17962,
+   "expense_dr": 4545.45,
+   "expense_code": "5032",
+   "ap_cr": 5000.0
+  },
+  {
+   "je_id": 8960,
+   "line_1350_id": 17981,
+   "gst": 878.14,
+   "expense_line_id": 17980,
+   "expense_dr": 8781.35,
+   "expense_code": "1300",
+   "ap_cr": 9659.49
+  },
+  {
+   "je_id": 8964,
+   "line_1350_id": 17991,
+   "gst": 181.82,
+   "expense_line_id": 17990,
+   "expense_dr": 1818.18,
+   "expense_code": "5060",
+   "ap_cr": 2000.0
+  },
+  {
+   "je_id": 8974,
+   "line_1350_id": 18015,
+   "gst": 1227.0,
+   "expense_line_id": 18014,
+   "expense_dr": 12269.98,
+   "expense_code": "5030",
+   "ap_cr": 13496.98
+  },
+  {
+   "je_id": 8978,
+   "line_1350_id": 18025,
+   "gst": 281.11,
+   "expense_line_id": 18024,
+   "expense_dr": 2811.09,
+   "expense_code": "5032",
+   "ap_cr": 3092.2
+  },
+  {
+   "je_id": 9016,
+   "line_1350_id": 18111,
+   "gst": 181.82,
+   "expense_line_id": 18110,
+   "expense_dr": 1818.18,
+   "expense_code": "5060",
+   "ap_cr": 2000.0
+  },
+  {
+   "je_id": 9992,
+   "line_1350_id": 20358,
+   "gst": 90.0,
+   "expense_line_id": 20357,
+   "expense_dr": 900.0,
+   "expense_code": "6500",
+   "ap_cr": 990.0
+  },
+  {
+   "je_id": 10002,
+   "line_1350_id": 20383,
+   "gst": 40.0,
+   "expense_line_id": 20382,
+   "expense_dr": 400.0,
+   "expense_code": "6500",
+   "ap_cr": 440.0
+  },
+  {
+   "je_id": 10030,
+   "line_1350_id": 20449,
+   "gst": 82.5,
+   "expense_line_id": 20448,
+   "expense_dr": 825.0,
+   "expense_code": "1300",
+   "ap_cr": 907.5
+  },
+  {
+   "je_id": 10040,
+   "line_1350_id": 20474,
+   "gst": 20.0,
+   "expense_line_id": 20473,
+   "expense_dr": 200.0,
+   "expense_code": "5034",
+   "ap_cr": 220.0
+  },
+  {
+   "je_id": 10050,
+   "line_1350_id": 20499,
+   "gst": 30.0,
+   "expense_line_id": 20498,
+   "expense_dr": 300.0,
+   "expense_code": "6500",
+   "ap_cr": 330.0
+  },
+  {
+   "je_id": 10054,
+   "line_1350_id": 20508,
+   "gst": 20.0,
+   "expense_line_id": 20507,
+   "expense_dr": 200.0,
+   "expense_code": "5034",
+   "ap_cr": 220.0
+  },
+  {
+   "je_id": 10082,
+   "line_1350_id": 20573,
+   "gst": 280.0,
+   "expense_line_id": 20572,
+   "expense_dr": 2800.0,
+   "expense_code": "5032",
+   "ap_cr": 3080.0
+  },
+  {
+   "je_id": 10084,
+   "line_1350_id": 20578,
+   "gst": 30.0,
+   "expense_line_id": 20577,
+   "expense_dr": 300.0,
+   "expense_code": "6500",
+   "ap_cr": 330.0
+  },
+  {
+   "je_id": 10098,
+   "line_1350_id": 20611,
+   "gst": 1000.0,
+   "expense_line_id": 20610,
+   "expense_dr": 10000.0,
+   "expense_code": "6300",
+   "ap_cr": 11000.0
+  },
+  {
+   "je_id": 10120,
+   "line_1350_id": 20665,
+   "gst": 30.0,
+   "expense_line_id": 20664,
+   "expense_dr": 300.0,
+   "expense_code": "5034",
+   "ap_cr": 330.0
+  },
+  {
+   "je_id": 10126,
+   "line_1350_id": 20680,
+   "gst": 1176.29,
+   "expense_line_id": 20679,
+   "expense_dr": 11762.93,
+   "expense_code": "5030",
+   "ap_cr": 12939.22
+  },
+  {
+   "je_id": 10658,
+   "line_1350_id": 21753,
+   "gst": 20.0,
+   "expense_line_id": 21752,
+   "expense_dr": 200.0,
+   "expense_code": "5034",
+   "ap_cr": 220.0
+  },
+  {
+   "je_id": 10806,
+   "line_1350_id": 22061,
+   "gst": 6078.91,
+   "expense_line_id": 22060,
+   "expense_dr": 63393.16,
+   "expense_code": "1300",
+   "ap_cr": 69472.07
+  },
+  {
+   "je_id": 10904,
+   "line_1350_id": 22262,
+   "gst": 473.12,
+   "expense_line_id": 22261,
+   "expense_dr": 4731.23,
+   "expense_code": "5032",
+   "ap_cr": 5204.35
+  }
+ ],
+ "voided_redate": [
+  11001,
+  11002,
+  11003,
+  11004,
+  11005,
+  11006
+ ]
+}
