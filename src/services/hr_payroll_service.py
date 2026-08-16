@@ -88,10 +88,13 @@ class HrPayrollService:
         for k, v in data.items():
             if k in allowed:
                 setattr(emp, k, v)
-        # HR-managed fields that live on the shared users row (bank, manager, is_employee).
+        # HR-managed fields that live on the shared users row (bank, manager, is_employee, start date).
         from sqlalchemy import text
+        if data.get("date_of_joining") not in (None, ""):
+            # editable post-onboarding, but never in the future
+            data = {**data, "date_of_joining": self._no_future(data["date_of_joining"], "Start date (date of joining)")}
         user_fields = {k: data[k] for k in
-                       ("is_employee", "bank_account_number", "bank_code", "manager_id")
+                       ("is_employee", "bank_account_number", "bank_code", "manager_id", "date_of_joining")
                        if k in data}
         if user_fields:
             sets = ", ".join(f"{k} = :{k}" for k in user_fields)
@@ -105,6 +108,17 @@ class HrPayrollService:
     # Compensation history
     # ──────────────────────────────────────────────────────────────────────────
 
+    @staticmethod
+    def _no_future(value, label: str = "date"):
+        """Reject a future-dated value (POL: onboarding and pay dates can never be in the future —
+        this is what let the 2035 typo through). Returns the parsed date, or None if not provided."""
+        if value in (None, ""):
+            return None
+        d = value if isinstance(value, date) else date.fromisoformat(str(value)[:10])
+        if d > date.today():
+            raise ValueError(f"{label} cannot be in the future (got {d.isoformat()}).")
+        return d
+
     def add_compensation(self, db: Session, employee_id: int, data: dict) -> HrCompensation:
         """
         Add a new compensation record. Closes the previously open record
@@ -114,7 +128,7 @@ class HrPayrollService:
         if not emp:
             raise ValueError(f"Employee {employee_id} not found")
 
-        new_from: date = data["effective_from"]
+        new_from: date = self._no_future(data["effective_from"], "Compensation effective date")
 
         # Close previous open record
         open_comp = db.query(HrCompensation).filter(
@@ -138,6 +152,33 @@ class HrPayrollService:
             effective_to=data.get("effective_to"),
         )
         db.add(comp)
+        db.commit()
+        db.refresh(comp)
+        return comp
+
+    def update_compensation(self, db: Session, comp_id: int, data: dict) -> HrCompensation:
+        """Edit an EXISTING compensation record in place — current OR historical — to fix a wrong salary,
+        currency, pay type, schedule/split, or a typo'd effective date. A future effective_from is
+        rejected. The route writes the before/after to hr_audit_log."""
+        comp = db.get(HrCompensation, comp_id)
+        if not comp:
+            raise ValueError(f"Compensation {comp_id} not found")
+        if data.get("effective_from") not in (None, ""):
+            comp.effective_from = self._no_future(data["effective_from"], "Compensation effective date")
+        if "effective_to" in data:
+            comp.effective_to = (date.fromisoformat(str(data["effective_to"])[:10])
+                                 if data["effective_to"] not in (None, "") else None)
+        if data.get("gross_amount") is not None:
+            comp.gross_amount = Decimal(str(data["gross_amount"]))
+        if data.get("currency"):
+            comp.currency = data["currency"]
+        if data.get("pay_type"):
+            comp.pay_type = data["pay_type"]
+        if data.get("pay_schedule"):
+            comp.pay_schedule = str(data["pay_schedule"]).lower()
+        if "pay_split_pct" in data:
+            comp.pay_split_pct = (Decimal(str(data["pay_split_pct"]))
+                                  if data["pay_split_pct"] not in (None, "") else None)
         db.commit()
         db.refresh(comp)
         return comp

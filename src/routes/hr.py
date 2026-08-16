@@ -80,6 +80,7 @@ class EmployeeUpdate(BaseModel):
     bank_account_number: Optional[str] = None
     bank_code: Optional[str] = None
     manager_id: Optional[int] = None
+    date_of_joining: Optional[date] = None   # start date — editable post-onboarding, never future
 
 class CompensationCreate(BaseModel):
     pay_type: str  # FIXED_SALARY | HOURLY_RATE
@@ -278,6 +279,24 @@ def add_compensation(employee_id: int):
             comp = hr_payroll_service.add_compensation(db, employee_id, payload.model_dump())
             hr_audit(db, "add_compensation", target_employee_id=employee_id, detail=payload.model_dump())
             return jsonify(_compensation_dict(comp)), 201
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@hr_bp.route("/employees/<int:employee_id>/compensation/<int:comp_id>", methods=["PUT"])
+def update_compensation(employee_id: int, comp_id: int):
+    """Edit an existing compensation record in place (fix a wrong salary, currency, schedule/split, or a
+    typo'd effective date). Future effective dates are rejected. Audited to hr_audit_log."""
+    data = request.get_json() or {}
+    try:
+        with db_session() as db:
+            from src.models.hr_employee import HrCompensation as _HC
+            _before = db.get(_HC, comp_id)
+            _snap = _compensation_dict(_before) if _before else None
+            comp = hr_payroll_service.update_compensation(db, comp_id, data)
+            hr_audit(db, "update_compensation", target_employee_id=employee_id,
+                     detail={"comp_id": comp_id, "before": _snap, "after": _compensation_dict(comp), "changes": data})
+            return jsonify(_compensation_dict(comp)), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 

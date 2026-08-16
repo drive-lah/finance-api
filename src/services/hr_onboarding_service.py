@@ -229,6 +229,9 @@ class HrOnboardingService:
             except (ValueError, TypeError):
                 return [{"user_id": user_id,
                          "message": f"Invalid start_date '{raw_start}' — expected YYYY-MM-DD"}]
+            if start_date_val and start_date_val > date.today():
+                return [{"user_id": user_id,
+                         "message": f"start_date '{start_date_val.isoformat()}' cannot be in the future."}]
         elif existing_doj:
             start_date_val = existing_doj
         else:
