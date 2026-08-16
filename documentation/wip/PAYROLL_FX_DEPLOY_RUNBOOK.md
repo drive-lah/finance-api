@@ -15,16 +15,19 @@ Supervised, foreground deploy. Prod = `collections-db` RDS. Prod alembic version
    069 (totals nullable), 070 (`hr_audit_log` create-if-not-exists — a no-op on prod, which already
    has the table). None of these break the old code.
 
-   ⚠️ Do NOT run `alembic upgrade head` — the repo has a **pre-existing second head**
-   (`060_journal_entry_audit`, an orphan branch off 058 that was never applied to prod). Always
-   target revisions explicitly.
+   ⚠️ In THIS step target `070_hr_audit_log`, NOT `head` — `head` (072) would also run 071's
+   `amount_sgd` drop, which the still-running OLD code reads (breaks the payout list). The two-heads
+   problem itself is already resolved by migration `072_merge_heads` (a no-op merge of
+   `060_journal_entry_audit` + `071`), so `alembic upgrade head` is safe to run in step 4 — it just
+   must not run before the new code is live. Rehearsed 064→head on a prod-schema replica: clean, single
+   head 072, and prod's already-applied 060 re-runs idempotently.
 
 3. **Deploy the new code** (finance-api + admin-bff + admincontrols). The new code stops reading
    `finance_payouts.amount_sgd` and starts writing `finance_payroll_runs.currency` / `run_type`.
 
 4. **Apply the CONTRACT migration** (the column drop — only safe once the old code is gone):
    ```
-   alembic upgrade 071_drop_payout_amount_sgd
+   alembic upgrade head    # runs 071 (drop amount_sgd) + idempotent 060 + 072 merge
    ```
    071 drops `finance_payouts.amount_sgd`. The old code read that column on every payout listing, so
    it must run AFTER the new code is live.
