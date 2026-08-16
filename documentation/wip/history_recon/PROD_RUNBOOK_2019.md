@@ -38,7 +38,10 @@ Apply in one sitting, each with its recorded undo:
    7003 Other Income - Miscellaneous, Winata alias on cp 268, Upwork default 6103. *Undo: recorded
    before-images (the resolutions file holds both states).*
 4. Corridor rules 387/388 inserted; guessing rules 30/214/270/336 → INACTIVE. *Undo: flip back.*
-5. ClickHouse `v_SG_c_trip_cash_collected` fix is ALREADY LIVE (shared ClickHouse, 2026-08-16).
+5. ClickHouse `v_SG_c_trip_cash_collected` fix + `v_SG/AU_c_stripe_unmapped_charges` catch-all
+   views are ALREADY LIVE (shared ClickHouse, 2026-08-16).
+6. Insert the `stripe_unmapped_charges` JE templates (Dr 1017/Cr 7003 entity 2; Dr 1019/Cr 7003
+   entity 3) — same INSERT as the clone (template ids will differ). *Undo: deactivate.*
 **GATE: rule table diff vs clone matches exactly; no other rows changed.**
 
 ## Phase 3 — Import (additive, deduped, no journals)

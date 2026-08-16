@@ -102,6 +102,10 @@ VIEW_MAP: dict[tuple[str, str], ViewSpec] = {
     ("SG", "deposit_internal_transfer"): ViewSpec("v_SG_c_deposit_internal_transfer"),
     # POL-68: reconciliation catch for un-modelled platform categories
     # (refund_failure / connect_collection_transfer / charge_failure) -> 5011.
+    # Catch-all: charges captured by NO other view (no sharetribe id, no deposit/verification
+    # description). Makes charge gross complete by CONSTRUCTION (Gaurav ruling 2026-08-16:
+    # the 2019 S$87.50 orphan -> 7003 Other Income - Miscellaneous).
+    ("SG", "stripe_unmapped_charges"): ViewSpec("v_SG_c_stripe_unmapped_charges"),
     ("SG", "stripe_platform_adjustments"): ViewSpec("v_SG_c_stripe_platform_adjustments"),
     ("SG", "disputes"): ViewSpec("v_SG_c_disputes"),
     ("SG", "deposits_received"): ViewSpec("v_SG_c_customer_deposits_received"),
@@ -208,6 +212,10 @@ VIEW_MAP: dict[tuple[str, str], ViewSpec] = {
     # POL-69: deposit/verification transfer from platform to the deposit account.
     ("AU", "deposit_internal_transfer"): ViewSpec("v_AU_c_deposit_internal_transfer"),
     # POL-68: reconciliation catch (refund_failure/connect_collection/charge_failure) -> 5011.
+    # Catch-all: charges captured by NO other view (no sharetribe id, no deposit/verification
+    # description). Makes charge gross complete by CONSTRUCTION (Gaurav ruling 2026-08-16:
+    # the 2019 S$87.50 orphan -> 7003 Other Income - Miscellaneous).
+    ("AU", "stripe_unmapped_charges"): ViewSpec("v_AU_c_stripe_unmapped_charges"),
     ("AU", "stripe_platform_adjustments"): ViewSpec("v_AU_c_stripe_platform_adjustments"),
     ("AU", "disputes"): ViewSpec("v_AU_c_disputes"),
     ("AU", "deposits_received"): ViewSpec("v_AU_c_customer_deposits_received"),

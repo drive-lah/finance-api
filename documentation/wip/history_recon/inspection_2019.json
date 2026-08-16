@@ -27,16 +27,6 @@
    "question": "Ledger carries a balance but no source-of-truth is available for this account \u2014 how do we verify it?"
   },
   {
-   "rule": "INSP-2",
-   "severity": "HIGH",
-   "account": "1017 Stripe Platform ",
-   "book_balance": 7064.46,
-   "truth": 7151.96,
-   "truth_source": "Stripe balance transactions",
-   "diff": -87.5,
-   "question": "Books disagree with the account's own truth \u2014 which lane is missing or double-counting?"
-  },
-  {
    "rule": "INSP-5",
    "severity": "MEDIUM",
    "account": "2120 Host Payables",
@@ -44,16 +34,6 @@
    "normal_balance": "CREDIT",
    "balance": 17709.15,
    "question": "LIABILITY account sits 17,709.15 AGAINST its natural CREDIT side \u2014 double-booking, missing lane, or timing?"
-  },
-  {
-   "rule": "INSP-6",
-   "severity": "HIGH",
-   "source": "invoice_approval",
-   "entry_date": "1900-01-01",
-   "journals": 21,
-   "total_dr": 33410.91,
-   "example_id": 10756,
-   "question": "21 journal(s) dated 1900-01-01 (before the 2016-01-01 epoch) \u2014 sentinel dates pollute every as-of figure (retained earnings, balance sheet) while period reports exclude them."
   }
  ]
 }
