@@ -251,18 +251,22 @@ def cmd_load_own_accounts(args):
 
 
 def cmd_import_payouts(args):
-    """History backfill: import own-account payout lines for a whole year, month by month
-    (explicit periods — the sync button's 90-day default never reaches history)."""
+    """History backfill: import BOTH payout lanes for a whole year, month by month
+    (explicit periods — the sync button's 90-day default never reaches history).
+    Platform lane AND own-account lane must both land BEFORE the engine runs the
+    year's bank accounts: the bank-side Stripe guessing rules are deactivated
+    (2026-08-16), so arrivals only book by PAIRING against imported lines."""
     from src.services.economic_events.service import economic_event_service
     ent_ids = [int(x) for x in args.entity_ids.split(",")]
     with db_session() as db:
         for ent in ent_ids:
             for m in range(1, 13):
-                r = economic_event_service.import_own_account_payout_lines(
+                p = economic_event_service.import_payout_lines(db, ent, date(args.year, m, 1))
+                o = economic_event_service.import_own_account_payout_lines(
                     db, ent, date(args.year, m, 1))
-                if r["lines"]:
-                    print(f"  entity {ent} {args.year}-{m:02d}: {r['lines']} lines, "
-                          f"{r['created']} created, {r['duplicates']} dupes")
+                if p["lines"] or o["lines"]:
+                    print(f"  entity {ent} {args.year}-{m:02d}: platform {p['lines']} lines "
+                          f"({p['created']} new) · own-accounts {o['lines']} lines ({o['created']} new)")
         db.commit()
 
 
