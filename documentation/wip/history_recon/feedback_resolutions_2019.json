@@ -165,5 +165,10 @@
         "note": "S$14 ccy-conversion revaluation credit \u2014 AI booked 7001 on the final scorecard, Gaurav reviewed without objection (implicit OK); pinned as a resolution because AI was nondeterministic across runs (7100 first run, 7001 second, open on clean replay)"
       }
     ]
+  },
+  "round3": {
+    "source_feedback": "scorecard_feedback_2019_round3.json",
+    "date": "2026-08-16",
+    "result": "ALL-OK x8 \u2014 Gaurav sign-off on the one-shot recipe state; no corrections"
   }
 }
