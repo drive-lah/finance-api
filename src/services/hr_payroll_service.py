@@ -269,6 +269,46 @@ class HrPayrollService:
         return {"item_id": item.id, "gross": float(item.gross_amount), "net": float(item.net_amount),
                 "adjustments": audits}
 
+    def _derive_cycle_dates(self, run_type: str, data: dict):
+        """The two fixed cycles have prefixed dates, so finance names the cycle + month, not free dates.
+        end_of_month → run_date = 27th, period = 27th(prev month) → 27th(this month) (the 27→27 cycle).
+        mid_month    → run_date = 15th, period = 1st → 15th of the month.
+        Anchor month from data['period_month'] ('YYYY-MM') else the month of data['run_date']."""
+        pm = data.get("period_month")
+        if pm:
+            y, m = int(pm[:4]), int(pm[5:7])
+        elif data.get("run_date"):
+            rd = data["run_date"]
+            y, m = rd.year, rd.month
+        else:
+            raise ValueError("period_month (YYYY-MM) or run_date is required for a typed run")
+        prev_y, prev_m = (y - 1, 12) if m == 1 else (y, m - 1)
+        if run_type == "end_of_month":
+            return date(y, m, 27), date(prev_y, prev_m, 27), date(y, m, 27)
+        # mid_month
+        return date(y, m, 15), date(y, m, 1), date(y, m, 15)
+
+    def _prorata_factor(self, db: Session, emp, period_start: date, period_end: date):
+        """Fraction of the pay period the employee actually worked — 1 for a full-period employee, less
+        for a mid-period joiner (users.date_of_joining) or leaver (hr_employees.employment_end_date)."""
+        from decimal import Decimal as _D
+        from sqlalchemy import text as _text
+        doj = None
+        row = db.execute(_text("SELECT date_of_joining FROM users WHERE id = :u"), {"u": emp.user_id}).first()
+        if row and row[0]:
+            doj = row[0] if isinstance(row[0], date) else None
+        end = emp.employment_end_date
+        start = max(period_start, doj) if doj else period_start
+        finish = min(period_end, end) if end else period_end
+        if start > period_end or finish < period_start:
+            return _D("0")
+        days_worked = (finish - start).days + 1
+        total = (period_end - period_start).days + 1
+        if total <= 0:
+            return _D("1")
+        f = _D(days_worked) / _D(total)
+        return max(_D("0"), min(_D("1"), f))
+
     def create_run(self, db: Session, data: dict) -> FinancePayrollRun:
         """
         Create a DRAFT payroll run and auto-calculate payslip items.
@@ -279,12 +319,19 @@ class HrPayrollService:
         Returns the finance_payroll_run (status=DRAFT). Items are stored in hr_payroll_items.
         """
         entity_id = data["entity_id"]
-        run_date: date = data["run_date"]
+        # The two fixed cycles derive their dates; a typed run only needs run_type + month. Untyped runs
+        # (legacy / ad-hoc) still accept explicit dates.
+        run_type = (data.get("run_type") or "").lower()
+        if run_type in ("mid_month", "end_of_month"):
+            run_date, period_start, period_end = self._derive_cycle_dates(run_type, data)
+        else:
+            run_type = None
+            run_date: date = data["run_date"]
+            period_start = data["payroll_period_start"]
+            period_end = data["payroll_period_end"]
 
         # Duplicate-run guard: one (entity, period) may have only one live run.
         # Prevents two runs for the same month both posting → double-pay.
-        period_start = data["payroll_period_start"]
-        period_end = data["payroll_period_end"]
         existing_run = db.query(FinancePayrollRun).filter(
             FinancePayrollRun.entity_id == entity_id,
             FinancePayrollRun.payroll_period_start == period_start,
@@ -349,6 +396,13 @@ class HrPayrollService:
                 skipped.append(f"employee_id={emp.id} (no active compensation)")
                 continue
 
+            sched = (getattr(comp, "pay_schedule", None) or "monthly").lower()
+            # Cycle selection: the mid-month (15th) run pays ONLY semi-monthly employees. Monthly staff
+            # are paid once, at end-of-month.
+            if run_type == "mid_month" and sched != "semi_monthly":
+                skipped.append(f"employee_id={emp.id} (monthly — not in the mid-month run)")
+                continue
+
             if comp.pay_type == "HOURLY_RATE":
                 if emp.id not in contractor_hours:
                     skipped.append(f"employee_id={emp.id} (contractor, no hours_worked provided)")
@@ -356,6 +410,20 @@ class HrPayrollService:
                 gross = Decimal(str(comp.gross_amount)) * Decimal(str(contractor_hours[emp.id]))
             else:
                 gross = Decimal(str(comp.gross_amount))
+
+            # Semi-monthly split: the mid-month run pays pay_split_pct%, end-of-month pays the balance.
+            if sched == "semi_monthly" and run_type in ("mid_month", "end_of_month"):
+                _split = Decimal(str(getattr(comp, "pay_split_pct", None) or 50))
+                _pct = _split if run_type == "mid_month" else (Decimal("100") - _split)
+                gross = (gross * _pct / Decimal("100")).quantize(Decimal("0.01"))
+
+            # Pro-rata for mid-period joiners / leavers (day-count within the period).
+            _factor = self._prorata_factor(db, emp, period_start, period_end)
+            if _factor <= 0:
+                skipped.append(f"employee_id={emp.id} (not employed during the period)")
+                continue
+            if _factor < 1:
+                gross = (gross * _factor).quantize(Decimal("0.01"))
 
             emp_ded, emp_contrib, net, deduction_lines = self._compute_deductions(db, emp.id, run_date, gross)
             item_data_list.append({
@@ -383,14 +451,14 @@ class HrPayrollService:
             logger.warning(f"Payroll run skipped: {'; '.join(skipped)}")
 
         description = data.get("description") or (
-            f"Payroll {data['payroll_period_start']} to {data['payroll_period_end']}"
+            f"Payroll {period_start} to {period_end}"
         )
 
         # Create the finance_payroll_run as DRAFT (no JE yet)
         fin_run = FinancePayrollRun(
             entity_id=entity_id,
-            payroll_period_start=data["payroll_period_start"],
-            payroll_period_end=data["payroll_period_end"],
+            payroll_period_start=period_start,
+            payroll_period_end=period_end,
             run_date=run_date,
             headcount=len(item_data_list),
             gross_amount=total_gross,
@@ -399,6 +467,7 @@ class HrPayrollService:
             net_amount=total_net,
             cpf_payable_amount=total_employer_contrib + total_employee_ded,
             currency=_run_func,
+            run_type=run_type,
             bank_account_id=data["bank_account_id"],
             description=description,
             reference_number=data.get("reference_number"),

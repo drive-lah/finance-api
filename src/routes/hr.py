@@ -115,9 +115,13 @@ class ContractorHours(BaseModel):
 
 class PayrollRunCreate(BaseModel):
     entity_id: int
-    payroll_period_start: date
-    payroll_period_end: date
-    run_date: date
+    # Typed runs (the two fixed cycles) pass run_type + period_month and the dates are derived.
+    # Legacy/ad-hoc runs pass explicit run_date + period. Provide one or the other.
+    run_type: Optional[str] = None            # 'mid_month' | 'end_of_month'
+    period_month: Optional[str] = None        # 'YYYY-MM' — the cycle's month
+    payroll_period_start: Optional[date] = None
+    payroll_period_end: Optional[date] = None
+    run_date: Optional[date] = None
     bank_account_id: int
     contractor_hours: list[ContractorHours] = []
     description: Optional[str] = None
@@ -495,6 +499,8 @@ def _run_dict(run) -> dict:
         "payroll_period_start": run.payroll_period_start.isoformat(),
         "payroll_period_end": run.payroll_period_end.isoformat(),
         "run_date": run.run_date.isoformat(),
+        "run_type": run.run_type,
+        "currency": run.currency,
         "headcount": run.headcount,
         "gross_amount": float(run.gross_amount),
         "employer_contributions": float(run.employer_cpf_amount),

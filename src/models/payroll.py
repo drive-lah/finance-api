@@ -105,6 +105,9 @@ class FinancePayrollRun(Base):
     # entity's functional currency — so the totals are never a currency-less conflation. Per-employee
     # native amounts remain the source of truth on hr_payroll_items.
     currency: Mapped[str | None] = mapped_column(String(3), nullable=True)
+    # The two fixed payroll cycles: 'mid_month' (15th) pays only semi-monthly employees their split;
+    # 'end_of_month' (27th, a 27→27 period) pays monthly employees in full + semi-monthly the balance.
+    run_type: Mapped[str | None] = mapped_column(String(16), nullable=True)
 
     # Bank account net salary is paid from
     bank_account_id: Mapped[int] = mapped_column(
