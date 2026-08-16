@@ -1959,14 +1959,21 @@ Return only the JSON object, no explanation."""
             # POL-141/142: a CROSS-CURRENCY intra-entity transfer (source ccy != target ccy) can't be
             # booked from one leg — the two legs have genuinely different amounts and the FX residual
             # needs both. DEFER the JE (journal_entry=None) and build the FX-plug entry at pairing.
-            _tgt_ccy, _ = self._bank_ccy(db, rule.target_bank_account_id) if rule.target_bank_account_id else (None, None)
+            _tgt_ccy, _tgt_ba = self._bank_ccy(db, rule.target_bank_account_id) if rule.target_bank_account_id else (None, None)
             _src_ccy = bank_account.currency if bank_account else None
-            if _src_ccy and _tgt_ccy and _src_ccy != _tgt_ccy:
-                journal_entry = None
+            _cross_entity = bool(_tgt_ba and bank_account and _tgt_ba.entity_id != bank_account.entity_id)
+            if _cross_entity:
+                # IC1 — independent booking. The moment we see an intercompany transfer we book THIS
+                # entity's own leg straight away, converted to its functional currency. We do NOT wait for
+                # or pair the other side: that entity books its own leg from its own bank feed. The two IC
+                # balances differ across currencies and are trued at IC reconciliation.
+                journal_entry = self._create_internal_transfer_entries(
+                    db, transaction, rule, bank_account, amount, abs_amount)
+            elif _src_ccy and _tgt_ccy and _src_ccy != _tgt_ccy:
+                journal_entry = None   # cross-ccy INTRA → defer, FX-plug built at pairing (POL-144)
             else:
                 journal_entry = self._create_internal_transfer_entries(
-                    db, transaction, rule, bank_account, amount, abs_amount
-                )
+                    db, transaction, rule, bank_account, amount, abs_amount)
         elif rule.category == TransactionCategory.CROSS_ENTITY_ALLOCATION:
             journal_entry = self._create_cross_entity_allocation_entries(
                 db, transaction, rule, bank_account, abs_amount
@@ -2012,6 +2019,20 @@ Return only the JSON object, no explanation."""
             else 'ic_rule' if rule.category == TransactionCategory.INTERCOMPANY_TRANSFER
             else 'rule'
         )
+
+        # IC1 — a cross-entity (intercompany) transfer books ONE leg independently and is DONE. No
+        # pairing, no AWAITING_MATCH: the other entity records its own leg from its own feed. This is the
+        # "book it straight away the moment we see it's intercompany" path.
+        if (rule.category == TransactionCategory.INTERNAL_TRANSFER and _cross_entity
+                and journal_entry is not None):
+            transaction.status = TransactionStatus.MATCHED
+            transaction.reconciled_journal_entry_id = journal_entry.id
+            transaction.matched_at = datetime.now(UTC)
+            transaction.categorized_by_logic = 'intercompany_independent'
+            db.commit()
+            return {"transaction_id": transaction.id, "status": "categorized",
+                    "rule_name": f"{rule.name} [intercompany leg booked independently]",
+                    "journal_entry_id": journal_entry.id, "error": None}
 
         # For internal transfers: try to immediately pair with counter-transaction.
         # If counter not found yet → AWAITING_MATCH; the counter-transaction will
@@ -2325,70 +2346,45 @@ Return only the JSON object, no explanation."""
             return entry
 
         else:
-            # Intercompany: two paired JEs using a receivable/payable PAIR (NOT one
-            # shared code), resolved per entity-pair — same as the allocation/AP paths.
+            # IC1 — INDEPENDENT booking (POL-141). Book ONLY THIS entity's (the source's) leg, converted
+            # to its functional currency, and post it straight away. The OTHER entity records its own leg
+            # from its own bank feed — no paired target JE here. The two IC balances differ across
+            # currencies and are trued at IC reconciliation.
             from src.services.invoice_service import invoice_service
-            ic_group_id = str(uuid.uuid4())
-
+            from src.models.entity import FinanceEntity
+            from src.services.fx_service import fx_service
+            from decimal import Decimal as _D
+            _func = db.get(FinanceEntity, source_entity_id).base_currency if source_entity_id else None
+            _native = _D(str(abs_amount))
+            _amt, _rate = fx_service.to_functional_or_same(
+                db, _native, transaction.currency, _func, transaction.transaction_date)
+            _meta = {"currency": transaction.currency, "native_amount": _native, "fx_rate": _rate}
             if amount < 0:
-                # Source bank pays out → source FUNDS target: source holds the
-                # receivable (owed by target); target holds the payable.
+                # Source pays out → source FUNDS the other entity → source holds the RECEIVABLE
                 ic_codes = invoice_service._get_ic_codes(db, source_entity_id, target_entity_id)
                 if not ic_codes:
-                    raise ValueError(
-                        f"No intercompany codes for entity pair ({source_entity_id} → "
-                        f"{target_entity_id}); add to _IC_RECEIVABLE_CODES / _IC_PAYABLE_CODES."
-                    )
-                ic_receivable, ic_payable = ic_codes
-                # Source: Dr IC Receivable (due from target) / Cr Source Bank
-                source_lines = [
-                    {"account_code": ic_receivable, "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
-                    {"account_code": source_coa,    "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
-                ]
-                # Target: Dr Target Bank / Cr IC Payable (due to source)
-                target_lines = [
-                    {"account_code": target_coa,   "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
-                    {"account_code": ic_payable,   "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
+                    raise ValueError(f"No intercompany codes for entity pair ({source_entity_id} → {target_entity_id}).")
+                ic_receivable, _ = ic_codes
+                lines = [
+                    {"account_code": ic_receivable, "debit_amount": float(_amt), "credit_amount": 0.0,        "description": je_description, **_meta},
+                    {"account_code": source_coa,    "debit_amount": 0.0,         "credit_amount": float(_amt), "description": je_description, **_meta},
                 ]
             else:
-                # Source bank receives in → target FUNDS source: target holds the
-                # receivable; source holds the payable.
+                # Source receives in → the other entity FUNDED source → source holds the PAYABLE
                 ic_codes = invoice_service._get_ic_codes(db, target_entity_id, source_entity_id)
                 if not ic_codes:
-                    raise ValueError(
-                        f"No intercompany codes for entity pair ({target_entity_id} → "
-                        f"{source_entity_id}); add to _IC_RECEIVABLE_CODES / _IC_PAYABLE_CODES."
-                    )
-                ic_receivable, ic_payable = ic_codes
-                # Source: Dr Source Bank / Cr IC Payable (due to target)
-                source_lines = [
-                    {"account_code": source_coa,  "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
-                    {"account_code": ic_payable,  "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
+                    raise ValueError(f"No intercompany codes for entity pair ({target_entity_id} → {source_entity_id}).")
+                _, ic_payable = ic_codes
+                lines = [
+                    {"account_code": source_coa, "debit_amount": float(_amt), "credit_amount": 0.0,        "description": je_description, **_meta},
+                    {"account_code": ic_payable, "debit_amount": 0.0,         "credit_amount": float(_amt), "description": je_description, **_meta},
                 ]
-                # Target: Dr IC Receivable (due from source) / Cr Target Bank
-                target_lines = [
-                    {"account_code": ic_receivable, "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
-                    {"account_code": target_coa,    "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
-                ]
-
-            source_entry = journal_service.create(
-                db=db, entity_id=source_entity_id,
-                entry_date=transaction.transaction_date,
-                description=je_description, lines=source_lines,
-            )
-            source_entry.source = "categorization_engine"
-            source_entry.intercompany_group_id = ic_group_id
-
-            target_entry = journal_service.create(
-                db=db, entity_id=target_entity_id,
-                entry_date=transaction.transaction_date,
-                description=je_description, lines=target_lines,
-            )
-            target_entry.source = "categorization_engine"
-            target_entry.intercompany_group_id = ic_group_id
-
+            entry = journal_service.create(
+                db=db, entity_id=source_entity_id, entry_date=transaction.transaction_date,
+                description=je_description, lines=lines)
+            entry.source = "categorization_engine"
             db.flush()
-            return source_entry
+            return entry
 
     def _create_cross_entity_allocation_entries(
         self,
