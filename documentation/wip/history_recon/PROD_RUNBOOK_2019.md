@@ -67,9 +67,11 @@ Technology - Infrastructure, 88450 → 1710 Technology Development).**
 
 ## Phase 6 — HUMAN GATE, then post
 
-Gaurav eyeballs the prod scorecard (generated from prod state) and says POST. Then batch-post the
-2019 DRAFT journals. *Undo: void by the same source+date selection.*
-**GATE: re-run `check` + inspector AFTER posting — numbers must not move.**
+Gaurav eyeballs the prod scorecard (generated from prod state) and says POST. Then FINALIZE:
+batch-post the 2019 DRAFT journals AND promote the year's bank transactions MATCHED → RECONCILED
+(the sign-off is the human approval RECONCILED represents). *Undo: void by source+date; demote txns.*
+**GATE: re-run `check` + inspector AFTER — numbers must not move, and INSP-3 (terminal-state
+completeness: journals POSTED, txns RECONCILED, events POSTED, payouts terminal) must be CLEAN.**
 
 ## Phase 7 — Re-park + close-out
 
