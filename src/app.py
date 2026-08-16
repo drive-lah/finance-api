@@ -37,6 +37,7 @@ def create_app(config=None):
     
     # Register blueprints
     from src.routes.entities import entities_bp
+    from src.routes.fx_rates import fx_rates_bp
     from src.routes.accounts import accounts_bp
     from src.routes.bank_accounts import bank_accounts_bp
     from src.routes.transactions import transactions_bp
@@ -66,6 +67,7 @@ def create_app(config=None):
     from src.routes.enrichment import enrichment_bp
     from src.routes.approvals import approvals_bp
     app.register_blueprint(entities_bp)
+    app.register_blueprint(fx_rates_bp)
     app.register_blueprint(accounts_bp)
     app.register_blueprint(bank_accounts_bp)
     app.register_blueprint(transactions_bp)
