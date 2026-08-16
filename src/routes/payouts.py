@@ -120,6 +120,15 @@ def create_payout():
         return jsonify(p.to_dict()), 201
 
 
+@payouts_bp.route("/<int:payout_id>/mark-reconcile", methods=["POST"])
+def mark_reconcile_payout(payout_id):
+    """Mark a payout as paid OUTSIDE the system → RECONCILE, so the categorization engine's amount
+    fallback settles it when the bank line arrives."""
+    with db_session() as db:
+        p = payout_service.mark_reconcile(db, payout_id, actor=(_actor() or {}).get("user_id"))
+        return jsonify(p.to_dict()), 200
+
+
 @payouts_bp.route("/claim", methods=["POST"])
 def create_claim_payout():
     """Raise (and, under threshold, send) a reimbursement payout for an APPROVED employee claim (POL-139

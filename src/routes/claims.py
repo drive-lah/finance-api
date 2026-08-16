@@ -60,6 +60,15 @@ def submit_claim(claim_id):
         return jsonify(claim_service.submit(db, claim_id, caller, is_admin).to_dict())
 
 
+@claims_bp.route("/<int:claim_id>/mark-reconcile", methods=["POST"])
+def mark_reconcile_claim(claim_id):
+    """Mark an approved claim as paid OUTSIDE the system → RECONCILE, so the categorization engine's
+    amount fallback settles it when the bank line arrives."""
+    caller, _ = _caller()
+    with db_session() as db:
+        return jsonify(claim_service.mark_reconcile(db, claim_id, actor=str(caller)).to_dict())
+
+
 @claims_bp.route("/<int:claim_id>/approve", methods=["POST"])
 def approve_claim(claim_id):
     caller, is_admin = _caller()

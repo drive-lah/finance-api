@@ -827,9 +827,11 @@ class CategorizationService:
             # the payment (+1d grace), within the last 180d", not a tight ±7d around approval. Oldest first.
             lo = txn.transaction_date - timedelta(days=180)
             hi = txn.transaction_date + timedelta(days=1)
+            # Amount fallback fires ONLY for claims marked paid-OUTSIDE the system (RECONCILE). System-paid
+            # claims settle deterministically via Rung 1 (transfer-id on their payout). The reconcile guard
+            # stops a random payment from auto-settling an approved-but-not-yet-paid claim.
             claim = (db.query(FinanceEmployeeClaim)
-                     .filter(FinanceEmployeeClaim.status.in_(
-                                 [ClaimStatus.APPROVED.value, ClaimStatus.PAYMENT_INITIATED.value]),
+                     .filter(FinanceEmployeeClaim.status == ClaimStatus.RECONCILE.value,
                              FinanceEmployeeClaim.entity_id == ba.entity_id,
                              FinanceEmployeeClaim.transaction_id.is_(None),
                              FinanceEmployeeClaim.approved_at.between(lo, hi))
@@ -876,12 +878,14 @@ class CategorizationService:
             if not ba or not ba.entity_id or not ba.coa_account_code:
                 continue
             abs_amount = abs(float(txn.amount))
+            # Amount fallback fires ONLY for payouts marked paid-OUTSIDE the system (RECONCILE). System-paid
+            # payroll settles via Rung 1 (transfer-id). The reconcile guard prevents a stray payment from
+            # auto-settling a payout that wasn't actually paid.
             payout = (db.query(FinancePayout)
                       .filter(FinancePayout.payable_type == "payroll",
                               FinancePayout.entity_id == ba.entity_id,
                               FinancePayout.transaction_id.is_(None),
-                              FinancePayout.state.notin_([PayoutState.CANCELLED.value,
-                                                          PayoutState.FAILED.value, PayoutState.POSTED.value]))
+                              FinancePayout.state == PayoutState.RECONCILE.value)
                       .order_by(FinancePayout.id.asc()).all())
             match = next((p for p in payout if abs(float(p.amount) - abs_amount) <= 0.01), None)
             if not match:

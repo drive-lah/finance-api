@@ -26,7 +26,8 @@ class PayoutState(str, enum.Enum):
     QUOTED = "quoted"
     REQUESTED = "requested"          # maker raised; awaiting checker if >= threshold
     SENT = "sent"                    # approved + money left Wise (approve = send)
-    AWAITING_IMPORT = "awaiting_import"  # money gone; waiting for the txn to arrive via import
+    AWAITING_IMPORT = "awaiting_import"  # money gone (via our system); waiting for the txn — transfer-id lane
+    RECONCILE = "reconcile"         # believed paid OUTSIDE the system; awaiting the bank line — amount fallback
     POSTED = "posted"               # terminal: txn paired + knock-off JE posted
     FAILED = "failed"
     CANCELLED = "cancelled"

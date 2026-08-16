@@ -188,6 +188,19 @@ class ClaimService:
         db.flush()
         return je
 
+    def mark_reconcile(self, db, claim_id, actor: str | None = None):
+        """Mark an approved claim as paid OUTSIDE the system → RECONCILE, so the categorization engine's
+        amount fallback will settle it when the bank line arrives. The outside-system counterpart of a
+        system reimbursement (which goes APPROVED → PAYMENT_INITIATED via a payout / Rung 1)."""
+        c = db.get(FinanceEmployeeClaim, claim_id)
+        if not c:
+            raise NotFoundError(f"Claim {claim_id} not found")
+        if c.status not in (ClaimStatus.APPROVED.value, ClaimStatus.PAYMENT_INITIATED.value):
+            raise BadRequestError(f"Claim is {c.status}; only an approved/payment-initiated claim can be marked reconcile.")
+        c.status = ClaimStatus.RECONCILE.value
+        db.commit()
+        return c
+
     def reject(self, db, claim_id, caller_user_id, is_admin, reason: str):
         c = db.get(FinanceEmployeeClaim, claim_id)
         if not c:

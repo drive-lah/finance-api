@@ -531,4 +531,22 @@ class PayoutService:
         return True
 
 
+    def mark_reconcile(self, db, payout_id: int, actor: Optional[str] = None):
+        """Mark a payout as paid OUTSIDE the system → RECONCILE, so the categorization engine's amount
+        fallback settles it when the bank line arrives (the outside-system counterpart of the
+        awaiting_import / transfer-id lane). Only a non-terminal, unpaired payout can be marked."""
+        from src.utils.errors import NotFoundError, BadRequestError
+        p = db.get(FinanceVendorPayout, payout_id)
+        if not p:
+            raise NotFoundError(f"Payout {payout_id} not found")
+        if p.transaction_id is not None or p.state in (PayoutState.POSTED.value, PayoutState.CANCELLED.value, PayoutState.FAILED.value):
+            raise BadRequestError(f"Payout {payout_id} is {p.state} / already settled; cannot mark reconcile.")
+        prev = p.state
+        p.state = PayoutState.RECONCILE.value
+        self._event(db, p, "marked_reconcile", PayoutState.RECONCILE.value, {"user_id": actor or "system"},
+                    snapshot={"from_state": prev})
+        db.commit()
+        return p
+
+
 payout_service = PayoutService()

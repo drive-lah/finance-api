@@ -21,6 +21,7 @@ class ClaimStatus(str, enum.Enum):
     SUBMITTED = "submitted"       # awaiting manager approval
     APPROVED = "approved"         # bill JE posted; payable
     PAYMENT_INITIATED = "payment_initiated"  # reimbursement sent/marked; money in transit (POL-132 parity)
+    RECONCILE = "reconcile"       # believed paid OUTSIDE the system; awaiting the bank line (amount fallback)
     REJECTED = "rejected"
     PAID = "paid"                 # reimbursed (settlement JE Dr 2303 / Cr bank posted)
 
