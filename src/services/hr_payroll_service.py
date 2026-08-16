@@ -34,6 +34,12 @@ from src.services.journal_service import journal_service
 
 logger = logging.getLogger(__name__)
 
+# Payroll is an accrual: the net salary owed lands in a liability (2304 Salaries Payable), mirroring
+# claims (2303) and invoices (AP). The bank is only touched at PAYMENT, via the payout knock-off
+# (Dr 2304 / Cr bank). Statutory obligations (CPF 2300 / super 2302 / PAYG 2301 / income tax 2305)
+# credit their own payables through the per-employee deduction rules.
+SALARIES_PAYABLE = "2304"
+
 
 class HrPayrollService:
 
@@ -88,10 +94,13 @@ class HrPayrollService:
         for k, v in data.items():
             if k in allowed:
                 setattr(emp, k, v)
-        # HR-managed fields that live on the shared users row (bank, manager, is_employee).
+        # HR-managed fields that live on the shared users row (bank, manager, is_employee, start date).
         from sqlalchemy import text
+        if data.get("date_of_joining") not in (None, ""):
+            # editable post-onboarding, but never in the future
+            data = {**data, "date_of_joining": self._no_future(data["date_of_joining"], "Start date (date of joining)")}
         user_fields = {k: data[k] for k in
-                       ("is_employee", "bank_account_number", "bank_code", "manager_id")
+                       ("is_employee", "bank_account_number", "bank_code", "manager_id", "date_of_joining")
                        if k in data}
         if user_fields:
             sets = ", ".join(f"{k} = :{k}" for k in user_fields)
@@ -105,6 +114,17 @@ class HrPayrollService:
     # Compensation history
     # ──────────────────────────────────────────────────────────────────────────
 
+    @staticmethod
+    def _no_future(value, label: str = "date"):
+        """Reject a future-dated value (POL: onboarding and pay dates can never be in the future —
+        this is what let the 2035 typo through). Returns the parsed date, or None if not provided."""
+        if value in (None, ""):
+            return None
+        d = value if isinstance(value, date) else date.fromisoformat(str(value)[:10])
+        if d > date.today():
+            raise ValueError(f"{label} cannot be in the future (got {d.isoformat()}).")
+        return d
+
     def add_compensation(self, db: Session, employee_id: int, data: dict) -> HrCompensation:
         """
         Add a new compensation record. Closes the previously open record
@@ -114,7 +134,7 @@ class HrPayrollService:
         if not emp:
             raise ValueError(f"Employee {employee_id} not found")
 
-        new_from: date = data["effective_from"]
+        new_from: date = self._no_future(data["effective_from"], "Compensation effective date")
 
         # Close previous open record
         open_comp = db.query(HrCompensation).filter(
@@ -124,15 +144,47 @@ class HrPayrollService:
         if open_comp:
             open_comp.effective_to = new_from - timedelta(days=1)
 
+        sched = (data.get("pay_schedule") or "monthly").lower()
+        split = data.get("pay_split_pct")
         comp = HrCompensation(
             employee_id=employee_id,
             pay_type=data["pay_type"],
             gross_amount=Decimal(str(data["gross_amount"])),
             currency=data.get("currency", "SGD"),
+            pay_schedule=sched,
+            pay_split_pct=(Decimal(str(split)) if split not in (None, "") else
+                           (Decimal("50") if sched == "semi_monthly" else None)),
             effective_from=new_from,
             effective_to=data.get("effective_to"),
         )
         db.add(comp)
+        db.commit()
+        db.refresh(comp)
+        return comp
+
+    def update_compensation(self, db: Session, comp_id: int, data: dict) -> HrCompensation:
+        """Edit an EXISTING compensation record in place — current OR historical — to fix a wrong salary,
+        currency, pay type, schedule/split, or a typo'd effective date. A future effective_from is
+        rejected. The route writes the before/after to hr_audit_log."""
+        comp = db.get(HrCompensation, comp_id)
+        if not comp:
+            raise ValueError(f"Compensation {comp_id} not found")
+        if data.get("effective_from") not in (None, ""):
+            comp.effective_from = self._no_future(data["effective_from"], "Compensation effective date")
+        if "effective_to" in data:
+            comp.effective_to = (date.fromisoformat(str(data["effective_to"])[:10])
+                                 if data["effective_to"] not in (None, "") else None)
+        if data.get("gross_amount") is not None:
+            comp.gross_amount = Decimal(str(data["gross_amount"]))
+        if data.get("currency"):
+            comp.currency = data["currency"]
+        if data.get("pay_type"):
+            comp.pay_type = data["pay_type"]
+        if data.get("pay_schedule"):
+            comp.pay_schedule = str(data["pay_schedule"]).lower()
+        if "pay_split_pct" in data:
+            comp.pay_split_pct = (Decimal(str(data["pay_split_pct"]))
+                                  if data["pay_split_pct"] not in (None, "") else None)
         db.commit()
         db.refresh(comp)
         return comp
@@ -152,20 +204,33 @@ class HrPayrollService:
     # ──────────────────────────────────────────────────────────────────────────
 
     def add_deduction_rule(self, db: Session, employee_id: int, data: dict) -> HrDeductionRule:
+        """Manually add one deduction rule to an employee. The team supplies the TYPE, the calc
+        (PERCENTAGE/FIXED_AMOUNT) and the value; the accounting metadata (who bears it, the debit/credit
+        COA, and any wage cap) is DERIVED from DEDUCTION_COA by type, so the team never types COA codes.
+        An explicit coa_*/employee_bears/cap in `data` still wins (for a bespoke OTHER deduction)."""
         emp = db.query(HrEmployee).filter(HrEmployee.id == employee_id).first()
         if not emp:
             raise ValueError(f"Employee {employee_id} not found")
+        from src.services.hr_onboarding_service import DEDUCTION_COA
+        dtype = data["deduction_type"]
+        meta = DEDUCTION_COA.get(dtype, {})
+        coa_debit = data.get("coa_debit_code") or meta.get("coa_debit_code")
+        coa_credit = data.get("coa_credit_code") or meta.get("coa_credit_code")
+        if not coa_debit or not coa_credit:
+            raise ValueError(f"Deduction type '{dtype}' has no COA mapping — pass coa_debit_code and "
+                             f"coa_credit_code explicitly, or use a known type ({', '.join(DEDUCTION_COA)}).")
+        _cap = data.get("ordinary_wage_cap", meta.get("cap"))
         rule = HrDeductionRule(
             employee_id=employee_id,
-            deduction_type=data["deduction_type"],
-            label=data.get("label") or data["deduction_type"].replace("_", " ").title(),
+            deduction_type=dtype,
+            label=data.get("label") or dtype.replace("_", " ").title(),
             calculation_type=data["calculation_type"],
             rate=data.get("rate"),
             fixed_amount=data.get("fixed_amount"),
-            ordinary_wage_cap=data.get("ordinary_wage_cap"),
-            employee_bears=data.get("employee_bears", True),
-            coa_debit_code=data["coa_debit_code"],
-            coa_credit_code=data["coa_credit_code"],
+            ordinary_wage_cap=_cap,
+            employee_bears=data.get("employee_bears", meta.get("employee_bears", True)),
+            coa_debit_code=str(coa_debit),
+            coa_credit_code=str(coa_credit),
             effective_from=data["effective_from"],
             effective_to=data.get("effective_to"),
         )
@@ -173,6 +238,17 @@ class HrPayrollService:
         db.commit()
         db.refresh(rule)
         return rule
+
+    def delete_deduction_rule(self, db: Session, employee_id: int, rule_id: int) -> None:
+        """Remove a deduction rule (manual correction). Scoped to the employee so a stray id can't
+        delete another employee's rule."""
+        rule = (db.query(HrDeductionRule)
+                .filter(HrDeductionRule.id == rule_id, HrDeductionRule.employee_id == employee_id)
+                .first())
+        if not rule:
+            raise ValueError(f"Deduction rule {rule_id} not found for employee {employee_id}")
+        db.delete(rule)
+        db.commit()
 
     def get_deduction_rules(
         self, db: Session, employee_id: int
@@ -188,6 +264,131 @@ class HrPayrollService:
     # Payroll run — Step 1: create draft
     # ──────────────────────────────────────────────────────────────────────────
 
+    def _compute_deductions(self, db, employee_id, run_date, gross):
+        """Given a gross, compute (employee_deductions, employer_contributions, net, deduction_lines) from
+        the employee's active deduction rules. Shared by create_run and adjust_line (PR-6) so an adjusted
+        gross recomputes deductions + net consistently."""
+        rules = self._active_deduction_rules(db, employee_id, run_date)
+        deduction_lines, emp_ded, emp_contrib = [], Decimal("0"), Decimal("0")
+        for rule in rules:
+            amount = self._calculate_deduction(rule, gross)
+            if amount <= 0:
+                continue
+            deduction_lines.append({
+                "type": rule.deduction_type,
+                "label": rule.label or rule.deduction_type.replace("_", " ").title(),
+                "amount": float(amount), "employee_bears": rule.employee_bears,
+                "coa_debit_code": rule.coa_debit_code, "coa_credit_code": rule.coa_credit_code})
+            if rule.employee_bears:
+                emp_ded += amount
+            else:
+                emp_contrib += amount
+        return emp_ded, emp_contrib, gross - emp_ded, deduction_lines
+
+    def adjust_line(self, db, item_id: int, *, gross_amount=None, hours_worked=None, reason: str,
+                    actor=None) -> dict:
+        """PR-6: adjust a DRAFT run's payslip line, RECOMPUTING deductions + net, with a MANDATORY reason
+        written to the append-only audit (system-generated original is preserved on the line). Only DRAFT
+        runs (before approval) are adjustable. Returns the updated item + the audit rows."""
+        from src.models.hr_payroll import HrPayrollItem
+        from src.models.hr_employee import HrEmployee
+        from src.models.payroll_adjustment import FinancePayrollAdjustment
+        from src.utils.errors import BadRequestError, NotFoundError
+        if not reason or not reason.strip():
+            raise BadRequestError("A reason is required for any payroll adjustment.")
+        item = db.get(HrPayrollItem, item_id)
+        if not item:
+            raise NotFoundError(f"Payroll line {item_id} not found")
+        run = db.get(FinancePayrollRun, item.finance_payroll_run_id)
+        if not run or run.status != "DRAFT":
+            raise BadRequestError(f"Only a DRAFT run can be adjusted (run is {run.status if run else '—'}).")
+        emp = db.get(HrEmployee, item.employee_id)
+        run_date = run.run_date
+        old = {"gross": float(item.gross_amount), "net": float(item.net_amount),
+               "hours": float(item.hours_worked) if item.hours_worked is not None else None}
+        # derive the new gross: explicit override, or rate × new hours (hourly)
+        if hours_worked is not None:
+            comp = self._active_compensation(db, emp.id, run_date)
+            new_gross = Decimal(str(comp.gross_amount)) * Decimal(str(hours_worked))
+            item.hours_worked = hours_worked
+        elif gross_amount is not None:
+            new_gross = Decimal(str(gross_amount))
+        else:
+            raise BadRequestError("Provide gross_amount or hours_worked to adjust.")
+        emp_ded, emp_contrib, net, lines = self._compute_deductions(db, emp.id, run_date, new_gross)
+        item.gross_amount = new_gross
+        item.employee_deductions = emp_ded
+        item.employer_contributions = emp_contrib
+        item.net_amount = net
+        item.deduction_lines = lines
+        db.flush()
+        audits = []
+        for field, ov, nv in [("gross", old["gross"], float(new_gross)),
+                              ("net", old["net"], float(net)),
+                              ("hours", old["hours"], (float(hours_worked) if hours_worked is not None else old["hours"]))]:
+            if ov != nv:
+                a = FinancePayrollAdjustment(run_id=run.id, payroll_item_id=item.id, employee_id=emp.id,
+                                             field=field, old_value=(str(ov) if ov is not None else None),
+                                             new_value=(str(nv) if nv is not None else None),
+                                             reason=reason.strip(), actor=(actor or {}).get("user_id"))
+                db.add(a); db.flush(); audits.append(a.to_dict())
+        # keep the run totals in sync — NATIVE per currency, same rule as create_run (POL-142). A raw
+        # sum across mixed currencies is meaningless, so leave the functional roll-up NULL when the run
+        # spans >1 currency (submit's set_functional_totals fills it). Only collapse to a native total
+        # when the whole run is single-currency.
+        items = db.query(HrPayrollItem).filter(HrPayrollItem.finance_payroll_run_id == run.id).all()
+        _ccys = {i.currency for i in items}
+        if len(_ccys) == 1:
+            run.gross_amount = sum(Decimal(str(i.gross_amount)) for i in items)
+            run.net_amount = sum(Decimal(str(i.net_amount)) for i in items)
+            run.currency = next(iter(_ccys))
+        else:
+            run.gross_amount = None
+            run.net_amount = None
+        db.commit()
+        return {"item_id": item.id, "gross": float(item.gross_amount), "net": float(item.net_amount),
+                "adjustments": audits}
+
+    def _derive_cycle_dates(self, run_type: str, data: dict):
+        """The two fixed cycles have prefixed dates, so finance names the cycle + month, not free dates.
+        end_of_month → run_date = 27th, period = 27th(prev month) → 27th(this month) (the 27→27 cycle).
+        mid_month    → run_date = 15th, period = 1st → 15th of the month.
+        Anchor month from data['period_month'] ('YYYY-MM') else the month of data['run_date']."""
+        pm = data.get("period_month")
+        if pm:
+            y, m = int(pm[:4]), int(pm[5:7])
+        elif data.get("run_date"):
+            rd = data["run_date"]
+            y, m = rd.year, rd.month
+        else:
+            raise ValueError("period_month (YYYY-MM) or run_date is required for a typed run")
+        prev_y, prev_m = (y - 1, 12) if m == 1 else (y, m - 1)
+        if run_type == "end_of_month":
+            return date(y, m, 27), date(prev_y, prev_m, 27), date(y, m, 27)
+        # mid_month
+        return date(y, m, 15), date(y, m, 1), date(y, m, 15)
+
+    def _prorata_factor(self, db: Session, emp, period_start: date, period_end: date):
+        """Fraction of the pay period the employee actually worked — 1 for a full-period employee, less
+        for a mid-period joiner (users.date_of_joining) or leaver (hr_employees.employment_end_date)."""
+        from decimal import Decimal as _D
+        from sqlalchemy import text as _text
+        doj = None
+        row = db.execute(_text("SELECT date_of_joining FROM users WHERE id = :u"), {"u": emp.user_id}).first()
+        if row and row[0]:
+            doj = row[0] if isinstance(row[0], date) else None
+        end = emp.employment_end_date
+        start = max(period_start, doj) if doj else period_start
+        finish = min(period_end, end) if end else period_end
+        if start > period_end or finish < period_start:
+            return _D("0")
+        days_worked = (finish - start).days + 1
+        total = (period_end - period_start).days + 1
+        if total <= 0:
+            return _D("1")
+        f = _D(days_worked) / _D(total)
+        return max(_D("0"), min(_D("1"), f))
+
     def create_run(self, db: Session, data: dict) -> FinancePayrollRun:
         """
         Create a DRAFT payroll run and auto-calculate payslip items.
@@ -198,12 +399,19 @@ class HrPayrollService:
         Returns the finance_payroll_run (status=DRAFT). Items are stored in hr_payroll_items.
         """
         entity_id = data["entity_id"]
-        run_date: date = data["run_date"]
+        # The two fixed cycles derive their dates; a typed run only needs run_type + month. Untyped runs
+        # (legacy / ad-hoc) still accept explicit dates.
+        run_type = (data.get("run_type") or "").lower()
+        if run_type in ("mid_month", "end_of_month"):
+            run_date, period_start, period_end = self._derive_cycle_dates(run_type, data)
+        else:
+            run_type = None
+            run_date: date = data["run_date"]
+            period_start = data["payroll_period_start"]
+            period_end = data["payroll_period_end"]
 
         # Duplicate-run guard: one (entity, period) may have only one live run.
         # Prevents two runs for the same month both posting → double-pay.
-        period_start = data["payroll_period_start"]
-        period_end = data["payroll_period_end"]
         existing_run = db.query(FinancePayrollRun).filter(
             FinancePayrollRun.entity_id == entity_id,
             FinancePayrollRun.payroll_period_start == period_start,
@@ -217,16 +425,22 @@ class HrPayrollService:
                 f"status={existing_run.status}). Void it before creating another."
             )
 
-        bank_account = db.query(FinanceBankAccount).filter(
-            FinanceBankAccount.id == data["bank_account_id"]
-        ).first()
-        if not bank_account:
-            raise ValueError(f"Bank account {data['bank_account_id']} not found")
-        if bank_account.entity_id != entity_id:
-            raise ValueError(
-                f"Bank account {bank_account.id} belongs to entity "
-                f"{bank_account.entity_id}, not {entity_id}"
-            )
+        # A payroll run is an ACCRUAL (Dr expense / Cr 2304 Salaries Payable + statutory payables).
+        # The bank is only touched at PAYMENT, via the payout knock-off (Dr 2304 / Cr bank). So a
+        # bank account is NOT required to create/accrue a run — the modal asks only for the entity.
+        # If a bank_account_id is supplied it must belong to the entity (validated for legacy callers).
+        bank_account = None
+        if data.get("bank_account_id"):
+            bank_account = db.query(FinanceBankAccount).filter(
+                FinanceBankAccount.id == data["bank_account_id"]
+            ).first()
+            if not bank_account:
+                raise ValueError(f"Bank account {data['bank_account_id']} not found")
+            if bank_account.entity_id != entity_id:
+                raise ValueError(
+                    f"Bank account {bank_account.id} belongs to entity "
+                    f"{bank_account.entity_id}, not {entity_id}"
+                )
 
         contractor_hours: dict[int, float] = {
             e["employee_id"]: float(e["hours_worked"])
@@ -246,11 +460,14 @@ class HrPayrollService:
         if not employees:
             raise ValueError(f"No active employees found for entity {entity_id}")
 
-        # Calculate totals across all employees
-        total_gross = Decimal("0")
-        total_employee_ded = Decimal("0")
-        total_employer_contrib = Decimal("0")
-        total_net = Decimal("0")
+        # A DRAFT run does NO currency conversion — no JE exists yet, and every payslip is shown in the
+        # employee's OWN salary currency. FX happens later, only when the DRAFT JE is built at submit
+        # (submit_for_approval / submit_run), dated on the run date. Here we just tally NATIVE amounts
+        # per currency; if the run is single-currency the run-level total is that native sum, and if it
+        # is mixed-currency the run total is left NULL (deferred) until the functional roll-up at submit.
+        from src.models.entity import FinanceEntity
+        _run_func = db.get(FinanceEntity, entity_id).base_currency if entity_id else None
+        native_by_ccy: dict[str, dict] = {}
 
         # Build items before committing the run (so we can populate run totals)
         item_data_list: list[dict] = []
@@ -262,6 +479,13 @@ class HrPayrollService:
                 skipped.append(f"employee_id={emp.id} (no active compensation)")
                 continue
 
+            sched = (getattr(comp, "pay_schedule", None) or "monthly").lower()
+            # Cycle selection: the mid-month (15th) run pays ONLY semi-monthly employees. Monthly staff
+            # are paid once, at end-of-month.
+            if run_type == "mid_month" and sched != "semi_monthly":
+                skipped.append(f"employee_id={emp.id} (monthly — not in the mid-month run)")
+                continue
+
             if comp.pay_type == "HOURLY_RATE":
                 if emp.id not in contractor_hours:
                     skipped.append(f"employee_id={emp.id} (contractor, no hours_worked provided)")
@@ -270,30 +494,21 @@ class HrPayrollService:
             else:
                 gross = Decimal(str(comp.gross_amount))
 
-            rules = self._active_deduction_rules(db, emp.id, run_date)
-            deduction_lines = []
-            emp_ded = Decimal("0")
-            emp_contrib = Decimal("0")
+            # Semi-monthly split: the mid-month run pays pay_split_pct%, end-of-month pays the balance.
+            if sched == "semi_monthly" and run_type in ("mid_month", "end_of_month"):
+                _split = Decimal(str(getattr(comp, "pay_split_pct", None) or 50))
+                _pct = _split if run_type == "mid_month" else (Decimal("100") - _split)
+                gross = (gross * _pct / Decimal("100")).quantize(Decimal("0.01"))
 
-            for rule in rules:
-                amount = self._calculate_deduction(rule, gross)
-                if amount <= 0:
-                    continue
-                label = rule.label or rule.deduction_type.replace("_", " ").title()
-                deduction_lines.append({
-                    "type": rule.deduction_type,
-                    "label": label,
-                    "amount": float(amount),
-                    "employee_bears": rule.employee_bears,
-                    "coa_debit_code": rule.coa_debit_code,
-                    "coa_credit_code": rule.coa_credit_code,
-                })
-                if rule.employee_bears:
-                    emp_ded += amount
-                else:
-                    emp_contrib += amount
+            # Pro-rata for mid-period joiners / leavers (day-count within the period).
+            _factor = self._prorata_factor(db, emp, period_start, period_end)
+            if _factor <= 0:
+                skipped.append(f"employee_id={emp.id} (not employed during the period)")
+                continue
+            if _factor < 1:
+                gross = (gross * _factor).quantize(Decimal("0.01"))
 
-            net = gross - emp_ded
+            emp_ded, emp_contrib, net, deduction_lines = self._compute_deductions(db, emp.id, run_date, gross)
             item_data_list.append({
                 "employee_id": emp.id,
                 "hours_worked": contractor_hours.get(emp.id),
@@ -304,10 +519,11 @@ class HrPayrollService:
                 "currency": comp.currency,
                 "deduction_lines": deduction_lines,
             })
-            total_gross += gross
-            total_employee_ded += emp_ded
-            total_employer_contrib += emp_contrib
-            total_net += net
+            # tally NATIVE amounts per currency — NO conversion at draft
+            _b = native_by_ccy.setdefault(comp.currency, {"gross": Decimal("0"),
+                 "emp_ded": Decimal("0"), "employer": Decimal("0"), "net": Decimal("0")})
+            _b["gross"] += gross; _b["emp_ded"] += emp_ded
+            _b["employer"] += emp_contrib; _b["net"] += net
 
         if not item_data_list:
             raise ValueError(
@@ -318,22 +534,35 @@ class HrPayrollService:
             logger.warning(f"Payroll run skipped: {'; '.join(skipped)}")
 
         description = data.get("description") or (
-            f"Payroll {data['payroll_period_start']} to {data['payroll_period_end']}"
+            f"Payroll {period_start} to {period_end}"
         )
+
+        # Run-level totals: native sum if the run is single-currency; NULL (deferred to the submit-time
+        # functional roll-up) if mixed. currency = that single ccy, or the entity functional as the label.
+        if len(native_by_ccy) == 1:
+            _c, _t = next(iter(native_by_ccy.items()))
+            _run_gross, _run_emp_ded = _t["gross"], _t["emp_ded"]
+            _run_employer, _run_net, _run_ccy = _t["employer"], _t["net"], _c
+        else:
+            _run_gross = _run_emp_ded = _run_employer = _run_net = None
+            _run_ccy = _run_func
 
         # Create the finance_payroll_run as DRAFT (no JE yet)
         fin_run = FinancePayrollRun(
             entity_id=entity_id,
-            payroll_period_start=data["payroll_period_start"],
-            payroll_period_end=data["payroll_period_end"],
+            payroll_period_start=period_start,
+            payroll_period_end=period_end,
             run_date=run_date,
             headcount=len(item_data_list),
-            gross_amount=total_gross,
-            employer_cpf_amount=total_employer_contrib,
-            employee_cpf_amount=total_employee_ded,
-            net_amount=total_net,
-            cpf_payable_amount=total_employer_contrib + total_employee_ded,
-            bank_account_id=data["bank_account_id"],
+            gross_amount=_run_gross,
+            employer_cpf_amount=_run_employer,
+            employee_cpf_amount=_run_emp_ded,
+            net_amount=_run_net,
+            cpf_payable_amount=((_run_employer + _run_emp_ded)
+                                if _run_employer is not None else None),
+            currency=_run_ccy,
+            run_type=run_type,
+            bank_account_id=data.get("bank_account_id"),
             description=description,
             reference_number=data.get("reference_number"),
             submitted_by=data.get("created_by"),
@@ -351,6 +580,8 @@ class HrPayrollService:
                 employee_deductions=item["employee_deductions"],
                 employer_contributions=item["employer_contributions"],
                 net_amount=item["net_amount"],
+                system_gross_amount=item["gross_amount"],  # PR-6 baseline (immutable)
+                system_net_amount=item["net_amount"],
                 currency=item["currency"],
                 deduction_lines=item["deduction_lines"],
             ))
@@ -362,6 +593,110 @@ class HrPayrollService:
     # ──────────────────────────────────────────────────────────────────────────
     # Payroll run — Step 2: submit (creates JE, posts to accounting)
     # ──────────────────────────────────────────────────────────────────────────
+
+    def _resolve_salary_code(self, db, emp, currency) -> str:
+        """Salary account for an employee (POL-112): counterparty default_account_code first, then the
+        legacy employee column, then rules. Raises if none resolvable."""
+        from src.models.counterparty import FinanceCounterparty
+        cp = db.query(FinanceCounterparty).filter(
+            FinanceCounterparty.external_id == str(emp.user_id),
+            FinanceCounterparty.external_system == "employee").first()
+        salary_code = cp.default_account_code if cp else None
+        if not salary_code and emp.salary_expense_code:
+            salary_code = emp.salary_expense_code
+            logger.warning("Employee %s counterparty has no default_account_code — falling back to the "
+                           "legacy salary_expense_code %s. Backfill the counterparty.", emp.id, salary_code)
+        if not salary_code:
+            salary_code = self._get_salary_account_from_rules(db, emp, currency)
+        if not salary_code:
+            raise ValueError(f"Cannot determine salary account for employee {emp.id}. "
+                             f"Set the salary COA on their counterparty (default_account_code).")
+        return salary_code
+
+    def set_functional_totals(self, db, fin_run, items):
+        """Populate the run-level FUNCTIONAL roll-up (POL-142) from the per-payslip natives, converting at
+        the run date. This is the ONLY place a run's totals are converted — called at SUBMIT, when the
+        DRAFT JE is built, NOT at draft creation. Sets gross/net/employer/employee/cpf_payable + currency
+        to the entity functional so a mixed-currency run finally has one meaningful total."""
+        from src.models.entity import FinanceEntity
+        from src.services.fx_service import fx_service
+        _func = db.get(FinanceEntity, fin_run.entity_id).base_currency if fin_run.entity_id else None
+        _on = fin_run.run_date
+        g = ded = emp_con = net = Decimal("0")
+        for it in items:
+            g += fx_service.to_functional_or_same(db, Decimal(str(it.gross_amount)), it.currency, _func, _on)[0]
+            ded += fx_service.to_functional_or_same(db, Decimal(str(it.employee_deductions)), it.currency, _func, _on)[0]
+            emp_con += fx_service.to_functional_or_same(db, Decimal(str(it.employer_contributions)), it.currency, _func, _on)[0]
+            net += fx_service.to_functional_or_same(db, Decimal(str(it.net_amount)), it.currency, _func, _on)[0]
+        fin_run.gross_amount = g
+        fin_run.employee_cpf_amount = ded
+        fin_run.employer_cpf_amount = emp_con
+        fin_run.net_amount = net
+        fin_run.cpf_payable_amount = emp_con + ded
+        fin_run.currency = _func
+
+    def _build_je_lines_and_groups(self, db, fin_run, items, bank_account, net_to_account=None):
+        """Build the balanced payroll JE lines from the payslip items AND the per-salary-account groups
+        (PR-3 segmented approval). Returns (lines, groups, je_description) where
+        groups = {salary_code: {"total": float (gross), "headcount": int}}. Single source of truth for
+        both the legacy submit_run (posts directly) and the new approval flow (draft JE).
+
+        PR-4: `net_to_account` chooses where the NET credit lands. None = credit the BANK directly (legacy
+        pay-immediately model). A code like '2304' = credit Salaries Payable (accrue-then-pay model), so
+        the net can be fanned out into the register and settled Dr 2304 / Cr bank per employee."""
+        # POL-141/142: a payroll run is NOT single-currency — CS salaries run in USD, wages in INR,
+        # inside an SGD/AU entity. Each payslip (item.currency) converts to the entity's functional
+        # currency at the run date BEFORE aggregating, so the JE is wholly in functional currency.
+        from src.models.entity import FinanceEntity
+        from src.services.fx_service import fx_service
+        _func = db.get(FinanceEntity, fin_run.entity_id).base_currency if fin_run.entity_id else None
+        _on = fin_run.run_date
+
+        def _conv(amount, ccy):
+            a, _r = fx_service.to_functional_or_same(db, Decimal(str(amount)), ccy, _func, _on)
+            return a
+
+        debit_map: dict[str, Decimal] = {}
+        credit_map: dict[str, Decimal] = {}
+        groups: dict[str, dict] = {}
+        total_net = Decimal("0")
+        for item in items:
+            emp = db.query(HrEmployee).filter(HrEmployee.id == item.employee_id).first()
+            if not emp:
+                raise ValueError(f"Employee {item.employee_id} not found for payroll item {item.id}")
+            salary_code = self._resolve_salary_code(db, emp, item.currency)
+            gross = _conv(item.gross_amount, item.currency)
+            debit_map[salary_code] = debit_map.get(salary_code, Decimal("0")) + gross
+            g = groups.setdefault(salary_code, {"total": Decimal("0"), "headcount": 0})
+            g["total"] += gross
+            g["headcount"] += 1
+            total_net += _conv(item.net_amount, item.currency)
+            for line in (item.deduction_lines or []):
+                amount = _conv(line["amount"], item.currency)
+                if not line["employee_bears"]:
+                    dr = line["coa_debit_code"]
+                    debit_map[dr] = debit_map.get(dr, Decimal("0")) + amount
+                cr = line["coa_credit_code"]
+                credit_map[cr] = credit_map.get(cr, Decimal("0")) + amount
+        je_description = fin_run.description or (
+            f"Payroll {fin_run.payroll_period_start} to {fin_run.payroll_period_end}")
+        # every aggregated amount is now in the entity functional currency
+        _meta = {"currency": _func, "fx_rate": Decimal("1")}
+        lines: list[dict] = []
+        for code, amount in debit_map.items():
+            lines.append({"account_code": code, "debit_amount": float(amount),
+                          "credit_amount": 0.0, "description": je_description,
+                          "native_amount": amount, **_meta})
+        net_credit_code = net_to_account or bank_account.coa_account_code
+        lines.append({"account_code": net_credit_code, "debit_amount": 0.0,
+                      "credit_amount": float(total_net), "description": je_description,
+                      "native_amount": total_net, **_meta})
+        for code, amount in credit_map.items():
+            lines.append({"account_code": code, "debit_amount": 0.0,
+                          "credit_amount": float(amount), "description": je_description,
+                          "native_amount": amount, **_meta})
+        groups = {k: {"total": float(v["total"]), "headcount": v["headcount"]} for k, v in groups.items()}
+        return lines, groups, je_description
 
     def submit_run(
         self,
@@ -397,86 +732,16 @@ class HrPayrollService:
         if not items:
             raise ValueError(f"Run {finance_payroll_run_id} has no payroll items")
 
-        bank_account = db.query(FinanceBankAccount).filter(
-            FinanceBankAccount.id == fin_run.bank_account_id
-        ).first()
-        if not bank_account or not bank_account.coa_account_code:
-            raise ValueError("Bank account has no COA code configured")
+        # Accrual only: net salary credits 2304 Salaries Payable (NOT the bank). The bank leg is
+        # posted later at payment by the payout knock-off (Dr 2304 / Cr bank). No bank needed here.
+        bank_account = (db.query(FinanceBankAccount)
+                        .filter(FinanceBankAccount.id == fin_run.bank_account_id).first()
+                        if fin_run.bank_account_id else None)
 
-        # Aggregate JE lines
-        debit_map: dict[str, Decimal] = {}   # coa_code → amount
-        credit_map: dict[str, Decimal] = {}  # coa_code → amount
-        total_net = Decimal("0")
-
-        for item in items:
-            emp = db.query(HrEmployee).filter(HrEmployee.id == item.employee_id).first()
-            if not emp:
-                raise ValueError(f"Employee {item.employee_id} not found for payroll item {item.id}")
-
-            # Salary account — SINGLE SOURCE OF TRUTH is the employee's COUNTERPARTY
-            # default_account_code (Gaurav 2026-08-07). Fall back to the legacy employee
-            # column only transitionally (pre-backfill) with a warning, then Phase 4A rules.
-            from src.models.counterparty import FinanceCounterparty
-            cp = db.query(FinanceCounterparty).filter(
-                FinanceCounterparty.external_id == str(emp.user_id),
-                FinanceCounterparty.external_system == "employee",
-            ).first()
-            salary_code = cp.default_account_code if cp else None
-            if not salary_code and emp.salary_expense_code:
-                salary_code = emp.salary_expense_code
-                logger.warning(
-                    "Employee %s counterparty has no default_account_code — falling back to the "
-                    "legacy employee salary_expense_code %s. Backfill the counterparty.",
-                    emp.id, salary_code,
-                )
-            if not salary_code:
-                salary_code = self._get_salary_account_from_rules(db, emp, item.currency)
-            if not salary_code:
-                raise ValueError(
-                    f"Cannot determine salary account for employee {item.employee_id}. "
-                    f"Set the salary COA on their counterparty (default_account_code)."
-                )
-
-            gross = Decimal(str(item.gross_amount))
-
-            debit_map[salary_code] = debit_map.get(salary_code, Decimal("0")) + gross
-            total_net += Decimal(str(item.net_amount))
-
-            for line in (item.deduction_lines or []):
-                amount = Decimal(str(line["amount"]))
-                if not line["employee_bears"]:
-                    # Employer contribution: extra debit on employer expense account
-                    dr = line["coa_debit_code"]
-                    debit_map[dr] = debit_map.get(dr, Decimal("0")) + amount
-                # All deductions create a payable credit
-                cr = line["coa_credit_code"]
-                credit_map[cr] = credit_map.get(cr, Decimal("0")) + amount
-
-        je_description = fin_run.description or (
-            f"Payroll {fin_run.payroll_period_start} to {fin_run.payroll_period_end}"
-        )
-        lines: list[dict] = []
-
-        for code, amount in debit_map.items():
-            lines.append({
-                "account_code": code,
-                "debit_amount": float(amount),
-                "credit_amount": 0.0,
-                "description": je_description,
-            })
-        lines.append({
-            "account_code": bank_account.coa_account_code,
-            "debit_amount": 0.0,
-            "credit_amount": float(total_net),
-            "description": je_description,
-        })
-        for code, amount in credit_map.items():
-            lines.append({
-                "account_code": code,
-                "debit_amount": 0.0,
-                "credit_amount": float(amount),
-                "description": je_description,
-            })
+        lines, _groups, je_description = self._build_je_lines_and_groups(
+            db, fin_run, items, bank_account, net_to_account=SALARIES_PAYABLE)
+        # FX happens HERE (at submit / JE build), never at draft: fill the functional roll-up totals.
+        self.set_functional_totals(db, fin_run, items)
 
         je = journal_service.create(
             db=db,
@@ -509,6 +774,30 @@ class HrPayrollService:
     def get_run(self, db: Session, run_id: int) -> Optional[FinancePayrollRun]:
         return db.query(FinancePayrollRun).filter(FinancePayrollRun.id == run_id).first()
 
+    def void_run(self, db: Session, run_id: int, reason: str = "", actor=None) -> FinancePayrollRun:
+        """Void a payroll run so the cycle can be re-run. Voids the run's JE (draft or posted) if one
+        exists, then marks the run VOID (terminal). Allowed pre-payment (DRAFT / PENDING_APPROVAL /
+        APPROVED / POSTED); a run that has been paid or already fanned out to the register is refused —
+        a paid run must be reversed through the payout rails, not silently voided."""
+        run = db.get(FinancePayrollRun, run_id)
+        if not run:
+            raise ValueError(f"Payroll run {run_id} not found")
+        if run.status in ("VOID", "PAID", "PAYMENT_INITIATED"):
+            raise ValueError(f"Run {run_id} is {run.status} — a paid/settling run can't be voided; "
+                             f"reverse it through the payout rails instead.")
+        # refuse if it has already fanned out into the payout register (payments in flight)
+        from src.models.vendor_payout import FinancePayout
+        if db.query(FinancePayout).filter(FinancePayout.payable_type == "payroll",
+                                          FinancePayout.payable_id == run_id).first():
+            raise ValueError(f"Run {run_id} has payouts in the register — settle or void those first.")
+        if run.journal_entry_id:
+            journal_service.void_entry(db, run.journal_entry_id, reason or f"Payroll run {run_id} voided")
+            run.journal_entry_id = None
+        run.status = "VOID"
+        db.commit()
+        db.refresh(run)
+        return run
+
     def get_runs(
         self,
         db: Session,
@@ -529,13 +818,21 @@ class HrPayrollService:
             .filter(HrPayrollItem.finance_payroll_run_id == run_id)
             .all()
         )
+        from sqlalchemy import text as _text
         result = []
         for item in items:
             emp = db.query(HrEmployee).filter(HrEmployee.id == item.employee_id).first()
+            # name lives on the shared users row; surface it so HR reviews people, not row ids
+            emp_name = None
+            if emp:
+                _r = db.execute(_text("SELECT name, email FROM users WHERE id=:u"),
+                                {"u": emp.user_id}).first()
+                emp_name = (_r[0] or _r[1]) if _r else None
             result.append({
                 "id": item.id,
                 "employee_id": item.employee_id,
                 "user_id": emp.user_id if emp else None,
+                "employee_name": emp_name,
                 "hours_worked": float(item.hours_worked) if item.hours_worked else None,
                 "gross_amount": float(item.gross_amount),
                 "employee_deductions": float(item.employee_deductions),

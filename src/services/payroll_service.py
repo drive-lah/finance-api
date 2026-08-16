@@ -50,10 +50,312 @@ def _entity_short(name: str) -> str:
 SALARY_ACCOUNT = "6000"        # Salaries & Wages
 CPF_EMPLOYER_ACCOUNT = "6001"  # Employer CPF
 CPF_PAYABLE_ACCOUNT = "2300"   # CPF Payable
+SALARIES_PAYABLE_ACCOUNT = "2304"  # Net salaries payable (PR-4 accrue-then-pay)
+# Statutory payable account → the authority counterparty it's paid to (PR-4 fan-out). Matched by name.
+STATUTORY_AUTHORITY = {"2300": "CPF", "2302": "superannuation",
+                       "2301": "tax office", "2305": "tax office"}  # 2301 PAYG withholding (AU) → ATO
 
 
 class PayrollService:
     """Service for managing payroll runs (System 3)."""
+
+    def transition_run(self, db: Session, run, to_status: str, *, actor=None) -> "FinancePayrollRun":
+        """PR-2: move a payroll run to a new status, enforcing the lifecycle (PAYROLL_TRANSITIONS).
+        Raises on an illegal transition so callers can't skip approval or resurrect a paid/void run."""
+        from src.models.payroll import can_transition, PayrollRunStatus
+        from src.utils.errors import BadRequestError
+        valid = {s.value for s in PayrollRunStatus}
+        if to_status not in valid:
+            raise BadRequestError(f"Unknown payroll status '{to_status}'.")
+        if not can_transition(run.status, to_status):
+            raise BadRequestError(
+                f"Illegal payroll transition {run.status} → {to_status}.")
+        run.status = to_status
+        db.flush()
+        return run
+
+    def get_approval_view(self, db: Session, run_id: int) -> dict:
+        """PR-3 approval view (best-practice consolidated-per-group, Gaurav): for each salary-account
+        group, the total + headcount + approver/status AND the per-employee lines AND the change-summary
+        vs the prior run (new joiners / salary changes / leavers) — so an approver drills in but signs
+        once, reviewing by exception."""
+        from src.services.hr_payroll_service import hr_payroll_service
+        from src.models.hr_payroll import HrPayrollItem
+        from src.models.hr_employee import HrEmployee
+        from src.models.counterparty import FinanceCounterparty
+        from src.models.payroll_approval import FinancePayrollApproval
+        from src.models.payroll_adjustment import FinancePayrollAdjustment
+        from src.utils.errors import NotFoundError
+        run = db.get(FinancePayrollRun, run_id)
+        if not run:
+            raise NotFoundError(f"Payroll run {run_id} not found")
+        # PR-7 touch: adjustment reasons per employee, surfaced to approvers (audit visibility).
+        adj_by_emp: dict[int, list] = {}
+        for a in db.query(FinancePayrollAdjustment).filter(FinancePayrollAdjustment.run_id == run_id).all():
+            adj_by_emp.setdefault(a.employee_id, []).append(
+                {"field": a.field, "old": a.old_value, "new": a.new_value, "reason": a.reason})
+
+        def _name(emp):
+            # The employee's NAME lives on the users row. NEVER fall back to emp.designation — that is a
+            # JOB TITLE ("Customer Service Executive"), not a name (bug fix 2026-08-16).
+            from sqlalchemy import text as _text
+            urow = db.execute(_text("SELECT name FROM users WHERE id=:u"), {"u": emp.user_id}).first()
+            if urow and urow[0]:
+                return urow[0]
+            cp = (db.query(FinanceCounterparty)
+                  .filter(FinanceCounterparty.external_system == "employee",
+                          FinanceCounterparty.external_id == str(emp.user_id)).first())
+            return (cp.name if cp else None) or f"user {emp.user_id}"
+
+        # prior run for this entity (the most recent posted/paid one before this run_date)
+        prior = (db.query(FinancePayrollRun)
+                 .filter(FinancePayrollRun.entity_id == run.entity_id,
+                         FinancePayrollRun.id != run_id,
+                         FinancePayrollRun.status.in_(["POSTED", "PAYMENT_INITIATED", "PAID"]),
+                         FinancePayrollRun.run_date <= run.run_date)
+                 .order_by(FinancePayrollRun.run_date.desc(), FinancePayrollRun.id.desc()).first())
+        prior_gross = {}   # employee_id -> gross in the prior run
+        if prior:
+            for pi in db.query(HrPayrollItem).filter(HrPayrollItem.finance_payroll_run_id == prior.id).all():
+                prior_gross[pi.employee_id] = float(pi.gross_amount)
+
+        items = db.query(HrPayrollItem).filter(HrPayrollItem.finance_payroll_run_id == run_id).all()
+        approvals = {a.salary_account_code: a for a in
+                     db.query(FinancePayrollApproval).filter(FinancePayrollApproval.run_id == run_id).all()}
+        # Per-line amounts are NATIVE (the employee's salary currency); the GROUP total is a functional
+        # roll-up (a group can mix USD/INR/SGD, so a raw native sum would be meaningless — same rule as
+        # the run total, POL-142). FX at the run date is safe here: the DRAFT JE was already built at
+        # submit-for-approval, so the rates exist.
+        from src.models.entity import FinanceEntity
+        from src.services.fx_service import fx_service
+        from decimal import Decimal as _D
+        _func = db.get(FinanceEntity, run.entity_id).base_currency if run.entity_id else None
+        groups: dict[str, dict] = {}
+        seen_emp = set()
+        for it in items:
+            emp = db.get(HrEmployee, it.employee_id)
+            if not emp:
+                continue
+            code = hr_payroll_service._resolve_salary_code(db, emp, it.currency)
+            seen_emp.add(it.employee_id)
+            g = groups.setdefault(code, {"salary_account_code": code, "lines": [], "leavers": [],
+                                         "total": 0.0, "currency": _func, "headcount": 0})
+            gross = float(it.gross_amount)
+            prev = prior_gross.get(it.employee_id)
+            change = "new" if prev is None else ("changed" if abs(prev - gross) > 0.01 else "same")
+            g["lines"].append({"employee_id": it.employee_id, "name": _name(emp), "gross": gross,
+                               "net": float(it.net_amount), "currency": it.currency, "change": change,
+                               "prev_gross": prev, "adjustments": adj_by_emp.get(it.employee_id, [])})
+            # group total accumulates in the entity functional currency
+            g["total"] += float(fx_service.to_functional_or_same(
+                db, _D(str(it.gross_amount)), it.currency, _func, run.run_date)[0])
+            g["headcount"] += 1
+        # leavers: anyone paid in the prior run but not in this one (attributed to their salary group)
+        if prior:
+            for pi in db.query(HrPayrollItem).filter(HrPayrollItem.finance_payroll_run_id == prior.id).all():
+                if pi.employee_id in seen_emp:
+                    continue
+                emp = db.get(HrEmployee, pi.employee_id)
+                if not emp:
+                    continue
+                code = hr_payroll_service._resolve_salary_code(db, emp, pi.currency)
+                if code in groups:
+                    groups[code]["leavers"].append({"employee_id": pi.employee_id, "name": _name(emp),
+                                                    "prev_gross": float(pi.gross_amount)})
+        out_groups = []
+        for code, g in groups.items():
+            a = approvals.get(code)
+            g["approver"] = a.approver if a else None
+            g["status"] = a.status if a else "pending"
+            g["changes_summary"] = {
+                "new": sum(1 for l in g["lines"] if l["change"] == "new"),
+                "changed": sum(1 for l in g["lines"] if l["change"] == "changed"),
+                "leavers": len(g["leavers"])}
+            g["total"] = round(g["total"], 2)
+            out_groups.append(g)
+        return {
+            "run": {"id": run.id, "status": run.status, "entity_id": run.entity_id,
+                    "run_date": run.run_date.isoformat() if run.run_date else None,
+                    "period": [run.payroll_period_start.isoformat(), run.payroll_period_end.isoformat()]},
+            "prior_run_id": prior.id if prior else None,
+            "groups": out_groups,
+        }
+
+    def submit_for_approval(self, db: Session, run_id: int, actor=None) -> dict:
+        """PR-3 (POL-140): submit a DRAFT run for SEGMENTED approval. Builds the balanced JE as a DRAFT
+        (posted only on full approval — the draft-JE benefit), groups the payslip lines by salary account,
+        and routes each group to that account's approver in the COA matrix (finance_coa_config). Run moves
+        DRAFT → PENDING_APPROVAL. Returns {run, approvals}."""
+        from src.services.hr_payroll_service import hr_payroll_service
+        from src.services.journal_service import journal_service
+        from src.services.task_service import task_service
+        from src.models.hr_payroll import HrPayrollItem
+        from src.models.bank_account import FinanceBankAccount
+        from src.models.coa_config import FinanceCoaConfig
+        from src.models.payroll_approval import FinancePayrollApproval, PayrollApprovalStatus
+        from src.models.journal_entry import JournalEntryStatus
+        from src.utils.errors import BadRequestError, NotFoundError
+        run = db.get(FinancePayrollRun, run_id)
+        if not run:
+            raise NotFoundError(f"Payroll run {run_id} not found")
+        if run.status != "DRAFT":
+            raise BadRequestError(f"Only a DRAFT run can be submitted (is {run.status}).")
+        items = db.query(HrPayrollItem).filter(HrPayrollItem.finance_payroll_run_id == run_id).all()
+        if not items:
+            raise BadRequestError("Run has no payroll items.")
+        bank = db.get(FinanceBankAccount, run.bank_account_id)
+        # PR-4: accrue the net to Salaries Payable (2304) rather than crediting bank directly, so the net
+        # can be fanned out into the register and settled per employee (Dr 2304 / Cr bank).
+        lines, groups, desc = hr_payroll_service._build_je_lines_and_groups(
+            db, run, items, bank, net_to_account=SALARIES_PAYABLE_ACCOUNT)
+        # FX happens HERE (draft JE at submit-for-approval), not at draft creation: fill functional totals.
+        hr_payroll_service.set_functional_totals(db, run, items)
+        # DRAFT JE — the approver reviews the literal entry; posted only when all groups sign off.
+        je = journal_service.create(db=db, entity_id=run.entity_id, entry_date=run.run_date,
+                                    description=desc, lines=lines,
+                                    created_by=(actor or {}).get("user_id"),
+                                    status=JournalEntryStatus.DRAFT)
+        je.source = "payroll"
+        run.journal_entry_id = je.id
+        approvals = []
+        for salary_code, g in groups.items():
+            cfg = db.query(FinanceCoaConfig).filter(FinanceCoaConfig.coa_code == salary_code).first()
+            approver = cfg.approver_1 if cfg else None
+            a = FinancePayrollApproval(run_id=run_id, salary_account_code=salary_code,
+                                       group_total=g["total"], group_headcount=g["headcount"],
+                                       approver=approver, status=PayrollApprovalStatus.PENDING.value)
+            db.add(a); db.flush(); approvals.append(a)
+            task_service.enqueue(
+                db, type="payroll-approval", source_ref=f"payroll:{run_id}:{salary_code}",
+                title=f"Approve payroll — account {salary_code} · {run.currency if hasattr(run,'currency') else ''} "
+                      f"{g['total']:,.2f} ({g['headcount']} staff)",
+                summary=f"Payroll run #{run_id} · salary account {salary_code}",
+                body={"run_id": run_id, "salary_account_code": salary_code, "total": g["total"],
+                      "headcount": g["headcount"]},
+                assignee_role=approver or "finance.payroll",
+                created_by=(actor or {}).get("user_id"))
+        self.transition_run(db, run, "PENDING_APPROVAL", actor=actor)
+        return {"run": run.to_dict() if hasattr(run, "to_dict") else {"id": run.id, "status": run.status},
+                "approvals": [a.to_dict() for a in approvals]}
+
+    def decide_group(self, db: Session, run_id: int, salary_account_code: str, decision: str,
+                     actor=None, reason: str = None) -> dict:
+        """PR-3: record one salary-account group's approval decision. A rejection sends the run back to
+        DRAFT (and discards the draft JE). When ALL groups are approved, the run → APPROVED and the draft
+        JE is POSTED (→ POSTED), after which the register fan-out (PR-4) + settlement run."""
+        from src.services.journal_service import journal_service
+        from src.models.payroll_approval import FinancePayrollApproval, PayrollApprovalStatus
+        from src.models.journal_entry import JournalEntryStatus
+        from src.utils.errors import BadRequestError, NotFoundError
+        from datetime import datetime, UTC
+        run = db.get(FinancePayrollRun, run_id)
+        if not run:
+            raise NotFoundError(f"Payroll run {run_id} not found")
+        if run.status != "PENDING_APPROVAL":
+            raise BadRequestError(f"Run is {run.status}, not awaiting approval.")
+        a = (db.query(FinancePayrollApproval)
+             .filter(FinancePayrollApproval.run_id == run_id,
+                     FinancePayrollApproval.salary_account_code == salary_account_code).first())
+        if not a:
+            raise NotFoundError(f"No approval group {salary_account_code} on run {run_id}.")
+        if a.status != PayrollApprovalStatus.PENDING.value:
+            raise BadRequestError(f"Group {salary_account_code} already {a.status}.")
+        if decision not in ("approved", "rejected"):
+            raise BadRequestError("decision must be 'approved' or 'rejected'.")
+        a.status = decision
+        a.decided_by = (actor or {}).get("user_id")
+        a.decided_at = datetime.now(UTC)
+        a.reason = reason
+        db.flush()
+        if decision == "rejected":
+            # discard the draft JE and send the run back to DRAFT for fixes
+            if run.journal_entry_id:
+                from src.models.journal_entry import FinanceJournalEntry
+                je = db.get(FinanceJournalEntry, run.journal_entry_id)
+                if je and je.status == JournalEntryStatus.DRAFT:
+                    db.delete(je)
+                run.journal_entry_id = None
+            self.transition_run(db, run, "DRAFT", actor=actor)
+            return {"run_id": run_id, "status": run.status, "group": a.to_dict()}
+        # approved — all groups done?
+        remaining = (db.query(FinancePayrollApproval)
+                     .filter(FinancePayrollApproval.run_id == run_id,
+                             FinancePayrollApproval.status != PayrollApprovalStatus.APPROVED.value).count())
+        if remaining == 0:
+            if not run.journal_entry_id:
+                raise BadRequestError(
+                    f"Run {run_id} has no draft JE to post (a prior step failed) — resubmit for approval.")
+            self.transition_run(db, run, "APPROVED", actor=actor)
+            journal_service.post_entry(db, run.journal_entry_id,
+                                       posting_user_id=(actor or {}).get("user_id"))
+            self.transition_run(db, run, "POSTED", actor=actor)
+        return {"run_id": run_id, "status": run.status, "group": a.to_dict(),
+                "groups_remaining": remaining}
+
+    def fan_out_to_register(self, db: Session, run_id: int, actor=None) -> dict:
+        """PR-4 (POL-139/140): fan a POSTED run OUT into the payout register — one net-salary payable per
+        employee (payee = the employee counterparty) + one statutory payable per accrued authority account
+        (CPF 2300 / super 2302 / PAYG 2305 → the CPF Board / super fund / tax office counterparty). Each
+        row is a `payable_type='payroll'` payout awaiting payment (settled Dr <liability> / Cr bank later).
+        Idempotent: re-running skips employees/statutory already fanned out."""
+        from src.models.hr_payroll import HrPayrollItem
+        from src.models.hr_employee import HrEmployee
+        from src.models.counterparty import FinanceCounterparty
+        from src.models.vendor_payout import FinancePayout, PayoutState
+        from src.services.payout_service import DRY_RUN
+        from src.utils.errors import BadRequestError, NotFoundError
+        from datetime import datetime, UTC
+        run = db.get(FinancePayrollRun, run_id)
+        if not run:
+            raise NotFoundError(f"Payroll run {run_id} not found")
+        if run.status not in ("POSTED", "PAYMENT_INITIATED"):
+            raise BadRequestError(f"Run must be POSTED to fan out (is {run.status}).")
+        existing = {(p.payable_type, p.payable_id, p.counterparty_id) for p in
+                    db.query(FinancePayout).filter(FinancePayout.payable_type == "payroll",
+                                                   FinancePayout.payable_id == run_id).all()}
+        items = db.query(HrPayrollItem).filter(HrPayrollItem.finance_payroll_run_id == run_id).all()
+        net_payouts, statutory = [], {}
+        for it in items:
+            emp = db.get(HrEmployee, it.employee_id)
+            cp = (db.query(FinanceCounterparty)
+                  .filter(FinanceCounterparty.external_system == "employee",
+                          FinanceCounterparty.external_id == str(emp.user_id)).first()) if emp else None
+            if cp and ("payroll", run_id, cp.id) not in existing:
+                p = FinancePayout(
+                    invoice_id=None, payable_type="payroll", payable_id=run_id, method="system_wise",
+                    counterparty_id=cp.id, entity_id=run.entity_id, amount=round(float(it.net_amount), 2),
+                    currency=it.currency, state=PayoutState.DRAFT.value, is_dry_run=DRY_RUN,
+                    requested_by=(actor or {}).get("user_id"), requested_at=datetime.now(UTC))
+                db.add(p); db.flush(); net_payouts.append(p.id)
+            # accrue statutory obligations by credit account — ONLY where WE withhold their tax.
+            # The flag is EMPLOYER_WITHHOLD, never the legacy 'internal' string (model/schema/UI all use
+            # EMPLOYER_WITHHOLD | SELF_MANAGED). The old 'internal' check silently produced ZERO statutory
+            # payouts for every real employee — CPF/super/PAYG never entered the register.
+            if emp and (emp.tax_treatment or "").upper() == "EMPLOYER_WITHHOLD":
+                for line in (it.deduction_lines or []):
+                    code = line["coa_credit_code"]
+                    if code in STATUTORY_AUTHORITY:
+                        # Decimal accumulation: float drift would desync the payout from the accrual JE
+                        # credit and emit a spurious 7100 FX line on same-currency payroll.
+                        statutory[code] = statutory.get(code, Decimal("0")) + Decimal(str(line["amount"]))
+        stat_payouts = []
+        for code, amount in statutory.items():
+            if amount <= 0:
+                continue
+            authority = (db.query(FinanceCounterparty)
+                         .filter(FinanceCounterparty.name.ilike(f"%{STATUTORY_AUTHORITY[code]}%")).first())
+            if not authority or ("payroll", run_id, authority.id) in existing:
+                continue
+            p = FinancePayout(
+                invoice_id=None, payable_type="payroll", payable_id=run_id, method="system_wise",
+                counterparty_id=authority.id, entity_id=run.entity_id, amount=round(amount, 2),
+                currency=(items[0].currency if items else "SGD"),
+                external_reference=f"statutory:{code}", state=PayoutState.DRAFT.value, is_dry_run=DRY_RUN,
+                requested_by=(actor or {}).get("user_id"), requested_at=datetime.now(UTC))
+            db.add(p); db.flush(); stat_payouts.append({"account": code, "payout_id": p.id, "amount": round(amount, 2)})
+        db.commit()
+        return {"run_id": run_id, "net_payouts": net_payouts, "statutory_payouts": stat_payouts,
+                "net_count": len(net_payouts)}
 
     def create_run(self, db: Session, data: dict) -> FinancePayrollRun:
         """

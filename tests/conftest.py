@@ -32,6 +32,9 @@ from src.models.categorization_rule import FinanceCategorizationRule  # noqa: F4
 from src.models.depreciation import FinanceCOAAmortizationPolicy, FinanceAssetSchedule  # noqa: F401
 from src.models.hr_employee import HrEmployee, HrCompensation, HrDeductionRule  # noqa: F401
 from src.models.payroll import FinancePayrollRun  # noqa: F401
+from src.models.hr_payroll import HrPayrollItem  # noqa: F401
+from src.models.payroll_adjustment import FinancePayrollAdjustment  # noqa: F401
+from src.models.payroll_approval import FinancePayrollApproval  # noqa: F401
 from src.models.economic_event import FinanceJETemplate, FinanceEconomicEvent  # noqa: F401
 from src.models.sync_run import FinanceSyncRun  # noqa: F401
 

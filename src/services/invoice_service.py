@@ -865,6 +865,61 @@ class InvoiceService:
         db.refresh(invoice)
         return invoice
 
+    def mark_paid_already(self, db: Session, invoice_id: int, *, amount: Optional[float] = None,
+                          source_bank_account_id: Optional[int] = None, reference: Optional[str] = None,
+                          actor: Optional[str] = None) -> FinanceInvoice:
+        """POL-135: 'paid outside the system'. Captures WHICH of our bank accounts it was paid from, the
+        EXACT amount (can be a PARTIAL, ≤ remaining), and an OPTIONAL reference (no txn id — the operator
+        won't have one). Moves the payable into the reconciliation arm (`reconcile`), where the
+        categorization engine pairs the real bank payment (aided by the captured amount + account) and
+        posts the knock-off → `paid`/`partially_paid`. Does NOT set amount_paid (paid <=> a matched txn).
+        Every field is written to the append-only audit (POL-125). Displays as "Paid (reconciling)"."""
+        from src.utils.errors import ConflictError, BadRequestError
+        invoice = self.get_by_id(db, invoice_id)
+        if invoice.status not in (InvoiceStatus.APPROVED.value, InvoiceStatus.PARTIALLY_PAID.value):
+            raise ConflictError(
+                f"Only an approved / partially-paid payable can be marked paid-already (is '{invoice.status}').")
+        remaining = float(invoice.total_amount) - float(invoice.amount_paid or 0)
+        amt = float(amount) if amount is not None else remaining
+        if amt <= 0 or amt - remaining > 0.01:
+            raise BadRequestError(f"Amount {amt} must be > 0 and ≤ the remaining balance {remaining:.2f}.")
+
+        prior_status = invoice.status
+        invoice.status = InvoiceStatus.RECONCILE.value
+        # Full audit of the capture (source account / exact amount / optional reference). This is part of
+        # the deliverable — the operator asked for a complete audit trail — so a failed audit ABORTS the
+        # mark-paid rather than silently succeeding without a record.
+        from src.models.payout_channels import FinancePayoutReferenceAudit
+        db.add(FinancePayoutReferenceAudit(
+            target_type="invoice_mark_paid", target_id=invoice_id, action="mark_paid",
+            before={"status": prior_status, "amount_paid": float(invoice.amount_paid or 0)},
+            after={"amount": amt, "source_bank_account_id": source_bank_account_id,
+                   "reference": reference, "remaining_before": round(remaining, 2)},
+            actor=actor, reason="paid outside the system"))
+        # PM-7: record the manual payment in the SAME payout register (method='external_manual'), so every
+        # payout — Wise or outside — is one register. No wise_transfer_id (paired via the reconcile lane,
+        # not pair_on_import); state=awaiting_import (money already left us, awaiting the bank line to pair).
+        from src.models.vendor_payout import FinanceVendorPayout, PayoutState
+        db.add(FinanceVendorPayout(
+            invoice_id=invoice_id, payable_type="invoice", payable_id=invoice_id,
+            counterparty_id=invoice.counterparty_id, entity_id=invoice.entity_id,
+            # our SOURCE account (source_bank_account_id) lives in the audit; the payout register routes
+            # payees via registration_id (NULL here — a manual payment has no system-resolved recipient).
+            amount=amt, currency=invoice.currency,
+            method="external_manual", external_reference=reference,
+            # RECONCILE (not AWAITING_IMPORT): a paid-outside payout has no wise_transfer_id, so Rung 1
+            # can't pair it. RECONCILE is what the amount-fallback phase (3.7) settles against — mirrors
+            # the claim/payroll reconcile lane. AWAITING_IMPORT left it unmatchable forever.
+            state=PayoutState.RECONCILE.value, is_dry_run=False,
+            requested_by=actor, requested_at=datetime.now(UTC), settled_at=datetime.now(UTC)))
+        from src.services.task_service import task_service
+        from src.models.task import TaskStatus
+        task_service.close_for_source(db, f"invoice:{invoice_id}", TaskStatus.RETURNED.value,
+                                      acted_by=actor, action="approve",
+                                      notes=f"marked paid outside: {amt} from acct {source_bank_account_id}")
+        db.commit(); db.refresh(invoice)
+        return invoice
+
     def void(self, db: Session, invoice_id: int, voided_by: Optional[str] = None,
              void_reason: Optional[str] = None) -> FinanceInvoice:
         """Void an invoice. Allowed in any pre-posting state where nothing has hit the ledger:
@@ -1220,7 +1275,10 @@ class InvoiceService:
         if not txn:
             raise NotFoundError(f"Transaction with ID {transaction_id} not found")
 
-        open_statuses = (InvoiceStatus.APPROVED.value, InvoiceStatus.PARTIALLY_PAID.value)
+        # RECONCILE included: a paid-outside invoice (mark_paid_already) settles here when the bank line
+        # arrives, via the Phase 3.7 register knock-off. Without it, paid-outside invoices could never pair.
+        open_statuses = (InvoiceStatus.APPROVED.value, InvoiceStatus.PARTIALLY_PAID.value,
+                         InvoiceStatus.RECONCILE.value)
         if invoice.status not in open_statuses:
             raise BadRequestError(
                 f"Invoice {invoice_id} is not open for payment (status: {invoice.status})."

@@ -37,6 +37,7 @@ def create_app(config=None):
     
     # Register blueprints
     from src.routes.entities import entities_bp
+    from src.routes.fx_rates import fx_rates_bp
     from src.routes.accounts import accounts_bp
     from src.routes.bank_accounts import bank_accounts_bp
     from src.routes.transactions import transactions_bp
@@ -56,7 +57,8 @@ def create_app(config=None):
     from src.routes.jobs import jobs_bp
     from src.routes.economic_events import economic_events_bp
     from src.routes.payouts import payouts_bp
-    from src.routes.payee_bank_accounts import payee_bank_accounts_bp
+    from src.routes.payee_bank_accounts import payee_bank_accounts_bp  # legacy: HR employee bank accounts (not payout engine)
+    from src.routes.payout_recipients import payout_recipients_bp
     from src.routes.claims import claims_bp
     from src.routes.tasks import tasks_bp
     from src.routes.host_payouts import host_payouts_bp
@@ -65,6 +67,7 @@ def create_app(config=None):
     from src.routes.enrichment import enrichment_bp
     from src.routes.approvals import approvals_bp
     app.register_blueprint(entities_bp)
+    app.register_blueprint(fx_rates_bp)
     app.register_blueprint(accounts_bp)
     app.register_blueprint(bank_accounts_bp)
     app.register_blueprint(transactions_bp)
@@ -86,6 +89,7 @@ def create_app(config=None):
     app.register_blueprint(economic_events_bp)
     app.register_blueprint(payouts_bp)
     app.register_blueprint(payee_bank_accounts_bp)
+    app.register_blueprint(payout_recipients_bp)
     app.register_blueprint(claims_bp)
     app.register_blueprint(tasks_bp)
     app.register_blueprint(host_payouts_bp)

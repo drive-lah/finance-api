@@ -57,5 +57,18 @@ class FxService:
         functional = (amount_abs * rate).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         return functional, rate
 
+    def to_functional_or_same(
+        self, db: Session, amount_abs, currency: Optional[str],
+        functional_currency: Optional[str], on_date: date,
+    ) -> tuple[Decimal, Decimal]:
+        """Shared caller-converts helper (POL-25/26/141). Returns (amount, 1) when the
+        line is already in the entity's functional currency (or currency is unknown);
+        otherwise converts via to_functional (which RAISES if no rate on file). Every JE
+        creator uses this so foreign amounts are never booked at fx=1."""
+        amt = amount_abs if isinstance(amount_abs, Decimal) else Decimal(str(amount_abs))
+        if not functional_currency or not currency or currency == functional_currency:
+            return amt, Decimal("1")
+        return self.to_functional(db, amt, currency, functional_currency, on_date)
+
 
 fx_service = FxService()

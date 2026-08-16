@@ -224,6 +224,19 @@ def reject_invoice(invoice_id: int):
         return jsonify(_invoice_dict(invoice, db)), 200
 
 
+@invoices_bp.route("/<int:invoice_id>/mark-paid-already", methods=["POST"])
+def mark_paid_already(invoice_id: int):
+    """Mark an approved payable as paid outside the system → reconciliation arm (POL-135).
+    Body: { amount?, source_bank_account_id?, reference?, actor? }."""
+    data = request.get_json(silent=True) or {}
+    with db_session() as db:
+        invoice = invoice_service.mark_paid_already(
+            db, invoice_id, amount=data.get("amount"),
+            source_bank_account_id=data.get("source_bank_account_id"),
+            reference=data.get("reference"), actor=data.get("actor"))
+        return jsonify(_invoice_dict(invoice, db)), 200
+
+
 @invoices_bp.route("/<int:invoice_id>/void", methods=["POST"])
 def void_invoice(invoice_id: int):
     """Void an invoice. Body: { void_reason: str (required), voided_by: str (logged-in user) }."""

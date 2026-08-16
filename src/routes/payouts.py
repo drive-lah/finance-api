@@ -6,7 +6,7 @@ from flask import Blueprint, request, jsonify
 from src.database import db_session
 from src.services.payout_service import payout_service, ENTITY_WISE_PROFILE
 from src.models.vendor_payout import (
-    FinanceVendorPayout, FinanceVendorPayoutEvent, FinancePayoutBankAccount,
+    FinanceVendorPayout, FinanceVendorPayoutEvent,
 )
 from src.models.invoice import FinanceInvoice, InvoiceStatus
 from src.models.counterparty import FinanceCounterparty
@@ -115,9 +115,55 @@ def create_payout():
         raise BadRequestError("invoice_id is required")
     with db_session() as db:
         p = payout_service.create_payout(
-            db, int(invoice_id), body.get("bank_account_id"), _actor())
+            db, int(invoice_id), body.get("bank_account_id"), _actor(), amount=body.get("amount"))
         db.flush()
         return jsonify(p.to_dict()), 201
+
+
+@payouts_bp.route("/<int:payout_id>/mark-reconcile", methods=["POST"])
+def mark_reconcile_payout(payout_id):
+    """Mark a payout as paid OUTSIDE the system → RECONCILE, so the categorization engine's amount
+    fallback settles it when the bank line arrives."""
+    with db_session() as db:
+        p = payout_service.mark_reconcile(db, payout_id, actor=(_actor() or {}).get("user_id"))
+        return jsonify(p.to_dict()), 200
+
+
+@payouts_bp.route("/claim", methods=["POST"])
+def create_claim_payout():
+    """Raise (and, under threshold, send) a reimbursement payout for an APPROVED employee claim (POL-139
+    cat 4). Moves the claim approved → payment_initiated; settlement → paid via the categorization engine."""
+    body = request.get_json(force=True) or {}
+    claim_id = body.get("claim_id")
+    if not claim_id:
+        raise BadRequestError("claim_id is required")
+    with db_session() as db:
+        p = payout_service.create_claim_payout(db, int(claim_id), _actor())
+        db.flush()
+        return jsonify(p.to_dict()), 201
+
+
+@payouts_bp.route("/claim-payables", methods=["GET"])
+def claim_payables():
+    """Approved employee claims awaiting reimbursement (finance payment queue). `entity_id` optional."""
+    from src.models.employee_claim import FinanceEmployeeClaim, ClaimStatus
+    from src.models.counterparty import FinanceCounterparty
+    entity_id = request.args.get("entity_id", type=int)
+    with db_session() as db:
+        q = db.query(FinanceEmployeeClaim).filter(
+            FinanceEmployeeClaim.status == ClaimStatus.APPROVED.value)
+        if entity_id:
+            q = q.filter(FinanceEmployeeClaim.entity_id == entity_id)
+        out = []
+        for c in q.order_by(FinanceEmployeeClaim.approved_at.asc()).all():
+            emp = (db.query(FinanceCounterparty)
+                   .filter(FinanceCounterparty.external_system == "employee",
+                           FinanceCounterparty.external_id == str(c.owner_user_id)).first())
+            d = c.to_dict()
+            d["payee_name"] = emp.name if emp else f"user {c.owner_user_id}"
+            d["counterparty_id"] = emp.id if emp else None
+            out.append(d)
+        return jsonify(out)
 
 
 @payouts_bp.route("/<int:payout_id>/approve", methods=["POST"])
@@ -134,6 +180,67 @@ def cancel_payout(payout_id):
     with db_session() as db:
         p = payout_service.cancel(db, payout_id, _actor(), body.get("reason") or "cancelled")
         return jsonify(p.to_dict())
+
+
+@payouts_bp.route("/poll-statuses", methods=["POST"])
+def poll_statuses():
+    """SM-2 poller trigger (POL-130) — schedule this (e.g. every few minutes / daily). Asks Wise for
+    the current status of every non-terminal payout and advances the state machine (delivered ->
+    awaiting_import, refunded -> failed + invoice revert). Reconciliation to paid stays with the
+    categorization engine (POL-131)."""
+    with db_session() as db:
+        return jsonify(payout_service.poll_pending_statuses(db, _actor()))
+
+
+def _verify_wise_signature(raw: bytes, sig_b64: str | None) -> bool:
+    """Verify a Wise webhook signature (RSA-SHA256 over the raw body) with Wise's published public key
+    at WISE_WEBHOOK_PUBLIC_KEY_PATH. Until that key is configured we treat every event as UNVERIFIED and
+    ignore it — the poller is the reliable path, the webhook is only the real-time optimization."""
+    import os
+    # TEST-ONLY escape hatch: WISE_WEBHOOK_INSECURE_SKIP_VERIFY=1 processes unsigned events so we can
+    # smoke-test delivery over ngrok before configuring Wise's public key. NEVER set this in prod.
+    if os.environ.get("WISE_WEBHOOK_INSECURE_SKIP_VERIFY") == "1":
+        logger.warning("Wise webhook signature verification SKIPPED (test mode) — do NOT use in prod")
+        return True
+    path = os.environ.get("WISE_WEBHOOK_PUBLIC_KEY_PATH")
+    if not path or not sig_b64:
+        return False
+    try:
+        import base64
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import padding
+        with open(path, "rb") as f:
+            pub = serialization.load_pem_public_key(f.read())
+        pub.verify(base64.b64decode(sig_b64), raw, padding.PKCS1v15(), hashes.SHA256())
+        return True
+    except Exception:
+        logger.exception("Wise webhook signature verification error")
+        return False
+
+
+@payouts_bp.route("/webhook", methods=["POST"])
+def wise_webhook():
+    """Wise `transfers#state-change` receiver (POL-130). Signature-verified; drives the payout state
+    machine off delivered/refunded. Always returns 200 so Wise does not retry-storm."""
+    raw = request.get_data()
+    if not _verify_wise_signature(raw, request.headers.get("X-Signature-SHA256")
+                                  or request.headers.get("X-Signature")):
+        logger.warning("Wise webhook ignored (unverified — set WISE_WEBHOOK_PUBLIC_KEY_PATH; poller covers it)")
+        return jsonify({"ok": True, "ignored": "unverified"}), 200
+    evt = request.get_json(silent=True) or {}
+    if evt.get("event_type") != "transfers#state-change":
+        return jsonify({"ok": True, "ignored": evt.get("event_type")}), 200
+    data = evt.get("data") or {}
+    transfer_id = str((data.get("resource") or {}).get("id") or "")
+    status = data.get("current_state")
+    with db_session() as db:
+        from src.models.vendor_payout import FinanceVendorPayout
+        p = db.query(FinanceVendorPayout).filter_by(wise_transfer_id=transfer_id).first()
+        if not p:
+            return jsonify({"ok": True, "ignored": "no matching payout"}), 200
+        payout_service.apply_wise_status(db, p, status, {"user_id": "wise-webhook"})
+        db.commit()
+        return jsonify({"ok": True, "payout_id": p.id, "state": p.state}), 200
 
 
 @payouts_bp.route("/config", methods=["GET"])

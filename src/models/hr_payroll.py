@@ -54,6 +54,10 @@ class HrPayrollItem(Base):
         Numeric(15, 2), default=0, server_default="0", nullable=False,
     )
     net_amount: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    # PR-6: the SYSTEM-GENERATED baseline (set once at create_run). Divergence needs a reason
+    # (finance_payroll_adjustments). Nullable for pre-PR-6 rows.
+    system_gross_amount: Mapped[float | None] = mapped_column(Numeric(15, 2), nullable=True)
+    system_net_amount: Mapped[float | None] = mapped_column(Numeric(15, 2), nullable=True)
     currency: Mapped[str] = mapped_column(
         String(3), default="SGD", server_default="SGD", nullable=False,
     )

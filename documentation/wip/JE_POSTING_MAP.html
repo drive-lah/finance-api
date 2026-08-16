@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JE Posting Mechanisms — Current State</title>
+<style>
+  :root{
+    --bg:#0f1221; --panel:#171a2e; --card:#1d2138; --ink:#e8ebf7; --sub:#9aa3c4;
+    --line:#2b3053; --mono:#7f8ac0;
+    --green:#37d399; --greenbg:#123326; --amber:#f5b13d; --amberbg:#332711;
+    --red:#ff6b7d; --redbg:#331419; --blue:#5aa9ff; --bluebg:#10233d; --violet:#b48bff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:26px 22px 60px}
+  h1{font-size:22px;margin:0 0 3px;letter-spacing:.2px}
+  .sub{color:var(--sub);font-size:13px;margin:0 0 18px}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin:0 0 22px;padding:12px 14px;background:var(--panel);
+    border:1px solid var(--line);border-radius:12px}
+  .legend b{font-weight:600}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--sub)}
+  .dot{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;align-items:start}
+  .bucket{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 13px 16px}
+  .bucket > h2{font-size:14px;margin:0 0 3px;display:flex;align-items:center;gap:8px}
+  .bucket > .bmeta{color:var(--mono);font-size:11px;margin:0 0 12px}
+  .bucket .tag{font-size:10px;padding:2px 7px;border-radius:20px;background:var(--card);color:var(--sub);border:1px solid var(--line)}
+  .card{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--line);
+    border-radius:10px;padding:9px 11px;margin-bottom:9px;min-width:0;overflow-wrap:break-word}
+  .out,.when,.trig{overflow-wrap:break-word;word-break:break-word;white-space:normal}
+  .card.g{border-left-color:var(--green)} .card.a{border-left-color:var(--amber)} .card.r{border-left-color:var(--red)} .card.b{border-left-color:var(--blue)}
+  .card h3{font-size:13px;margin:0 0 2px;font-weight:600}
+  .loc{font:11px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--mono)}
+  .badges{display:flex;flex-wrap:wrap;gap:5px;margin:7px 0 5px}
+  .b{font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:6px;white-space:nowrap}
+  .draft{background:var(--amberbg);color:var(--amber)} .posted{background:var(--greenbg);color:var(--green)}
+  .fxy{background:var(--greenbg);color:var(--green)} .fxn{background:var(--redbg);color:var(--red)}
+  .paired{background:var(--bluebg);color:var(--blue)} .legacy{background:var(--redbg);color:var(--red)}
+  .goforward{background:#182a1e;color:var(--green);border:1px solid var(--green)}
+  .warn{background:var(--amberbg);color:var(--amber)}
+  .deleg{background:#201a33;color:var(--violet)}
+  .trig{color:var(--sub);font-size:11.5px;margin-top:3px}
+  .target{margin-top:26px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 16px 18px}
+  .target h2{font-size:15px;margin:0 0 12px}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+  .node{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 13px;min-width:120px}
+  .node .nt{font-size:12.5px;font-weight:600} .node .ns{font-size:11px;color:var(--sub);margin-top:2px}
+  .node.evt{border-color:var(--violet)} .node.post{border-color:var(--blue)} .node.je{border-color:var(--green)}
+  .arrow{color:var(--mono);font-size:18px}
+  .foot{color:var(--mono);font-size:11px;margin-top:22px;border-top:1px solid var(--line);padding-top:12px}
+  .tabbar{display:flex;align-items:center;gap:8px;margin:0 0 20px;flex-wrap:wrap}
+  .tabbar .pt{font-weight:700;font-size:15px;margin-right:12px}
+  .tb{background:var(--panel);border:1px solid var(--line);color:var(--sub);font-size:13px;font-weight:600;
+    padding:8px 15px;border-radius:9px;cursor:pointer}
+  .tb.active{background:var(--blue);border-color:var(--blue);color:#fff}
+  .tab{display:none} .tab.active{display:block}
+  .ev{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:6px;background:#201a33;color:var(--violet);white-space:nowrap}
+  .when{font-size:12.5px} .when b{color:var(--ink)}
+  .out{font-size:11.5px;color:var(--sub);margin-top:4px}
+  @media (prefers-color-scheme:light){
+    :root{--bg:#f4f6fc;--panel:#fff;--card:#fbfcff;--ink:#141a33;--sub:#5a6488;--line:#e0e5f2;--mono:#8790b5}
+  }
+</style>
+</head>
+<body>
+  <div class="tabbar">
+    <span class="pt">JE Posting Map · finance-api</span>
+    <button class="tb active" data-t="current" onclick="showTab('current')">① Current reality</button>
+    <button class="tb" data-t="target" onclick="showTab('target')">② Target state</button>
+  </div>
+
+  <section id="tab-current" class="tab active">
+  <h1>Journal-Entry Posting Mechanisms — Current State</h1>
+  <p class="sub">23 <code>journal_service.create()</code> calls (19 logical mechanisms, 4 paired) <b>+ 2 engines that bypass the service</b> (Economic Events, Stripe Sync — direct <code>FinanceJournalEntry(...)</code>). Bucketed by domain. Read on branch <code>260814_payout_module</code>, 2026-08-16.</p>
+
+  <div class="legend">
+    <span class="chip"><span class="dot" style="background:var(--green)"></span><b>Healthy</b> — posts right + FX applied</span>
+    <span class="chip"><span class="dot" style="background:var(--amber)"></span><b>Gap</b> — no FX, or stuck draft</span>
+    <span class="chip"><span class="dot" style="background:var(--red)"></span><b>Legacy / bug</b> — remove or fix</span>
+    <span class="chip"><span class="dot" style="background:var(--blue)"></span><b>Go-forward</b> — the intended path</span>
+    <span class="chip">·</span>
+    <span class="chip"><span class="b draft">DRAFT</span>/<span class="b posted">POSTED</span> = born-status</span>
+    <span class="chip"><span class="b fxy">FX✓</span>/<span class="b fxn">FX✗</span></span>
+    <span class="chip"><span class="b paired">PAIRED</span></span>
+    <span class="chip"><span class="b deleg">DELEGATES→</span></span>
+  </div>
+
+  <div class="cols">
+
+    <!-- INVOICE -->
+    <section class="bucket">
+      <h2>🧾 Invoice <span class="tag">5 calls · 4 mech</span></h2>
+      <p class="bmeta">invoice_service.py</p>
+      <div class="card g"><h3>Bill on approve()</h3><span class="loc">invoice_service:766</span>
+        <div class="badges"><span class="b posted">POSTED</span><span class="b fxy">FX✓</span></div>
+        <div class="trig">Trigger: Invoice → <b>approved</b> ("posts at approval, PERIOD")</div></div>
+      <div class="card g"><h3>Bill — post-pairing (Mechanism A)</h3><span class="loc">invoice_service:1188</span>
+        <div class="badges"><span class="b posted">POSTED</span><span class="b fxy">FX✓</span></div>
+        <div class="trig">Trigger: paired → post action</div></div>
+      <div class="card a"><h3>AP payment — intra (knock-off)</h3><span class="loc">invoice_service:1697</span>
+        <div class="badges"><span class="b draft">DRAFT</span><span class="b fxy">FX✓</span></div>
+        <div class="trig">Trigger: categorization <b>_try_ap_knockoff</b> matches a bank txn</div></div>
+      <div class="card a"><h3>AP payment — cross-entity</h3><span class="loc">invoice_service:1720 + 1759</span>
+        <div class="badges"><span class="b draft">DRAFT</span><span class="b fxy">FX✓</span><span class="b paired">PAIRED</span></div>
+        <div class="trig">IC receivable / payable across two entities</div></div>
+    </section>
+
+    <!-- PAYROLL -->
+    <section class="bucket">
+      <h2>👥 Payroll <span class="tag">5 calls</span></h2>
+      <p class="bmeta">payroll_service.py + hr_payroll_service.py</p>
+      <div class="card b"><h3>Accrual via approval flow</h3><span class="loc">payroll_service:195 (submit_for_approval)</span>
+        <div class="badges"><span class="b draft">DRAFT</span><span class="b fxn">FX✗</span><span class="b goforward">GO-FORWARD</span></div>
+        <div class="trig">DRAFT → POSTED when all COA groups sign off (decide_group → post_entry)</div></div>
+      <div class="card r"><h3>Accrual — immediate post</h3><span class="loc">hr_payroll_service:533 (submit_run)</span>
+        <div class="badges"><span class="b posted">POSTED</span><span class="b fxn">FX✗</span><span class="b warn">OVERLAPS ⚠</span></div>
+        <div class="trig">Live via <code>hr.py:367</code> — competes with the approval flow. Pick one.</div></div>
+      <div class="card r"><h3>create_run (direct)</h3><span class="loc">payroll_service:405</span>
+        <div class="badges"><span class="b posted">POSTED</span><span class="b fxn">FX✗</span><span class="b legacy">TEST-ONLY ⚠</span></div>
+        <div class="trig">No route wires it — only tests/test_payroll.py. Legacy.</div></div>
+      <div class="card a"><h3>Cross-entity payroll payment</h3><span class="loc">payroll_service:513 + 549</span>
+        <div class="badges"><span class="b draft">DRAFT</span><span class="b fxn">FX✗</span><span class="b paired">PAIRED</span></div>
+        <div class="trig">Trigger: categorization <b>_try_payroll_knockoff</b> (:910, the OLD knock-off)</div></div>
+    </section>
+
+    <!-- CLAIM -->
+    <section class="bucket">
+      <h2>🧑‍💼 Claim <span class="tag">2 calls · 2 mech</span></h2>
+      <p class="bmeta">claim_service.py</p>
+      <div class="card a"><h3>Bill on approve()</h3><span class="loc">claim_service:114</span>
+        <div class="badges"><span class="b posted">POSTED</span><span class="b fxn">FX✗</span></div>
+        <div class="trig">Trigger: Claim → <b>approved</b> · Dr claim-COA / Cr 2303</div></div>
+      <div class="card a"><h3>Reimbursement payment (knock-off)</h3><span class="loc">claim_service:141</span>
+        <div class="badges"><span class="b posted">POSTED</span><span class="b fxn">FX✗</span></div>
+        <div class="trig">Trigger: categorization <b>_try_claim_knockoff</b> (:833) · same-entity only</div></div>
+    </section>
+
+    <!-- CATEGORIZATION -->
+    <section class="bucket" style="grid-column:span 2;min-width:0">
+      <h2>⚙️ Categorization Engine <span class="tag">8 in-engine calls + 3 delegated</span></h2>
+      <p class="bmeta">categorization_service.py — the busiest bucket. Splits into base rule-posting + four knock-off orchestrators.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px">
+        <div class="card g"><h3>Basic rule-based posting</h3><span class="loc">_create_simple_entry :2003</span>
+          <div class="badges"><span class="b draft">DRAFT</span><span class="b fxy">FX✓</span></div>
+          <div class="trig">Expense / deposit from a matched rule</div></div>
+        <div class="card a"><h3>Internal transfer — intra</h3><span class="loc">_create_internal_transfer :2111</span>
+          <div class="badges"><span class="b draft">DRAFT</span><span class="b fxn">FX✗</span></div>
+          <div class="trig">Same-entity, same-ccy bank-to-bank</div></div>
+        <div class="card g"><h3>Cross-ccy FX transfer</h3><span class="loc">_create_fx_transfer_je :2054</span>
+          <div class="badges"><span class="b posted">POSTED</span><span class="b fxy">FX✓</span><span class="b goforward">NEW · POL-144</span></div>
+          <div class="trig">Intra-entity, differing ccy · residual → 7100</div></div>
+        <div class="card a"><h3>Intercompany transfer</h3><span class="loc">:2169 + :2177</span>
+          <div class="badges"><span class="b draft">DRAFT</span><span class="b fxn">FX✗</span><span class="b paired">PAIRED</span></div>
+          <div class="trig">IC receivable / payable · the 72 unconverted groups live here</div></div>
+        <div class="card a"><h3>Cross-entity allocation</h3><span class="loc">:2257 + :2267</span>
+          <div class="badges"><span class="b draft">DRAFT</span><span class="b fxn">FX✗</span><span class="b paired">PAIRED</span></div>
+          <div class="trig">Cost borne by another entity</div></div>
+        <div class="card a"><h3>Payroll register knock-off</h3><span class="loc">_try_payroll_register_knockoff :884</span>
+          <div class="badges"><span class="b posted">POSTED</span><span class="b fxn">FX✗</span></div>
+          <div class="trig">New register-based settlement · overlaps the old :910</div></div>
+        <div class="card b"><h3>Invoice AP knock-off →</h3><span class="loc">_try_ap_knockoff :656</span>
+          <div class="badges"><span class="b deleg">DELEGATES→ invoice_service</span></div>
+          <div class="trig">Posts via invoice AP payment (:1697/:1720)</div></div>
+        <div class="card b"><h3>Claim knock-off →</h3><span class="loc">_try_claim_knockoff :285</span>
+          <div class="badges"><span class="b deleg">DELEGATES→ claim_service</span></div>
+          <div class="trig">Posts via claim reimbursement (:141)</div></div>
+        <div class="card r"><h3>Payroll knock-off (old) →</h3><span class="loc">_try_payroll_knockoff :910</span>
+          <div class="badges"><span class="b deleg">DELEGATES→ payroll_service</span><span class="b warn">OVERLAPS :884 ⚠</span></div>
+          <div class="trig">Posts via cross-entity payroll (:513/:549)</div></div>
+      </div>
+    </section>
+
+    <!-- MANUAL / SCHEDULED -->
+    <section class="bucket">
+      <h2>🛠️ Manual / Scheduled <span class="tag">3 calls</span></h2>
+      <p class="bmeta">routes + transaction + amortization</p>
+      <div class="card g"><h3>Manual JE (admin UI)</h3><span class="loc">routes/journal_entries:119</span>
+        <div class="badges"><span class="b draft">DRAFT</span><span class="b fxy">FX✓</span></div>
+        <div class="trig">Posts via manual <code>POST /{id}/post</code> → post_entry</div></div>
+      <div class="card g"><h3>NEEDS_REVIEW resolution</h3><span class="loc">transaction_service:801</span>
+        <div class="badges"><span class="b draft">DRAFT</span><span class="b fxy">FX✓</span></div>
+        <div class="trig">Manual resolve of an unmatched txn</div></div>
+      <div class="card r"><h3>Amortization / depreciation</h3><span class="loc">amortization_service:224</span>
+        <div class="badges"><span class="b draft">DRAFT</span><span class="b fxn">FX✗</span><span class="b legacy">NEVER POSTS ⚠</span></div>
+        <div class="trig">Scheduler bumps months_posted but never calls post_entry — JE stuck DRAFT (bug)</div></div>
+    </section>
+
+    <!-- ECONOMIC EVENTS -->
+    <section class="bucket">
+      <h2>⚡ Economic Events <span class="tag">bypasses journal_service</span></h2>
+      <p class="bmeta">economic_events/service.py — template-driven, staged events → JEs</p>
+      <div class="card a"><h3>project_month() → posts JEs</h3><span class="loc">economic_events/service.py:200</span>
+        <div class="badges"><span class="b posted">POSTED</span><span class="b fxn">FX✗ (assumes fx=1)</span><span class="b warn">DIRECT MODEL ⚠</span></div>
+        <div class="trig">STAGED FinanceEconomicEvent + FinanceJETemplate (debit/credit codes) → builds FinanceJournalEntry + lines DIRECTLY. Wired: route <code>project_month</code>. LIVE.</div></div>
+      <div class="card a"><h3>Own GST — Lane A</h3><span class="loc">_lane_a_gst :153 (POL-123)</span>
+        <div class="badges"><span class="b posted">BY DESIGN ✓</span></div>
+        <div class="trig">Lane A = CASH-BASIS GST (bank-leg, 1/11, 1350/2500). Distinct from the invoice/accrual Lane B (1355/2505 deferred). Two GST engines by design — NOT merged.</div></div>
+    </section>
+
+    <!-- STRIPE SYNC (dormant) -->
+    <section class="bucket">
+      <h2>💳 Stripe Sync <span class="tag">dormant</span></h2>
+      <p class="bmeta">stripe_sync/sync_service.py</p>
+      <div class="card r"><h3>sync_month() → posts JEs</h3><span class="loc">stripe_sync/sync_service.py:234</span>
+        <div class="badges"><span class="b posted">POSTED</span><span class="b legacy">NO CALLER ⚠</span><span class="b warn">DIRECT MODEL</span></div>
+        <div class="trig">Builds FinanceJournalEntry directly, bypasses journal_service. No route / cron / caller anywhere — dead or paused. Gaurav's call: revive-through-posting-layer or remove.</div></div>
+    </section>
+
+  </div>
+  </section>
+
+  <!-- ============ TAB 2 — TARGET STATE ============ -->
+  <section id="tab-target" class="tab">
+  <h1>Target State — which event each engine emits, and when</h1>
+  <p class="sub">Every engine emits a <b>typed economic event</b> at a defined point in its own state machine. One shared posting layer converts each leg to the entity's currency, generates the lines, balances, and plugs FX to 7100. The JE is <b>born DRAFT</b> and posts only on the marked transition. Engines never build JE lines by hand, and never post a payable they don't own.</p>
+
+  <div class="legend">
+    <span class="chip"><span class="ev">EVENT</span> the typed signal the engine emits</span>
+    <span class="chip">·</span>
+    <span class="chip"><b>when</b> = the trigger point in that engine's state machine</span>
+    <span class="chip"><b>out</b> = what the posting layer does with it</span>
+  </div>
+
+  <div class="cols">
+
+    <!-- INVOICE -->
+    <section class="bucket">
+      <h2>🧾 Invoice engine</h2>
+      <p class="bmeta">owns AP bills + their settlement</p>
+      <div class="card b"><div class="when"><b>Invoice → approved</b></div>
+        <div class="badges"><span class="ev">BillRaised</span></div>
+        <div class="out">Posts now · Dr expense / Cr AP · invoice-ccy → entity func</div></div>
+      <div class="card b"><div class="when"><b>Payment txn matched</b> <span style="color:var(--mono)">(categ hands off)</span></div>
+        <div class="badges"><span class="ev">PayableSettled</span></div>
+        <div class="out">Dr AP / Cr bank · bank-ccy → entity · FX residue → 7100</div></div>
+      <div class="card b"><div class="when"><b>Cross-entity payment</b></div>
+        <div class="badges"><span class="ev">PayableSettled · IC</span><span class="b paired">PAIRED</span></div>
+        <div class="out">Two JEs, IC receivable / payable, each per-entity ccy</div></div>
+    </section>
+
+    <!-- PAYROLL -->
+    <section class="bucket">
+      <h2>👥 Payroll engine</h2>
+      <p class="bmeta">owns run accrual + payout settlement</p>
+      <div class="card b"><div class="when"><b>Run → APPROVED</b> (all COA groups sign off)</div>
+        <div class="badges"><span class="ev">PayrollAccrued</span></div>
+        <div class="out">Draft through approval → posts here · mixed-ccy per employee → entity func</div></div>
+      <div class="card b"><div class="when"><b>Net / statutory payout matched</b></div>
+        <div class="badges"><span class="ev">PayableSettled</span></div>
+        <div class="out">Register knock-off · <b>posting moves OUT of categ</b> into here</div></div>
+      <div class="card b"><div class="when"><b>Cross-entity payroll</b></div>
+        <div class="badges"><span class="ev">PayableSettled · IC</span><span class="b paired">PAIRED</span></div>
+        <div class="out">Paired IC JEs, per-entity ccy</div></div>
+    </section>
+
+    <!-- CLAIM -->
+    <section class="bucket">
+      <h2>🧑‍💼 Claim engine</h2>
+      <p class="bmeta">owns claim bills + reimbursement</p>
+      <div class="card b"><div class="when"><b>Claim → approved</b></div>
+        <div class="badges"><span class="ev">BillRaised</span></div>
+        <div class="out">Posts now · Dr claim-COA / Cr 2303 · claim-ccy → entity</div></div>
+      <div class="card b"><div class="when"><b>Reimbursement matched</b></div>
+        <div class="badges"><span class="ev">PayableSettled</span></div>
+        <div class="out">Dr 2303 / Cr bank · FX residue → 7100</div></div>
+    </section>
+
+    <!-- ECONOMIC EVENTS -->
+    <section class="bucket">
+      <h2>⚡ Economic Events engine</h2>
+      <p class="bmeta">template-driven monthly rollups (Stripe/ops views)</p>
+      <div class="card b"><div class="when"><b>project_month</b> on STAGED events</div>
+        <div class="badges"><span class="ev">EconomicEventPosted</span></div>
+        <div class="out">Template (debit/credit codes) → posting layer builds &amp; balances · converted to entity ccy · <b>no more direct FinanceJournalEntry</b></div></div>
+      <div class="card b"><div class="when"><b>GST leg</b></div>
+        <div class="badges"><span class="ev">Lane A stays its own engine</span></div>
+        <div class="out">Cash-basis GST (Lane A, POL-123) is distinct from invoice accrual GST (Lane B) · service carries the engine-computed GST line, does NOT merge them</div></div>
+    </section>
+
+    <!-- CATEGORIZATION -->
+    <section class="bucket" style="grid-column:span 2;min-width:0">
+      <h2>⚙️ Categorization engine</h2>
+      <p class="bmeta">emits ONLY events it owns · for invoice/claim/payroll it triggers, the domain engine posts</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:9px">
+        <div class="card g"><div class="when"><b>Rule matches expense / deposit</b></div>
+          <div class="badges"><span class="ev">SimplePosting</span></div>
+          <div class="out">Posts · single 2-line entry, converted</div></div>
+        <div class="card g"><div class="when"><b>Intra-entity transfer</b></div>
+          <div class="badges"><span class="ev">TransferPaired</span></div>
+          <div class="out">DRAFT at awaiting-match → POSTS on match · FX-aware, both legs → entity · residue → 7100</div></div>
+        <div class="card b"><div class="when"><b>Intercompany leg</b> (each entity, own feed)</div>
+          <div class="badges"><span class="ev">IntercompanyLegPosted</span></div>
+          <div class="out">Each entity books its own leg on its own sight · <b>no matching</b> · FX trued at IC recon</div></div>
+        <div class="card b"><div class="when"><b>Cross-entity allocation</b></div>
+          <div class="badges"><span class="ev">AllocationBooked</span><span class="b paired">PAIRED</span></div>
+          <div class="out">Cost borne by another entity · paired IC</div></div>
+        <div class="card a" style="grid-column:span 2"><div class="when"><b>Matches an open invoice / claim / payroll payable</b></div>
+          <div class="badges"><span class="ev">PaymentMatched → owning engine</span></div>
+          <div class="out"><b>Does NOT post.</b> Hands the match to the domain engine, which emits <code>PayableSettled</code> and owns the JE. This is what pulls the knock-off posting (incl. the misplaced :884) out of the engine.</div></div>
+      </div>
+    </section>
+
+    <!-- MANUAL / SCHEDULED -->
+    <section class="bucket">
+      <h2>🛠️ Manual / Scheduled engine</h2>
+      <p class="bmeta">admin + amortization + review recovery</p>
+      <div class="card b"><div class="when"><b>Admin creates JE</b></div>
+        <div class="badges"><span class="ev">ManualPosting</span></div>
+        <div class="out">Born DRAFT → posts on explicit post action</div></div>
+      <div class="card b"><div class="when"><b>Amortization scheduler tick</b></div>
+        <div class="badges"><span class="ev">AmortizationDue</span></div>
+        <div class="out">Posts at the tick — <b>fixes the never-posts bug</b></div></div>
+      <div class="card b"><div class="when"><b>NEEDS_REVIEW resolved</b></div>
+        <div class="badges"><span class="ev">AdjustmentPosting</span></div>
+        <div class="out">Manual resolve · converted, posts</div></div>
+      <div class="card g"><div class="when"><b>IC reconciliation (periodic)</b></div>
+        <div class="badges"><span class="ev">ICReconciled</span></div>
+        <div class="out">Trues IC-Receivable vs IC-Payable across entities · books the FX difference → 7100 (realized) or CTA (net-investment) · flags any unmatched leg</div></div>
+    </section>
+
+  </div>
+
+  <!-- the spine -->
+  <div class="target">
+    <h2>🎯 The one posting spine every event above flows through</h2>
+    <div class="flow">
+      <div class="node"><div class="nt">Engine</div><div class="ns">invoice · payroll · claim · categorization · manual</div></div>
+      <span class="arrow">→</span>
+      <div class="node evt"><div class="nt">Economic Event</div><div class="ns">BillRaised · PayableSettled · PayrollAccrued · TransferPaired · IntercompanyLegPosted · AllocationBooked · ICReconciled · EconomicEventPosted</div></div>
+      <span class="arrow">→</span>
+      <div class="node post"><div class="nt">Posting layer</div><div class="ns">converts each leg → entity ccy · <b style="color:var(--violet)">GST decorator</b> (gst_service.classify) adds input/output GST line, REVIEW → human · generates lines · balances · 7100 residue</div></div>
+      <span class="arrow">→</span>
+      <div class="node je"><div class="nt">JE lifecycle</div><div class="ns">born DRAFT → POSTED only on the marked transition</div></div>
+      <span class="arrow">→</span>
+      <div class="node"><div class="nt">Reports</div><div class="ns">read POSTED</div></div>
+    </div>
+    <p class="trig" style="margin-top:12px">Enforcement: a pre-commit invariant rejects any JE that doesn't balance or whose lines lack functional-ccy + native + rate.</p>
+  </div>
+  </section>
+
+  <p class="foot">Companion to <code>JE_CREATION_MECHANISMS.md</code> (the table) and <code>LEDGER_POSTING_ARCHITECTURE.md</code> (the design). Tab 1 is the verified current reality; Tab 2 is the proposed target for review — Pickle's read of the code, not a runnable extract.</p>
+
+  <script>
+  function showTab(t){
+    document.querySelectorAll('.tab').forEach(function(s){s.classList.toggle('active', s.id==='tab-'+t);});
+    document.querySelectorAll('.tb').forEach(function(b){b.classList.toggle('active', b.dataset.t===t);});
+    window.scrollTo(0,0);
+  }
+  </script>
+</body>
+</html>

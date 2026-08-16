@@ -149,6 +149,10 @@ def register_error_handlers(app):
         log_error(error)
         return jsonify(error.to_dict()), error.status_code
     
+    # NOTE: deliberately NO global ValueError handler. Many services raise ValueError for INFRA failures
+    # (journal_service re-fetch, wise_service upstream errors, DB integrity) that must stay 5xx so alerting
+    # fires. The payroll approval routes that call fx_service wrap ValueError themselves (see routes/hr.py).
+
     @app.errorhandler(Exception)
     def handle_generic_error(error: Exception):
         """Handle any unhandled exceptions."""

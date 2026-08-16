@@ -28,8 +28,14 @@ from src.models.sync_run import FinanceSyncRun
 from src.models.invoice import FinanceInvoice, InvoiceStatus
 from src.models.user import User
 from src.models.employee_claim import FinanceEmployeeClaim, ClaimStatus
+from src.models.payroll_approval import FinancePayrollApproval, PayrollApprovalStatus
+from src.models.payroll_adjustment import FinancePayrollAdjustment
 from src.models.vendor_payout import (
-    FinancePayoutBankAccount, FinanceVendorPayout, FinanceVendorPayoutEvent, PayoutState,
+    FinancePayout, FinancePayoutEvent, FinancePayoutBankAccount,
+    FinanceVendorPayout, FinanceVendorPayoutEvent, PayoutState,
+)
+from src.models.payout_channels import (
+    PaymentChannel, CounterpartyBankAccount, PayoutChannelRegistration, FinancePayoutReferenceAudit,
 )
 from src.models.task import Task, TaskStatus
 from src.models.coa_config import FinanceCoaConfig, FinanceCoaConfigAudit

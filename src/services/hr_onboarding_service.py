@@ -27,16 +27,19 @@ logger = logging.getLogger(__name__)
 # (produces balanced JEs). employee_bears=True reduces net pay; =False is an
 # employer cost debited to its own expense account on top of gross.
 DEDUCTION_COA = {
-    "CPF_EMPLOYEE":   {"employee_bears": True,  "coa_debit_code": "6000", "coa_credit_code": "2300", "cap": 6000},
-    "CPF_EMPLOYER":   {"employee_bears": False, "coa_debit_code": "6001", "coa_credit_code": "2300", "cap": 6000},
-    "SUPERANNUATION": {"employee_bears": False, "coa_debit_code": "6001", "coa_credit_code": "2310", "cap": None},
-    "INCOME_TAX":     {"employee_bears": True,  "coa_debit_code": "6000", "coa_credit_code": "2320", "cap": None},
+    # coa_credit_code MUST be a real payable in the chart of accounts (finance_accounts):
+    # 2300 CPF Payable (SG) · 2301 PAYG Withholding Payable (AU) · 2302 Superannuation Payable (AU) ·
+    # 2305 Income Tax Payable. (Previously super→2310 and income_tax→2320 pointed at accounts that do
+    # not exist — fixed 2026-08-16.)
+    "CPF_EMPLOYEE":     {"employee_bears": True,  "coa_debit_code": "6000", "coa_credit_code": "2300", "cap": 6000},
+    "CPF_EMPLOYER":     {"employee_bears": False, "coa_debit_code": "6001", "coa_credit_code": "2300", "cap": 6000},
+    "SUPERANNUATION":   {"employee_bears": False, "coa_debit_code": "6001", "coa_credit_code": "2302", "cap": None},
+    "PAYG_WITHHOLDING": {"employee_bears": True,  "coa_debit_code": "6000", "coa_credit_code": "2301", "cap": None},
+    "INCOME_TAX":       {"employee_bears": True,  "coa_debit_code": "6000", "coa_credit_code": "2305", "cap": None},
 }
-# Statutory defaults applied per region when no explicit default_deductions given.
-REGION_DEFAULT_DEDUCTIONS = {
-    "SG": [("CPF_EMPLOYEE", "PERCENTAGE", 0.20), ("CPF_EMPLOYER", "PERCENTAGE", 0.17)],
-    "AU": [("SUPERANNUATION", "PERCENTAGE", 0.115)],
-}
+# NOTE: the old REGION_DEFAULT_DEDUCTIONS auto-apply map was REMOVED (2026-08-16). Deductions are now
+# entered MANUALLY per employee (it used to blanket-apply SG CPF to everyone, incl. offshore staff).
+# DEDUCTION_COA above is still used to DERIVE the COA/who-bears when a deduction is added by hand.
 
 
 class HrOnboardingService:
@@ -229,6 +232,9 @@ class HrOnboardingService:
             except (ValueError, TypeError):
                 return [{"user_id": user_id,
                          "message": f"Invalid start_date '{raw_start}' — expected YYYY-MM-DD"}]
+            if start_date_val and start_date_val > date.today():
+                return [{"user_id": user_id,
+                         "message": f"start_date '{start_date_val.isoformat()}' cannot be in the future."}]
         elif existing_doj:
             start_date_val = existing_doj
         else:
@@ -386,16 +392,27 @@ class HrOnboardingService:
         country = (entity.country or "SG").upper()
         currency = item.get("currency") or ("AUD" if country == "AU" else "SGD")
 
+        # Pay schedule (POL-140): HR sets it at onboarding; default monthly = paid at month-end.
+        pay_schedule = (item.get("pay_schedule") or "monthly").lower()
+        split_pct = item.get("pay_split_pct")
         db.add(HrCompensation(
             employee_id=emp.id,
             pay_type=item.get("pay_type", "FIXED_SALARY"),
             gross_amount=Decimal(str(gross)),
             currency=currency,
+            pay_schedule=pay_schedule,
+            pay_split_pct=(Decimal(str(split_pct)) if split_pct not in (None, "") else
+                           (Decimal("50") if pay_schedule == "semi_monthly" else None)),
             effective_from=eff,
         ))
 
+        # Deductions are MANUAL for now (Gaurav, 2026-08-16): the team enters each employee's deductions
+        # explicitly (per entity + whether we handle their tax), through the deductions editor. Onboarding
+        # NO LONGER auto-applies a region default — that blanket-applied SG CPF to everyone, including
+        # offshore self-managed staff. Only an explicit `default_deductions` payload is honored (a caller
+        # deliberately supplying them); absent that, a new hire starts with ZERO deductions.
         raw = item.get("default_deductions")
-        specs = self._parse_deductions(raw) if raw else REGION_DEFAULT_DEDUCTIONS.get(country, [])
+        specs = self._parse_deductions(raw) if raw else []
         for dtype, calc, value in specs:
             meta = DEDUCTION_COA.get(
                 dtype,

@@ -254,12 +254,58 @@ class WiseService:
             result = result.get("content", result.get("accounts", []))
         return result if isinstance(result, list) else []
 
+    def get_transfer(self, transfer_id) -> dict:
+        """GET a transfer's current status (POL-130 poller). Returns the Wise transfer object incl
+        `status` (incoming_payment_waiting / outgoing_payment_sent / funds_refunded / bounced_back / ...)."""
+        r = self._get(f"/v1/transfers/{transfer_id}")
+        return r if isinstance(r, dict) else {}
+
+    def get_account_requirements(self, target_ccy: str, source_ccy: str = "AUD",
+                                 amount: float = 1000) -> list:
+        """PM-6: Wise's per-currency recipient shape. Returns the account TYPES valid for `target_ccy`
+        (e.g. 'indian'/'philippines'/'aba'/'swift_code'), each with its required `fields`, so we can
+        render the right form and validate BEFORE calling create_recipient (a 400 with the missing
+        field, not a Wise 500). No quote needed — the temporary-quote form of the v1 endpoint."""
+        r = self._get("/v1/account-requirements",
+                      {"source": source_ccy, "target": target_ccy, "sourceAmount": amount})
+        return r if isinstance(r, list) else (r.get("content", []) if isinstance(r, dict) else [])
+
+    def create_recipient(self, profile_id: int, currency: str, account_holder_name: str,
+                         account_type: str, details: dict) -> dict:
+        """Register a recipient (bank account) on a Wise profile. Returns the created account incl `id`
+        (the channel's recipient id). `account_type` + `details` are Wise's currency-specific shape
+        (e.g. type='singapore' details={accountNumber}; type='australian' details={bsbCode,accountNumber};
+        type='iban' details={IBAN}). No money moves. Recipients are IMMUTABLE — an edit is a new create."""
+        return self._post("/v1/accounts", {
+            "profile": int(profile_id), "currency": currency, "type": account_type,
+            "accountHolderName": account_holder_name, "details": details,
+        })
+
+    def delete_recipient(self, account_id) -> bool:
+        """Soft-delete (deactivate) a Wise recipient. Best-effort — Wise keeps it referenced by past
+        transfers, so this only removes it from the active list."""
+        if not self.api_key:
+            raise ValueError("WISE_API_KEY environment variable is not set")
+        headers = {"Authorization": f"Bearer {self.api_key}"}
+        r = requests.delete(f"{self.base_url}/v1/accounts/{account_id}", headers=headers, timeout=30)
+        return r.status_code in (200, 204)
+
     def create_transfer(self, target_account_id: str, quote_id: str,
                         customer_txn_id: str, reference: str) -> dict:
-        """Create a transfer (does NOT move money until funded)."""
+        """Create a transfer (does NOT move money until funded).
+
+        Wise requires customerTransactionId to be a UUID (it is Wise's idempotency key). Our
+        idempotency_key is a human-readable string ("inv<id>-<ts>"), so derive a STABLE UUID from
+        it (uuid5) — same key -> same UUID -> Wise treats a retry as the same transfer, not a new one.
+        """
+        import uuid
+        try:
+            ctid = str(uuid.UUID(str(customer_txn_id)))
+        except (ValueError, AttributeError, TypeError):
+            ctid = str(uuid.uuid5(uuid.NAMESPACE_OID, str(customer_txn_id)))
         return self._post("/v1/transfers", {
             "targetAccount": target_account_id, "quoteUuid": quote_id,
-            "customerTransactionId": customer_txn_id,
+            "customerTransactionId": ctid,
             "details": {"reference": (reference or "")[:35]},
         })
 

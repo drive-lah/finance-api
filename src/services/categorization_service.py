@@ -264,6 +264,14 @@ class CategorizationService:
         # ── Phase 1: Counterparty enrichment ──────────────────────────────
         self._enrich_counterparties(db, transactions)
 
+        # ── Rung 1: Transfer-ID knock-off (unified, deterministic, FX-aware) ──
+        # Anything we paid THROUGH OUR SYSTEM carries a wise_transfer_id that pairs to an
+        # awaiting_import payout (invoice/claim/payroll alike). Settle it deterministically and
+        # currency-agnostically BEFORE the amount-based fallbacks below.
+        transfer_id_handled: set[int] = self._try_transfer_id_knockoff(db, transactions, results)
+        categorized += len(transfer_id_handled)
+        transactions = [t for t in transactions if t.id not in transfer_id_handled]
+
         # ── Phase 2: AP Knock-off ────────────────────────────────────────
         # For any transaction whose counterparty was just enriched, check
         # whether it matches an open AP invoice. If so, create the payment
@@ -272,12 +280,30 @@ class CategorizationService:
         ap_handled_ids: set[int] = self._try_ap_knockoff(db, transactions, results, categorized)
         categorized += len(ap_handled_ids)
 
-        # ── Phase 3: Payroll Knock-off ──────────────────────────────────
-        # Check whether any outgoing transaction matches an unmatched line in
-        # a posted payroll JE (net salary or CPF payment). If so, link the
-        # transaction to the payroll JE instead of running Phase 4 rules.
-        payroll_handled_ids: set[int] = self._try_payroll_knockoff(db, transactions, results)
-        categorized += len(payroll_handled_ids)
+        # ── Phase 3: Payroll Knock-off — RETIRED (item 3, 2026-08-16) ────
+        # The old run-based amount match (_try_payroll_knockoff) is superseded: system-paid payroll
+        # settles via Rung 1 (transfer-id, incl. cross-entity), and the outside-system same-entity
+        # fallback is the register knock-off (Phase 3.6). One payroll knock-off, not two.
+        payroll_handled_ids: set[int] = set()
+
+        # ── Phase 3.5: Employee-claim Knock-off (POL-139 cat 4) ──────────
+        # An outgoing reimbursement that settles an approved employee claim → post
+        # Dr 2303 / Cr bank and mark the claim PAID, instead of Phase-4 rules.
+        claim_handled_ids: set[int] = self._try_claim_knockoff(db, transactions, results)
+        categorized += len(claim_handled_ids)
+
+        # ── Phase 3.6: Payroll register-payout Knock-off (PR-4b, POL-139) ─
+        # A fanned-out payroll payable (net→2304 / statutory→2300/2302/2305) settled by its bank
+        # payment → post Dr <liability> / Cr bank and mark the payout POSTED.
+        payroll_reg_ids: set[int] = self._try_payroll_register_knockoff(db, transactions, results)
+        categorized += len(payroll_reg_ids)
+
+        # ── Phase 3.7: Invoice register-payout Knock-off (paid-outside AP) ─
+        # A paid-OUTSIDE invoice (mark_paid_already → RECONCILE payout) settled by its bank line →
+        # settle via the FX-aware AP path and mark the payout POSTED. Without this, paid-outside
+        # invoices accumulate unmatched bank lines forever.
+        invoice_reg_ids: set[int] = self._try_invoice_register_knockoff(db, transactions, results)
+        categorized += len(invoice_reg_ids)
 
         # ── Phase 4: Accounting classification ───────────────────────────
         rules_query = (
@@ -432,7 +458,7 @@ class CategorizationService:
                 continue
 
             counter = self._pick_counter(
-                waiting_txn,
+                db, waiting_txn,
                 [c for c in candidates if c.id not in handled_ids],
             )
             if not counter:
@@ -441,6 +467,16 @@ class CategorizationService:
             # Pair them
             now = datetime.now(UTC)
             je_id = waiting_txn.reconciled_journal_entry_id
+            # Cross-ccy transfer deferred its JE (je_id is None) → mint the FX-plug entry now that both
+            # legs are known (POL-141/142); same-ccy legs share the waiting leg's existing JE.
+            if je_id is None:
+                out_leg, in_leg = ((waiting_txn, counter) if float(waiting_txn.amount) < 0
+                                   else (counter, waiting_txn))
+                je_id = self._create_fx_transfer_je(db, out_leg, in_leg).id
+                waiting_txn.reconciled_journal_entry_id = je_id
+                counter.categorized_by_logic = 'transfer_pairing_fx'
+            else:
+                counter.categorized_by_logic = 'transfer_pairing'
 
             waiting_txn.status = TransactionStatus.MATCHED
             waiting_txn.matched_at = now
@@ -449,7 +485,6 @@ class CategorizationService:
             counter.status = TransactionStatus.MATCHED
             counter.reconciled_journal_entry_id = je_id
             counter.matched_at = now
-            counter.categorized_by_logic = 'transfer_pairing'
             counter.categorization_type = CategorizationType.INTERNAL_TRANSFER
 
             db.commit()
@@ -485,6 +520,7 @@ class CategorizationService:
 
     def _pick_counter(
         self,
+        db: Session,
         waiting_txn: FinanceTransaction,
         candidates: list[FinanceTransaction],
     ) -> Optional[FinanceTransaction]:
@@ -509,7 +545,25 @@ class CategorizationService:
             cand_amount = float(c.amount)
             if waiting_amount * cand_amount >= 0:
                 continue  # same sign — not a counter
-            if abs(abs(cand_amount) - abs_waiting) / abs_waiting > 0.02:
+            # POL-141/142: currency-aware amount match. Same ccy → tight ±2%. Cross-currency (e.g. a USD
+            # leg vs its SGD counterpart) → convert the candidate INTO the waiting leg's currency at the
+            # monthly rate, then a LOOSER ±5% band absorbs the bank spot-vs-our-rate spread.
+            w_ccy = waiting_txn.currency
+            c_ccy = c.currency
+            cand_cmp, tol = abs(cand_amount), 0.02
+            if w_ccy and c_ccy and w_ccy != c_ccy:
+                try:
+                    from src.services.fx_service import fx_service
+                    rate = fx_service.get_monthly_rate(db, c_ccy, w_ccy, c.transaction_date)
+                    if rate is None:
+                        continue  # no rate on file — can't compare across currencies, skip (POL-26)
+                    cand_cmp = abs(cand_amount) * float(rate)
+                    tol = 0.05
+                except Exception as e:
+                    # a DB/rate-lookup error must not SILENTLY drop this candidate for every pair — log it
+                    logger.warning("cross-currency rate lookup failed (%s->%s): %s", c_ccy, w_ccy, e)
+                    continue
+            if abs(cand_cmp - abs_waiting) / abs_waiting > tol:
                 continue
             if abs((c.transaction_date - waiting_txn.transaction_date).days) > 5:
                 continue
@@ -583,7 +637,7 @@ class CategorizationService:
             FinanceTransaction.transaction_date.between(date_low, date_high),
         ).all()
 
-        return self._pick_counter(txn, candidates)
+        return self._pick_counter(db, txn, candidates)
 
     def _find_awaiting_mirror_je(
         self,
@@ -609,7 +663,7 @@ class CategorizationService:
             FinanceTransaction.expected_counterpart_ba_id == txn.bank_account_id,
             FinanceTransaction.transaction_date.between(date_low, date_high),
         ).all()
-        return self._pick_counter(txn, candidates)
+        return self._pick_counter(db, txn, candidates)
 
     # ------------------------------------------------------------------
     # Phase 2: AP Knock-off
@@ -753,6 +807,376 @@ class CategorizationService:
         return handled
 
     # ------------------------------------------------------------------
+    # Phase 3.5: Employee-claim Knock-off (POL-139 cat 4)
+    # ------------------------------------------------------------------
+
+    def _try_claim_knockoff(self, db, transactions, results) -> set[int]:
+        """Settle approved employee claims from matching outgoing reimbursements. Same shape as the
+        payroll knock-off: for each outgoing txn, find an APPROVED, not-yet-paid claim in the SAME entity
+        whose amount matches (exact, tol 0.01) within a ±7-day window; post Dr 2303 / Cr bank via
+        claim_service and mark the claim PAID. Conservative (exact amount + same entity) to avoid
+        mis-settling — the categorization engine stays the sole matcher."""
+        from datetime import timedelta
+        from src.models.employee_claim import FinanceEmployeeClaim, ClaimStatus
+        from src.services.claim_service import claim_service
+        handled: set[int] = set()
+        outgoing = [t for t in transactions if t.amount is not None and float(t.amount) < 0
+                    and t.status == TransactionStatus.PENDING]
+        if not outgoing:
+            return handled
+        ba_ids = {t.bank_account_id for t in outgoing}
+        ba_map = {ba.id: ba for ba in db.query(FinanceBankAccount)
+                  .filter(FinanceBankAccount.id.in_(ba_ids)).all()}
+        for txn in outgoing:
+            ba = ba_map.get(txn.bank_account_id)
+            if not ba or not ba.entity_id:
+                continue
+            abs_amount = abs(float(txn.amount))
+            # A claim is reimbursed AFTER approval, often weeks later — so window on "approved on/before
+            # the payment (+1d grace), within the last 180d", not a tight ±7d around approval. Oldest first.
+            lo = txn.transaction_date - timedelta(days=180)
+            hi = txn.transaction_date + timedelta(days=1)
+            # Amount fallback fires ONLY for claims marked paid-OUTSIDE the system (RECONCILE). System-paid
+            # claims settle deterministically via Rung 1 (transfer-id on their payout). The reconcile guard
+            # stops a random payment from auto-settling an approved-but-not-yet-paid claim.
+            claim = (db.query(FinanceEmployeeClaim)
+                     .filter(FinanceEmployeeClaim.status == ClaimStatus.RECONCILE.value,
+                             FinanceEmployeeClaim.entity_id == ba.entity_id,
+                             FinanceEmployeeClaim.transaction_id.is_(None),
+                             FinanceEmployeeClaim.approved_at.between(lo, hi))
+                     .order_by(FinanceEmployeeClaim.approved_at.asc(), FinanceEmployeeClaim.id.asc()).all())
+            match = next((c for c in claim if abs(float(c.amount) - abs_amount) <= 0.01), None)
+            if not match:
+                continue
+            je = claim_service.create_claim_payment_entries(
+                db=db, bank_account=ba, claim=match, txn_date=txn.transaction_date,
+                abs_amount=abs_amount, source="claim_knockoff",
+                description=f"Reimburse employee claim #{match.id}")
+            txn.status = TransactionStatus.MATCHED
+            txn.matched_at = datetime.now(UTC)
+            txn.categorized_by_logic = "claim_knockoff"
+            txn.reconciled_journal_entry_id = je.id
+            match.transaction_id = txn.id
+            db.commit()
+            results.append({"transaction_id": txn.id, "status": "categorized",
+                            "rule_name": f"[claim_knockoff:claim_{match.id}]"})
+            handled.add(txn.id)
+        return handled
+
+    # ------------------------------------------------------------------
+    # Phase 3.6: Payroll register-payout Knock-off (PR-4b)
+    # ------------------------------------------------------------------
+
+    def _try_payroll_register_knockoff(self, db, transactions, results) -> set[int]:
+        """Settle fanned-out payroll payables (payable_type='payroll') from matching outgoing payments.
+        The liability to clear is 2304 (net salary) or, for a statutory payout, the code in
+        `external_reference='statutory:<code>'`. Posts Dr <liability> / Cr bank, marks the payout POSTED.
+        Same shape as the claim knock-off; exact amount + same entity."""
+        from src.models.vendor_payout import FinancePayout, PayoutState
+        from src.services.journal_service import journal_service
+        from src.models.journal_entry import JournalEntryStatus
+        handled: set[int] = set()
+        outgoing = [t for t in transactions if t.amount is not None and float(t.amount) < 0
+                    and t.status == TransactionStatus.PENDING]
+        if not outgoing:
+            return handled
+        ba_map = {ba.id: ba for ba in db.query(FinanceBankAccount)
+                  .filter(FinanceBankAccount.id.in_({t.bank_account_id for t in outgoing})).all()}
+        for txn in outgoing:
+            ba = ba_map.get(txn.bank_account_id)
+            if not ba or not ba.entity_id or not ba.coa_account_code:
+                continue
+            abs_amount = abs(float(txn.amount))
+            # Amount fallback fires ONLY for payouts marked paid-OUTSIDE the system (RECONCILE). System-paid
+            # payroll settles via Rung 1 (transfer-id). The reconcile guard prevents a stray payment from
+            # auto-settling a payout that wasn't actually paid.
+            payout = (db.query(FinancePayout)
+                      .filter(FinancePayout.payable_type == "payroll",
+                              FinancePayout.entity_id == ba.entity_id,
+                              FinancePayout.transaction_id.is_(None),
+                              FinancePayout.state == PayoutState.RECONCILE.value)
+                      .order_by(FinancePayout.id.asc()).all())
+            match = next((p for p in payout if abs(float(p.amount) - abs_amount) <= 0.01), None)
+            if not match:
+                continue
+            # FX-aware settlement (item 2): reuse the same helper Rung 1 uses, so the register fallback
+            # clears the accrued functional liability against the converted payment (residue → 7100)
+            # instead of booking at fx=1. Same-ccy collapses to the prior behaviour.
+            je_id = self._settle_payroll_payout(db, match, txn, ba)
+            if je_id is None:
+                continue
+            match.state = PayoutState.POSTED.value
+            match.transaction_id = txn.id
+            match.journal_entry_id = je_id
+            txn.status = TransactionStatus.MATCHED
+            txn.matched_at = datetime.now(UTC)
+            txn.categorized_by_logic = "payroll_register_knockoff"
+            txn.reconciled_journal_entry_id = je_id
+            db.commit()
+            results.append({"transaction_id": txn.id, "status": "categorized",
+                            "rule_name": f"[payroll_register_knockoff:payout_{match.id}]"})
+            handled.add(txn.id)
+        return handled
+
+    # ------------------------------------------------------------------
+    # Rung 1: Transfer-ID knock-off (unified, deterministic, FX-aware)
+    # ------------------------------------------------------------------
+    def _try_transfer_id_knockoff(self, db, transactions, results) -> set[int]:
+        """Rung 1 of the ladder: a bank txn we paid THROUGH OUR SYSTEM carries a wise_transfer_id that
+        matches an AWAITING_IMPORT payout in the register. Deterministic (no fuzzy match), currency-
+        AGNOSTIC (matches on the id, so an SGD payable settles against a USD payment), and FX-aware.
+        One rung for every payable type — invoice / claim / payroll — dispatched by payout.payable_type.
+        Runs before the amount-based fallbacks so system-paid settlements never depend on amounts."""
+        from src.models.vendor_payout import FinancePayout, PayoutState
+        handled: set[int] = set()
+        outgoing = [t for t in transactions
+                    if t.amount is not None and float(t.amount) < 0
+                    and t.status == TransactionStatus.PENDING
+                    and getattr(t, "wise_transfer_id", None)]
+        if not outgoing:
+            return handled
+        for txn in outgoing:
+            tid = str(txn.wise_transfer_id)
+            payout = (db.query(FinancePayout)
+                      .filter(FinancePayout.wise_transfer_id == tid,
+                              FinancePayout.state == PayoutState.AWAITING_IMPORT.value,
+                              FinancePayout.transaction_id.is_(None))
+                      .first())
+            if not payout:
+                continue
+            try:
+                je_id = self._settle_payout_by_type(db, payout, txn)
+            except Exception as e:
+                # ROLL BACK the partially-flushed JE (VR-1c): without this, the orphaned lines ride the
+                # NEXT iteration's db.commit() as a stray POSTED entry.
+                db.rollback()
+                logger.error("transfer-id knock-off failed for txn %s / payout %s: %s", txn.id, payout.id, e)
+                continue
+            if je_id is None:
+                continue
+            payout.transaction_id = txn.id
+            payout.journal_entry_id = je_id
+            payout.state = PayoutState.POSTED.value
+            if txn.status != TransactionStatus.MATCHED:
+                txn.status = TransactionStatus.MATCHED
+                txn.matched_at = datetime.now(UTC)
+                txn.reconciled_journal_entry_id = je_id
+            txn.categorized_by_logic = "transfer_id_knockoff"
+            db.commit()
+            results.append({"transaction_id": txn.id, "status": "categorized",
+                            "rule_name": f"[transfer_id_knockoff:{payout.payable_type}_{payout.id}]",
+                            "journal_entry_id": je_id})
+            handled.add(txn.id)
+        return handled
+
+    # ------------------------------------------------------------------
+    # Phase 3.7: Invoice register-payout Knock-off (paid-outside AP)
+    # ------------------------------------------------------------------
+
+    def _try_invoice_register_knockoff(self, db, transactions, results) -> set[int]:
+        """Phase 3.7: settle a paid-OUTSIDE invoice payout (payable_type='invoice', state=RECONCILE, no
+        wise_transfer_id) against the matching outgoing bank line. mark_paid_already captured the exact
+        amount, so we amount-match and settle via the FX-aware AP path (_settle_payout_by_type → invoice
+        match_transaction, whose status gate now admits RECONCILE). Guarded on RECONCILE so a stray
+        payment can't auto-settle an invoice that wasn't marked paid-outside. Mirrors the payroll/claim
+        register phases; fixes paid-outside invoices accumulating unmatched bank lines forever."""
+        from src.models.vendor_payout import FinancePayout, PayoutState
+        handled: set[int] = set()
+        outgoing = [t for t in transactions if t.amount is not None and float(t.amount) < 0
+                    and t.status == TransactionStatus.PENDING]
+        if not outgoing:
+            return handled
+        ba_map = {ba.id: ba for ba in db.query(FinanceBankAccount)
+                  .filter(FinanceBankAccount.id.in_({t.bank_account_id for t in outgoing})).all()}
+        for txn in outgoing:
+            ba = ba_map.get(txn.bank_account_id)
+            if not ba or not ba.entity_id:
+                continue
+            abs_amount = abs(float(txn.amount))
+            payouts = (db.query(FinancePayout)
+                       .filter(FinancePayout.payable_type == "invoice",
+                               FinancePayout.entity_id == ba.entity_id,
+                               FinancePayout.transaction_id.is_(None),
+                               FinancePayout.state == PayoutState.RECONCILE.value)
+                       .order_by(FinancePayout.id.asc()).all())
+            match = next((p for p in payouts if abs(float(p.amount) - abs_amount) <= 0.01), None)
+            if not match:
+                continue
+            try:
+                je_id = self._settle_payout_by_type(db, match, txn)
+            except Exception as e:
+                db.rollback()   # VR-1c: never let a partial JE ride the next commit
+                logger.error("invoice register knock-off failed for txn %s / payout %s: %s",
+                             txn.id, match.id, e)
+                continue
+            if je_id is None:
+                continue
+            match.state = PayoutState.POSTED.value
+            match.transaction_id = txn.id
+            match.journal_entry_id = je_id
+            if txn.status != TransactionStatus.MATCHED:
+                txn.status = TransactionStatus.MATCHED
+                txn.matched_at = datetime.now(UTC)
+                txn.reconciled_journal_entry_id = je_id
+            txn.categorized_by_logic = "invoice_register_knockoff"
+            db.commit()
+            results.append({"transaction_id": txn.id, "status": "categorized",
+                            "rule_name": f"[invoice_register_knockoff:payout_{match.id}]"})
+            handled.add(txn.id)
+        return handled
+
+    def _settle_payout_by_type(self, db, payout, txn) -> Optional[int]:
+        """Post the FX-aware settlement JE for a payout matched by transfer id, dispatched by
+        payable_type. Returns the JE id. invoice → the existing FX-aware AP match; claim → the FX-aware
+        claim reimbursement (F2); payroll → clear 2304/statutory (functional payable) vs the converted
+        bank payment, residue → 7100."""
+        ba = db.query(FinanceBankAccount).filter(FinanceBankAccount.id == txn.bank_account_id).first()
+        if not ba or not ba.coa_account_code:
+            return None
+        ptype = payout.payable_type
+        if ptype == "invoice":
+            inv_id = payout.invoice_id or payout.payable_id
+            from src.services.invoice_service import invoice_service
+            res = invoice_service.match_transaction(db, inv_id, txn.id, matched_by="transfer_id")
+            return res.get("journal_entry_id") if isinstance(res, dict) else txn.reconciled_journal_entry_id
+        if ptype == "claim":
+            from src.models.employee_claim import FinanceEmployeeClaim
+            claim = db.get(FinanceEmployeeClaim, payout.payable_id)
+            if not claim:
+                return None
+            from src.services.claim_service import claim_service
+            je = claim_service.create_claim_payment_entries(
+                db, ba, claim, txn.transaction_date, abs(float(txn.amount)),
+                source="transfer_id_knockoff", description=f"Claim #{claim.id} settlement (transfer {payout.wise_transfer_id})")
+            return je.id
+        if ptype == "payroll":
+            return self._settle_payroll_payout(db, payout, txn, ba)
+        return None
+
+    def _settle_payroll_payout(self, db, payout, txn, ba) -> Optional[int]:
+        """FX-aware payroll settlement. The accrued liability (2304 net, or statutory:<code>) is cleared
+        at the functional amount that was accrued (payout.amount native converted at the run date).
+
+        SAME entity: Dr liability / Cr bank at the payment converted at pay date, spread -> 7100.
+        CROSS entity (bank entity != payroll entity): two internally-balanced paired JEs, each in ITS
+        functional currency (POL-141 independent booking) — payroll entity Dr liability / Cr IC-payable;
+        bank entity Dr IC-receivable / Cr bank. The IC balances differ across currencies and are trued
+        at IC reconciliation (no 7100 plug here)."""
+        from decimal import Decimal as _D
+        from src.models.entity import FinanceEntity
+        from src.models.payroll import FinancePayrollRun
+        from src.services.fx_service import fx_service
+        from src.models.journal_entry import JournalEntryStatus
+        run = db.get(FinancePayrollRun, payout.payable_id)
+        accr_date = run.run_date if run else txn.transaction_date
+        native_pay = _D(str(abs(float(txn.amount))))
+        ref = payout.external_reference or ""
+        liability = ref.split(":", 1)[1] if ref.startswith("statutory:") else "2304"
+        payroll_entity_id = payout.entity_id
+        bank_entity_id = ba.entity_id
+
+        if payroll_entity_id == bank_entity_id or not payroll_entity_id:
+            # Same entity — single JE, FX spread to 7100
+            func = db.get(FinanceEntity, bank_entity_id).base_currency if bank_entity_id else None
+            payable_func, _ = fx_service.to_functional_or_same(db, _D(str(payout.amount)), payout.currency, func, accr_date)
+            bank_func, rate = fx_service.to_functional_or_same(db, native_pay, txn.currency, func, txn.transaction_date)
+            lines = [
+                {"account_code": liability, "debit_amount": float(payable_func), "credit_amount": 0.0,
+                 "description": f"Payroll payout #{payout.id} settlement",
+                 "currency": func, "native_amount": payable_func, "fx_rate": _D("1")},
+                {"account_code": ba.coa_account_code, "debit_amount": 0.0, "credit_amount": float(bank_func),
+                 "description": f"Payroll payout #{payout.id} settlement",
+                 "currency": txn.currency, "native_amount": native_pay, "fx_rate": rate},
+            ]
+            residue = payable_func - bank_func
+            if abs(residue) >= _D("0.01"):
+                if residue > 0:
+                    lines.append({"account_code": "7100", "debit_amount": 0.0, "credit_amount": float(residue),
+                                  "description": f"FX gain on payroll payout #{payout.id}"})
+                else:
+                    lines.append({"account_code": "7100", "debit_amount": float(-residue), "credit_amount": 0.0,
+                                  "description": f"FX loss on payroll payout #{payout.id}"})
+            je = journal_service.create(db=db, entity_id=bank_entity_id, entry_date=txn.transaction_date,
+                                        description=f"Payroll payout #{payout.id} settlement",
+                                        lines=lines, status=JournalEntryStatus.POSTED)
+            je.source = "transfer_id_knockoff"
+            db.flush()
+            return je.id
+
+        # Cross entity — paired IC JEs, each in its own functional currency
+        from src.services.invoice_service import invoice_service
+        ic_codes = invoice_service._get_ic_codes(db, bank_entity_id, payroll_entity_id)
+        if not ic_codes:
+            raise ValueError(f"No IC codes for entity pair (bank {bank_entity_id}, payroll {payroll_entity_id})")
+        ic_receivable, ic_payable = ic_codes
+        pf = db.get(FinanceEntity, payroll_entity_id).base_currency
+        bf = db.get(FinanceEntity, bank_entity_id).base_currency
+        payable_pf, _pr = fx_service.to_functional_or_same(db, _D(str(payout.amount)), payout.currency, pf, accr_date)
+        bank_bf, _br = fx_service.to_functional_or_same(db, native_pay, txn.currency, bf, txn.transaction_date)
+        import uuid as _uuid
+        grp = str(_uuid.uuid4())
+        desc = f"Payroll payout #{payout.id} settlement (IC)"
+        # Payroll entity: Dr liability / Cr IC-payable (in payroll func)
+        pe = journal_service.create(db=db, entity_id=payroll_entity_id, entry_date=txn.transaction_date, description=desc,
+            lines=[{"account_code": liability, "debit_amount": float(payable_pf), "credit_amount": 0.0, "description": desc,
+                    "currency": pf, "native_amount": payable_pf, "fx_rate": _D("1")},
+                   {"account_code": ic_payable, "debit_amount": 0.0, "credit_amount": float(payable_pf), "description": desc,
+                    "currency": pf, "native_amount": payable_pf, "fx_rate": _D("1")}],
+            status=JournalEntryStatus.POSTED)
+        pe.source = "transfer_id_knockoff"; pe.intercompany_group_id = grp
+        # Bank entity: Dr IC-receivable / Cr bank (in bank func)
+        be = journal_service.create(db=db, entity_id=bank_entity_id, entry_date=txn.transaction_date, description=desc,
+            lines=[{"account_code": ic_receivable, "debit_amount": float(bank_bf), "credit_amount": 0.0, "description": desc,
+                    "currency": txn.currency, "native_amount": native_pay, "fx_rate": _br},
+                   {"account_code": ba.coa_account_code, "debit_amount": 0.0, "credit_amount": float(bank_bf), "description": desc,
+                    "currency": txn.currency, "native_amount": native_pay, "fx_rate": _br}],
+            status=JournalEntryStatus.POSTED)
+        be.source = "transfer_id_knockoff"; be.intercompany_group_id = grp
+        db.flush()
+        # link the txn to the bank-entity JE (that's where the cash moved)
+        return be.id
+
+    # ------------------------------------------------------------------
+    # Manual knock-off (human-driven) — item 5
+    # ------------------------------------------------------------------
+    def manual_knockoff(self, db, txn_id: int, payout_id: int, actor: Optional[str] = None) -> dict:
+        """Human-driven knock-off: an operator explicitly pairs a bank transaction to a payout
+        (invoice / claim / payroll) and posts the SAME FX-aware settlement the automated ladder would.
+        The override for cases the ladder can't match on its own — a payment made outside the system,
+        a cross-currency amount that doesn't line up, or an ambiguous match. No transfer-id or state
+        guard: the human is asserting the pairing. Idempotency + basic safety are still enforced."""
+        from src.models.vendor_payout import FinancePayout, PayoutState
+        from src.utils.errors import NotFoundError, BadRequestError
+        txn = db.get(FinanceTransaction, txn_id)
+        if not txn:
+            raise NotFoundError(f"Transaction {txn_id} not found")
+        if txn.status == TransactionStatus.MATCHED:
+            raise BadRequestError(f"Transaction {txn_id} is already matched")
+        if txn.amount is None or float(txn.amount) >= 0:
+            raise BadRequestError("Manual knock-off only applies to an outgoing (negative) payment")
+        payout = db.get(FinancePayout, payout_id)
+        if not payout:
+            raise NotFoundError(f"Payout {payout_id} not found")
+        if payout.transaction_id is not None or payout.state == PayoutState.POSTED.value:
+            raise BadRequestError(f"Payout {payout_id} is already settled")
+        je_id = self._settle_payout_by_type(db, payout, txn)
+        if je_id is None:
+            raise BadRequestError(f"Could not settle payout {payout_id} (unsupported type or missing data)")
+        payout.transaction_id = txn.id
+        payout.journal_entry_id = je_id
+        payout.state = PayoutState.POSTED.value
+        if txn.status != TransactionStatus.MATCHED:
+            txn.status = TransactionStatus.MATCHED
+            txn.matched_at = datetime.now(UTC)
+            txn.reconciled_journal_entry_id = je_id
+        txn.categorized_by_logic = f"manual_knockoff:{actor or 'admin'}"
+        db.commit()
+        logger.info("Manual knock-off: txn %s ↔ payout %s (%s) by %s → JE %s",
+                    txn.id, payout.id, payout.payable_type, actor, je_id)
+        return {"transaction_id": txn.id, "payout_id": payout.id, "payable_type": payout.payable_type,
+                "journal_entry_id": je_id, "status": "matched"}
+
+    # ------------------------------------------------------------------
     # Phase 3: Payroll Knock-off
     # ------------------------------------------------------------------
 
@@ -810,10 +1234,15 @@ class CategorizationService:
             date_high = txn_date + timedelta(days=7)
 
             try:
-                runs = db.query(FinancePayrollRun).filter(
+                # PR-4b: a run that fanned out into register payouts settles via Phase 3.6 (per-payout),
+                # NOT the legacy aggregate net/CPF slots — exclude those runs to avoid double-settlement.
+                from src.models.vendor_payout import FinancePayout
+                fanned = {r[0] for r in db.query(FinancePayout.payable_id)
+                          .filter(FinancePayout.payable_type == "payroll").distinct().all()}
+                runs = [r for r in db.query(FinancePayrollRun).filter(
                     FinancePayrollRun.status == "POSTED",
                     FinancePayrollRun.run_date.between(date_low, date_high),
-                ).all()
+                ).all() if r.id not in fanned]
                 # Prefer the transaction's own entity: a same-entity payroll run
                 # should win over a coincidental amount match in another entity.
                 # Cross-entity is still supported (below), but only when no
@@ -1595,9 +2024,24 @@ Return only the JSON object, no explanation."""
                         "journal_entry_id": je_id,
                         "error": None,
                     }
-            journal_entry = self._create_internal_transfer_entries(
-                db, transaction, rule, bank_account, amount, abs_amount
-            )
+            # POL-141/142: a CROSS-CURRENCY intra-entity transfer (source ccy != target ccy) can't be
+            # booked from one leg — the two legs have genuinely different amounts and the FX residual
+            # needs both. DEFER the JE (journal_entry=None) and build the FX-plug entry at pairing.
+            _tgt_ccy, _tgt_ba = self._bank_ccy(db, rule.target_bank_account_id) if rule.target_bank_account_id else (None, None)
+            _src_ccy = bank_account.currency if bank_account else None
+            _cross_entity = bool(_tgt_ba and bank_account and _tgt_ba.entity_id != bank_account.entity_id)
+            if _cross_entity:
+                # IC1 — independent booking. The moment we see an intercompany transfer we book THIS
+                # entity's own leg straight away, converted to its functional currency. We do NOT wait for
+                # or pair the other side: that entity books its own leg from its own bank feed. The two IC
+                # balances differ across currencies and are trued at IC reconciliation.
+                journal_entry = self._create_internal_transfer_entries(
+                    db, transaction, rule, bank_account, amount, abs_amount)
+            elif _src_ccy and _tgt_ccy and _src_ccy != _tgt_ccy:
+                journal_entry = None   # cross-ccy INTRA → defer, FX-plug built at pairing (POL-144)
+            else:
+                journal_entry = self._create_internal_transfer_entries(
+                    db, transaction, rule, bank_account, amount, abs_amount)
         elif rule.category == TransactionCategory.CROSS_ENTITY_ALLOCATION:
             journal_entry = self._create_cross_entity_allocation_entries(
                 db, transaction, rule, bank_account, abs_amount
@@ -1644,6 +2088,20 @@ Return only the JSON object, no explanation."""
             else 'rule'
         )
 
+        # IC1 — a cross-entity (intercompany) transfer books ONE leg independently and is DONE. No
+        # pairing, no AWAITING_MATCH: the other entity records its own leg from its own feed. This is the
+        # "book it straight away the moment we see it's intercompany" path.
+        if (rule.category == TransactionCategory.INTERNAL_TRANSFER and _cross_entity
+                and journal_entry is not None):
+            transaction.status = TransactionStatus.MATCHED
+            transaction.reconciled_journal_entry_id = journal_entry.id
+            transaction.matched_at = datetime.now(UTC)
+            transaction.categorized_by_logic = 'intercompany_independent'
+            db.commit()
+            return {"transaction_id": transaction.id, "status": "categorized",
+                    "rule_name": f"{rule.name} [intercompany leg booked independently]",
+                    "journal_entry_id": journal_entry.id, "error": None}
+
         # For internal transfers: try to immediately pair with counter-transaction.
         # If counter not found yet → AWAITING_MATCH; the counter-transaction will
         # complete the pair when it arrives and Step 0 runs next time.
@@ -1654,6 +2112,7 @@ Return only the JSON object, no explanation."""
         # verified in AGGREGATE at the Stripe-sync tie-out instead.
         if (rule.category == TransactionCategory.INTERNAL_TRANSFER
                 and rule.target_bank_account_id
+                and journal_entry is not None  # cross-ccy defers the JE — can't standalone-match on one leg
                 and self._target_has_no_statement_feed(db, rule.target_bank_account_id)):
             transaction.status = TransactionStatus.MATCHED
             transaction.reconciled_journal_entry_id = journal_entry.id
@@ -1667,28 +2126,36 @@ Return only the JSON object, no explanation."""
                 db, transaction, rule.target_bank_account_id
             )
             if counter_txn:
-                # Pair both sides right now
+                # Pair both sides right now. Cross-ccy (journal_entry is None) → build the FX-plug JE from
+                # BOTH legs now (both amounts known); same-ccy → both share the leg-1 JE.
                 now = datetime.now(UTC)
+                if journal_entry is None:
+                    out_leg, in_leg = ((transaction, counter_txn) if float(transaction.amount) < 0
+                                       else (counter_txn, transaction))
+                    journal_entry = self._create_fx_transfer_je(db, out_leg, in_leg)
+                    counter_txn.categorized_by_logic = 'transfer_pairing_fx'
+                else:
+                    counter_txn.categorized_by_logic = 'transfer_pairing'
                 transaction.status = TransactionStatus.MATCHED
                 transaction.reconciled_journal_entry_id = journal_entry.id
                 transaction.matched_at = now
                 counter_txn.status = TransactionStatus.MATCHED
                 counter_txn.reconciled_journal_entry_id = journal_entry.id
                 counter_txn.matched_at = now
-                counter_txn.categorized_by_logic = 'transfer_pairing'
                 counter_txn.categorization_type = CategorizationType.INTERNAL_TRANSFER
                 logger.info(
                     f"Internal transfer paired: txn {transaction.id} ↔ txn {counter_txn.id} "
                     f"via JE {journal_entry.id}"
                 )
             else:
-                # Counter not yet imported — wait
+                # Counter not yet imported — wait. Cross-ccy leaves reconciled_journal_entry_id NULL
+                # (deferred); the FX-plug JE is minted when the counter arrives (Phase 0).
                 transaction.status = TransactionStatus.AWAITING_MATCH
-                transaction.reconciled_journal_entry_id = journal_entry.id
+                transaction.reconciled_journal_entry_id = journal_entry.id if journal_entry else None
                 transaction.expected_counterpart_ba_id = rule.target_bank_account_id
                 logger.info(
                     f"Internal transfer awaiting counter: txn {transaction.id} "
-                    f"waiting for ba={rule.target_bank_account_id}"
+                    f"waiting for ba={rule.target_bank_account_id} (xccy={journal_entry is None})"
                 )
         else:
             # Normal expense/deposit → MATCHED immediately
@@ -1838,6 +2305,52 @@ Return only the JSON object, no explanation."""
         db.flush()
         return entry
 
+    def _to_func(self, db, amount_abs, ccy, functional_ccy, on_date):
+        """(functional_amount, rate). Same-ccy → (amount, 1); else fx_service.to_functional (POL-26)."""
+        from decimal import Decimal
+        from src.services.fx_service import fx_service
+        amt = Decimal(str(amount_abs))
+        if not functional_ccy or (ccy or functional_ccy) == functional_ccy:
+            return amt, Decimal("1")
+        return fx_service.to_functional(db, amt, ccy, functional_ccy, on_date)
+
+    def _bank_ccy(self, db, ba_id):
+        ba = db.query(FinanceBankAccount).filter(FinanceBankAccount.id == ba_id).first()
+        return (ba.currency if ba else None), ba
+
+    def _create_fx_transfer_je(self, db, leg_out, leg_in):
+        """POL-141/142: cross-currency intra-entity internal transfer. Both legs are known (paired), each
+        converts INDEPENDENTLY to the entity's functional currency; the residual plugs to 7100 FX — the
+        invoice pattern applied to two asset accounts. `leg_out` sent (negative), `leg_in` received
+        (positive). Dr received-account (functional) / Cr sent-account (functional) / 7100 plug."""
+        from decimal import Decimal
+        from src.models.entity import FinanceEntity
+        ba_out = db.query(FinanceBankAccount).filter(FinanceBankAccount.id == leg_out.bank_account_id).first()
+        ba_in = db.query(FinanceBankAccount).filter(FinanceBankAccount.id == leg_in.bank_account_id).first()
+        entity_id = ba_out.entity_id
+        func = (db.get(FinanceEntity, entity_id).base_currency) if entity_id else None
+        out_func, out_rate = self._to_func(db, abs(float(leg_out.amount)), leg_out.currency, func, leg_out.transaction_date)
+        in_func, in_rate = self._to_func(db, abs(float(leg_in.amount)), leg_in.currency, func, leg_in.transaction_date)
+        desc = leg_in.description or leg_out.description or "Internal transfer (FX)"
+        lines = [
+            {"account_code": ba_in.coa_account_code, "debit_amount": float(in_func), "credit_amount": 0.0,
+             "description": desc, "currency": leg_in.currency, "native_amount": abs(float(leg_in.amount)), "fx_rate": in_rate},
+            {"account_code": ba_out.coa_account_code, "debit_amount": 0.0, "credit_amount": float(out_func),
+             "description": desc, "currency": leg_out.currency, "native_amount": abs(float(leg_out.amount)), "fx_rate": out_rate},
+        ]
+        diff = in_func - out_func  # Dr side − Cr side
+        if abs(diff) >= Decimal("0.01"):
+            if diff > 0:   # more Dr than Cr → FX GAIN (extra credit)
+                lines.append({"account_code": "7100", "debit_amount": 0.0, "credit_amount": float(diff), "description": "FX gain on internal transfer"})
+            else:          # more Cr than Dr → FX LOSS (extra debit)
+                lines.append({"account_code": "7100", "debit_amount": float(-diff), "credit_amount": 0.0, "description": "FX loss on internal transfer"})
+        from src.models.journal_entry import JournalEntryStatus
+        je = journal_service.create(db=db, entity_id=entity_id, entry_date=leg_in.transaction_date,
+                                    description=desc, lines=lines, status=JournalEntryStatus.POSTED)
+        je.source = "categorization_engine"
+        db.flush()
+        return je
+
     def _create_internal_transfer_entries(
         self,
         db: Session,
@@ -1901,70 +2414,45 @@ Return only the JSON object, no explanation."""
             return entry
 
         else:
-            # Intercompany: two paired JEs using a receivable/payable PAIR (NOT one
-            # shared code), resolved per entity-pair — same as the allocation/AP paths.
+            # IC1 — INDEPENDENT booking (POL-141). Book ONLY THIS entity's (the source's) leg, converted
+            # to its functional currency, and post it straight away. The OTHER entity records its own leg
+            # from its own bank feed — no paired target JE here. The two IC balances differ across
+            # currencies and are trued at IC reconciliation.
             from src.services.invoice_service import invoice_service
-            ic_group_id = str(uuid.uuid4())
-
+            from src.models.entity import FinanceEntity
+            from src.services.fx_service import fx_service
+            from decimal import Decimal as _D
+            _func = db.get(FinanceEntity, source_entity_id).base_currency if source_entity_id else None
+            _native = _D(str(abs_amount))
+            _amt, _rate = fx_service.to_functional_or_same(
+                db, _native, transaction.currency, _func, transaction.transaction_date)
+            _meta = {"currency": transaction.currency, "native_amount": _native, "fx_rate": _rate}
             if amount < 0:
-                # Source bank pays out → source FUNDS target: source holds the
-                # receivable (owed by target); target holds the payable.
+                # Source pays out → source FUNDS the other entity → source holds the RECEIVABLE
                 ic_codes = invoice_service._get_ic_codes(db, source_entity_id, target_entity_id)
                 if not ic_codes:
-                    raise ValueError(
-                        f"No intercompany codes for entity pair ({source_entity_id} → "
-                        f"{target_entity_id}); add to _IC_RECEIVABLE_CODES / _IC_PAYABLE_CODES."
-                    )
-                ic_receivable, ic_payable = ic_codes
-                # Source: Dr IC Receivable (due from target) / Cr Source Bank
-                source_lines = [
-                    {"account_code": ic_receivable, "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
-                    {"account_code": source_coa,    "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
-                ]
-                # Target: Dr Target Bank / Cr IC Payable (due to source)
-                target_lines = [
-                    {"account_code": target_coa,   "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
-                    {"account_code": ic_payable,   "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
+                    raise ValueError(f"No intercompany codes for entity pair ({source_entity_id} → {target_entity_id}).")
+                ic_receivable, _ = ic_codes
+                lines = [
+                    {"account_code": ic_receivable, "debit_amount": float(_amt), "credit_amount": 0.0,        "description": je_description, **_meta},
+                    {"account_code": source_coa,    "debit_amount": 0.0,         "credit_amount": float(_amt), "description": je_description, **_meta},
                 ]
             else:
-                # Source bank receives in → target FUNDS source: target holds the
-                # receivable; source holds the payable.
+                # Source receives in → the other entity FUNDED source → source holds the PAYABLE
                 ic_codes = invoice_service._get_ic_codes(db, target_entity_id, source_entity_id)
                 if not ic_codes:
-                    raise ValueError(
-                        f"No intercompany codes for entity pair ({target_entity_id} → "
-                        f"{source_entity_id}); add to _IC_RECEIVABLE_CODES / _IC_PAYABLE_CODES."
-                    )
-                ic_receivable, ic_payable = ic_codes
-                # Source: Dr Source Bank / Cr IC Payable (due to target)
-                source_lines = [
-                    {"account_code": source_coa,  "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
-                    {"account_code": ic_payable,  "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
+                    raise ValueError(f"No intercompany codes for entity pair ({target_entity_id} → {source_entity_id}).")
+                _, ic_payable = ic_codes
+                lines = [
+                    {"account_code": source_coa, "debit_amount": float(_amt), "credit_amount": 0.0,        "description": je_description, **_meta},
+                    {"account_code": ic_payable, "debit_amount": 0.0,         "credit_amount": float(_amt), "description": je_description, **_meta},
                 ]
-                # Target: Dr IC Receivable (due from source) / Cr Target Bank
-                target_lines = [
-                    {"account_code": ic_receivable, "debit_amount": abs_amount, "credit_amount": 0.0,       "description": je_description},
-                    {"account_code": target_coa,    "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
-                ]
-
-            source_entry = journal_service.create(
-                db=db, entity_id=source_entity_id,
-                entry_date=transaction.transaction_date,
-                description=je_description, lines=source_lines,
-            )
-            source_entry.source = "categorization_engine"
-            source_entry.intercompany_group_id = ic_group_id
-
-            target_entry = journal_service.create(
-                db=db, entity_id=target_entity_id,
-                entry_date=transaction.transaction_date,
-                description=je_description, lines=target_lines,
-            )
-            target_entry.source = "categorization_engine"
-            target_entry.intercompany_group_id = ic_group_id
-
+            entry = journal_service.create(
+                db=db, entity_id=source_entity_id, entry_date=transaction.transaction_date,
+                description=je_description, lines=lines)
+            entry.source = "categorization_engine"
             db.flush()
-            return source_entry
+            return entry
 
     def _create_cross_entity_allocation_entries(
         self,
@@ -1987,6 +2475,7 @@ Return only the JSON object, no explanation."""
         """
         from src.services.invoice_service import _IC_RECEIVABLE_CODES, _IC_PAYABLE_CODES, _entity_short
         from src.models.entity import FinanceEntity
+        from src.services.fx_service import fx_service
 
         if not rule.allocation_entity_id:
             raise ValueError("cross_entity_allocation rule missing allocation_entity_id")
@@ -2021,18 +2510,30 @@ Return only the JSON object, no explanation."""
         je_description = transaction.description or "Cross-entity cost allocation"
         ic_group_id = str(uuid.uuid4())
 
+        # POL-141: each entity books its OWN leg in ITS OWN functional currency (independent booking).
+        # The cash amount is native in the transaction's currency; convert per entity at the txn date.
+        # IC receivable (bank func) and IC payable (alloc func) differ across currencies — that spread
+        # is an intercompany FX item trued at IC reconciliation, not a per-txn plug.
+        from decimal import Decimal as _D
+        _txn_ccy = transaction.currency
+        _native = _D(str(abs_amount))
+        _bank_amt, _bank_rate = fx_service.to_functional_or_same(db, _native, _txn_ccy, bank_entity.base_currency, transaction.transaction_date)
+        _alloc_amt, _alloc_rate = fx_service.to_functional_or_same(db, _native, _txn_ccy, alloc_entity.base_currency, transaction.transaction_date)
+        _bank_meta = {"currency": _txn_ccy, "native_amount": _native, "fx_rate": _bank_rate}
+        _alloc_meta = {"currency": _txn_ccy, "native_amount": _native, "fx_rate": _alloc_rate}
+
         # Bank entity: pays out cash → Dr IC Receivable (asset: they are owed by alloc entity)
         #                             Cr Bank
         bank_lines = [
-            {"account_code": ic_recv_code,               "debit_amount": abs_amount, "credit_amount": 0.0,        "description": je_description},
-            {"account_code": bank_account.coa_account_code, "debit_amount": 0.0,      "credit_amount": abs_amount, "description": je_description},
+            {"account_code": ic_recv_code,               "debit_amount": float(_bank_amt), "credit_amount": 0.0,        "description": je_description, **_bank_meta},
+            {"account_code": bank_account.coa_account_code, "debit_amount": 0.0,      "credit_amount": float(_bank_amt), "description": je_description, **_bank_meta},
         ]
 
         # Allocation entity: bears the cost → Dr Expense (contra_account_code)
         #                                      Cr IC Payable (they owe the bank entity)
         alloc_lines = [
-            {"account_code": rule.contra_account_code, "debit_amount": abs_amount, "credit_amount": 0.0,        "description": je_description},
-            {"account_code": ic_pay_code,              "debit_amount": 0.0,        "credit_amount": abs_amount, "description": je_description},
+            {"account_code": rule.contra_account_code, "debit_amount": float(_alloc_amt), "credit_amount": 0.0,        "description": je_description, **_alloc_meta},
+            {"account_code": ic_pay_code,              "debit_amount": 0.0,        "credit_amount": float(_alloc_amt), "description": je_description, **_alloc_meta},
         ]
 
         bank_entry = journal_service.create(

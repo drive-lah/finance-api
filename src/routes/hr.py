@@ -54,8 +54,8 @@ def hr_audit(db=None, action=None, target_user_id=None, target_employee_id=None,
                  "te": target_employee_id,
                  "detail": _json.dumps(detail, default=str) if detail else None})
     except Exception:
-        logging.getLogger(__name__).warning(
-            "hr_audit write failed (action=%s user=%s)", action, target_user_id, exc_info=True)
+        logging.getLogger(__name__).error(
+            "AUDIT WRITE FAILED (alert): hr_audit (action=%s user=%s)", action, target_user_id, exc_info=True)
 
 
 # ── Inline Pydantic schemas (kept here — not in shared schemas.py) ────────────
@@ -80,6 +80,7 @@ class EmployeeUpdate(BaseModel):
     bank_account_number: Optional[str] = None
     bank_code: Optional[str] = None
     manager_id: Optional[int] = None
+    date_of_joining: Optional[date] = None   # start date — editable post-onboarding, never future
 
 class CompensationCreate(BaseModel):
     pay_type: str  # FIXED_SALARY | HOURLY_RATE
@@ -89,15 +90,16 @@ class CompensationCreate(BaseModel):
     effective_to: Optional[date] = None
 
 class DeductionRuleCreate(BaseModel):
-    deduction_type: str   # CPF_EMPLOYEE | CPF_EMPLOYER | SUPERANNUATION | INCOME_TAX | OTHER
+    deduction_type: str   # CPF_EMPLOYEE | CPF_EMPLOYER | SUPERANNUATION | PAYG_WITHHOLDING | INCOME_TAX | OTHER
     label: Optional[str] = None
     calculation_type: str  # PERCENTAGE | FIXED_AMOUNT
     rate: Optional[Decimal] = None
     fixed_amount: Optional[Decimal] = None
     ordinary_wage_cap: Optional[Decimal] = None
-    employee_bears: bool = True
-    coa_debit_code: str
-    coa_credit_code: str
+    # COA + who-bears are DERIVED from deduction_type (DEDUCTION_COA); pass them only for a bespoke type.
+    employee_bears: Optional[bool] = None
+    coa_debit_code: Optional[str] = None
+    coa_credit_code: Optional[str] = None
     effective_from: date
     effective_to: Optional[date] = None
 
@@ -115,10 +117,14 @@ class ContractorHours(BaseModel):
 
 class PayrollRunCreate(BaseModel):
     entity_id: int
-    payroll_period_start: date
-    payroll_period_end: date
-    run_date: date
-    bank_account_id: int
+    # Typed runs (the two fixed cycles) pass run_type + period_month and the dates are derived.
+    # Legacy/ad-hoc runs pass explicit run_date + period. Provide one or the other.
+    run_type: Optional[str] = None            # 'mid_month' | 'end_of_month'
+    period_month: Optional[str] = None        # 'YYYY-MM' — the cycle's month
+    payroll_period_start: Optional[date] = None
+    payroll_period_end: Optional[date] = None
+    run_date: Optional[date] = None
+    bank_account_id: Optional[int] = None     # accrual needs no bank; bank is chosen at payment
     contractor_hours: list[ContractorHours] = []
     description: Optional[str] = None
     reference_number: Optional[str] = None
@@ -142,6 +148,8 @@ def create_employee():
     try:
         with db_session() as db:
             emp = hr_payroll_service.create_employee(db, payload.model_dump())
+            hr_audit(db, "create_employee", target_user_id=getattr(emp, "user_id", None),
+                     target_employee_id=emp.id, detail=payload.model_dump())
             return jsonify(_employee_dict(emp, db)), 201
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
@@ -278,6 +286,24 @@ def add_compensation(employee_id: int):
         return jsonify({"error": str(e)}), 400
 
 
+@hr_bp.route("/employees/<int:employee_id>/compensation/<int:comp_id>", methods=["PUT"])
+def update_compensation(employee_id: int, comp_id: int):
+    """Edit an existing compensation record in place (fix a wrong salary, currency, schedule/split, or a
+    typo'd effective date). Future effective dates are rejected. Audited to hr_audit_log."""
+    data = request.get_json() or {}
+    try:
+        with db_session() as db:
+            from src.models.hr_employee import HrCompensation as _HC
+            _before = db.get(_HC, comp_id)
+            _snap = _compensation_dict(_before) if _before else None
+            comp = hr_payroll_service.update_compensation(db, comp_id, data)
+            hr_audit(db, "update_compensation", target_employee_id=employee_id,
+                     detail={"comp_id": comp_id, "before": _snap, "after": _compensation_dict(comp), "changes": data})
+            return jsonify(_compensation_dict(comp)), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
 @hr_bp.route("/employees/<int:employee_id>/compensation", methods=["GET"])
 def get_compensation(employee_id: int):
     with db_session() as db:
@@ -298,7 +324,9 @@ def add_deduction_rule(employee_id: int):
         return jsonify({"error": e.errors()}), 400
     try:
         with db_session() as db:
-            rule = hr_payroll_service.add_deduction_rule(db, employee_id, payload.model_dump())
+            # exclude_none so unset COA/who-bears/cap are DERIVED from the type, not nulled
+            rule = hr_payroll_service.add_deduction_rule(db, employee_id, payload.model_dump(exclude_none=True))
+            hr_audit(db, "add_deduction_rule", target_employee_id=employee_id, detail=payload.model_dump())
             return jsonify(_rule_dict(rule)), 201
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
@@ -309,6 +337,19 @@ def get_deduction_rules(employee_id: int):
     with db_session() as db:
         rules = hr_payroll_service.get_deduction_rules(db, employee_id)
         return jsonify([_rule_dict(r) for r in rules])
+
+
+@hr_bp.route("/employees/<int:employee_id>/deduction-rules/<int:rule_id>", methods=["DELETE"])
+def delete_deduction_rule(employee_id: int, rule_id: int):
+    """Remove a deduction rule (manual correction). Audited."""
+    try:
+        with db_session() as db:
+            hr_payroll_service.delete_deduction_rule(db, employee_id, rule_id)
+            hr_audit(db, "delete_deduction_rule", target_employee_id=employee_id,
+                     detail={"rule_id": rule_id})
+            return jsonify({"deleted": rule_id}), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
 
 
 # ── Payroll run endpoints ─────────────────────────────────────────────────────
@@ -368,6 +409,78 @@ def submit_payroll_run(run_id: int):
             return jsonify(_run_dict(run))
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
+
+
+@hr_bp.route("/payroll-runs/<int:run_id>/void", methods=["POST"])
+def void_payroll_run(run_id: int):
+    """Void a payroll run (and its JE) so the cycle can be re-run. Refused once payments are in flight."""
+    data = request.get_json() or {}
+    try:
+        with db_session() as db:
+            run = hr_payroll_service.void_run(db, run_id, reason=data.get("reason", ""))
+            hr_audit(db, "void_payroll_run", detail={"run_id": run_id, "reason": data.get("reason", "")})
+            return jsonify(_run_dict(run))
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+def _actor():
+    return {"user_id": request.headers.get("X-User-Id") or request.headers.get("X-User-Email") or "ui"}
+
+
+@hr_bp.route("/payroll-runs/<int:run_id>/submit-for-approval", methods=["POST"])
+def submit_payroll_for_approval(run_id: int):
+    """PR-3: submit a DRAFT run for SEGMENTED approval — creates the DRAFT JE + one approval group per
+    salary account (routed to its COA-matrix approver). Run → PENDING_APPROVAL."""
+    from src.services.payroll_service import payroll_service
+    try:
+        with db_session() as db:
+            return jsonify(payroll_service.submit_for_approval(db, run_id, _actor()))
+    except ValueError as e:   # e.g. fx_service: no rate on file for the month — actionable 400, not a 500
+        return jsonify({"error": str(e)}), 400
+
+
+@hr_bp.route("/payroll-runs/<int:run_id>/lines/<int:item_id>/adjust", methods=["POST"])
+def adjust_payroll_line(run_id: int, item_id: int):
+    """PR-6: adjust a DRAFT run's payslip line (gross_amount or hours_worked), recomputing deductions +
+    net, with a MANDATORY reason written to the append-only adjustment audit."""
+    body = request.get_json(force=True) or {}
+    with db_session() as db:
+        return jsonify(hr_payroll_service.adjust_line(
+            db, item_id, gross_amount=body.get("gross_amount"), hours_worked=body.get("hours_worked"),
+            reason=body.get("reason", ""), actor=_actor()))
+
+
+@hr_bp.route("/payroll-runs/<int:run_id>/fan-out", methods=["POST"])
+def fan_out_payroll(run_id: int):
+    """PR-4: fan a POSTED run out into the payout register (per-employee net + statutory payables)."""
+    from src.services.payroll_service import payroll_service
+    with db_session() as db:
+        return jsonify(payroll_service.fan_out_to_register(db, run_id, _actor()))
+
+
+@hr_bp.route("/payroll-runs/<int:run_id>/approval-view", methods=["GET"])
+def payroll_approval_view(run_id: int):
+    """PR-3: consolidated-per-group approval view — each salary-account group's total + per-employee
+    lines + change-summary vs the prior run (new/changed/leavers). Approvers review by exception."""
+    from src.services.payroll_service import payroll_service
+    try:
+        with db_session() as db:
+            return jsonify(payroll_service.get_approval_view(db, run_id))
+    except ValueError as e:   # fx_service missing-rate on the functional roll-up — actionable 400
+        return jsonify({"error": str(e)}), 400
+
+
+@hr_bp.route("/payroll-runs/<int:run_id>/approve-group", methods=["POST"])
+def decide_payroll_group(run_id: int):
+    """PR-3: record one salary-account group's decision. `salary_account_code` + `decision`
+    (approved|rejected) [+ reason]. All groups approved → run APPROVED + draft JE POSTED."""
+    from src.services.payroll_service import payroll_service
+    body = request.get_json(force=True) or {}
+    with db_session() as db:
+        return jsonify(payroll_service.decide_group(
+            db, run_id, body["salary_account_code"], body.get("decision", "approved"),
+            _actor(), reason=body.get("reason")))
 
 
 # ── Serialization helpers ─────────────────────────────────────────────────────
@@ -436,18 +549,22 @@ def _rule_dict(rule) -> dict:
 
 
 def _run_dict(run) -> dict:
+    # Run totals are the functional roll-up, NULL on a mixed-currency DRAFT until submit fills them.
+    _f = lambda v: float(v) if v is not None else None
     return {
         "id": run.id,
         "entity_id": run.entity_id,
         "payroll_period_start": run.payroll_period_start.isoformat(),
         "payroll_period_end": run.payroll_period_end.isoformat(),
         "run_date": run.run_date.isoformat(),
+        "run_type": run.run_type,
+        "currency": run.currency,
         "headcount": run.headcount,
-        "gross_amount": float(run.gross_amount),
-        "employer_contributions": float(run.employer_cpf_amount),
-        "employee_deductions": float(run.employee_cpf_amount),
-        "net_amount": float(run.net_amount),
-        "total_payable": float(run.cpf_payable_amount),
+        "gross_amount": _f(run.gross_amount),
+        "employer_contributions": _f(run.employer_cpf_amount),
+        "employee_deductions": _f(run.employee_cpf_amount),
+        "net_amount": _f(run.net_amount),
+        "total_payable": _f(run.cpf_payable_amount),
         "bank_account_id": run.bank_account_id,
         "description": run.description,
         "status": run.status,
