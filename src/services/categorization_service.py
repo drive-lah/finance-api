@@ -886,24 +886,19 @@ class CategorizationService:
             match = next((p for p in payout if abs(float(p.amount) - abs_amount) <= 0.01), None)
             if not match:
                 continue
-            ref = match.external_reference or ""
-            liability = ref.split(":", 1)[1] if ref.startswith("statutory:") else "2304"
-            je = journal_service.create(
-                db=db, entity_id=ba.entity_id, entry_date=txn.transaction_date,
-                description=f"Payroll payout #{match.id} settlement",
-                lines=[{"account_code": liability, "debit_amount": abs_amount, "credit_amount": 0.0,
-                        "description": f"Payroll payout #{match.id}"},
-                       {"account_code": ba.coa_account_code, "debit_amount": 0.0, "credit_amount": abs_amount,
-                        "description": f"Payroll payout #{match.id}"}],
-                status=JournalEntryStatus.POSTED)
-            je.source = "payroll_register_knockoff"
+            # FX-aware settlement (item 2): reuse the same helper Rung 1 uses, so the register fallback
+            # clears the accrued functional liability against the converted payment (residue → 7100)
+            # instead of booking at fx=1. Same-ccy collapses to the prior behaviour.
+            je_id = self._settle_payroll_payout(db, match, txn, ba)
+            if je_id is None:
+                continue
             match.state = PayoutState.POSTED.value
             match.transaction_id = txn.id
-            match.journal_entry_id = je.id
+            match.journal_entry_id = je_id
             txn.status = TransactionStatus.MATCHED
             txn.matched_at = datetime.now(UTC)
             txn.categorized_by_logic = "payroll_register_knockoff"
-            txn.reconciled_journal_entry_id = je.id
+            txn.reconciled_journal_entry_id = je_id
             db.commit()
             results.append({"transaction_id": txn.id, "status": "categorized",
                             "rule_name": f"[payroll_register_knockoff:payout_{match.id}]"})
