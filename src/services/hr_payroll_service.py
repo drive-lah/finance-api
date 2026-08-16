@@ -34,6 +34,12 @@ from src.services.journal_service import journal_service
 
 logger = logging.getLogger(__name__)
 
+# Payroll is an accrual: the net salary owed lands in a liability (2304 Salaries Payable), mirroring
+# claims (2303) and invoices (AP). The bank is only touched at PAYMENT, via the payout knock-off
+# (Dr 2304 / Cr bank). Statutory obligations (CPF 2300 / super 2302 / PAYG 2301 / income tax 2305)
+# credit their own payables through the per-employee deduction rules.
+SALARIES_PAYABLE = "2304"
+
 
 class HrPayrollService:
 
@@ -386,16 +392,22 @@ class HrPayrollService:
                 f"status={existing_run.status}). Void it before creating another."
             )
 
-        bank_account = db.query(FinanceBankAccount).filter(
-            FinanceBankAccount.id == data["bank_account_id"]
-        ).first()
-        if not bank_account:
-            raise ValueError(f"Bank account {data['bank_account_id']} not found")
-        if bank_account.entity_id != entity_id:
-            raise ValueError(
-                f"Bank account {bank_account.id} belongs to entity "
-                f"{bank_account.entity_id}, not {entity_id}"
-            )
+        # A payroll run is an ACCRUAL (Dr expense / Cr 2304 Salaries Payable + statutory payables).
+        # The bank is only touched at PAYMENT, via the payout knock-off (Dr 2304 / Cr bank). So a
+        # bank account is NOT required to create/accrue a run — the modal asks only for the entity.
+        # If a bank_account_id is supplied it must belong to the entity (validated for legacy callers).
+        bank_account = None
+        if data.get("bank_account_id"):
+            bank_account = db.query(FinanceBankAccount).filter(
+                FinanceBankAccount.id == data["bank_account_id"]
+            ).first()
+            if not bank_account:
+                raise ValueError(f"Bank account {data['bank_account_id']} not found")
+            if bank_account.entity_id != entity_id:
+                raise ValueError(
+                    f"Bank account {bank_account.id} belongs to entity "
+                    f"{bank_account.entity_id}, not {entity_id}"
+                )
 
         contractor_hours: dict[int, float] = {
             e["employee_id"]: float(e["hours_worked"])
@@ -509,7 +521,7 @@ class HrPayrollService:
             cpf_payable_amount=total_employer_contrib + total_employee_ded,
             currency=_run_func,
             run_type=run_type,
-            bank_account_id=data["bank_account_id"],
+            bank_account_id=data.get("bank_account_id"),
             description=description,
             reference_number=data.get("reference_number"),
             submitted_by=data.get("created_by"),
@@ -657,13 +669,14 @@ class HrPayrollService:
         if not items:
             raise ValueError(f"Run {finance_payroll_run_id} has no payroll items")
 
-        bank_account = db.query(FinanceBankAccount).filter(
-            FinanceBankAccount.id == fin_run.bank_account_id
-        ).first()
-        if not bank_account or not bank_account.coa_account_code:
-            raise ValueError("Bank account has no COA code configured")
+        # Accrual only: net salary credits 2304 Salaries Payable (NOT the bank). The bank leg is
+        # posted later at payment by the payout knock-off (Dr 2304 / Cr bank). No bank needed here.
+        bank_account = (db.query(FinanceBankAccount)
+                        .filter(FinanceBankAccount.id == fin_run.bank_account_id).first()
+                        if fin_run.bank_account_id else None)
 
-        lines, _groups, je_description = self._build_je_lines_and_groups(db, fin_run, items, bank_account)
+        lines, _groups, je_description = self._build_je_lines_and_groups(
+            db, fin_run, items, bank_account, net_to_account=SALARIES_PAYABLE)
 
         je = journal_service.create(
             db=db,

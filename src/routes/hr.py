@@ -123,7 +123,7 @@ class PayrollRunCreate(BaseModel):
     payroll_period_start: Optional[date] = None
     payroll_period_end: Optional[date] = None
     run_date: Optional[date] = None
-    bank_account_id: int
+    bank_account_id: Optional[int] = None     # accrual needs no bank; bank is chosen at payment
     contractor_hours: list[ContractorHours] = []
     description: Optional[str] = None
     reference_number: Optional[str] = None

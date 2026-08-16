@@ -52,7 +52,8 @@ CPF_EMPLOYER_ACCOUNT = "6001"  # Employer CPF
 CPF_PAYABLE_ACCOUNT = "2300"   # CPF Payable
 SALARIES_PAYABLE_ACCOUNT = "2304"  # Net salaries payable (PR-4 accrue-then-pay)
 # Statutory payable account → the authority counterparty it's paid to (PR-4 fan-out). Matched by name.
-STATUTORY_AUTHORITY = {"2300": "CPF", "2302": "superannuation", "2305": "tax office"}
+STATUTORY_AUTHORITY = {"2300": "CPF", "2302": "superannuation",
+                       "2301": "tax office", "2305": "tax office"}  # 2301 PAYG withholding (AU) → ATO
 
 
 class PayrollService:
