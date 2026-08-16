@@ -332,6 +332,12 @@ class HrPayrollService:
         total_employee_ded = Decimal("0")
         total_employer_contrib = Decimal("0")
         total_net = Decimal("0")
+        # POL-142: run totals are a FUNCTIONAL-currency roll-up. Payslips can be mixed-currency (USD/INR),
+        # so each item converts to the entity's functional currency BEFORE it's added to a run total — the
+        # per-employee native amount still lives on the payslip. Never sum raw mixed-currency natives.
+        from src.models.entity import FinanceEntity
+        from src.services.fx_service import fx_service
+        _run_func = db.get(FinanceEntity, entity_id).base_currency if entity_id else None
 
         # Build items before committing the run (so we can populate run totals)
         item_data_list: list[dict] = []
@@ -362,10 +368,11 @@ class HrPayrollService:
                 "currency": comp.currency,
                 "deduction_lines": deduction_lines,
             })
-            total_gross += gross
-            total_employee_ded += emp_ded
-            total_employer_contrib += emp_contrib
-            total_net += net
+            # add each payslip to the run totals in FUNCTIONAL currency (POL-142)
+            total_gross += fx_service.to_functional_or_same(db, gross, comp.currency, _run_func, run_date)[0]
+            total_employee_ded += fx_service.to_functional_or_same(db, emp_ded, comp.currency, _run_func, run_date)[0]
+            total_employer_contrib += fx_service.to_functional_or_same(db, emp_contrib, comp.currency, _run_func, run_date)[0]
+            total_net += fx_service.to_functional_or_same(db, net, comp.currency, _run_func, run_date)[0]
 
         if not item_data_list:
             raise ValueError(
@@ -391,6 +398,7 @@ class HrPayrollService:
             employee_cpf_amount=total_employee_ded,
             net_amount=total_net,
             cpf_payable_amount=total_employer_contrib + total_employee_ded,
+            currency=_run_func,
             bank_account_id=data["bank_account_id"],
             description=description,
             reference_number=data.get("reference_number"),

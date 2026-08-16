@@ -100,6 +100,11 @@ class FinancePayrollRun(Base):
         Numeric(15, 2), nullable=False,
         comment="Total CPF payable = employer_cpf + employee_cpf — Cr 2300",
     )
+    # POL-142: the run-level totals are a FUNCTIONAL-currency roll-up of the per-payslip native amounts
+    # (payslips can be mixed-currency: USD/INR). This names the currency they're expressed in — the
+    # entity's functional currency — so the totals are never a currency-less conflation. Per-employee
+    # native amounts remain the source of truth on hr_payroll_items.
+    currency: Mapped[str | None] = mapped_column(String(3), nullable=True)
 
     # Bank account net salary is paid from
     bank_account_id: Mapped[int] = mapped_column(
