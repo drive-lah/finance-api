@@ -433,8 +433,11 @@ def submit_payroll_for_approval(run_id: int):
     """PR-3: submit a DRAFT run for SEGMENTED approval — creates the DRAFT JE + one approval group per
     salary account (routed to its COA-matrix approver). Run → PENDING_APPROVAL."""
     from src.services.payroll_service import payroll_service
-    with db_session() as db:
-        return jsonify(payroll_service.submit_for_approval(db, run_id, _actor()))
+    try:
+        with db_session() as db:
+            return jsonify(payroll_service.submit_for_approval(db, run_id, _actor()))
+    except ValueError as e:   # e.g. fx_service: no rate on file for the month — actionable 400, not a 500
+        return jsonify({"error": str(e)}), 400
 
 
 @hr_bp.route("/payroll-runs/<int:run_id>/lines/<int:item_id>/adjust", methods=["POST"])
@@ -461,8 +464,11 @@ def payroll_approval_view(run_id: int):
     """PR-3: consolidated-per-group approval view — each salary-account group's total + per-employee
     lines + change-summary vs the prior run (new/changed/leavers). Approvers review by exception."""
     from src.services.payroll_service import payroll_service
-    with db_session() as db:
-        return jsonify(payroll_service.get_approval_view(db, run_id))
+    try:
+        with db_session() as db:
+            return jsonify(payroll_service.get_approval_view(db, run_id))
+    except ValueError as e:   # fx_service missing-rate on the functional roll-up — actionable 400
+        return jsonify({"error": str(e)}), 400
 
 
 @hr_bp.route("/payroll-runs/<int:run_id>/approve-group", methods=["POST"])

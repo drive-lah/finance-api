@@ -149,15 +149,9 @@ def register_error_handlers(app):
         log_error(error)
         return jsonify(error.to_dict()), error.status_code
     
-    @app.errorhandler(ValueError)
-    def handle_value_error(error: ValueError):
-        """Service-layer ValueErrors are domain/validation errors (e.g. fx_service's 'no rate on file for
-        the month', bad input) — dozens of routes already catch them as 400. Handle them globally so the
-        routes that DON'T wrap them (payroll approval-view / submit-for-approval, which call fx_service)
-        return a clean, actionable 400 with the message instead of an opaque generic 500. Logged with a
-        stack so a genuine ValueError bug is still visible."""
-        logger.warning("ValueError -> 400: %s", str(error), exc_info=True)
-        return jsonify({"error": str(error)}), 400
+    # NOTE: deliberately NO global ValueError handler. Many services raise ValueError for INFRA failures
+    # (journal_service re-fetch, wise_service upstream errors, DB integrity) that must stay 5xx so alerting
+    # fires. The payroll approval routes that call fx_service wrap ValueError themselves (see routes/hr.py).
 
     @app.errorhandler(Exception)
     def handle_generic_error(error: Exception):
