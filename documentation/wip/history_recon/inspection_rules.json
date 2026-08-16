@@ -65,6 +65,16 @@
       "params": {
         "epoch": "2016-01-01"
       }
+    },
+    {
+      "id": "INSP-7",
+      "name": "AU GST handling on invoice postings (PLACEHOLDER \u2014 design pending)",
+      "severity": "MEDIUM",
+      "enabled": false,
+      "rationale": "Gaurav 2026-08-16: a batch of invoices was posted earlier (and more will post in subsequent years) alongside GST approvals \u2014 but GST approvals on invoices are no longer done. A dedicated AU GST-handling piece is coming; until it lands, the inspector must remember that posted-invoice GST treatment for AU is an OPEN design area to check, not an assumption. Discussion pending with Gaurav.",
+      "params": {
+        "note": "enable once the AU invoice-GST design is ruled"
+      }
     }
   ]
 }

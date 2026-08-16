@@ -602,6 +602,21 @@ class InvoiceService:
         )
         return acct.offset_account_code if acct and acct.offset_account_code else AP_ACCOUNT_CODE
 
+    # Books epoch: no Drive lah entity has activity before this. An invoice_date missing,
+    # sentinel (1900-01-01 style), or pre-epoch must NEVER advance state — not even to
+    # pending_approval (Gaurav, 2026-08-16: 21 backlog invoices with sentinel dates were
+    # batch-posted into the year 1900, polluting every as-of figure).
+    INVOICE_DATE_EPOCH = date(2016, 1, 1)
+
+    def _guard_invoice_date(self, invoice) -> None:
+        from src.utils.errors import ConflictError
+        d = invoice.invoice_date
+        if d is None or d < self.INVOICE_DATE_EPOCH:
+            raise ConflictError(
+                f"Invoice {invoice.id}: invoice_date {d} is missing or a sentinel/pre-epoch date "
+                f"(< {self.INVOICE_DATE_EPOCH}). Fix the date first — the invoice belongs in "
+                f"needs_fix and cannot advance to any state.")
+
     def approve(self, db: Session, invoice_id: int, approved_by: str, contra_account_code: Optional[str] = None) -> FinanceInvoice:
         """
         Approve an invoice, creating the corresponding journal entry.
@@ -610,6 +625,7 @@ class InvoiceService:
         Amortization case: Dr 1200 (Prepaid) / Cr 2000, plus amortization schedule
         """
         invoice = self.get_by_id(db, invoice_id)
+        self._guard_invoice_date(invoice)
 
         # POL (Gaurav 2026-07-31): NO direct-to-approved. Every invoice must pass
         # through pending_approval first — a draft cannot be approved directly.
@@ -2034,6 +2050,7 @@ class InvoiceService:
           - require_approval or no match → status = pending_approval.
         """
         invoice = self.get_by_id(db, invoice_id)
+        self._guard_invoice_date(invoice)
 
         # Submittable from draft OR needs_fix (re-submit after resolving an exception).
         if invoice.status not in (InvoiceStatus.DRAFT.value, InvoiceStatus.NEEDS_FIX.value):
@@ -2392,6 +2409,7 @@ class InvoiceService:
         # Risk: high-value OR low-confidence surfaces for closer review.
         risk = "high" if (amount >= self._APPROVAL_HIGH_RISK_MIN or (conf is not None and conf < 40)) else "low"
 
+        self._guard_invoice_date(invoice)
         invoice.status = InvoiceStatus.PENDING_APPROVAL.value
         task_service.enqueue(
             db, type="invoice-approval", source_ref=f"invoice:{invoice.id}",
