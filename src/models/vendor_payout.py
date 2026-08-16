@@ -114,7 +114,6 @@ class FinancePayout(Base):
 
     amount: Mapped[float] = mapped_column(Numeric(precision=15, scale=2), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), nullable=False)
-    amount_sgd: Mapped[float | None] = mapped_column(Numeric(precision=15, scale=2), nullable=True)
 
     wise_profile_id: Mapped[str | None] = mapped_column(String(32), nullable=True)
     wise_quote_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
@@ -155,9 +154,7 @@ class FinancePayout(Base):
             "entity_id": self.entity_id,
             "channel_id": self.channel_id, "registration_id": self.registration_id,
             "amount": float(self.amount) if self.amount is not None else None,
-            "currency": self.currency,
-            "amount_sgd": float(self.amount_sgd) if self.amount_sgd is not None else None,
-            "wise_profile_id": self.wise_profile_id, "wise_quote_id": self.wise_quote_id,
+            "currency": self.currency,            "wise_profile_id": self.wise_profile_id, "wise_quote_id": self.wise_quote_id,
             "wise_transfer_id": self.wise_transfer_id, "idempotency_key": self.idempotency_key,
             "state": self.state, "requires_checker": self.requires_checker,
             "failure_reason": self.failure_reason, "is_dry_run": self.is_dry_run,

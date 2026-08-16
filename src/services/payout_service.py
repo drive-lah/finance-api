@@ -150,7 +150,7 @@ class PayoutService:
             invoice_id=invoice_id, payable_type="invoice", payable_id=invoice_id, method="system_wise",
             counterparty_id=inv.counterparty_id, entity_id=inv.entity_id,
             channel_id=ch.id if ch else None, registration_id=reg.id if reg else None,
-            amount=amount, currency=ccy, amount_sgd=amount_sgd,
+            amount=amount, currency=ccy,
             wise_profile_id=profile, idempotency_key=f"inv{invoice_id}-{int(datetime.utcnow().timestamp())}",
             state=PayoutState.DRAFT.value, requires_checker=requires_checker, is_dry_run=DRY_RUN,
             requested_by=(actor or {}).get("user_id"), requested_at=datetime.utcnow())
@@ -232,7 +232,7 @@ class PayoutService:
             invoice_id=None, payable_type="claim", payable_id=claim_id, method="system_wise",
             counterparty_id=emp.id, entity_id=c.entity_id,
             channel_id=ch.id if ch else None, registration_id=reg.id if reg else None,
-            amount=amount, currency=ccy, amount_sgd=amount_sgd, wise_profile_id=profile,
+            amount=amount, currency=ccy, wise_profile_id=profile,
             idempotency_key=f"claim{claim_id}-{int(datetime.utcnow().timestamp())}",
             state=PayoutState.DRAFT.value, requires_checker=requires_checker, is_dry_run=DRY_RUN,
             requested_by=(actor or {}).get("user_id"), requested_at=datetime.utcnow())
