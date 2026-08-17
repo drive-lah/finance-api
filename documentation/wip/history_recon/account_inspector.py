@@ -414,6 +414,68 @@ def insp_11(db, year, ent_ids, params):
     return out
 
 
+# ── INSP-13: spend parked but never scheduled (the manual-JE blind spot) ─────
+
+def insp_13(db, year, ent_ids, params):
+    """Every debit into a spread account must be answered by a schedule.
+
+    Both routes into a schedule run off an approval: the invoice creates the prepaid spread, and
+    the registrar picks up capitalized spend that has a bank transaction behind it. A MANUAL
+    journal has neither, so the cost parks on the balance sheet and nothing ever ages it — silent
+    understatement of expense, forever. INSP-10(b) only fires when a policy has NO register rows
+    at all, so it cannot see one unscheduled journal among many scheduled ones.
+    """
+    y1 = date(year, 12, 31)
+    out = []
+    # (a) capitalized: a debit into a policy-covered asset account with no register row for that JE
+    for r in db.execute(text("""
+        SELECT je.id, je.entry_date, je.source, je.entity_id,
+               round(l.debit_amount::numeric,2) AS amount,
+               p.asset_account_code AS code, a.name AS account,
+               left(coalesce(je.description,''),70) AS descr,
+               (SELECT count(*) FROM finance_transactions t
+                 WHERE t.reconciled_journal_entry_id = je.id) AS has_txn
+        FROM finance_coa_amortization_policies p
+        JOIN finance_journal_lines l ON l.account_code = p.asset_account_code AND l.debit_amount > 0
+        JOIN finance_journal_entries je ON je.id = l.entry_id AND je.status IN ('POSTED','DRAFT')
+        LEFT JOIN finance_accounts a ON a.code = p.asset_account_code AND a.entity_id IS NULL
+        WHERE p.is_active AND l.entity_id = ANY(:ents) AND je.entry_date <= :y1
+          AND coalesce(je.source,'') NOT IN ('amortization_scheduler','prepaid_release')
+          AND NOT EXISTS (SELECT 1 FROM finance_asset_schedules s WHERE s.journal_entry_id = je.id)
+        ORDER BY l.debit_amount DESC"""), {"ents": ent_ids, "y1": y1}).mappings():
+        out.append({
+            "kind": "capitalized_not_registered", "journal": r["id"],
+            "date": str(r["entry_date"]), "amount": float(r["amount"]),
+            "account": f"{r['code']} {r['account']}", "source": r["source"] or "manual",
+            "what": r["descr"], "has_bank_txn": bool(r["has_txn"]),
+            "question": "Debited into an account that depreciates, but nothing in the asset "
+                        "register answers for it — it will never be charged to the P&L. "
+                        "(Register rows require a bank transaction today, so a manual journal "
+                        "cannot be registered at all.)"})
+    # (b) prepaid: a debit into 1300 Prepayments with no spread schedule behind it
+    for r in db.execute(text("""
+        SELECT je.id, je.entry_date, je.source, round(l.debit_amount::numeric,2) AS amount,
+               left(coalesce(je.description,''),70) AS descr
+        FROM finance_journal_lines l
+        JOIN finance_journal_entries je ON je.id = l.entry_id AND je.status IN ('POSTED','DRAFT')
+        WHERE l.account_code = '1300' AND l.debit_amount > 0
+          AND l.entity_id = ANY(:ents) AND je.entry_date <= :y1
+          AND coalesce(je.source,'') != 'prepaid_release'
+          AND NOT EXISTS (
+            SELECT 1 FROM finance_amortization_schedules s
+            JOIN finance_invoices i ON i.id = s.invoice_id
+            WHERE i.journal_entry_id = je.id)
+        ORDER BY l.debit_amount DESC"""), {"ents": ent_ids, "y1": y1}).mappings():
+        out.append({
+            "kind": "prepaid_without_schedule", "journal": r["id"],
+            "date": str(r["entry_date"]), "amount": float(r["amount"]),
+            "account": "1300 Prepayments", "source": r["source"] or "manual",
+            "what": r["descr"],
+            "question": "Parked in Prepayments with no release schedule — it will sit there "
+                        "forever. Create the spread, or book it as an expense outright."})
+    return out
+
+
 # ── INSP-12: prepaid/capitalized route conflict (DA-14) ──────────────────────
 
 def insp_12(db, year, ent_ids, params):
@@ -560,7 +622,7 @@ def insp_10(db, year, ent_ids, params):
 
 CHECKS = {"INSP-1": insp_1, "INSP-2": insp_2, "INSP-3": insp_3, "INSP-4": insp_4,
           "INSP-5": insp_5, "INSP-6": insp_6, "INSP-8": insp_8, "INSP-9": insp_9,
-          "INSP-10": insp_10, "INSP-11": insp_11, "INSP-12": insp_12}
+          "INSP-10": insp_10, "INSP-11": insp_11, "INSP-12": insp_12, "INSP-13": insp_13}
 
 
 def main():
