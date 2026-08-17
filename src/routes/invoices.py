@@ -434,10 +434,21 @@ def extract_invoice():
         from datetime import date as _date
         raw_dt = result.get("invoice_date")
         inv_dt = _date.fromisoformat(raw_dt) if isinstance(raw_dt, str) and len(raw_dt) >= 10 else None
+        # Resolve the AI's Bill-To hint to an entity id so the duplicate check runs scoped
+        # when possible; the detector also fires UNscoped now (2026-08-17: 2549974 slipped
+        # the extract check because entity_id was None and the old check silently passed).
+        _ent_id = result.get("entity_id")
+        if not _ent_id and result.get("bill_to_entity_hint"):
+            _hint = str(result["bill_to_entity_hint"]).strip().lower()
+            with db_session() as db:
+                for e in db.query(FinanceEntity).all():
+                    if e.name and (e.name.lower() in _hint or _hint in e.name.lower()):
+                        _ent_id = e.id
+                        break
         with db_session() as db:
             verdict = duplicate_detection_service.detect(
                 db,
-                entity_id=result.get("entity_id"),
+                entity_id=_ent_id,
                 counterparty_id=vendor_match["counterparty_id"],
                 invoice_number=result.get("invoice_number"),
                 total_amount=result.get("total_amount"),

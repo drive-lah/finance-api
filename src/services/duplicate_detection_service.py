@@ -125,11 +125,16 @@ class DuplicateDetectionService:
 
         # ── L2: semantic (vendor + invoice number is the DECIDER) ───────────────
         if counterparty_id and num:
-            rows = base.filter(
-                FinanceInvoice.entity_id == entity_id,
+            # Entity scope is CONDITIONAL (Gaurav live-test 2026-08-17): the extract stage often
+            # has no entity resolved yet, and a same-vendor+same-number hit in ANY entity is a
+            # duplicate signal — an unscoped check must not silently pass.
+            q = base.filter(
                 FinanceInvoice.counterparty_id == counterparty_id,
                 func.lower(func.trim(FinanceInvoice.invoice_number)) == num.lower(),
-            ).order_by(FinanceInvoice.id.asc()).all()
+            )
+            if entity_id is not None:
+                q = q.filter(FinanceInvoice.entity_id == entity_id)
+            rows = q.order_by(FinanceInvoice.id.asc()).all()
             if rows:
                 exact = next((r for r in rows if _amounts_match(r.total_amount, total_amount)), None)
                 if exact:
@@ -154,12 +159,14 @@ class DuplicateDetectionService:
         # (never fuzzy-match on amount when a number is present: that is the
         #  recurring-same-amount safeguard.)
         if counterparty_id and total_amount is not None and invoice_date is not None:
-            rows = base.filter(
-                FinanceInvoice.entity_id == entity_id,
+            q = base.filter(
                 FinanceInvoice.counterparty_id == counterparty_id,
                 FinanceInvoice.invoice_date == invoice_date,
                 FinanceInvoice.currency == currency,
-            ).all()
+            )
+            if entity_id is not None:
+                q = q.filter(FinanceInvoice.entity_id == entity_id)
+            rows = q.all()
             same_amt = [r for r in rows if _amounts_match(r.total_amount, total_amount)]
             if same_amt:
                 same_amt.sort(key=lambda r: r.id)
