@@ -46,8 +46,10 @@ logger = logging.getLogger(__name__)
 
 # Standard AP liability account
 AP_ACCOUNT_CODE = "2000"
-# Prepaid asset account for amortization (COA: 1300 Prepayments; 1200 is Trade Receivables)
-PREPAID_ACCOUNT_CODE = "1300"
+# Prepaid asset account for amortization (COA: 1300 Prepayments; 1200 is Trade Receivables).
+# Single definition lives in amortization_service — the engine and the invoice must never
+# disagree about where a prepayment parks.
+from src.services.amortization_service import PREPAID_ACCOUNT_CODE  # noqa: E402
 # GST / VAT input tax credit (recoverable on purchases)
 GST_INPUT_ACCOUNT_CODE = "1350"
 
@@ -828,6 +830,9 @@ class InvoiceService:
             description=f"AP Invoice: {invoice.invoice_number or f'#{invoice.id}'}",
             lines=lines,
             status=JournalEntryStatus.POSTED,
+            # the invoice is the ONE route allowed to park in Prepayments: it carries the
+            # service period, and the schedule is created below in the same transaction (DA-15)
+            prepaid_ok=needs_amortization,
         )
         entry.source = "invoice_approval"
         entry.reference_number = f"INV-{invoice.id}"  # trace JE -> invoice (Gaurav 2026-08-03)
@@ -856,6 +861,14 @@ class InvoiceService:
             )
             db.add(schedule)
             invoice.has_amortization_schedule = True
+        else:
+            # DA-15: capitalized spend bought on an invoice must enter the asset register HERE.
+            # It has no bank transaction, so the old sweep refused it and it never depreciated
+            # (11 journals, S$35,100.03 of Technology Development found stranded on the clone).
+            from src.services.amortization_service import amortization_service as _amort
+            _asset = _amort.register_from_journal(db, entry)
+            if _asset is not None:
+                logger.info(f"Invoice {invoice.id} capitalized -> asset schedule {_asset.id}")
 
         # Close the approval task (POL-108) — done whether approved directly or via the task.
         from src.services.task_service import task_service

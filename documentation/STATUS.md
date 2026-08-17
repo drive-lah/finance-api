@@ -168,6 +168,25 @@ Locking first would refuse the catch-up charges that legitimately date into that
 | PL-9 | **Test on clone** | Lock a month → every writer refused (service, projection, raw SQL) → unlock as admin with reason → writes succeed → audit trail shows both events. |
 | PL-10 | **2019 close** | Lock the **7 active months** (Jun–Dec 2019; Jan–May has no activity) for entity 2 = Drive lah Singapore. That is what makes "2019 is locked" a fact rather than a statement. |
 
+### 2.0h SPREAD CHAIN — every entry door registers (DA-15/DA-16, Gaurav 2026-08-18)
+
+Clone-verified 2026-08-18 on `finance_clone_20260816`; nothing run against production.
+
+| ID | Item | State |
+|----|------|-------|
+| SC-1 | Migration **075**: `finance_asset_schedules.transaction_id` nullable — a bank transaction is evidence, not a requirement | ✅ applied on clone; prod pending with the 073/074 batch |
+| SC-2 | `register_from_journal`: registers capitalized spend off a journal alone, idempotent on journal_entry_id, refuses the engine's own postings | ✅ |
+| SC-3 | Door A: invoice approval now registers the asset inline when the account is policy-covered | ✅ |
+| SC-4 | Catch-up sweep accepts bank-less spend | ✅ — registered the **6 real stranded invoice assets**, S$19,802.28 |
+| SC-5 | **DA-16 bug**: `source NOT IN (...)` is NULL for NULL source, so the sweep skipped every MANUAL journal. Fixed with an explicit `IS NULL` arm | ✅ found by the new test, not in production |
+| SC-6 | Prepaid door guard: `journal_service.create` refuses a direct debit into 1300 unless `prepaid_ok=True` (invoice route only) | ✅ |
+| SC-7 | `unscheduled_prepaids` detector reported in every `run_all`; INSP-13 covers both shapes | ✅ |
+| SC-8 | Test suite `wip/history_recon/test_spread_chain_watertight.py` — 8 cases, 10 assertions, self-cleaning, clone-only guard | ✅ **10/10 pass**, 0 leftover rows |
+| SC-9 | Catch-up posted **125 charges** across 2024–2025 and stopped cleanly at the Jan-2026 period lock, cursors intact at 20–22/36 | ✅ correct behaviour |
+| SC-10 | 2019 unchanged by all of it — bank check 0.00 × 14, inspector identical (21 exceptions, same rules) | ✅ |
+| SC-11 | Regression check: pytest `test_amortization`/`test_journal_entries` show the SAME 35 pre-existing SQLite errors with my changes stashed; mypy 149 vs a 150 baseline | ✅ no regression |
+| SC-12 | 2024 INSP-13 was 6 exceptions, now **0** | ✅ |
+
 **2019 close — position as of 2026-08-17 EOD.** Runbook: `wip/history_recon/2019/PROD_RUNBOOK_2019.md`
 (now turnkey: 8 phases, every command carries the prod-arming prefix). Scorecard:
 `wip/history_recon/2019/scorecard_2019_20260817.html`.

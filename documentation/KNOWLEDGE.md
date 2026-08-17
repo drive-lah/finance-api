@@ -522,6 +522,32 @@ Feeds: (1) the RAG "company facts" input (IDEAL_STATE §3 — the AI never runs 
   the registration pass now excludes the engine's own postings (`_SCHEDULED_SOURCES`) so a release
   debiting an asset account can never be registered as a fresh capital purchase. (Gaurav, 2026-08-17)
 
+- **DA-15 EVERY ENTRY DOOR MUST REGISTER — AND THE PREPAID DOOR IS GUARDED, NOT SWEPT (Gaurav,
+  2026-08-18).** Spend enters through three doors and only one of them used to register what came
+  through: (A) invoice approval created the prepaid spread but NOTHING for capitalized spend;
+  (B) bank reconcile auto-registered assets; (C) a manual journal registered nothing at all. The
+  cause was a hard requirement: `finance_asset_schedules.transaction_id` was NOT NULL, so only
+  bank-backed spend could ever be registered — capital bought on an invoice never depreciated
+  (11 journals, S$35,100.03 stranded in 1710 Technology Development, found by INSP-13). A bank
+  transaction is EVIDENCE, not a requirement: the journal already carries amount, date, entity and
+  description. Fixed (migration 075): the link is nullable, `register_from_journal` registers off a
+  journal alone, invoice approval calls it inline, and the catch-up sweep accepts bank-less spend.
+  **The two sides are deliberately asymmetric.** The asset side SELF-HEALS, because a policy
+  supplies the useful life. The prepaid side CANNOT: a spread needs a SERVICE PERIOD and only an
+  invoice carries one, so the engine would have to invent it. Therefore the prepaid fix is at the
+  DOOR — `journal_service.create` refuses any direct debit into 1300 Prepayments unless the caller
+  passes `prepaid_ok=True` (only the invoice route does), telling the writer to use the invoice
+  route with a service period or expense it outright. Anything already stranded is reported by
+  `unscheduled_prepaids` inside every `run_all` and by INSP-13. **The rule: the engine registers
+  what it can derive, and refuses at entry what it cannot.**
+
+- **DA-16 `NOT IN` IS NOT A FILTER WHEN THE COLUMN IS NULLABLE (2026-08-18).** The registrar's
+  exclusion of its own postings was `source NOT IN ('amortization_scheduler','prepaid_release')`.
+  In SQL three-valued logic that expression is NULL — not TRUE — when `source IS NULL`, so the
+  sweep silently skipped EVERY manual journal, which is precisely the case it exists to catch. The
+  bug was invisible until a manual journal was tested: real journals carried a source, so the sweep
+  looked correct. Always pair a `NOT IN` on a nullable column with an explicit `IS NULL` arm.
+
 - **DA-12 OPEN.** (a) ~~Kaveesh confirmation of DA-8 lives~~ LOCKED 2026-08-17 — **Gaurav owns the useful lives**, not Kaveesh; only tax-book divergence (SG capital allowances / AU ATO) stays with Kaveesh at year-close;
   (b) DQ-111 residue ruling (S$468.93 of bounced-TT bank fees sitting inside the 1710 base);
   (c) history-year asset backfill (finalized years bypass approve, so the trigger never fires);

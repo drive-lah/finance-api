@@ -17,7 +17,7 @@ import logging
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import text
+from sqlalchemy import or_, text
 from sqlalchemy.orm import Session
 
 from src.models.depreciation import FinanceCOAAmortizationPolicy, FinanceAssetSchedule
@@ -33,6 +33,10 @@ logger = logging.getLogger(__name__)
 # which is exactly what the mis-coded 1710 schedules did — would otherwise be registered as a
 # fresh capital purchase and depreciated a second time.
 _SCHEDULED_SOURCES = ("amortization_scheduler", "prepaid_release")
+
+# The one prepaid parking account (COA 1300 Prepayments; 1200 is Trade Receivables).
+# Defined here and imported by invoice_service so the code lives in exactly one place.
+PREPAID_ACCOUNT_CODE = "1300"
 
 
 def _first_of_next_month(d: date) -> date:
@@ -312,7 +316,11 @@ class AmortizationService:
                          FinanceJournalLine.debit_amount > 0,
                          FinanceJournalEntry.entry_date <= as_of_date,
                          FinanceJournalEntry.status.in_(["POSTED", "DRAFT"]),
-                         FinanceJournalEntry.source.notin_(_SCHEDULED_SOURCES)))
+                         # SQL three-valued logic: `source NOT IN (...)` is NULL — not TRUE —
+                         # when source IS NULL, so a plain notin_ silently drops every MANUAL
+                         # journal, the exact case this sweep exists to catch (DA-15).
+                         or_(FinanceJournalEntry.source.is_(None),
+                             FinanceJournalEntry.source.notin_(_SCHEDULED_SOURCES))))
             if entity_ids:
                 q = q.filter(FinanceJournalEntry.entity_id.in_(entity_ids))
             for je, line in q.all():
@@ -323,19 +331,17 @@ class AmortizationService:
                 if exists:
                     skipped += 1
                     continue
+                # DA-15 (Gaurav 2026-08-18): a bank transaction is EVIDENCE, not a requirement.
+                # The journal already carries amount, date, entity and description, so a
+                # journal-born asset (invoice approval, manual capitalization) registers too.
+                # Requiring the bank line meant invoice-bought capital never depreciated.
                 txn = (db.query(FinanceTransaction)
                        .filter(FinanceTransaction.reconciled_journal_entry_id == je.id).first())
-                if txn is None:
-                    # the register requires a source transaction today; a journal-born asset
-                    # (no bank line) is reported rather than silently dropped.
-                    skipped += 1
-                    logger.warning(f"register_pending: JE {je.id} debits {pol.asset_account_code} "
-                                   f"but has no source transaction — cannot register yet")
-                    continue
                 total = round(float(line.debit_amount), 2)
                 months = pol.useful_life_months
                 sched = FinanceAssetSchedule(
-                    policy_id=pol.id, transaction_id=txn.id, journal_entry_id=je.id,
+                    policy_id=pol.id, transaction_id=(txn.id if txn else None),
+                    journal_entry_id=je.id,
                     entity_id=je.entity_id,
                     asset_description=(je.description or f"Asset via JE {je.id}")[:255],
                     total_amount=total, monthly_amount=round(total / months, 2),
@@ -350,6 +356,80 @@ class AmortizationService:
         return {"as_of_date": as_of_date.isoformat(), "registered": created,
                 "already_registered_or_skipped": skipped}
 
+    def register_from_journal(self, db: Session, je: FinanceJournalEntry) -> FinanceAssetSchedule | None:
+        """Register capitalized spend straight off a journal — no bank transaction needed (DA-15).
+
+        Door A (invoice approval) and any other journal-born capitalization call this so the asset
+        starts depreciating the moment it is booked, instead of waiting for a sweep that used to
+        refuse it outright. Idempotent on journal_entry_id. Flushes; the caller commits.
+        """
+        if (je.source or "") in _SCHEDULED_SOURCES:
+            return None
+        existing = (db.query(FinanceAssetSchedule)
+                    .filter(FinanceAssetSchedule.journal_entry_id == je.id).first())
+        if existing:
+            return None
+        lines = (db.query(FinanceJournalLine)
+                 .filter(FinanceJournalLine.entry_id == je.id).all())
+        for line in lines:
+            debit = float(line.debit_amount or 0)
+            if debit <= 0:
+                continue
+            policy = self._find_policy(db, line.account_code, je.entity_id)
+            if not policy:
+                continue
+            total = round(debit, 2)
+            months = policy.useful_life_months
+            sched = FinanceAssetSchedule(
+                policy_id=policy.id, transaction_id=None, journal_entry_id=je.id,
+                entity_id=je.entity_id,
+                asset_description=(je.description or f"Asset via JE {je.id}")[:255],
+                total_amount=total, monthly_amount=round(total / months, 2),
+                months_total=months, months_posted=0,
+                start_date=_first_of_next_month(je.entry_date), status="active")
+            db.add(sched)
+            db.flush()
+            logger.info(f"register_from_journal: registered asset {sched.id} from JE {je.id} "
+                        f"({line.account_code} {total} over {months}mo)")
+            return sched
+        return None
+
+    def unscheduled_prepaids(self, db: Session, as_of_date: date,
+                             entity_ids: list[int] | None = None) -> list[dict]:
+        """Debits parked in 1300 Prepayments that no release schedule answers for (DA-15).
+
+        The asset side can self-heal because a policy supplies the useful life. The prepaid side
+        cannot: a spread needs a SERVICE PERIOD, and only the invoice knows it — the engine would
+        have to invent one. So the fix is at the door (journal_service refuses an unscheduled
+        prepaid debit) and this pass is the detector for anything already on file.
+        """
+        q = """
+            SELECT je.id, je.entry_date, je.entity_id, coalesce(je.source,'manual') AS source,
+                   round(l.debit_amount::numeric,2) AS amount,
+                   left(coalesce(je.description,''),80) AS descr
+            FROM finance_journal_lines l
+            JOIN finance_journal_entries je ON je.id = l.entry_id
+                 AND je.status IN ('POSTED','DRAFT')
+            WHERE l.account_code = :prepaid AND l.debit_amount > 0
+              AND je.entry_date <= :as_of
+              AND coalesce(je.source,'') != 'prepaid_release'
+              AND NOT EXISTS (
+                SELECT 1 FROM finance_amortization_schedules s
+                JOIN finance_invoices i ON i.id = s.invoice_id
+                WHERE i.journal_entry_id = je.id)
+        """
+        params: dict = {"prepaid": PREPAID_ACCOUNT_CODE, "as_of": as_of_date}
+        if entity_ids:
+            q += " AND je.entity_id = ANY(:ents)"
+            params["ents"] = entity_ids
+        rows = db.execute(text(q + " ORDER BY l.debit_amount DESC"), params).mappings().all()
+        return [{"journal_entry_id": r["id"], "date": r["entry_date"].isoformat(),
+                 "entity_id": r["entity_id"], "source": r["source"],
+                 "amount": float(r["amount"]), "description": r["descr"],
+                 "problem": "parked in Prepayments with no release schedule — it will never "
+                            "reach the P&L. Book it through an invoice with a service period, "
+                            "or expense it outright."} for r in rows]
+
     # ── THE SCHEDULED-POSTINGS ENGINE (DA-13, Gaurav 2026-08-17) ─────────────
     # Sibling of the categorization engine: that one turns BANK TRANSACTIONS into journals,
     # this one turns SCHEDULES into journals. One call runs every pending pass in order,
@@ -362,9 +442,14 @@ class AmortizationService:
         adjustments = self.apply_asset_adjustments(db, as_of_date=as_of_date)
         assets = self.run(db, as_of_date=as_of_date)
         prepaids = self.run_prepaids(db, as_of_date=as_of_date)
+        # The asset side self-heals (a policy supplies the life); the prepaid side cannot invent a
+        # service period, so anything already parked without a schedule is REPORTED here and must
+        # be resolved by hand. New ones are refused at the door by journal_service (DA-15).
+        stranded = self.unscheduled_prepaids(db, as_of_date=as_of_date, entity_ids=entity_ids)
         return {
             "as_of_date": as_of_date.isoformat(),
             "registered": registered,
+            "unscheduled_prepaids": stranded,
             "adjustments": adjustments,
             "assets": assets,
             "prepaids": prepaids,
@@ -389,7 +474,8 @@ class AmortizationService:
                     .filter(FinanceJournalLine.account_code == pol.asset_account_code,
                             FinanceJournalLine.credit_amount > 0,
                             FinanceJournalEntry.entry_date <= as_of_date,
-                            FinanceJournalEntry.source.notin_(_SCHEDULED_SOURCES),
+                            or_(FinanceJournalEntry.source.is_(None),
+                                FinanceJournalEntry.source.notin_(_SCHEDULED_SOURCES)),
                             FinanceJournalEntry.source_schedule_id.is_(None))
                     .all())
             for je, line in rows:
@@ -427,7 +513,9 @@ class AmortizationService:
         row = db.execute(text(
             "SELECT account_type FROM finance_accounts WHERE code = :c "
             "ORDER BY entity_id NULLS FIRST LIMIT 1"), {"c": code}).first()
-        return bool(row) and str(row[0]).upper().endswith(("EXPENSE", "COST_OF_SALES"))
+        if row is None:
+            return False
+        return str(row[0]).upper().endswith(("EXPENSE", "COST_OF_SALES"))
 
     def run_prepaids(self, db: Session, as_of_date: date | None = None) -> dict:
         from src.models.contract import FinanceAmortizationSchedule
