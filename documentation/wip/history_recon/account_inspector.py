@@ -388,8 +388,35 @@ def insp_9(db, year, ent_ids, params):
     return out
 
 
+# ── INSP-11: no duplicate invoices alive ─────────────────────────────────────
+
+def insp_11(db, year, ent_ids, params):
+    out = []
+    for r in db.execute(text("""
+        SELECT d.id AS dup_id, d.invoice_number, d.status AS dup_status,
+               round(d.total_amount::numeric,2) AS amount, cp.name AS vendor,
+               o.id AS original_id, o.status AS original_status
+        FROM finance_invoices d
+        JOIN finance_invoices o ON o.invoice_number = d.invoice_number
+             AND o.counterparty_id = d.counterparty_id AND o.id < d.id
+             AND o.status NOT IN ('void','rejected')
+        LEFT JOIN finance_counterparties cp ON cp.id = d.counterparty_id
+        WHERE d.status NOT IN ('void','rejected')
+          AND d.invoice_number IS NOT NULL AND d.invoice_number != ''
+          AND round(d.total_amount::numeric,2) = round(o.total_amount::numeric,2)
+        ORDER BY d.id""")).mappings():
+        out.append({"dup_invoice": r["dup_id"], "vendor": r["vendor"],
+                    "invoice_number": r["invoice_number"], "amount": float(r["amount"]),
+                    "dup_status": r["dup_status"],
+                    "original": f"#{r['original_id']} ({r['original_status']})",
+                    "question": "Two live invoices share vendor + number + amount — void the "
+                                "later one (first one wins) or explain why both are real."})
+    return out
+
+
 CHECKS = {"INSP-1": insp_1, "INSP-2": insp_2, "INSP-3": insp_3, "INSP-4": insp_4,
-          "INSP-5": insp_5, "INSP-6": insp_6, "INSP-8": insp_8, "INSP-9": insp_9}
+          "INSP-5": insp_5, "INSP-6": insp_6, "INSP-8": insp_8, "INSP-9": insp_9,
+          "INSP-11": insp_11}
 
 
 def main():

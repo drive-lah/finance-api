@@ -93,6 +93,16 @@
       "enabled": true,
       "rationale": "Gaurav 2026-08-17: 169 invoice-linked amortization schedules park expenses into 1300 Prepayments but NO release engine ever existed \u2014 S$1.36M parked, zero released, P&L overstated since 2023. The inspector must check, for every inspected year, each schedule with release months falling in that year: due releases must be POSTED. Also flags schedules whose spread total mismatches the parked (net) amount (56 gross-vs-net defects found 2026-08-17 \u2014 releasing gross from a net asset would drive 1300 negative). Fixed year by year as part of each year pass.",
       "params": {}
+    },
+    {
+      "id": "INSP-11",
+      "name": "No duplicate invoices alive in the system",
+      "severity": "HIGH",
+      "enabled": true,
+      "rationale": "Gaurav 2026-08-17: we cannot have duplicate invoices in the system. Two live catches the same day: 3 AFCA re-ingest dupes + an 8-row sweep (incl. a S$64,323.21 Penguin duplicate in reconcile) \u2014 all same vendor + same invoice number + same amount as a live original, born from re-ingests and portal re-downloads (DQ-112: regenerated PDFs defeat byte-hash dedup). The upload-time guards (semantic block at extract + create) prevent NEW ones; this rule catches any that slip in through ingests, backfills, or edits.",
+      "params": {
+        "note": "flags non-void/rejected invoices sharing vendor+number+amount with an earlier live invoice"
+      }
     }
   ]
 }
