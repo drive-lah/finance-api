@@ -170,10 +170,18 @@ def overview():
                 LEFT JOIN finance_accounts a ON a.code = p.asset_account_code AND a.entity_id IS NULL
                 WHERE (:ent IS NULL OR s.entity_id = :ent) ORDER BY s.id"""),
                 {"ent": entity_f}).mappings():
+                # "Released" = what this schedule has CHARGED to the P&L. Sum only the engine's
+                # own charges landing on the policy's expense account (2026-08-18 fix): the old
+                # query summed EVERY debit line on any journal tagged with the schedule, so a
+                # mid-life adjustment — which carries source_schedule_id as its idempotency
+                # marker — contributed its bank leg. One asset read S$15,573 released against a
+                # S$314 cost, showing a nonsense negative remaining.
                 released = round(float(db.execute(_text(
                     "SELECT coalesce(sum(l.debit_amount),0) FROM finance_journal_entries je "
                     "JOIN finance_journal_lines l ON l.entry_id=je.id AND l.debit_amount>0 "
-                    "WHERE je.source_schedule_id = :sid"), {"sid": r["id"]}).scalar() or 0), 2)
+                    "WHERE je.source_schedule_id = :sid AND je.source = 'amortization_scheduler' "
+                    "AND l.account_code = :exp"),
+                    {"sid": r["id"], "exp": r["expense_account_code"]}).scalar() or 0), 2)
                 rows.append({
                     "type": r["policy_type"], "kind": "asset", "id": r["id"],
                     "entity": r["entity"], "what": r["what"],
@@ -197,10 +205,14 @@ def overview():
                 LEFT JOIN finance_accounts a ON a.code = s.expense_account_code AND a.entity_id IS NULL
                 WHERE (:ent IS NULL OR i.entity_id = :ent) ORDER BY s.total_amount DESC"""),
                 {"ent": entity_f}).mappings():
+                # Same shape as the asset arm above: only the engine's own releases, only on the
+                # account this schedule releases into.
                 released = float(db.execute(_text(
                     "SELECT coalesce(sum(l.debit_amount),0) FROM finance_journal_entries je "
                     "JOIN finance_journal_lines l ON l.entry_id=je.id AND l.debit_amount>0 "
-                    "WHERE je.source_prepaid_schedule_id = :sid"), {"sid": r["id"]}).scalar() or 0)
+                    "WHERE je.source_prepaid_schedule_id = :sid AND je.source = 'prepaid_release' "
+                    "AND l.account_code = :exp"),
+                    {"sid": r["id"], "exp": r["expense_account_code"]}).scalar() or 0)
                 released = round(released, 2)
                 rows.append({
                     "type": "prepaid", "kind": "prepaid", "id": r["id"],
