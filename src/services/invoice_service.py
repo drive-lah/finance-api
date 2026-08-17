@@ -312,6 +312,15 @@ class InvoiceService:
                 raise ConflictError(
                     f"Duplicate invoice — {verdict.reason} This document cannot be added again."
                 )
+            # UPLOAD PATH = ZERO TOLERANCE (Gaurav 2026-08-17: "We should NOT allow upload of any
+            # duplicate invoice. Period."). A REVIEW verdict (same vendor+number, different amount;
+            # or no-number fuzzy match) is ALSO refused here — the uploader must void/supersede the
+            # existing row first. Bulk ingests (no pdf hash) keep the flag-only behaviour by design.
+            if getattr(verdict, "action", None) == "review":
+                raise ConflictError(
+                    f"Possible duplicate — {verdict.reason} Upload refused: resolve invoice "
+                    f"#{verdict.duplicate_of} first (void it, or correct this document)."
+                )
 
         invoice = FinanceInvoice(
             entity_id=data.entity_id,

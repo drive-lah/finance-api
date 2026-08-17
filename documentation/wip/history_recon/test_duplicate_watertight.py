@@ -104,6 +104,20 @@ with db_session() as db:
     except Exception as e:
         chk(False, f"unexpected error class: {type(e).__name__}: {str(e)[:60]}")
 
+    print("T12 upload path refuses a REVIEW verdict (zero tolerance)")
+    from src.models.schemas import InvoiceCreate
+    cp = db.execute(text("SELECT id FROM finance_counterparties WHERE name='[TEST] WT Vendor'")).scalar()
+    try:
+        invoice_service.create(db, InvoiceCreate(
+            entity_id=2, counterparty_id=cp, invoice_number="WT-100", invoice_date=date(2026, 6, 1),
+            total_amount=650.00, currency="SGD", pdf_content_hash="wt-review-case"))
+        chk(False, "review verdict was NOT refused at upload")
+    except ConflictError as e:
+        chk("duplicate" in str(e).lower(), f"upload refuses review verdict ({str(e)[:60]})")
+    except Exception as e:
+        chk(False, f"unexpected: {type(e).__name__} {str(e)[:60]}")
+    db.rollback()
+
     print("T9 voided original frees the number")
     db.execute(text("UPDATE finance_invoices SET status='void' WHERE id=:i"), {"i": orig})
     db.execute(text("UPDATE finance_invoices SET status='void' WHERE id=:i"), {"i": dup})

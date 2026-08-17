@@ -21,7 +21,7 @@ invoice. **L1 can never catch this class; L2 is the real gate.**
 | Door | Gate | Behavior |
 |---|---|---|
 | `POST /invoices/extract` (upload screen) | advisory verdict in response; FE HARD-STOPS on block (Aug-9 build) | entity resolved from AI bill-to hint (2026-08-17 fix); unscoped L2 also fires |
-| `invoice_service.create` | HARD BLOCK when a pdf hash is present (Gaurav 2026-08-09) | bulk imports without hash: flag-only *(hole H2, mitigated below)* |
+| `invoice_service.create` | **ZERO TOLERANCE on the upload path (Gaurav 2026-08-17)**: pdf hash present → BLOCK verdicts AND **REVIEW verdicts** both refused | bulk ingests (no hash) keep flag-only *by Gaurav's ruling — they can never pay (H1 gates)* |
 | ingest paths (retool, urlbackfill) | detect runs post-population → **flag only** (`recon.duplicate`) | flagged rows historically continued into `reconcile` *(source of the 11)* |
 | `submit` / `approve` | POL-106 hard block, re-asserted | covered |
 | **`create_match` (provisional pairing)** | **NEW 2026-08-17: `assert_not_duplicate`** | a flagged/live-detected dup can't reach `paired` |
@@ -36,9 +36,9 @@ invoice. **L1 can never catch this class; L2 is the real gate.**
   Evidence: #1312 paid on 2024-10-16 payment while `is_duplicate: true → #1291`.
   **FIXED**: `assert_not_duplicate` (stored flag + live detect, first-one-wins) now gates both
   `create_match` and `post_pairing`.
-- **H2 — hashless bulk ingests only flag.** The 2026-08 ingests created flagged dupes that sat in
-  `reconcile`. With H1 fixed they can no longer pair or post — they are inert until voided — and
-  INSP-11 surfaces them on every run. Residual risk accepted: they clutter triage until voided.
+- **H2 — hashless bulk ingests only flag.** ACCEPTED BY RULING (Gaurav 2026-08-17: "Bulk ingest
+  currently is fine. But duplicate flag invoice CAN NEVER BE PAID."). Flagged ingest rows are inert:
+  H1's gates stop them at pairing and posting, POL-106 stops approval, INSP-11 sweeps them for voiding.
 - **H3 — extract-stage entity blindness.** detect() was entity-scoped and extract passed
   entity=None → silent pass (the 2549974 case). **FIXED** (conditional scope + bill-to hint
   resolution; shipped as finance-api PR #30).
@@ -60,16 +60,17 @@ invoice. **L1 can never catch this class; L2 is the real gate.**
 | T9 | voided original, re-upload same invoice | ALLOWED (void frees the number — intended) |
 | T10 | create race: two rows same number → both promote | 2nd blocked by partial unique index |
 | T11 | cross-entity same vendor+number, entity known | scoped: allowed (entities bill separately) — INSP-11 still lists for review |
+| T12 | upload path, REVIEW verdict (same number, different amount) | REFUSED — zero tolerance ruling |
 
 ## 5. Verdict
 
 **Watertight for money movement**: after H1's gates, NO path exists from "duplicate" to "paid" —
 upload blocks at extract+create, promotion blocks at submit/approve (POL-106), the reconcile arm
 blocks at pairing and posting, the DB uniques catch races, and INSP-11 sweeps whatever remains.
-**Not watertight for row existence**: hashless bulk ingests can still create flagged-but-inert
-duplicate ROWS (H2) — by design they can never pair, post, or be approved; they wait in triage
-for voiding. If zero-row tolerance is wanted, the ingest paths must quarantine flagged rows to
-`needs_fix` (small follow-up).
+**Upload path: zero duplicates, period** (Gaurav ruling 2026-08-17) — both BLOCK and REVIEW
+verdicts refuse the create; the uploader must void or correct the existing row first.
+**Bulk ingest: flag-only by ruling** — those rows exist but are INERT: they can never pair, post,
+be approved, or be paid, and INSP-11 lists them for voiding every run.
 
 Known accepted limits: L2 keys on the counterparty ID — a duplicate under a DIFFERENT counterparty
 (mis-matched vendor) evades until INSP-11/vendor cleanup; and "INV-123" vs "123" style number
