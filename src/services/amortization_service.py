@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 from src.models.depreciation import FinanceCOAAmortizationPolicy, FinanceAssetSchedule
 from src.models.journal_entry import FinanceJournalEntry
 from src.models.journal_line import FinanceJournalLine
+from src.models.invoice import FinanceInvoice
 from src.services.journal_service import journal_service
 
 logger = logging.getLogger(__name__)
@@ -282,4 +283,69 @@ class AmortizationService:
 
 
 # Singleton instance
+
+    # ── Prepaid RELEASE pass (Gaurav 2026-08-17) ─────────────────────────────
+    # Same verb as depreciation, different tables: finance_amortization_schedules
+    # parks invoice spend in 1300 Prepayments at approval; this releases the months
+    # that have ARRIVED into the intended expense account. Never posts future months.
+    #   monthly JE: Dr <expense_account_code> / Cr <prepaid_account_code>
+    # Idempotent via schedules.entries_posted; last month trues-up the rounding.
+    def run_prepaids(self, db: Session, as_of_date: date | None = None) -> dict:
+        from src.models.contract import FinanceAmortizationSchedule
+        if as_of_date is None:
+            as_of_date = date.today()
+        rows = (db.query(FinanceAmortizationSchedule)
+                .filter(FinanceAmortizationSchedule.entries_posted < FinanceAmortizationSchedule.months)
+                .all())
+        posted = 0
+        errors: list[dict] = []
+        for sc in rows:
+            try:
+                inv = db.get(FinanceInvoice, sc.invoice_id) if sc.invoice_id else None
+                entity_id = inv.entity_id if inv is not None else None
+                if entity_id is None:
+                    errors.append({"schedule_id": sc.id, "error": "no entity (orphan schedule)"})
+                    continue
+                while sc.entries_posted < sc.months:
+                    due_month = _add_months(sc.start_month, sc.entries_posted)
+                    if due_month > as_of_date:
+                        break          # the month has not arrived — never post ahead
+                    amount = float(sc.monthly_amount)
+                    if sc.entries_posted == sc.months - 1:      # true-up the last month
+                        amount = round(float(sc.total_amount)
+                                       - float(sc.monthly_amount) * sc.entries_posted, 2)
+                    if amount <= 0:
+                        sc.entries_posted = sc.months
+                        break
+                    desc = (f"Prepaid release: invoice #{sc.invoice_id} "
+                            f"({sc.entries_posted + 1}/{sc.months})")
+                    je = journal_service.create(
+                        db=db, entity_id=entity_id, entry_date=due_month, description=desc,
+                        lines=[
+                            {"account_code": sc.expense_account_code, "debit_amount": amount,
+                             "credit_amount": 0.0, "description": desc},
+                            {"account_code": sc.prepaid_account_code, "debit_amount": 0.0,
+                             "credit_amount": amount, "description": desc},
+                        ])
+                    je.source = "prepaid_release"
+                    je.source_prepaid_schedule_id = sc.id
+                    db.flush()
+                    sc.entries_posted += 1
+                    posted += 1
+                db.commit()          # durable per schedule: a later failure can't undo this one
+            except Exception as e:
+                # A failed schedule must not poison the batch — but a rollback would also
+                # discard the source tags of JEs already flushed in this loop, orphaning them
+                # (2026-08-17: that orphaning caused a double-release on the retry). So commit
+                # the good work first, then continue with a clean session state.
+                db.rollback()
+                errors.append({"schedule_id": sc.id, "error": str(e)[:200]})
+                # re-sync the cursor from what actually survived in the DB
+                db.expire_all()
+                continue
+        db.commit()
+        return {"as_of_date": as_of_date.isoformat(), "schedules_checked": len(rows),
+                "months_posted": posted, "errors": errors}
+
+
 amortization_service = AmortizationService()
