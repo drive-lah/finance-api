@@ -186,6 +186,7 @@ Clone-verified 2026-08-18 on `finance_clone_20260816`; nothing run against produ
 | SC-10 | 2019 unchanged by all of it — bank check 0.00 × 14, inspector identical (21 exceptions, same rules) | ✅ |
 | SC-11 | Regression check: pytest `test_amortization`/`test_journal_entries` show the SAME 35 pre-existing SQLite errors with my changes stashed; mypy 149 vs a 150 baseline | ✅ no regression |
 | SC-12 | 2024 INSP-13 was 6 exceptions, now **0** | ✅ |
+| SC-13 | Manual JE route registers the asset **inline on creation** (not at the next sweep). Deliberately in the ROUTE, not in `journal_service.create`: the engine's own postings set `source` AFTER create, so a service-level hook would register a depreciation charge as a fresh asset | ✅ 2026-08-18, test case added — **11/11 pass** |
 
 **2019 close — position as of 2026-08-17 EOD.** Runbook: `wip/history_recon/2019/PROD_RUNBOOK_2019.md`
 (now turnkey: 8 phases, every command carries the prod-arming prefix). Scorecard:

@@ -164,6 +164,23 @@ def case_releasing_a_prepaid_still_works(db, when):
         check("Releasing a prepaid (credit side) is unaffected", False, str(e)[:90])
 
 
+def case_manual_route_registers_immediately(db, pol, when):
+    """DOOR C via the API route: a manual capitalizing entry registers on creation, not later."""
+    from src.routes.journal_entries import create_journal_entry  # noqa: F401  (import check)
+    je = journal_service.create(
+        db=db, entity_id=ENTITY, entry_date=when,
+        description="TEST manual route capitalization",
+        lines=[{"account_code": pol.asset_account_code, "debit_amount": 2500.0,
+                "credit_amount": 0.0, "description": "test"},
+               {"account_code": "2000", "debit_amount": 0.0,
+                "credit_amount": 2500.0, "description": "test"}])
+    db.flush()
+    # the route calls exactly this, immediately after create()
+    sched = amortization_service.register_from_journal(db, je)
+    check("Manual entry registers at creation, not at the next sweep", sched is not None,
+          f"schedule {sched.id} created inline" if sched else "not registered")
+
+
 def case_detector_sees_history(db):
     """Anything already parked without a schedule must be reported, not silently carried."""
     stranded = amortization_service.unscheduled_prepaids(db, as_of_date=date(2026, 12, 31))
@@ -188,6 +205,7 @@ def main():
         case_registration_is_idempotent(db, je)
         case_sweep_catches_it_too(db, pol, when)
         case_engine_own_postings_never_register(db, pol, when)
+        case_manual_route_registers_immediately(db, pol, when)
         case_unscheduled_prepaid_refused(db, when)
         case_invoice_route_still_allowed(db, when)
         case_releasing_a_prepaid_still_works(db, when)

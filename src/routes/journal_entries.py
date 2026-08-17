@@ -3,6 +3,8 @@ Journal Entry Routes
 
 API endpoints for managing journal entries.
 """
+import logging
+
 from flask import Blueprint, request, jsonify
 
 from src.utils.errors import NotFoundError, BadRequestError, ConflictError
@@ -12,6 +14,8 @@ from src.models.schemas import JournalEntryCreate, JournalEntryResponse
 from src.models.journal_entry import JournalEntryStatus
 from src.services.journal_service import journal_service
 
+
+logger = logging.getLogger(__name__)
 
 journal_entries_bp = Blueprint('journal_entries', __name__, url_prefix='/api/finance/journal-entries')
 
@@ -129,6 +133,21 @@ def create_journal_entry():
         except ValueError as e:
             # Service layer raises ValueError for business logic errors
             raise BadRequestError(str(e))
+
+        # DA-15 (Gaurav 2026-08-18): a MANUAL journal capitalizing into a policy-covered asset
+        # account registers immediately, not at the next engine sweep. This is the safe place to
+        # do it — a human wrote this entry, so it can never be one of the engine's own postings
+        # (the engine calls journal_service directly and sets its source afterwards, which is why
+        # this must NOT live inside journal_service.create).
+        try:
+            from src.services.amortization_service import amortization_service as _amort
+            _asset = _amort.register_from_journal(db, entry)
+            if _asset is not None:
+                db.commit()
+                logger.info(f"Manual JE {entry.id} capitalized -> asset schedule {_asset.id}")
+        except Exception as _e:
+            logger.warning(f"Asset registration check failed for JE {entry.id}: {_e}",
+                           exc_info=True)
 
         # Convert to response schema
         response = JournalEntryResponse.model_validate(entry)
