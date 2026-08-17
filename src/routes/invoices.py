@@ -46,6 +46,11 @@ def create_match():
         if clash:
             raise ConflictError(
                 f"already matched (invoice {clash.invoice_id} ↔ txn {clash.transaction_id}); detach first")
+        # POL-106 extended (2026-08-17): a duplicate invoice can never enter the payment arm.
+        _inv = db.get(FinanceInvoice, int(invoice_id))
+        if _inv is not None:
+            from src.services.invoice_service import invoice_service as _isvc
+            _isvc.assert_not_duplicate(db, _inv, "be paired to a payment")
         m = FinanceInvoicePaymentMatch(
             invoice_id=int(invoice_id), transaction_id=int(transaction_id),
             state="provisional", source="manual", created_by=body.get("created_by") or "ui")

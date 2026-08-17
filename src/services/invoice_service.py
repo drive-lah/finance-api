@@ -312,6 +312,15 @@ class InvoiceService:
                 raise ConflictError(
                     f"Duplicate invoice — {verdict.reason} This document cannot be added again."
                 )
+            # UPLOAD PATH = ZERO TOLERANCE (Gaurav 2026-08-17: "We should NOT allow upload of any
+            # duplicate invoice. Period."). A REVIEW verdict (same vendor+number, different amount;
+            # or no-number fuzzy match) is ALSO refused here — the uploader must void/supersede the
+            # existing row first. Bulk ingests (no pdf hash) keep the flag-only behaviour by design.
+            if getattr(verdict, "action", None) == "review":
+                raise ConflictError(
+                    f"Possible duplicate — {verdict.reason} Upload refused: resolve invoice "
+                    f"#{verdict.duplicate_of} first (void it, or correct this document)."
+                )
 
         invoice = FinanceInvoice(
             entity_id=data.entity_id,
@@ -602,6 +611,21 @@ class InvoiceService:
         )
         return acct.offset_account_code if acct and acct.offset_account_code else AP_ACCOUNT_CODE
 
+    # Books epoch: no Drive lah entity has activity before this. An invoice_date missing,
+    # sentinel (1900-01-01 style), or pre-epoch must NEVER advance state — not even to
+    # pending_approval (Gaurav, 2026-08-16: 21 backlog invoices with sentinel dates were
+    # batch-posted into the year 1900, polluting every as-of figure).
+    INVOICE_DATE_EPOCH = date(2016, 1, 1)
+
+    def _guard_invoice_date(self, invoice) -> None:
+        from src.utils.errors import ConflictError
+        d = invoice.invoice_date
+        if d is None or d < self.INVOICE_DATE_EPOCH:
+            raise ConflictError(
+                f"Invoice {invoice.id}: invoice_date {d} is missing or a sentinel/pre-epoch date "
+                f"(< {self.INVOICE_DATE_EPOCH}). Fix the date first — the invoice belongs in "
+                f"needs_fix and cannot advance to any state.")
+
     def approve(self, db: Session, invoice_id: int, approved_by: str, contra_account_code: Optional[str] = None) -> FinanceInvoice:
         """
         Approve an invoice, creating the corresponding journal entry.
@@ -610,6 +634,7 @@ class InvoiceService:
         Amortization case: Dr 1200 (Prepaid) / Cr 2000, plus amortization schedule
         """
         invoice = self.get_by_id(db, invoice_id)
+        self._guard_invoice_date(invoice)
 
         # POL (Gaurav 2026-07-31): NO direct-to-approved. Every invoice must pass
         # through pending_approval first — a draft cannot be approved directly.
@@ -1115,6 +1140,29 @@ class InvoiceService:
 
         return query.order_by(FinanceInvoice.invoice_date.asc(), FinanceInvoice.id.asc()).all()
 
+    def assert_not_duplicate(self, db: Session, invoice: "FinanceInvoice", action: str) -> None:
+        """POL-106 hard gate, extended to the RECONCILE ARM (Gaurav 2026-08-17: invoice #1312 was
+        PAID via pairing while flagged is_duplicate of #1291 — the arm never consulted the flag).
+        Checks BOTH the stored ingest flag and a live detect(); a duplicate can never pair or post.
+        First-one-wins: only blocks when the matched original has a LOWER id and is alive."""
+        from src.services.duplicate_detection_service import duplicate_detection_service
+        from src.utils.errors import ConflictError
+        raw = invoice.ai_extraction_raw or {}
+        stored = ((raw.get("recon") or {}).get("duplicate") or {}) if isinstance(raw, dict) else {}
+        if stored.get("is_duplicate"):
+            raise ConflictError(
+                f"Invoice {invoice.id} is flagged as a DUPLICATE ({stored.get('duplicate_of') or 'see recon'}) "
+                f"— it cannot {action}. Void it (first one wins) or clear the flag with an explicit override.")
+        v = duplicate_detection_service.detect(
+            db, entity_id=invoice.entity_id, counterparty_id=invoice.counterparty_id,
+            invoice_number=invoice.invoice_number, total_amount=invoice.total_amount,
+            invoice_date=invoice.invoice_date, currency=invoice.currency,
+            pdf_content_hash=invoice.pdf_content_hash)
+        if getattr(v, "action", None) == "block" and (v.duplicate_of or 0) < invoice.id:
+            raise ConflictError(
+                f"Invoice {invoice.id} duplicates invoice #{v.duplicate_of} ({v.reason}) — it cannot "
+                f"{action}. Void it (first one wins).")
+
     def post_pairing(self, db: Session, invoice_id: int, posted_by: str = "ui") -> dict:
         """Post a PAIRED (reconcile-arm) invoice — the Mechanism-A posting action (Gaurav, 2026-08-15).
 
@@ -1142,6 +1190,7 @@ class InvoiceService:
                    .with_for_update().first())
         if invoice is None:
             raise NotFoundError(f"Invoice {invoice_id} not found.")
+        self.assert_not_duplicate(db, invoice, "post via pairing")
         if invoice.status != InvoiceStatus.PAIRED.value:
             raise BadRequestError(f"Invoice {invoice_id} is not in paired status (is: {invoice.status}).")
         if invoice.journal_entry_id is not None:
@@ -2034,6 +2083,7 @@ class InvoiceService:
           - require_approval or no match → status = pending_approval.
         """
         invoice = self.get_by_id(db, invoice_id)
+        self._guard_invoice_date(invoice)
 
         # Submittable from draft OR needs_fix (re-submit after resolving an exception).
         if invoice.status not in (InvoiceStatus.DRAFT.value, InvoiceStatus.NEEDS_FIX.value):
@@ -2392,6 +2442,7 @@ class InvoiceService:
         # Risk: high-value OR low-confidence surfaces for closer review.
         risk = "high" if (amount >= self._APPROVAL_HIGH_RISK_MIN or (conf is not None and conf < 40)) else "low"
 
+        self._guard_invoice_date(invoice)
         invoice.status = InvoiceStatus.PENDING_APPROVAL.value
         task_service.enqueue(
             db, type="invoice-approval", source_ref=f"invoice:{invoice.id}",
