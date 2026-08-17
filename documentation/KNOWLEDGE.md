@@ -426,6 +426,12 @@ Feeds: (1) the RAG "company facts" input (IDEAL_STATE §3 — the AI never runs 
 
 > Design ratified by Gaurav 2026-08-17 in conversation. This section REPLACES all earlier DA notes
 > (the pre-2026-08-17 DA-1..DA-9 draft entries are superseded and were removed).
+>
+> **📄 How it works, end to end: [`wip/SPREAD_ENGINE.md`](wip/SPREAD_ENGINE.md)** — the canonical
+> explainer for the Spread Engine (entry doors, both schedules, the four posting passes, the guards,
+> the tests, what is open). THIS section holds the RULES, one fact per line; that doc explains the
+> MECHANISM. On any disagreement KNOWLEDGE wins and the doc is stale — fix the doc.
+> Keep them in step: a change to DA-n means a same-session pass over SPREAD_ENGINE.md.
 
 - **DA-1 ONE MECHANISM, ONE VERB.** Depreciation (tangibles: vehicles, computers, in-car devices,
   furniture) and amortization (intangibles: capitalized development, brand) are the SAME treatment —
@@ -531,7 +537,11 @@ Feeds: (1) the RAG "company facts" input (IDEAL_STATE §3 — the AI never runs 
   (11 journals, S$35,100.03 stranded in 1710 Technology Development, found by INSP-13). A bank
   transaction is EVIDENCE, not a requirement: the journal already carries amount, date, entity and
   description. Fixed (migration 075): the link is nullable, `register_from_journal` registers off a
-  journal alone, invoice approval calls it inline, and the catch-up sweep accepts bank-less spend.
+  journal alone; **invoice approval AND the manual-journal route both call it inline**, so every
+  door registers at the moment of booking rather than at the next sweep; and the catch-up sweep
+  accepts bank-less spend. Registration is called from the ROUTE, never from `journal_service.create`
+  — the engine stamps `je.source` AFTER create() returns, so a service-level hook would see an
+  unstamped depreciation charge and register it as a fresh asset purchase.
   **The two sides are deliberately asymmetric.** The asset side SELF-HEALS, because a policy
   supplies the useful life. The prepaid side CANNOT: a spread needs a SERVICE PERIOD and only an
   invoice carries one, so the engine would have to invent it. Therefore the prepaid fix is at the

@@ -170,6 +170,8 @@ Locking first would refuse the catch-up charges that legitimately date into that
 
 ### 2.0h SPREAD CHAIN — every entry door registers (DA-15/DA-16, Gaurav 2026-08-18)
 
+> Mechanism doc: `wip/SPREAD_ENGINE.md`. Rules: KNOWLEDGE § DA-1..DA-16.
+
 Clone-verified 2026-08-18 on `finance_clone_20260816`; nothing run against production.
 
 | ID | Item | State |
