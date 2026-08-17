@@ -537,6 +537,24 @@ class AmortizationService:
                 # asset or a liability moves money sideways and never becomes an expense — that
                 # spend is capitalized and belongs to the asset register, not to a spread. The
                 # invoice gate now prevents these, and this refuses the ones already on file.
+                # DA-17 (Gaurav 2026-08-18): a spread can never release MORE than was parked.
+                # 57 legacy AU schedules were written at GROSS while their approval journal —
+                # booked under the pre-POL-121 treatment that split GST at approval — parked only
+                # the NET. Releasing to plan would drain S$80,365 that never entered 1300 and push
+                # it negative. The rows are 2023+ and get restated when those year passes run, so
+                # this refuses them until then rather than letting a stray cycle-run leak them.
+                parked = float(db.execute(text(
+                    "SELECT coalesce(sum(l.debit_amount),0) FROM finance_journal_lines l "
+                    "JOIN finance_invoices i ON i.journal_entry_id = l.entry_id "
+                    "WHERE i.id = :inv AND l.account_code = :prepaid"),
+                    {"inv": sc.invoice_id, "prepaid": sc.prepaid_account_code}).scalar() or 0)
+                if parked > 0 and float(sc.total_amount) > parked + 0.01:
+                    errors.append({"schedule_id": sc.id,
+                                   "error": f"schedule plans to release {float(sc.total_amount):,.2f} "
+                                            f"but only {parked:,.2f} was parked in "
+                                            f"{sc.prepaid_account_code} — refusing (DA-17); this "
+                                            f"invoice needs restating to the gross treatment first"})
+                    continue
                 if not self._is_pl_account(db, sc.expense_account_code):
                     errors.append({"schedule_id": sc.id,
                                    "error": f"release account {sc.expense_account_code} is not a "

@@ -558,6 +558,22 @@ Feeds: (1) the RAG "company facts" input (IDEAL_STATE §3 — the AI never runs 
   bug was invisible until a manual journal was tested: real journals carried a source, so the sweep
   looked correct. Always pair a `NOT IN` on a nullable column with an explicit `IS NULL` arm.
 
+- **DA-17 A SPREAD CAN NEVER RELEASE MORE THAN WAS PARKED (Gaurav, 2026-08-18).** 57 legacy AU
+  schedules (2023-10 → 2026, Drive lah Australia only) were written at GROSS while their approval
+  journal — booked under the PRE-POL-121 treatment that split GST at approval — parked only the NET
+  in 1300 Prepayments: Dr 1300 870,095.39 + Dr 1350 GST Receivable 80,365.43 / Cr payable
+  950,460.82. Releasing to plan would drain S$80,365.43 that never entered 1300 and push it
+  negative. **The current code is already correct** — every AU approval since POL-121 books GROSS
+  with no 1350 leg, GST claimed at cash payment — so this is legacy data, not a live defect.
+  **Gaurav's ruling: the schedules are RIGHT and the old journals are wrong** (the earlier repair,
+  which lowered 56 schedule totals to net, went the wrong way). The correct restatement is to
+  re-book those approvals gross and let the GST be claimed at cash — which reverses S$80,365 of
+  input GST across 2023–2025 AU periods, so it needs Kaveesh and **belongs to the AU year passes,
+  not to the 2019 close** (earliest release is 2023-07; 2019 touches none of them). Until then
+  `run_prepaids` REFUSES any schedule whose total exceeds what its invoice actually parked, so a
+  stray cycle-run cannot leak the over-release. Verified on the fresh prod clone: a full run today
+  posts 0 months and refuses exactly 56.
+
 - **DA-12 OPEN.** (a) ~~Kaveesh confirmation of DA-8 lives~~ LOCKED 2026-08-17 — **Gaurav owns the useful lives**, not Kaveesh; only tax-book divergence (SG capital allowances / AU ATO) stays with Kaveesh at year-close;
   (b) DQ-111 residue ruling (S$468.93 of bounced-TT bank fees sitting inside the 1710 base);
   (c) history-year asset backfill (finalized years bypass approve, so the trigger never fires);
