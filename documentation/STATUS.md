@@ -144,7 +144,7 @@ Rulings locked in POL-124; spec `wip/HISTORY_RECON_PIPELINE.md`. Year-at-a-time 
 | # | Task | State | Unblocks / blocked by |
 |---|------|-------|----------------------|
 | DA-T1 | **Policy rulings** (Gaurav+Kaveesh): useful lives per class (draft 1710→36mo), capitalization threshold, in-service convention, DQ-111 (S$468.93 residue: expense vs amortize) | ⛔ AWAITING GAURAV+KAVEESH | blocks DA-T7 |
-| DA-T2 | **Fix 56 prepaid schedule totals** gross(GST-incl)→net-parked (S$80,365.43 over-release exposure; root: invoice branch stores functional GROSS while 1300 parks NET) | pending | blocks DA-T3 run |
+| DA-T2 | **Fix 56 prepaid schedule totals** gross(GST-incl)→net-parked (was S$80,365.43 over-release exposure; root: invoice branch stores functional GROSS while 1300 parks NET) | ✅ CLONE done 2026-08-17 (56 corrected, 0 mismatches, backup table `repair_sched_totals_backup_20260817`; schedules now sum 1,365,883.42 = net). PROD at DA-T11. **Also fix the SOURCE**: invoice_service amortization branch must store the NET/parked amount | blocks DA-T3 run |
 | DA-T3 | **Build the prepaid RELEASE engine** into the native /run family: monthly Dr expense / Cr 1300 Prepayments per finance_amortization_schedules, idempotent cursor, catch-up mode | pending | blocked by DA-T2 |
 | DA-T4 | **Catch-up releases 2023–2026** year-by-year inside each year pass (due-2024 ~S$322k, due-2025 ~S$818k; 1300 holds S$1.36M); Kaveesh on restated/filed periods | pending | blocked by DA-T3 |
 | DA-T5 | **Port draft enhancements INTO amortization_service**: asset↔JE link-trail table (proper migration; decide transaction_id nullability) + credit-side adjustment/disposal handling with prospective recompute | pending | — |
