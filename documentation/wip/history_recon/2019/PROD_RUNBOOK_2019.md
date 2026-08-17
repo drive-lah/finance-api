@@ -97,7 +97,9 @@ completeness: journals POSTED, txns RECONCILED, events POSTED, payouts terminal)
 Order is permanent (DA-3): **run the cycle → verify → lock**. Locking first would refuse the
 catch-up charges that legitimately date into those months.
 
-1. `POST /api/finance/amortization/run` with `as_of_date = 2019-12-31`, entity 2 (DA-13 `run_all`:
+1. `history_runner.py --allow-prod RUN-ON-PROD-2019 run-schedules --year 2019 --entity-ids 2`
+   (as_of is pinned to 31 Dec of the year, so it can never charge ahead; same engine as
+   `POST /api/finance/amortization/run`, now inside the runner so a year pass is ONE toolchain —
    asset adjustments → depreciation → prepaid releases). **Expect exactly ONE 2019 journal** —
    the first monthly charge (1/36) on the 2019-capitalized asset, dated 2019-12-01, Dr 7400 /
    Cr 1810, S$445.62 (clone-verified). No prepaid releases: every prepaid schedule starts 2023-07 or

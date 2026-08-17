@@ -223,6 +223,33 @@ def cmd_apply_feedback(args):
         print(f"resolutions: {applied} applied, {skipped} already handled by rules/defaults")
 
 
+def cmd_run_schedules(args):
+    """The scheduled-postings engine for a history year (DA-13).
+
+    The categorization engine turns BANK TRANSACTIONS into journals; this one turns SCHEDULES
+    into journals — they are siblings and, until now, separate toolchains. Running a year is not
+    finished until both have run, so the year pass carries this too.
+
+    as_of = 31 Dec of the year, so it posts only months that had ARRIVED by the year end and
+    never charges ahead. Re-running is safe: every pass is idempotent on its own cursor.
+    """
+    from src.services.amortization_service import amortization_service
+    ent_ids = [int(x) for x in args.entity_ids.split(",")] if args.entity_ids else None
+    as_of = date(args.year, 12, 31)
+    with db_session() as db:
+        r = amortization_service.run_all(db, as_of_date=as_of, entity_ids=ent_ids)
+    reg = r["registered"]
+    print(f"[schedules] as_of={as_of}  registered={reg.get('registered', reg)}  "
+          f"adjustments={r['adjustments'].get('adjusted', r['adjustments'])}")
+    print(f"[schedules] asset charges={r['assets'].get('months_posted')}  "
+          f"prepaid releases={r['prepaids'].get('months_posted')}  "
+          f"TOTAL={r['total_months_posted']}")
+    for e in r["errors"]:
+        print(f"  ERROR schedule {e.get('schedule_id')}: {e.get('error')}")
+    print("NOTE: these journals are DRAFT — post them with the year's other journals, or the "
+          "year is not in a terminal state (INSP-3).")
+
+
 def cmd_stage_events(args):
     """Stage the economic-events lane for a whole year (POL-124 ruling 4): stage_month for each
     entity x month. STAGED rows only — projection/posting comes at the year's posting step."""
@@ -570,6 +597,10 @@ def main():
     s.add_argument("--year", type=int, required=True)
     s.add_argument("--entity-ids", required=True)
     s.set_defaults(fn=cmd_stage_events)
+    s = sub.add_parser("run-schedules")
+    s.add_argument("--year", type=int, required=True)
+    s.add_argument("--entity-ids")
+    s.set_defaults(fn=cmd_run_schedules)
     s = sub.add_parser("load-own-accounts")
     s.add_argument("--csv", default="documentation/wip/OUR_CONNECT_ACCOUNTS.csv")
     s.set_defaults(fn=cmd_load_own_accounts)
@@ -585,7 +616,8 @@ def main():
     url = os.getenv("DATABASE_URL", "")
     tgt = "LOCAL-CLONE" if ("localhost" in url or "127.0.0.1" in url) else "PROD"
     print(f"[history_runner] target={tgt}")
-    if args.cmd in ("run", "apply-feedback", "stage-events", "load-own-accounts", "import-payouts", "pair-stripe-payouts") and tgt == "PROD":
+    if args.cmd in ("run", "apply-feedback", "stage-events", "load-own-accounts", "import-payouts",
+                    "pair-stripe-payouts", "run-schedules") and tgt == "PROD":
         # Deliberate prod arming (PROD_RUNBOOK_2019): the default is REFUSE. A single invocation
         # can be armed with --allow-prod plus the literal passphrase, so arming is a conscious act
         # that cannot happen by a stray `source .env` or a copy-pasted command.
