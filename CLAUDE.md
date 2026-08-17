@@ -216,3 +216,39 @@ STATUS.md is the living tracker and it must remain **scannable**:
 ---
 
 **These rules apply to all future work in this repository.**
+
+---
+
+## Rule 8: NEVER write to the production database without Gaurav's explicit approval
+
+**`.env`'s `DATABASE_URL` is PRODUCTION** (live RDS), not a clone. `source .env` before an ad-hoc
+script silently aims it at prod. This has already happened once (2026-08-18: a writer service was
+invoked against prod during verification; it wrote nothing, by luck).
+
+**The rule:** no INSERT, UPDATE, DELETE, DDL, migration, or engine run against the production
+database without Gaurav explicitly approving *that specific operation*, in that session. Not
+"approved in principle", not "approved for the year pass" — the operation in front of us.
+
+- **Read-only against prod is fine** (SELECT, counts, `pg_dump` for a backup/clone) and must print
+  its target first.
+- **Rehearsal work runs on a LOCAL clone**, always. Export the clone URL explicitly; never
+  `source .env` for it.
+- **Writers are guarded**: `history_runner.py` refuses a non-localhost target unless armed with
+  `--allow-prod RUN-ON-PROD-2019` *plus* an interactive `PROCEED`. Importing a service directly
+  bypasses that guard — so don't.
+- **Prod writes are FOREGROUND and SUPERVISED** (Gaurav present), never a background/detached
+  agent, with a backup taken first and the end-state verified by query, not by an agent's claim.
+
+## Rule 9: Clones are named with a date AND a timestamp
+
+A clone's name must say exactly when it was taken, so nobody reasons about "the clone" and gets a
+stale one:
+
+```
+finance_clone_YYYYMMDD_HHMM      e.g. finance_clone_20260818_0930
+```
+
+Date alone is not enough — production moves during the day, and two clones taken hours apart are
+different databases. Record the same stamp on the dump file (`prod_finance_YYYYMMDD_HHMM.sql`) and
+in whatever STATUS entry references the run. Older date-only clones
+(`finance_clone_20260816`, `finance_clone_20260818`) predate this rule.
