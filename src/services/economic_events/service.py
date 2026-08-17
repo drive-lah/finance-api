@@ -197,6 +197,10 @@ class EconomicEventService:
                     if t.flip_on_negative:
                         debit, credit = credit, debit
                     amount = -amount
+                # period lock (STATUS 2.0g): this path builds the JE directly, so it must
+                # assert the gate itself — it does not pass through journal_service.create.
+                from src.services.period_lock_service import period_lock_service
+                period_lock_service.assert_open(db, entity_id, ev.period)
                 je = FinanceJournalEntry(
                     entity_id=entity_id, entry_date=ev.period,
                     description=f"[{ev.event_type}] {t.description} — {ev.period.strftime('%b %Y')}",

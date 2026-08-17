@@ -169,6 +169,12 @@ class JournalService:
             ValueError: If validation fails
         """
         # Validate entity exists
+        # PERIOD LOCK (STATUS 2.0g, Gaurav 2026-08-17): a closed entity-month refuses new
+        # journals. This is the friendly gate across every caller; the DB trigger (migration
+        # 074) is the backstop for raw SQL and anything that skips this service.
+        from src.services.period_lock_service import period_lock_service
+        period_lock_service.assert_open(db, entity_id, entry_date)
+
         if not self.validate_entity_exists(db, entity_id):
             raise ValueError(f"Entity with ID {entity_id} does not exist")
         

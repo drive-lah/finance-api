@@ -231,6 +231,9 @@ class StripeSyncService:
                         continue
                     
                     # Create new JE (don't unpack lines - add them separately)
+                    # period lock (STATUS 2.0g): direct-build path, assert the gate here too.
+                    from src.services.period_lock_service import period_lock_service
+                    period_lock_service.assert_open(db, je_args.entity_id, je_args.entry_date)
                     je = FinanceJournalEntry(
                         entity_id=je_args.entity_id,
                         entry_date=je_args.entry_date,
