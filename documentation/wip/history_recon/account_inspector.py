@@ -414,9 +414,124 @@ def insp_11(db, year, ent_ids, params):
     return out
 
 
+# ── INSP-10: D&A integrity (six year-close dangers in one gate) ──────────────
+
+def insp_10(db, year, ent_ids, params):
+    y0, y1 = date(year, 1, 1), date(year, 12, 31)
+    out = []
+
+    # (a) asset-class balance with NO policy at all
+    for r in db.execute(text("""
+        SELECT l.account_code, a.name, round(sum(l.debit_amount - l.credit_amount)::numeric,2) AS bal
+        FROM finance_journal_lines l
+        JOIN finance_journal_entries je ON je.id=l.entry_id AND je.status IN ('POSTED','DRAFT')
+        JOIN finance_accounts a ON a.code=l.account_code AND a.entity_id IS NULL
+        WHERE l.entity_id = ANY(:ents) AND je.entry_date <= :y1
+          AND (l.account_code LIKE '15%' OR l.account_code LIKE '17%')
+          AND l.account_code NOT LIKE '159%'
+          AND NOT EXISTS (SELECT 1 FROM finance_coa_amortization_policies p
+                          WHERE p.asset_account_code = l.account_code AND p.is_active)
+        GROUP BY 1,2 HAVING abs(sum(l.debit_amount - l.credit_amount)) > 1"""),
+        {"ents": ent_ids, "y1": y1}).mappings():
+        out.append({"danger": "a_no_policy", "account": f"{r['account_code']} {r['name']}",
+                    "balance": float(r["bal"]),
+                    "question": "Capitalized balance with NO depreciation/amortisation policy — it will "
+                                "never age. Add a policy or reclassify."})
+
+    # (b) policy-covered account holding a balance but NO register row (history-year trap)
+    for r in db.execute(text("""
+        SELECT p.asset_account_code, a.name,
+               round(sum(l.debit_amount - l.credit_amount)::numeric,2) AS bal,
+               (SELECT count(*) FROM finance_asset_schedules s WHERE s.policy_id = p.id) AS reg_rows
+        FROM finance_coa_amortization_policies p
+        JOIN finance_journal_lines l ON l.account_code = p.asset_account_code
+        JOIN finance_journal_entries je ON je.id=l.entry_id AND je.status IN ('POSTED','DRAFT')
+        LEFT JOIN finance_accounts a ON a.code=p.asset_account_code AND a.entity_id IS NULL
+        WHERE p.is_active AND l.entity_id = ANY(:ents) AND je.entry_date <= :y1
+        GROUP BY p.id, p.asset_account_code, a.name
+        HAVING abs(sum(l.debit_amount - l.credit_amount)) > 1
+           AND (SELECT count(*) FROM finance_asset_schedules s WHERE s.policy_id = p.id) = 0"""),
+        {"ents": ent_ids, "y1": y1}).mappings():
+        out.append({"danger": "b_no_register_row", "account": f"{r['asset_account_code']} {r['name']}",
+                    "balance": float(r["bal"]),
+                    "question": "Policy exists and the account holds a balance, but NOTHING is in the "
+                                "asset register — the auto-trigger never fired (history years bypass "
+                                "approve). Run the backfill registrar."})
+
+    # (c) the cycle was never run for this year
+    n_charges = db.execute(text("""
+        SELECT count(*) FROM finance_journal_entries
+        WHERE source IN ('amortization_scheduler','prepaid_release')
+          AND entry_date BETWEEN :y0 AND :y1"""), {"y0": y0, "y1": y1}).scalar() or 0
+    n_due = db.execute(text("""
+        SELECT count(*) FROM finance_amortization_schedules s
+        WHERE s.start_month <= :y1 AND (s.start_month + (s.months || ' months')::interval) >= :y0"""),
+        {"y0": y0, "y1": y1}).scalar() or 0
+    if n_due > 0 and n_charges == 0:
+        out.append({"danger": "c_cycle_never_run", "schedules_covering_year": n_due,
+                    "charges_posted": 0,
+                    "question": f"{year} has {n_due} schedule(s) covering it but ZERO D&A/release "
+                                "journals — the month-end cycle was never run for this year."})
+
+    # (d) large single-month charge to an account that usually spreads
+    thr = params.get("single_month_charge_threshold", 5000)
+    ratio = params.get("spread_ratio", 0.5)
+    for r in db.execute(text("""
+        WITH spread AS (
+          SELECT expense_account_code AS acct, count(*) AS spread_n
+          FROM finance_amortization_schedules GROUP BY 1)
+        SELECT i.id, cp.name AS vendor, i.invoice_date, i.total_amount, i.contra_account_code,
+               sp.spread_n
+        FROM finance_invoices i
+        JOIN spread sp ON sp.acct = i.contra_account_code
+        LEFT JOIN finance_counterparties cp ON cp.id = i.counterparty_id
+        WHERE i.invoice_date BETWEEN :y0 AND :y1
+          AND i.status NOT IN ('void','rejected','draft')
+          AND i.total_amount >= :thr
+          AND i.has_amortization_schedule = false
+          AND sp.spread_n >= 3
+        ORDER BY i.total_amount DESC LIMIT 20"""),
+        {"y0": y0, "y1": y1, "thr": thr}).mappings():
+        out.append({"danger": "d_maybe_should_have_spread", "invoice": r["id"], "vendor": r["vendor"],
+                    "amount": float(r["total_amount"]), "account": r["contra_account_code"],
+                    "date": str(r["invoice_date"]),
+                    "question": f"Large single-month charge to an account that spreads {r['spread_n']} "
+                                "other invoices — was a service period missed?"})
+
+    # (e) prepaid period ended but balance remains
+    for r in db.execute(text("""
+        SELECT s.id, s.invoice_id, s.total_amount, s.monthly_amount, s.months, s.entries_posted,
+               s.start_month
+        FROM finance_amortization_schedules s
+        WHERE (s.start_month + (s.months || ' months')::interval)::date <= :y1
+          AND s.entries_posted < s.months"""), {"y1": y1}).mappings():
+        out.append({"danger": "e_period_over_balance_left", "schedule": r["id"],
+                    "invoice": r["invoice_id"], "posted": f"{r['entries_posted']}/{r['months']}",
+                    "unreleased": round(float(r["total_amount"])
+                                        - float(r["monthly_amount"]) * r["entries_posted"], 2),
+                    "question": "The prepaid's period has ENDED but its balance hasn't — a release "
+                                "failed or was skipped."})
+
+    # (f) accumulated exceeds cost, or a disposed asset still charging
+    for r in db.execute(text("""
+        SELECT s.id, s.asset_description, s.total_amount, s.monthly_amount, s.months_posted,
+               s.months_total, s.status
+        FROM finance_asset_schedules s
+        WHERE (s.monthly_amount * s.months_posted) > s.total_amount + 0.05
+           OR (s.status IN ('disposed','completed') AND s.months_posted > s.months_total)"""),
+        {}).mappings():
+        out.append({"danger": "f_over_charged", "asset": r["id"], "what": r["asset_description"],
+                    "cost": float(r["total_amount"]),
+                    "charged": round(float(r["monthly_amount"]) * r["months_posted"], 2),
+                    "status": r["status"],
+                    "question": "Accumulated charge exceeds cost (or a closed asset kept charging) — "
+                                "arithmetic proof of double-charging."})
+    return out
+
+
 CHECKS = {"INSP-1": insp_1, "INSP-2": insp_2, "INSP-3": insp_3, "INSP-4": insp_4,
           "INSP-5": insp_5, "INSP-6": insp_6, "INSP-8": insp_8, "INSP-9": insp_9,
-          "INSP-11": insp_11}
+          "INSP-10": insp_10, "INSP-11": insp_11}
 
 
 def main():

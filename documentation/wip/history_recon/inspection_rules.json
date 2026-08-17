@@ -103,6 +103,17 @@
       "params": {
         "note": "flags non-void/rejected invoices sharing vendor+number+amount with an earlier live invoice"
       }
+    },
+    {
+      "id": "INSP-10",
+      "name": "D&A integrity: nothing capitalized escapes aging, nothing ages wrongly",
+      "severity": "HIGH",
+      "enabled": true,
+      "rationale": "Gaurav 2026-08-17: the year-close dangers for depreciation/amortisation/prepaids, folded into ONE readable gate (six checks): (a) an asset-class balance with NO policy \u2014 capitalized cost that will never age, silent understatement forever; (b) a policy-covered account holding a balance with NO register row (the history-year trap: finalized years bypass approve() so auto-registration never fires); (c) the cycle unrun for the closing year \u2014 months with no charge; (d) a large single-month charge to an account that usually spreads (the blank-service-period trap: a multi-month bill expensed in one hit); (e) a prepaid whose period has ENDED but whose balance hasn't (a release failed silently); (f) accumulated depreciation EXCEEDING cost, or a disposed asset still charging \u2014 arithmetic proof of double-charging.",
+      "params": {
+        "single_month_charge_threshold": 5000,
+        "spread_ratio": 0.5
+      }
     }
   ]
 }

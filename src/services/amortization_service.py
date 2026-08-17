@@ -284,6 +284,25 @@ class AmortizationService:
 
 # Singleton instance
 
+    # ── THE SCHEDULED-POSTINGS ENGINE (DA-13, Gaurav 2026-08-17) ─────────────
+    # Sibling of the categorization engine: that one turns BANK TRANSACTIONS into journals,
+    # this one turns SCHEDULES into journals. One call runs every pending pass in order,
+    # idempotently, posting only months that have ARRIVED. Use at month-lock and in year passes.
+    def run_all(self, db: Session, as_of_date: date | None = None) -> dict:
+        if as_of_date is None:
+            as_of_date = date.today()
+        adjustments = self.apply_asset_adjustments(db, as_of_date=as_of_date)
+        assets = self.run(db, as_of_date=as_of_date)
+        prepaids = self.run_prepaids(db, as_of_date=as_of_date)
+        return {
+            "as_of_date": as_of_date.isoformat(),
+            "adjustments": adjustments,
+            "assets": assets,
+            "prepaids": prepaids,
+            "total_months_posted": (assets.get("months_posted") or 0) + (prepaids.get("months_posted") or 0),
+            "errors": (assets.get("errors") or []) + (prepaids.get("errors") or []),
+        }
+
     # ── Mid-life asset events (Gaurav 2026-08-17, DA-T5) ─────────────────────
     # A CREDIT posted to a policy-covered asset account = the asset shrank (refund,
     # write-down, disposal). The register must follow PROSPECTIVELY: reduce the base,

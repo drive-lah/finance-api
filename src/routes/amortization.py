@@ -140,14 +140,9 @@ def run_scheduler():
         except ValueError:
             raise BadRequestError("as_of_date must be YYYY-MM-DD")
 
-    include_prepaids = data.get("include_prepaids", True)
     with db_session() as db:
-        # mid-life events first: a shrunk asset must not charge yesterday's monthly amount
-        result = {"adjustments": amortization_service.apply_asset_adjustments(db, as_of_date=as_of_date)}
-        result.update(amortization_service.run(db, as_of_date=as_of_date))
-        if include_prepaids:
-            # Same scheduled-postings family (Gaurav 2026-08-17): assets age, prepaids release.
-            result["prepaids"] = amortization_service.run_prepaids(db, as_of_date=as_of_date)
+        # DA-13: one engine, every pending pass (adjustments -> assets -> prepaids).
+        result = amortization_service.run_all(db, as_of_date=as_of_date)
         return jsonify(result), 200
 
 

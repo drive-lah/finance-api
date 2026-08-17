@@ -467,7 +467,7 @@ Feeds: (1) the RAG "company facts" input (IDEAL_STATE §3 — the AI never runs 
   the prepaid asset drains to zero. Both idempotent via a months-posted cursor; both true-up the final
   month so rounding never leaves a residue.
 
-- **DA-8 THE RULEBOOK (seeded 2026-08-17 by general practice; confirm with Kaveesh at year-close).**
+- **DA-8 THE RULEBOOK — LOCKED (Gaurav owns these lives, NOT Kaveesh; ratified 2026-08-17).**
   1710 Technology Development → 36mo → 1810 / 7400 · 1700 Brand → 60mo → 1800 / 7400 ·
   1500 Computer & Peripherals → 36mo → 1590 / 7300 · 1510 Hardware Devices → 36mo → 1591 / 7301 ·
   1520 Motor Vehicles → 60mo → 1592 / 7302 · 1530 Furniture & Fixtures → 60mo → 1593 / 7303.
@@ -494,7 +494,16 @@ Feeds: (1) the RAG "company facts" input (IDEAL_STATE §3 — the AI never runs 
   empty: history-year assets never passed through approval — needs the backfill). Engine hardened to
   commit PER SCHEDULE after a first-run failure orphaned journals and caused a double-release on retry.
 
-- **DA-12 OPEN.** (a) Kaveesh confirmation of DA-8 lives + tax-book divergence at year-close;
+- **DA-13 THE SCHEDULED-POSTINGS ENGINE (Gaurav, 2026-08-17).** D&A + prepaid release is an ENGINE in
+  its own right, a SIBLING of the categorization engine: categorization turns BANK TRANSACTIONS into
+  journals; this one turns SCHEDULES into journals. One entry point — `amortization_service.run_all`
+  (route: `POST /api/finance/amortization/run`) — executes every pass in order: (1) mid-life asset
+  adjustments, (2) asset depreciation/amortisation, (3) prepaid releases; over everything pending,
+  idempotently, posting only ARRIVED months. Called at month-lock (DA-3), from the UI button, and
+  inside each recon year pass. Same discipline as the categorization engine: one call clears all
+  outstanding work, safe to re-run, catch-up correct.
+
+- **DA-12 OPEN.** (a) ~~Kaveesh confirmation of DA-8 lives~~ LOCKED 2026-08-17 — **Gaurav owns the useful lives**, not Kaveesh; only tax-book divergence (SG capital allowances / AU ATO) stays with Kaveesh at year-close;
   (b) DQ-111 residue ruling (S$468.93 of bounced-TT bank fees sitting inside the 1710 base);
   (c) history-year asset backfill (finalized years bypass approve, so the trigger never fires);
   (d) the DA-6 screen (the Amortization tab is still a placeholder); (e) INSP-10 (any asset-class
