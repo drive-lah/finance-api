@@ -36,46 +36,83 @@ def list_periods():
 
 @periods_bp.route("/months", methods=["GET"])
 def list_months():
-    """Months that actually HAVE ACTIVITY for an entity (Gaurav 2026-08-17), with their lock
-    status and journal counts. Empty months are not offered — you can only lock what exists.
-    Query: entity_id (required), year (optional filter)."""
+    """Months with ANY activity for the entity (Gaurav 2026-08-17) — bank transactions in ANY
+    state (imported/pending/matched/reconciled), journals, economic events, or invoices. A month
+    with imported-but-uncategorised transactions has work to do and must be visible; you can only
+    lock what exists, and the counts show what still isn't finished.
+    Query: entity_id (required), year (optional)."""
     entity_id = request.args.get("entity_id", type=int)
     year = request.args.get("year", type=int)
     if not entity_id:
         raise BadRequestError("entity_id is required")
     with db_session() as db:
         rows = db.execute(text("""
-            SELECT date_trunc('month', je.entry_date)::date AS period,
-                   count(DISTINCT je.id) AS journals,
-                   count(DISTINCT je.id) FILTER (WHERE je.status = 'DRAFT') AS drafts,
-                   round(sum(l.debit_amount)::numeric, 2) AS total_debits,
-                   l2.status AS lock_status, l2.locked_by, l2.locked_at,
-                   l2.unlocked_by, l2.unlocked_at, l2.unlock_reason
-            FROM finance_journal_entries je
-            JOIN finance_journal_lines l ON l.entry_id = je.id
-            LEFT JOIN finance_period_locks l2
-                   ON l2.entity_id = :ent AND l2.period = date_trunc('month', je.entry_date)::date
+            WITH act AS (
+                -- bank transactions in ANY state (the earliest signal a month exists)
+                SELECT date_trunc('month', t.transaction_date)::date AS period,
+                       count(*) AS txns,
+                       count(*) FILTER (WHERE upper(t.status) NOT IN ('RECONCILED')) AS txns_open,
+                       0 AS jes, 0 AS drafts, 0 AS events, 0 AS events_open, 0 AS invoices
+                FROM finance_transactions t
+                JOIN finance_bank_accounts ba ON ba.id = t.bank_account_id
+                WHERE ba.entity_id = :ent
+                GROUP BY 1
+                UNION ALL
+                SELECT date_trunc('month', je.entry_date)::date, 0, 0,
+                       count(*), count(*) FILTER (WHERE je.status = 'DRAFT'), 0, 0, 0
+                FROM finance_journal_entries je
+                WHERE je.entity_id = :ent AND je.status IN ('POSTED','DRAFT')
+                GROUP BY 1
+                UNION ALL
+                SELECT date_trunc('month', ev.period)::date, 0, 0, 0, 0,
+                       count(*), count(*) FILTER (WHERE ev.status != 'POSTED'), 0
+                FROM finance_economic_events ev
+                WHERE ev.entity_id = :ent
+                GROUP BY 1
+                UNION ALL
+                SELECT date_trunc('month', i.invoice_date)::date, 0, 0, 0, 0, 0, 0, count(*)
+                FROM finance_invoices i
+                WHERE i.entity_id = :ent AND i.status NOT IN ('void','rejected')
+                  AND i.invoice_date >= '2016-01-01'
+                GROUP BY 1
+            )
+            SELECT a.period,
+                   sum(a.txns) AS txns, sum(a.txns_open) AS txns_open,
+                   sum(a.jes) AS jes, sum(a.drafts) AS drafts,
+                   sum(a.events) AS events, sum(a.events_open) AS events_open,
+                   sum(a.invoices) AS invoices,
+                   l.status AS lock_status, l.locked_by, l.locked_at, l.unlocked_by, l.unlock_reason
+            FROM act a
+            LEFT JOIN finance_period_locks l ON l.entity_id = :ent AND l.period = a.period
+            WHERE (:yr IS NULL OR date_part('year', a.period) = :yr)
+            GROUP BY a.period, l.status, l.locked_by, l.locked_at, l.unlocked_by, l.unlock_reason
+            ORDER BY a.period DESC"""), {"ent": entity_id, "yr": year}).mappings().all()
+        years = sorted({r["period"].year for r in db.execute(text("""
+            SELECT date_trunc('month', t.transaction_date)::date AS period
+            FROM finance_transactions t JOIN finance_bank_accounts ba ON ba.id=t.bank_account_id
+            WHERE ba.entity_id = :ent
+            UNION SELECT date_trunc('month', je.entry_date)::date FROM finance_journal_entries je
             WHERE je.entity_id = :ent AND je.status IN ('POSTED','DRAFT')
-              AND (:yr IS NULL OR date_part('year', je.entry_date) = :yr)
-            GROUP BY 1, l2.status, l2.locked_by, l2.locked_at, l2.unlocked_by, l2.unlocked_at,
-                     l2.unlock_reason
-            ORDER BY 1 DESC"""), {"ent": entity_id, "yr": year}).mappings().all()
-        years = [int(r[0]) for r in db.execute(text("""
-            SELECT DISTINCT date_part('year', entry_date) AS y FROM finance_journal_entries
-            WHERE entity_id = :ent AND status IN ('POSTED','DRAFT') ORDER BY y DESC"""),
-            {"ent": entity_id}).fetchall()]
+            UNION SELECT date_trunc('month', ev.period)::date FROM finance_economic_events ev
+            WHERE ev.entity_id = :ent
+            UNION SELECT date_trunc('month', i.invoice_date)::date FROM finance_invoices i
+            WHERE i.entity_id = :ent AND i.status NOT IN ('void','rejected')
+              AND i.invoice_date >= '2016-01-01'"""), {"ent": entity_id}).mappings()}, reverse=True)
     return jsonify({
         "years": years,
         "months": [{
             "period": r["period"].isoformat(),
             "label": r["period"].strftime("%b %Y"),
-            "journals": r["journals"], "drafts": r["drafts"],
-            "total_debits": float(r["total_debits"] or 0),
+            "txns": int(r["txns"] or 0), "txns_open": int(r["txns_open"] or 0),
+            "journals": int(r["jes"] or 0), "drafts": int(r["drafts"] or 0),
+            "events": int(r["events"] or 0), "events_open": int(r["events_open"] or 0),
+            "invoices": int(r["invoices"] or 0),
+            "ready": int(r["txns_open"] or 0) == 0 and int(r["drafts"] or 0) == 0
+                     and int(r["events_open"] or 0) == 0,
             "locked": r["lock_status"] == "locked",
             "locked_by": r["locked_by"],
             "locked_at": r["locked_at"].isoformat() if r["locked_at"] else None,
-            "unlocked_by": r["unlocked_by"],
-            "unlock_reason": r["unlock_reason"],
+            "unlocked_by": r["unlocked_by"], "unlock_reason": r["unlock_reason"],
         } for r in rows],
     }), 200
 
