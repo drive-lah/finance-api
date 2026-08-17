@@ -166,7 +166,22 @@ Locking first would refuse the catch-up charges that legitimately date into that
 | PL-7 | **UI** | A Periods panel: entity × month grid, lock/unlock per cell, who/when/reason on hover, and the close checklist (cycle run? inspector clean?) shown before the lock button enables. |
 | PL-8 | **Inspector tie-in** | INSP-12: a journal dated into a locked period (defence-in-depth if a path ever slips), and "year has unlocked months" surfaced at year close. |
 | PL-9 | **Test on clone** | Lock a month → every writer refused (service, projection, raw SQL) → unlock as admin with reason → writes succeed → audit trail shows both events. |
-| PL-10 | **2019 close** | After the D&A backfill + inspector clean: lock all 12 months of 2019 for entity 2. That is what makes "2019 is locked" a fact rather than a statement. |
+| PL-10 | **2019 close** | Lock the **7 active months** (Jun–Dec 2019; Jan–May has no activity) for entity 2 = Drive lah Singapore. That is what makes "2019 is locked" a fact rather than a statement. |
+
+**2019 close — position as of 2026-08-17 EOD.** Runbook: `wip/history_recon/2019/PROD_RUNBOOK_2019.md`
+(now turnkey: 8 phases, every command carries the prod-arming prefix). Scorecard:
+`wip/history_recon/2019/scorecard_2019_20260817.html`.
+
+| ID | Item | State |
+|----|------|-------|
+| C19-1 | Clone still green — bank vs ledger 0.00 × 14 (Jun–Dec), 468 journals, entity 2 | ✅ verified 2026-08-17 |
+| C19-2 | Prod-arming flag `--allow-prod RUN-ON-PROD-2019` + interactive PROCEED | ✅ BUILT, all 4 states proven 2026-08-17 |
+| C19-3 | Inspector re-run against the RIGHT entity (2, not 1) with `--resolutions` so already-ruled txns aren't re-asked | ✅ 2026-08-17 — INSP-1/4/6/8/9 all 0 |
+| C19-4 | **2120 Host Payables S$17,709.15 on the debit side** — paid hosts 53,767.75 vs earnings booked 36,058.60, gap concentrated Nov–Dec | ⏳ **Gaurav ruling — the one substantive blocker** |
+| C19-5 | 1023 Stripe Connect Reserve S$122.50, no source-of-truth feed | ⏳ accept-with-note or wire the feed |
+| C19-6 | One DRAFT amortization journal (2019-12-01, Dr 7400 / Cr 1810, S$445.62, charge 1/36) must be POSTED or INSP-3 fails | mechanical, in runbook Phase 8 |
+| C19-7 | Prod is at alembic **072** — the run applies 073 + 074 (period locks); prod has **0** journals for 2019 | ready |
+| C19-8 | Merge + deploy the 3 branches (finance-api `260816_history_recon`, admin-bff + admincontrols `260817_amortization_tab`) — needed for the Period Locks UI, not for the booking path | pending |
 
 ### 2.0f D&A + Prepaid Release — task list (Gaurav, 2026-08-17; ONE mechanism = the native amortization_service)
 

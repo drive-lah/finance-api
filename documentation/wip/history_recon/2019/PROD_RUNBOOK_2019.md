@@ -13,8 +13,14 @@
 - **Abort tripwires between every phase** — any ⚠ stops the run; nothing continues past a red check.
 - **Pre-op backup** — full finance-table dump before the first write; every artifact class also has a
   surgical undo (below), so the backup is the last resort, not the plan.
-- **Deliberate prod arming** — the runner refuses prod by design; a one-time `--allow-prod` flag
-  (build item, 5 min) requiring the literal phrase `RUN-ON-PROD-2019` arms a single invocation.
+- **Deliberate prod arming** — ✅ BUILT + verified 2026-08-17. The runner refuses prod by default;
+  `--allow-prod RUN-ON-PROD-2019` plus an interactive `PROCEED` arms ONE invocation. All four states
+  proven: unarmed → refused; wrong passphrase → refused; armed without PROCEED → aborted, nothing ran;
+  clone unaffected. **Every command below therefore needs the flag prefix**, e.g.
+  `history_runner.py --allow-prod RUN-ON-PROD-2019 run --year 2019 ...` (run with `PYTHONPATH=$PWD`).
+- ⚠ **`.env` IS PRODUCTION.** `DATABASE_URL` in `.env` points at the live RDS instance; the clones are
+  local (`finance_clone_20260816`). Never `source .env` for rehearsal work, and never invoke a writing
+  service ad-hoc — the guard above lives in the runner CLI, and importing a service bypasses it.
 
 ## Phase 0 — Preconditions (read-only)
 
@@ -32,7 +38,9 @@
 ## Phase 2 — Config (additive/reversible, no journals)
 
 Apply in one sitting, each with its recorded undo:
-1. `alembic upgrade head` → adds `finance_stripe_own_accounts` (073). *Undo: downgrade -1.*
+1. `alembic upgrade head` → prod sits at **072**, so this applies **073** (`finance_stripe_own_accounts`)
+   AND **074** (`finance_period_locks` + the `period_lock_guard` trigger — needed for Phase 8).
+   *Undo: `downgrade 072`.* **GATE: `alembic current` = 074; `finance_period_locks` exists and is empty.**
 2. `load-own-accounts` → seed the registry from the CSV. *Undo: truncate the table.*
 3. `apply-feedback --config-only` → rules 239/240/372/373 updated, 384/385/386 inserted, account
    7003 Other Income - Miscellaneous, Winata alias on cp 268, Upwork default 6103. *Undo: recorded
@@ -83,6 +91,50 @@ completeness: journals POSTED, txns RECONCILED, events POSTED, payouts terminal)
 2. STATUS + KNOWLEDGE updated; scorecard archived as the 2019 record.
 3. Year-close journal (P&L → retained earnings) is NOT part of this run — it waits for Kaveesh
    (tax-sensitive, POL-124 ruling 3).
+
+## Phase 8 — Run the scheduled-postings engine, then LOCK 2019 (the goal)
+
+Order is permanent (DA-3): **run the cycle → verify → lock**. Locking first would refuse the
+catch-up charges that legitimately date into those months.
+
+1. `POST /api/finance/amortization/run` with `as_of_date = 2019-12-31`, entity 2 (DA-13 `run_all`:
+   asset adjustments → depreciation → prepaid releases). **Expect exactly ONE 2019 journal** —
+   the first monthly charge (1/36) on the 2019-capitalized asset, dated 2019-12-01, Dr 7400 /
+   Cr 1810, S$445.62 (clone-verified). No prepaid releases: every prepaid schedule starts 2023-07 or
+   later. Anything else in 2019 is a surprise — STOP and read it before locking.
+   *Undo: void by `source IN ('amortization_scheduler','prepaid_release')` + 2019 dates.*
+   **The engine writes DRAFT — post that journal, or INSP-3 fails and the year is not terminal.**
+2. **Inspector on prod, year 2019, entity 2**, passing `--resolutions
+   documentation/wip/history_recon/2019/feedback_resolutions_2019.json` (11 already-ruled
+   transactions are settled, not re-asked). Clone state 2026-08-17 — match it exactly:
+   - INSP-1, 4, 6, 8, 9 → **0**. INSP-3 → **0 once the amortization DRAFT above is posted**.
+   - INSP-2 → **1**, and it is a KNOWN open item, not a defect: 1023 Stripe Connect Reserve carries
+     S$122.50 with no source-of-truth feed to verify it against.
+   - INSP-5 → **1**: 2120 Host Payables sits **S$17,709.15 on the DEBIT side** of a credit-natured
+     liability. ⚠ **This is the one substantive 2019 question and it needs Gaurav's ruling before the
+     lock** — see "Open before you lock" below.
+   - INSP-10/11/12 exceptions (2 rounding over-charges, 12 duplicate invoices, 4 route conflicts) are
+     all 2023+ vintage and do NOT block a 2019 close — confirm none is dated 2019.
+3. **Lock Jun–Dec 2019 for Drive lah Singapore** (7 months; Jan–May 2019 has no activity so there is
+   nothing to lock): Period Locks tab → year 2019 → Lock each row. Or `POST /api/finance/periods/lock`
+   per month. *Undo: admin unlock with a reason — logged, deliberately awkward.*
+   **GATE: all 7 rows show locked; then prove it — attempt one journal into 2019 and confirm the
+   refusal (the service gate AND the DB trigger both fire).**
+
+## Open before you lock (Gaurav's calls — everything else is mechanical)
+
+1. **2120 Host Payables, S$17,709.15 on the debit side.** Built entirely from economic events:
+   host cash paid out S$53,767.75 vs host earnings recognized S$36,058.60 (33,120.80 p2p earnings
+   + 2,937.80 misc residual). Almost all of the gap appears Nov–Dec 2019 as volume ramped
+   (running balance: −150 Jun → 1,140 Oct → 5,688 Nov → 17,709 Dec). So we paid hosts materially
+   more than we booked as owed. Either the 2019 host-earnings view under-recognizes (same class of
+   gap as the `v_SG_c_trip_cash_collected` fix), or the payouts carry something that isn't host
+   earnings, or it is genuinely money owed BACK to us. **My lean: the earnings view undercuts** —
+   testable by taking one month's host payouts and tracing them to the trips behind them.
+   Locking with this unresolved freezes a S$17.7k mis-statement into a closed year.
+2. **1023 Stripe Connect Reserve, S$122.50, unverifiable.** No source-of-truth feed. Accept as
+   immaterial with a note, or wire the Connect balance feed before close.
+3. **DQ-111 residue** (S$468.93 of bounced-TT bank fees inside the 1710 base) — still parked.
 
 ## Abort protocol
 

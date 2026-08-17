@@ -549,6 +549,9 @@ function exportFb() {{
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--allow-prod", metavar="PASSPHRASE",
+                    help="Arm ONE write command against production. Requires the literal "
+                         "passphrase RUN-ON-PROD-2019 and an interactive PROCEED confirmation.")
     sub = ap.add_subparsers(dest="cmd", required=True)
     for name, fn in (("run", cmd_run), ("check", cmd_check), ("scorecard", cmd_scorecard)):
         s = sub.add_parser(name)
@@ -583,8 +586,20 @@ def main():
     tgt = "LOCAL-CLONE" if ("localhost" in url or "127.0.0.1" in url) else "PROD"
     print(f"[history_runner] target={tgt}")
     if args.cmd in ("run", "apply-feedback", "stage-events", "load-own-accounts", "import-payouts", "pair-stripe-payouts") and tgt == "PROD":
-        print("REFUSING: shadow work happens on the CLONE (POL-124/VR-1c). Point DATABASE_URL at the dated clone.")
-        return
+        # Deliberate prod arming (PROD_RUNBOOK_2019): the default is REFUSE. A single invocation
+        # can be armed with --allow-prod plus the literal passphrase, so arming is a conscious act
+        # that cannot happen by a stray `source .env` or a copy-pasted command.
+        if not getattr(args, "allow_prod", None):
+            print("REFUSING: shadow work happens on the CLONE (POL-124/VR-1c). Point DATABASE_URL "
+                  "at the dated clone, or arm this single run with --allow-prod RUN-ON-PROD-2019.")
+            return
+        if args.allow_prod != "RUN-ON-PROD-2019":
+            print(f"REFUSING: --allow-prod passphrase mismatch (got {args.allow_prod!r}).")
+            return
+        print(f"\n*** ARMED FOR PRODUCTION *** command={args.cmd}  db={url.split('@')[-1][:60]}")
+        if input("Type PROCEED to run this ONE command against production: ").strip() != "PROCEED":
+            print("Aborted — nothing ran.")
+            return
     args.fn(args)
 
 

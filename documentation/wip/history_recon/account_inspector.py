@@ -569,10 +569,28 @@ def main():
     ap.add_argument("--entity-ids", required=True)
     ap.add_argument("--json", help="also write exceptions to this path")
     ap.add_argument("--html", help="also write the inspection scorecard HTML to this path")
+    ap.add_argument("--resolutions", help="the year's feedback_resolutions JSON — transactions "
+                                          "already ruled on are settled, not exceptions")
     args = ap.parse_args()
     ent_ids = [int(x) for x in args.entity_ids.split(",")]
     url = os.getenv("DATABASE_URL", "")
     print(f"[inspector] target={'LOCAL-CLONE' if 'localhost' in url or '127.0.0.1' in url else 'PROD (read-only checks)'}")
+
+    ruled_txns: set[int] = set()
+    if args.resolutions:
+        def _collect(o):
+            if isinstance(o, dict):
+                t = o.get("txn")
+                if isinstance(t, int):
+                    ruled_txns.add(t)
+                for v in o.values():
+                    _collect(v)
+            elif isinstance(o, list):
+                for v in o:
+                    _collect(v)
+        with open(args.resolutions) as fh:
+            _collect(json.load(fh))
+        print(f"[inspector] {len(ruled_txns)} transaction(s) already ruled on — settled, not asked again")
 
     report = {"year": args.year, "entity_ids": ent_ids, "exceptions": []}
     with db_session() as db:
@@ -584,6 +602,11 @@ def main():
                 print(f"  {rule['id']}: no check registered — skipped")
                 continue
             hits = fn(db, args.year, ent_ids, rule.get("params", {}))
+            # A question Gaurav has already answered must not be asked again (2026-08-17): the
+            # year's resolutions file IS the answer sheet, so a ruled transaction is settled, not
+            # an exception. Anything NOT in it is genuinely open.
+            if ruled_txns:
+                hits = [h for h in hits if h.get("txn") not in ruled_txns]
             print(f"\n== {rule['id']} {rule['name']} — {len(hits)} exception(s) ==")
             for h in hits:
                 report["exceptions"].append({"rule": rule["id"], "severity": rule["severity"], **h})
