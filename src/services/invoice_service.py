@@ -1115,6 +1115,29 @@ class InvoiceService:
 
         return query.order_by(FinanceInvoice.invoice_date.asc(), FinanceInvoice.id.asc()).all()
 
+    def assert_not_duplicate(self, db: Session, invoice: "FinanceInvoice", action: str) -> None:
+        """POL-106 hard gate, extended to the RECONCILE ARM (Gaurav 2026-08-17: invoice #1312 was
+        PAID via pairing while flagged is_duplicate of #1291 — the arm never consulted the flag).
+        Checks BOTH the stored ingest flag and a live detect(); a duplicate can never pair or post.
+        First-one-wins: only blocks when the matched original has a LOWER id and is alive."""
+        from src.services.duplicate_detection_service import duplicate_detection_service
+        from src.utils.errors import ConflictError
+        raw = invoice.ai_extraction_raw or {}
+        stored = ((raw.get("recon") or {}).get("duplicate") or {}) if isinstance(raw, dict) else {}
+        if stored.get("is_duplicate"):
+            raise ConflictError(
+                f"Invoice {invoice.id} is flagged as a DUPLICATE ({stored.get('duplicate_of') or 'see recon'}) "
+                f"— it cannot {action}. Void it (first one wins) or clear the flag with an explicit override.")
+        v = duplicate_detection_service.detect(
+            db, entity_id=invoice.entity_id, counterparty_id=invoice.counterparty_id,
+            invoice_number=invoice.invoice_number, total_amount=invoice.total_amount,
+            invoice_date=invoice.invoice_date, currency=invoice.currency,
+            pdf_content_hash=invoice.pdf_content_hash)
+        if getattr(v, "action", None) == "block" and (v.duplicate_of or 0) < invoice.id:
+            raise ConflictError(
+                f"Invoice {invoice.id} duplicates invoice #{v.duplicate_of} ({v.reason}) — it cannot "
+                f"{action}. Void it (first one wins).")
+
     def post_pairing(self, db: Session, invoice_id: int, posted_by: str = "ui") -> dict:
         """Post a PAIRED (reconcile-arm) invoice — the Mechanism-A posting action (Gaurav, 2026-08-15).
 
@@ -1142,6 +1165,7 @@ class InvoiceService:
                    .with_for_update().first())
         if invoice is None:
             raise NotFoundError(f"Invoice {invoice_id} not found.")
+        self.assert_not_duplicate(db, invoice, "post via pairing")
         if invoice.status != InvoiceStatus.PAIRED.value:
             raise BadRequestError(f"Invoice {invoice_id} is not in paired status (is: {invoice.status}).")
         if invoice.journal_entry_id is not None:
