@@ -284,6 +284,48 @@ class AmortizationService:
 
 # Singleton instance
 
+    # ── Mid-life asset events (Gaurav 2026-08-17, DA-T5) ─────────────────────
+    # A CREDIT posted to a policy-covered asset account = the asset shrank (refund,
+    # write-down, disposal). The register must follow PROSPECTIVELY: reduce the base,
+    # recompute the remaining monthly charge over the months still to run, and mark
+    # the asset disposed when nothing is left. Idempotent: each adjusting JE is
+    # applied once (tracked by source_schedule_id on that JE).
+    def apply_asset_adjustments(self, db: Session, as_of_date: date | None = None) -> dict:
+        if as_of_date is None:
+            as_of_date = date.today()
+        applied, skipped = 0, 0
+        policies = db.query(FinanceCOAAmortizationPolicy).filter_by(is_active=True).all()
+        for pol in policies:
+            rows = (db.query(FinanceJournalEntry, FinanceJournalLine)
+                    .join(FinanceJournalLine, FinanceJournalLine.entry_id == FinanceJournalEntry.id)
+                    .filter(FinanceJournalLine.account_code == pol.asset_account_code,
+                            FinanceJournalLine.credit_amount > 0,
+                            FinanceJournalEntry.entry_date <= as_of_date,
+                            FinanceJournalEntry.source != "amortization_scheduler",
+                            FinanceJournalEntry.source_schedule_id.is_(None))
+                    .all())
+            for je, line in rows:
+                sched = (db.query(FinanceAssetSchedule)
+                         .filter(FinanceAssetSchedule.policy_id == pol.id,
+                                 FinanceAssetSchedule.entity_id == je.entity_id,
+                                 FinanceAssetSchedule.status == "active")
+                         .order_by(FinanceAssetSchedule.id.desc()).first())
+                if sched is None:
+                    skipped += 1
+                    continue
+                credit = float(line.credit_amount)
+                new_total = round(float(sched.total_amount) - credit, 2)
+                remaining = max(sched.months_total - sched.months_posted, 1)
+                sched.total_amount = max(new_total, 0)
+                sched.monthly_amount = round(max(new_total, 0) / remaining, 2)
+                if new_total <= 0:
+                    sched.status = "disposed"
+                je.source_schedule_id = sched.id     # marks this adjustment as applied
+                applied += 1
+        db.commit()
+        return {"as_of_date": as_of_date.isoformat(), "adjustments_applied": applied,
+                "credits_without_open_asset": skipped}
+
     # ── Prepaid RELEASE pass (Gaurav 2026-08-17) ─────────────────────────────
     # Same verb as depreciation, different tables: finance_amortization_schedules
     # parks invoice spend in 1300 Prepayments at approval; this releases the months

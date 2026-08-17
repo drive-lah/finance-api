@@ -142,11 +142,95 @@ def run_scheduler():
 
     include_prepaids = data.get("include_prepaids", True)
     with db_session() as db:
-        result = amortization_service.run(db, as_of_date=as_of_date)
+        # mid-life events first: a shrunk asset must not charge yesterday's monthly amount
+        result = {"adjustments": amortization_service.apply_asset_adjustments(db, as_of_date=as_of_date)}
+        result.update(amortization_service.run(db, as_of_date=as_of_date))
         if include_prepaids:
             # Same scheduled-postings family (Gaurav 2026-08-17): assets age, prepaids release.
             result["prepaids"] = amortization_service.run_prepaids(db, as_of_date=as_of_date)
         return jsonify(result), 200
+
+
+# ── DA-6 unified view: assets + prepaids in one list ─────────────────────────
+
+@amortization_bp.route("/overview", methods=["GET"])
+def overview():
+    """One screen, one question (DA-6): what have we paid for that hasn't hit the P&L yet,
+    and when will it? Assets show cost + accumulated separately (cost never moves); prepaids
+    show one balance draining to zero. Optional ?type=asset|prepaid, ?entity_id=."""
+    from sqlalchemy import text as _text
+    type_f = request.args.get("type")
+    entity_f = request.args.get("entity_id", type=int)
+    rows: list[dict] = []
+    with db_session() as db:
+        if type_f in (None, "", "asset"):
+            for r in db.execute(_text("""
+                SELECT s.id, s.entity_id, e.name AS entity, s.asset_description AS what,
+                       p.asset_account_code, a.name AS account_name, p.policy_type,
+                       s.total_amount, s.monthly_amount, s.months_total, s.months_posted,
+                       s.start_date, s.status, p.expense_account_code, p.accumulated_account_code
+                FROM finance_asset_schedules s
+                JOIN finance_coa_amortization_policies p ON p.id = s.policy_id
+                LEFT JOIN finance_entities e ON e.id = s.entity_id
+                LEFT JOIN finance_accounts a ON a.code = p.asset_account_code AND a.entity_id IS NULL
+                WHERE (:ent IS NULL OR s.entity_id = :ent) ORDER BY s.id"""),
+                {"ent": entity_f}).mappings():
+                released = round(float(db.execute(_text(
+                    "SELECT coalesce(sum(l.debit_amount),0) FROM finance_journal_entries je "
+                    "JOIN finance_journal_lines l ON l.entry_id=je.id AND l.debit_amount>0 "
+                    "WHERE je.source_schedule_id = :sid"), {"sid": r["id"]}).scalar() or 0), 2)
+                rows.append({
+                    "type": r["policy_type"], "kind": "asset", "id": r["id"],
+                    "entity": r["entity"], "what": r["what"],
+                    "account": f"{r['asset_account_code']} {r['account_name'] or ''}".strip(),
+                    "expense_account": r["expense_account_code"],
+                    "contra_account": r["accumulated_account_code"],
+                    "cost": float(r["total_amount"]), "released": released,
+                    "remaining": round(float(r["total_amount"]) - released, 2),
+                    "monthly": float(r["monthly_amount"]),
+                    "months_posted": r["months_posted"], "months_total": r["months_total"],
+                    "starts": str(r["start_date"]), "status": r["status"]})
+        if type_f in (None, "", "prepaid"):
+            for r in db.execute(_text("""
+                SELECT s.id, s.invoice_id, cp.name AS vendor, i.entity_id, e.name AS entity,
+                       s.expense_account_code, a.name AS expense_name, s.prepaid_account_code,
+                       s.total_amount, s.monthly_amount, s.months, s.entries_posted, s.start_month
+                FROM finance_amortization_schedules s
+                LEFT JOIN finance_invoices i ON i.id = s.invoice_id
+                LEFT JOIN finance_counterparties cp ON cp.id = i.counterparty_id
+                LEFT JOIN finance_entities e ON e.id = i.entity_id
+                LEFT JOIN finance_accounts a ON a.code = s.expense_account_code AND a.entity_id IS NULL
+                WHERE (:ent IS NULL OR i.entity_id = :ent) ORDER BY s.total_amount DESC"""),
+                {"ent": entity_f}).mappings():
+                released = float(db.execute(_text(
+                    "SELECT coalesce(sum(l.debit_amount),0) FROM finance_journal_entries je "
+                    "JOIN finance_journal_lines l ON l.entry_id=je.id AND l.debit_amount>0 "
+                    "WHERE je.source_prepaid_schedule_id = :sid"), {"sid": r["id"]}).scalar() or 0)
+                released = round(released, 2)
+                rows.append({
+                    "type": "prepaid", "kind": "prepaid", "id": r["id"],
+                    "entity": r["entity"],
+                    "what": f"Invoice #{r['invoice_id']}" + (f" — {r['vendor']}" if r["vendor"] else ""),
+                    "account": f"{r['prepaid_account_code']} Prepayments",
+                    "expense_account": f"{r['expense_account_code']} {r['expense_name'] or ''}".strip(),
+                    "contra_account": None,
+                    "cost": float(r["total_amount"]), "released": released,
+                    "remaining": round(float(r["total_amount"]) - released, 2),
+                    "monthly": float(r["monthly_amount"]),
+                    "months_posted": r["entries_posted"], "months_total": r["months"],
+                    "starts": str(r["start_month"]),
+                    "status": "completed" if r["entries_posted"] >= r["months"] else "active"})
+    live = [r for r in rows if r["status"] not in ("completed", "disposed")]
+    return jsonify({
+        "rows": rows,
+        "summary": {
+            "count": len(rows), "live_count": len(live),
+            "cost_total": round(sum(r["cost"] for r in rows), 2),
+            "released_total": round(sum(r["released"] for r in rows), 2),
+            "remaining_total": round(sum(r["remaining"] for r in live), 2),
+            "monthly_run_rate": round(sum(r["monthly"] for r in live), 2),
+        },
+    }), 200
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
