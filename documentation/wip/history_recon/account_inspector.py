@@ -414,6 +414,35 @@ def insp_11(db, year, ent_ids, params):
     return out
 
 
+# ── INSP-12: prepaid/capitalized route conflict (DA-14) ──────────────────────
+
+def insp_12(db, year, ent_ids, params):
+    """A cost is either waiting to become an expense (prepaid) or already an asset
+    (capitalized). Never both. A schedule releasing into a non-P&L account shuffles money
+    sideways and never reaches the P&L, while the asset register separately ages it."""
+    out = []
+    for r in db.execute(text("""
+        SELECT s.id, s.invoice_id, cp.name AS vendor, i.invoice_date,
+               round(s.total_amount::numeric,2) AS amount, s.months, s.entries_posted,
+               s.expense_account_code AS code, a.name AS account, a.account_type
+        FROM finance_amortization_schedules s
+        LEFT JOIN finance_invoices i ON i.id = s.invoice_id
+        LEFT JOIN finance_counterparties cp ON cp.id = i.counterparty_id
+        LEFT JOIN finance_accounts a ON a.code = s.expense_account_code AND a.entity_id IS NULL
+        WHERE a.account_type IS NULL OR upper(a.account_type::text)
+              NOT IN ('EXPENSE','COST_OF_SALES','ACCOUNTTYPE.EXPENSE','ACCOUNTTYPE.COST_OF_SALES')
+        ORDER BY s.id""")).mappings():
+        out.append({
+            "schedule": r["id"], "invoice": r["invoice_id"], "vendor": r["vendor"],
+            "amount": float(r["amount"] or 0), "releases_to": f"{r['code']} {r['account']}",
+            "account_type": str(r["account_type"]), "released": f"{r['entries_posted']}/{r['months']}",
+            "question": "This spread releases into a non-P&L account, so the cost never becomes "
+                        "an expense. Either it is capitalized spend (cancel the schedule and let "
+                        "the asset register amortize it) or the account is wrong (re-code it).",
+        })
+    return out
+
+
 # ── INSP-10: D&A integrity (six year-close dangers in one gate) ──────────────
 
 def insp_10(db, year, ent_ids, params):
@@ -531,7 +560,7 @@ def insp_10(db, year, ent_ids, params):
 
 CHECKS = {"INSP-1": insp_1, "INSP-2": insp_2, "INSP-3": insp_3, "INSP-4": insp_4,
           "INSP-5": insp_5, "INSP-6": insp_6, "INSP-8": insp_8, "INSP-9": insp_9,
-          "INSP-10": insp_10, "INSP-11": insp_11}
+          "INSP-10": insp_10, "INSP-11": insp_11, "INSP-12": insp_12}
 
 
 def main():

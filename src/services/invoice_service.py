@@ -12,6 +12,7 @@ from decimal import Decimal
 from datetime import datetime, date, UTC
 from typing import TYPE_CHECKING, Optional, cast
 
+from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -592,6 +593,21 @@ class InvoiceService:
         db.refresh(invoice)
         return invoice, verdict
 
+    def _is_spreadable_account(self, db: Session, code: Optional[str]) -> bool:
+        """DA-14: only a P&L cost can be spread over a service period.
+
+        Prepaid means "this cost has not become an expense YET" — the release has to land
+        somewhere in the P&L. An ASSET account is already capitalized (the asset register
+        amortizes it by policy); a LIABILITY/EQUITY/REVENUE account is not a cost at all.
+        Unknown codes are treated as non-spreadable: refusing to spread is the safe default.
+        """
+        if not code:
+            return False
+        row = db.execute(text(
+            "SELECT account_type FROM finance_accounts WHERE code = :c ORDER BY entity_id NULLS "
+            "FIRST LIMIT 1"), {"c": code}).first()
+        return bool(row) and str(row[0]).upper().endswith(("EXPENSE", "COST_OF_SALES"))
+
     def _payable_account_for(self, db: Session, contra_code: Optional[str]) -> str:
         """Resolve the credit (offset) leg for a given debit (expense/COS/asset) account.
 
@@ -733,11 +749,28 @@ class InvoiceService:
         # disagrees with total-tax is bad extraction and is ignored for the JE. (2026-08-03)
         net = round(total - tax, 2)
 
+        # DA-14 (Gaurav 2026-08-17): the ACCOUNT decides the route, and a service period is
+        # only meaningful on the expense side of that fork. A cost is either waiting to become
+        # an expense (prepaid: park in 1300 Prepayments, release monthly) or it is already an
+        # asset (capitalized: park in the asset account, amortize by policy through the asset
+        # register). It can never be both — spreading INTO an asset just shuffles money between
+        # two assets and never reaches the P&L, while the register separately tries to age it.
+        # Four live schedules did exactly that (3 -> 1710 Technology Development, 1 -> 2410
+        # Convertible Notes). So: if the chosen account is not EXPENSE/COST_OF_SALES, the
+        # service period is IGNORED — book straight to the chosen account, no schedule.
+        _spreadable = self._is_spreadable_account(db, invoice.contra_account_code)
         needs_amortization = (
             invoice.service_period_start
             and invoice.service_period_end
             and _months_between(invoice.service_period_start, invoice.service_period_end) > 1
+            and _spreadable
         )
+        if (invoice.service_period_start and invoice.service_period_end and not _spreadable
+                and _months_between(invoice.service_period_start, invoice.service_period_end) > 1):
+            logger.warning(
+                f"Invoice {invoice.id}: service period ignored — {invoice.contra_account_code} "
+                f"is not an expense account, so this is capitalized spend (amortized by policy "
+                f"through the asset register), not a prepayment.")
 
         if needs_amortization:
             debit_code = PREPAID_ACCOUNT_CODE

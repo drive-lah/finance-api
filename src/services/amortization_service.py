@@ -17,6 +17,7 @@ import logging
 from datetime import date, datetime
 from decimal import Decimal
 
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from src.models.depreciation import FinanceCOAAmortizationPolicy, FinanceAssetSchedule
@@ -26,6 +27,12 @@ from src.models.invoice import FinanceInvoice
 from src.services.journal_service import journal_service
 
 logger = logging.getLogger(__name__)
+
+# Journals this engine itself writes. Registration must NEVER treat one of its own postings as
+# a newly purchased asset (DA-14, 2026-08-17): a prepaid release that debits an asset account —
+# which is exactly what the mis-coded 1710 schedules did — would otherwise be registered as a
+# fresh capital purchase and depreciated a second time.
+_SCHEDULED_SOURCES = ("amortization_scheduler", "prepaid_release")
 
 
 def _first_of_next_month(d: date) -> date:
@@ -284,18 +291,80 @@ class AmortizationService:
 
 # Singleton instance
 
+    # ── PASS 0: REGISTER anything capitalized but not yet in the register ─────
+    # (Gaurav 2026-08-17: "that engine should just run" — registration is a PASS of the
+    # engine, not a one-off backfill script.) check_and_create_schedule fires at transaction
+    # APPROVAL, so anything booked another way — history years finalized in bulk, manual
+    # journals, imports — never registers and can never age. This pass sweeps every
+    # policy-covered account for debits with no register row and registers them. Idempotent:
+    # a JE already linked to a schedule is skipped, so it is safe to run every month.
+    def register_pending(self, db: Session, as_of_date: date | None = None,
+                         entity_ids: list[int] | None = None) -> dict:
+        from src.models.transaction import FinanceTransaction
+        if as_of_date is None:
+            as_of_date = date.today()
+        created, skipped = 0, 0
+        policies = db.query(FinanceCOAAmortizationPolicy).filter_by(is_active=True).all()
+        for pol in policies:
+            q = (db.query(FinanceJournalEntry, FinanceJournalLine)
+                 .join(FinanceJournalLine, FinanceJournalLine.entry_id == FinanceJournalEntry.id)
+                 .filter(FinanceJournalLine.account_code == pol.asset_account_code,
+                         FinanceJournalLine.debit_amount > 0,
+                         FinanceJournalEntry.entry_date <= as_of_date,
+                         FinanceJournalEntry.status.in_(["POSTED", "DRAFT"]),
+                         FinanceJournalEntry.source.notin_(_SCHEDULED_SOURCES)))
+            if entity_ids:
+                q = q.filter(FinanceJournalEntry.entity_id.in_(entity_ids))
+            for je, line in q.all():
+                if pol.entity_id is not None and pol.entity_id != je.entity_id:
+                    continue
+                exists = (db.query(FinanceAssetSchedule)
+                          .filter(FinanceAssetSchedule.journal_entry_id == je.id).first())
+                if exists:
+                    skipped += 1
+                    continue
+                txn = (db.query(FinanceTransaction)
+                       .filter(FinanceTransaction.reconciled_journal_entry_id == je.id).first())
+                if txn is None:
+                    # the register requires a source transaction today; a journal-born asset
+                    # (no bank line) is reported rather than silently dropped.
+                    skipped += 1
+                    logger.warning(f"register_pending: JE {je.id} debits {pol.asset_account_code} "
+                                   f"but has no source transaction — cannot register yet")
+                    continue
+                total = round(float(line.debit_amount), 2)
+                months = pol.useful_life_months
+                sched = FinanceAssetSchedule(
+                    policy_id=pol.id, transaction_id=txn.id, journal_entry_id=je.id,
+                    entity_id=je.entity_id,
+                    asset_description=(je.description or f"Asset via JE {je.id}")[:255],
+                    total_amount=total, monthly_amount=round(total / months, 2),
+                    months_total=months, months_posted=0,
+                    start_date=_first_of_next_month(je.entry_date), status="active")
+                db.add(sched)
+                db.flush()
+                created += 1
+                logger.info(f"register_pending: registered asset {sched.id} from JE {je.id} "
+                            f"({pol.asset_account_code} {total} over {months}mo)")
+        db.commit()
+        return {"as_of_date": as_of_date.isoformat(), "registered": created,
+                "already_registered_or_skipped": skipped}
+
     # ── THE SCHEDULED-POSTINGS ENGINE (DA-13, Gaurav 2026-08-17) ─────────────
     # Sibling of the categorization engine: that one turns BANK TRANSACTIONS into journals,
     # this one turns SCHEDULES into journals. One call runs every pending pass in order,
     # idempotently, posting only months that have ARRIVED. Use at month-lock and in year passes.
-    def run_all(self, db: Session, as_of_date: date | None = None) -> dict:
+    def run_all(self, db: Session, as_of_date: date | None = None,
+                entity_ids: list[int] | None = None) -> dict:
         if as_of_date is None:
             as_of_date = date.today()
+        registered = self.register_pending(db, as_of_date=as_of_date, entity_ids=entity_ids)
         adjustments = self.apply_asset_adjustments(db, as_of_date=as_of_date)
         assets = self.run(db, as_of_date=as_of_date)
         prepaids = self.run_prepaids(db, as_of_date=as_of_date)
         return {
             "as_of_date": as_of_date.isoformat(),
+            "registered": registered,
             "adjustments": adjustments,
             "assets": assets,
             "prepaids": prepaids,
@@ -320,7 +389,7 @@ class AmortizationService:
                     .filter(FinanceJournalLine.account_code == pol.asset_account_code,
                             FinanceJournalLine.credit_amount > 0,
                             FinanceJournalEntry.entry_date <= as_of_date,
-                            FinanceJournalEntry.source != "amortization_scheduler",
+                            FinanceJournalEntry.source.notin_(_SCHEDULED_SOURCES),
                             FinanceJournalEntry.source_schedule_id.is_(None))
                     .all())
             for je, line in rows:
@@ -351,6 +420,15 @@ class AmortizationService:
     # that have ARRIVED into the intended expense account. Never posts future months.
     #   monthly JE: Dr <expense_account_code> / Cr <prepaid_account_code>
     # Idempotent via schedules.entries_posted; last month trues-up the rounding.
+    def _is_pl_account(self, db: Session, code: str | None) -> bool:
+        """DA-14: only EXPENSE / COST_OF_SALES accounts can receive a prepaid release."""
+        if not code:
+            return False
+        row = db.execute(text(
+            "SELECT account_type FROM finance_accounts WHERE code = :c "
+            "ORDER BY entity_id NULLS FIRST LIMIT 1"), {"c": code}).first()
+        return bool(row) and str(row[0]).upper().endswith(("EXPENSE", "COST_OF_SALES"))
+
     def run_prepaids(self, db: Session, as_of_date: date | None = None) -> dict:
         from src.models.contract import FinanceAmortizationSchedule
         if as_of_date is None:
@@ -366,6 +444,16 @@ class AmortizationService:
                 entity_id = inv.entity_id if inv is not None else None
                 if entity_id is None:
                     errors.append({"schedule_id": sc.id, "error": "no entity (orphan schedule)"})
+                    continue
+                # DA-14 (Gaurav 2026-08-17): a release must land in the P&L. Releasing into an
+                # asset or a liability moves money sideways and never becomes an expense — that
+                # spend is capitalized and belongs to the asset register, not to a spread. The
+                # invoice gate now prevents these, and this refuses the ones already on file.
+                if not self._is_pl_account(db, sc.expense_account_code):
+                    errors.append({"schedule_id": sc.id,
+                                   "error": f"release account {sc.expense_account_code} is not a "
+                                            f"P&L account — capitalized spend cannot be spread "
+                                            f"(DA-14); this schedule needs re-coding or cancelling"})
                     continue
                 while sc.entries_posted < sc.months:
                     due_month = _add_months(sc.start_month, sc.entries_posted)

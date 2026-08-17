@@ -181,7 +181,7 @@ Locking first would refuse the catch-up charges that legitimately date into that
 | DA-T7 | **Seed policies + first clone run**: insert ruled policies, backfill 2019 (the two 1710 TTs), /run to 2019-12-31, verify vs P&L + inspector | pending | blocked by DA-T1 |
 | DA-T8 | **UI: real Amortization tab** (replace the 46-line placeholder): policies table, asset register with child-JE drill-down, prepaid schedules due-vs-released; BFF proxies over the EXISTING endpoints | pending | — |
 | DA-T9 | **INSP-10**: asset-class balances (15xx/17xx) without policy/register coverage = exception; wire INSP-9+10 into every year gate | pending | — |
-| DA-T10 | **Review the 5 odd prepaid schedules**: 1 targeting 2410 Convertible Notes (liability as amortization target), 3 targeting 1710 (capitalization via spread) | pending | Gaurav ruling |
+| DA-T10 | **Review the 4 odd prepaid schedules** (DA-14 route conflict): #127 Valletta S$1,193.07, #129 Valletta S$2,065.28, #136 Eventila S$415.37 all releasing into 1710 Technology Development (ASSET); #147 FIN-NOR S$6,228.24 releasing into 2410 Convertible Notes (LIABILITY). Guards now BUILT and clone-verified 2026-08-17 — invoice gate ignores a service period on a non-P&L account, `run_prepaids` refuses these 4, INSP-12 flags them, registration excludes `prepaid_release` so a release can't be registered as a new asset | ⏳ awaiting ruling | Gaurav: re-code to an expense account, or cancel the schedule and let the register amortize |
 | DA-T11 | **Prod apply pack**: link-trail migration + engines + ruled policies + corrected schedules, supervised (VR-1c), inspector green before+after | pending | blocked by all above |
 
 

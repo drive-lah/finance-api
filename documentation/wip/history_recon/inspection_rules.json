@@ -1,5 +1,22 @@
 {
   "description": "Accounts Inspection knowledge base (Gaurav, 2026-08-16). Each rule = a deterministic anomaly check the inspector runs after every year pass / before every scorecard. Exceptions go to Gaurav; every ruling he makes on an exception sharpens a rule or adds one. Append-only ids.",
+  "candidates": {
+    "note": "Standing backlog (Gaurav 2026-08-17: 'we should keep looking for things to add — the common pitfalls, so it can always scan the year for that'). A candidate graduates to a rule once it is deterministic and has a clear question for Gaurav. Add one every time a real defect is found by hand: anything caught by a human is a rule the inspector was missing.",
+    "items": [
+      "Round-number and repeated-amount clusters — the signature of a manual plug or a double-keyed payment.",
+      "Same vendor + same amount within N days across DIFFERENT invoice numbers (duplicate payment that L2 dedup cannot see).",
+      "An expense account that carries a balance in every other year but is empty this year — a whole category silently unbooked.",
+      "Year-on-year swing beyond a threshold on any P&L line, unexplained — catches a mis-mapped rule dumping into the wrong account.",
+      "Journals with no counterparty on a counterparty-conditioned account (POL-125's blind spot: the rule needs the name AND the id).",
+      "Bank-fee and FX-loss accounts holding a credit (natural-sign oddity already in INSP-5, but per-account thresholds tuned by history).",
+      "Payments knocked off against an invoice whose amount differs by more than rounding — silent under/over-settlement.",
+      "Any account that appears in the trial balance but in NO report section (INSP-4 covers coverage; extend to entity-specific accounts).",
+      "Intercompany accounts that do not net to zero across entities at year-close.",
+      "Journals posted by a source that no longer exists in code (orphaned engine tags) — dead paths still writing.",
+      "GST/tax accounts moving in a period where the entity is not registered (POL-87's inverse).",
+      "A closed period with journals dated inside it created AFTER the lock timestamp (proof the guard was bypassed)."
+    ]
+  },
   "rules": [
     {
       "id": "INSP-1",
@@ -114,6 +131,14 @@
         "single_month_charge_threshold": 5000,
         "spread_ratio": 0.5
       }
+    },
+    {
+      "id": "INSP-12",
+      "name": "Route conflict: a cost cannot be both prepaid and capitalized",
+      "severity": "HIGH",
+      "enabled": true,
+      "rationale": "Gaurav 2026-08-17 (DA-14): the chosen account decides the route, and a service period only means something on the expense side of the fork. Prepaid = the cost has not become an expense YET (park in 1300 Prepayments, release monthly into the P&L). Capitalized = it is already an asset (park in the asset account, amortize by policy through the register). A schedule releasing into a non-P&L account asks the system to run both: the money shuffles between two assets and never reaches the P&L, while the register separately ages it — profit is overstated and the same cost risks being charged twice. Four live schedules did exactly this (3 releasing into 1710 Technology Development, 1 into 2410 Convertible Notes). The invoice gate now ignores a service period on a non-expense account and the release engine refuses these, so this rule catches history and anything written around the services.",
+      "params": {}
     }
   ]
 }

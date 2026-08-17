@@ -503,6 +503,25 @@ Feeds: (1) the RAG "company facts" input (IDEAL_STATE §3 — the AI never runs 
   inside each recon year pass. Same discipline as the categorization engine: one call clears all
   outstanding work, safe to re-run, catch-up correct.
 
+- **DA-14 PREPAID AND CAPITALIZED ARE MUTUALLY EXCLUSIVE — THE ACCOUNT PICKS THE ROUTE (Gaurav,
+  2026-08-17).** A cost is either *waiting to become* an expense or it is *already* an asset; it can
+  never be both. Prepaid route: park in 1300 Prepayments, release monthly into the P&L, governed by
+  the **service period**. Capitalized route: park in the asset account, amortize monthly through the
+  asset register, governed by the **policy's useful life**. So the chosen chart-of-accounts code
+  decides the route, and a service period is meaningful ONLY on an EXPENSE / COST_OF_SALES account —
+  on an asset or liability account it is **ignored** (Gaurav: "if it's already booked into an asset,
+  you can't also rebook it into prepayment"). The invoice's COA choice is never overridden or lost:
+  the schedule *stores* it as `expense_account_code` and each monthly release debits exactly the
+  account that was picked; only the approval debit is swapped to 1300. Enforced in three places:
+  `invoice_service` ignores the period on a non-P&L account, `amortization_service.run_prepaids`
+  refuses to release into one, and INSP-12 flags any that already exist. Why it matters: spreading
+  into an asset shuffles money between two assets and never reaches the P&L while the register
+  separately ages it — profit overstated, and the same cost at risk of being charged twice.
+  Four live schedules did exactly this (3 → 1710 Technology Development, 1 → 2410 Convertible Notes,
+  awaiting Gaurav's re-code/cancel ruling). Same root cause as the "journal-born asset" false alarm:
+  the registration pass now excludes the engine's own postings (`_SCHEDULED_SOURCES`) so a release
+  debiting an asset account can never be registered as a fresh capital purchase. (Gaurav, 2026-08-17)
+
 - **DA-12 OPEN.** (a) ~~Kaveesh confirmation of DA-8 lives~~ LOCKED 2026-08-17 — **Gaurav owns the useful lives**, not Kaveesh; only tax-book divergence (SG capital allowances / AU ATO) stays with Kaveesh at year-close;
   (b) DQ-111 residue ruling (S$468.93 of bounced-TT bank fees sitting inside the 1710 base);
   (c) history-year asset backfill (finalized years bypass approve, so the trigger never fires);
