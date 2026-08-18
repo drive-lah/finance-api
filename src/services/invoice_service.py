@@ -235,7 +235,12 @@ class InvoiceService:
             query = query.filter(has_match if str(paired).lower() in ("true", "yes", "1")
                                  else ~has_match)
         if status is not None:
-            query = query.filter(FinanceInvoice.status == status)
+            # Accepts one status or several (Gaurav 2026-08-18): the UI sends a comma-separated
+            # list so you can look at, say, pending AND approved together. A single value still
+            # behaves exactly as before.
+            wanted = [s.strip() for s in str(status).split(",") if s.strip()]
+            query = (query.filter(FinanceInvoice.status == wanted[0]) if len(wanted) == 1
+                     else query.filter(FinanceInvoice.status.in_(wanted)))
         if counterparty_id is not None:
             query = query.filter(FinanceInvoice.counterparty_id == counterparty_id)
         if vendor_flag:
@@ -273,10 +278,24 @@ class InvoiceService:
             query = query.filter(or_(*conds))
         return query
 
-    def get_all(self, db: Session, *, limit: int = 100, offset: int = 0, **filters) -> list[FinanceInvoice]:
-        """Retrieve invoices with optional server-side filtering + pagination."""
+    # What the list can be sorted by. Kept as an allow-list so a caller cannot order by an
+    # arbitrary column (and so the UI and the API cannot drift apart on names).
+    SORTABLE = {
+        "invoice_date": FinanceInvoice.invoice_date,   # the date on the document
+        "uploaded_at": FinanceInvoice.created_at,      # when it landed in our system
+        "total_amount": FinanceInvoice.total_amount,
+        "id": FinanceInvoice.id,
+    }
+
+    def get_all(self, db: Session, *, limit: int = 100, offset: int = 0,
+                sort_by: str | None = None, sort_dir: str | None = None,
+                **filters) -> list[FinanceInvoice]:
+        """Retrieve invoices with optional server-side filtering, sorting + pagination."""
         query = self._apply_filters(db.query(FinanceInvoice), **filters)
-        return (query.order_by(FinanceInvoice.invoice_date.desc(), FinanceInvoice.id.desc())
+        col = self.SORTABLE.get(sort_by or "invoice_date", FinanceInvoice.invoice_date)
+        ordered = col.asc() if (sort_dir or "desc").lower() == "asc" else col.desc()
+        # id is the tiebreaker so paging is stable when two rows share a date
+        return (query.order_by(ordered, FinanceInvoice.id.desc())
                 .limit(limit).offset(offset).all())
 
     def count_all(self, db: Session, **filters) -> int:
