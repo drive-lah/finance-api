@@ -394,7 +394,10 @@ class ReportService:
         # assets (receivables, deposits paid, clearing) are OPERATING flows —
         # financing is reserved for true financing (loans 2400, equity), and
         # investing for long-term assets (15xx) + loans made to others (1320).
-        FINANCING_LIABILITY_CODES = {"2400"}
+        # 2405 Related-Party / Director Loans added 2026-08-16 (Gaurav, FY2019 review):
+        # director loans are TRUE financing, not working capital — the account postdates
+        # the working-capital law and was falling through to operating.
+        FINANCING_LIABILITY_CODES = {"2400", "2405"}
         INVESTING_ASSET_CODES = {"1320"}
 
         def bucket_for(counter, cash_delta: Decimal) -> str:

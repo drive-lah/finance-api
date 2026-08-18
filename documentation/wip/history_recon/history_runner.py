@@ -116,6 +116,286 @@ def cmd_check(args):
                   f"{r['ledger']:>13,.2f} {r['diff']:>11,.2f}{flag}")
 
 
+def cmd_apply_feedback(args):
+    """Replay Gaurav's rulings from a feedback_resolutions_<year>.json onto THIS clone.
+    CONFIG (rules/aliases/accounts/defaults) is idempotent and runs BEFORE the engine;
+    RESOLUTIONS apply AFTER the engine run, only to txns still in NEEDS_REVIEW
+    (rows the upgraded rules already caught are skipped and reported)."""
+    import json as _json
+    cfg = _json.load(open(args.file))
+    with db_session() as db:
+        conf = cfg.get("config", {})
+        # rule updates (partial: only the keys present in the JSON change)
+        for ru in conf.get("rules_update", []):
+            sets = {k: v for k, v in ru.items() if k != "id"}
+            assign = ", ".join(f"{k} = :{k}" for k in sets)
+            db.execute(text(f"UPDATE finance_categorization_rules SET {assign}, updated_at = now() "
+                            f"WHERE id = :id"), {**sets, "id": ru["id"]})
+            print(f"  rule {ru['id']} updated ({', '.join(sets)})")
+        # rule inserts (explicit ids; skipped when present)
+        for ri in conf.get("rules_insert", []):
+            exists = db.execute(text("SELECT 1 FROM finance_categorization_rules WHERE id=:id"),
+                                {"id": ri["id"]}).scalar()
+            if exists:
+                print(f"  rule {ri['id']} already present — skipped")
+                continue
+            cols = ", ".join(ri)
+            vals = ", ".join(f":{k}" for k in ri)
+            db.execute(text(f"INSERT INTO finance_categorization_rules ({cols}, created_at, updated_at) "
+                            f"VALUES ({vals}, now(), now())"), ri)
+            print(f"  rule {ri['id']} inserted: {ri['name']}")
+        db.execute(text("SELECT setval(pg_get_serial_sequence('finance_categorization_rules','id'), "
+                        "(SELECT max(id) FROM finance_categorization_rules))"))
+        for acc in conf.get("ensure_accounts", []):
+            exists = db.execute(text("SELECT 1 FROM finance_accounts WHERE code=:code AND entity_id IS NULL"),
+                                {"code": acc["code"]}).scalar()
+            if not exists:
+                db.execute(text(
+                    "INSERT INTO finance_accounts (code, name, account_type, normal_balance, category, "
+                    "description, status, created_at, updated_at) VALUES (:code, :name, :account_type, "
+                    ":normal_balance, :category, :description, 'ACTIVE', now(), now())"),
+                    {**acc,
+                     "normal_balance": acc.get("normal_balance", "CREDIT" if acc["account_type"] == "REVENUE" else "DEBIT"),
+                     "category": acc.get("category"), "description": acc.get("description")})
+                print(f"  account {acc['code']} {acc['name']} created")
+            else:
+                print(f"  account {acc['code']} already present")
+        for al in conf.get("add_aliases", []):
+            cur = db.execute(text("SELECT aliases FROM finance_counterparties WHERE id=:id"),
+                             {"id": al["counterparty_id"]}).scalar() or []
+            if al["alias"] not in cur:
+                db.execute(text("UPDATE finance_counterparties SET aliases = (coalesce(aliases::jsonb, '[]'::jsonb) "
+                                "|| to_jsonb(ARRAY[:a]))::json, updated_at = now() WHERE id=:id"),
+                           {"a": al["alias"], "id": al["counterparty_id"]})
+                print(f"  alias '{al['alias']}' added to counterparty {al['counterparty_id']}")
+            else:
+                print(f"  alias '{al['alias']}' already present on {al['counterparty_id']}")
+        for dv in conf.get("set_defaults", []):
+            db.execute(text("UPDATE finance_counterparties SET default_account_code=:c, updated_at=now() "
+                            "WHERE id=:id"), {"c": dv["default_account_code"], "id": dv["counterparty_id"]})
+            print(f"  counterparty {dv['counterparty_id']} default -> {dv['default_account_code']}")
+        db.commit()
+
+        if args.config_only:
+            print("config applied (resolutions skipped: --config-only)")
+            return
+        from src.services.transaction_service import transaction_service
+        from src.models.transaction import FinanceTransaction, TransactionStatus
+        applied, skipped = 0, 0
+        # Later rounds OVERRIDE earlier ones for the same txn (Gaurav's newest verdict wins):
+        # dedupe by txn id, round2 entries replacing round1.
+        by_txn = {}
+        for res in cfg.get("resolutions", []):
+            by_txn[res["txn"]] = res
+        for res in cfg.get("round2", {}).get("resolutions", []):
+            if res.get("account_code"):  # confirmed_no_change entries carry no action
+                by_txn[res["txn"]] = res
+        from src.services.journal_service import journal_service
+        for txn_id, res in sorted(by_txn.items()):
+            t = db.get(FinanceTransaction, txn_id)
+            if t is None:
+                print(f"  txn {txn_id}: NOT FOUND — investigate"); continue
+            if t.status == TransactionStatus.NEEDS_REVIEW:
+                transaction_service.resolve_needs_review(
+                    db, txn_id, account_code=res["account_code"],
+                    counterparty_id=res.get("counterparty_id"), resolved_by="apply_feedback")
+                print(f"  txn {txn_id}: resolved -> {res['account_code']}")
+                applied += 1
+            elif t.coa_account_code == res["account_code"]:
+                print(f"  txn {txn_id}: already on {res['account_code']} via {t.categorized_by_logic} — ok")
+                skipped += 1
+            else:
+                # booked to a DIFFERENT account than the ruling — the ruling wins (a verdict that
+                # fails to apply is a defect, per the 2026-08-16 process rule). Re-book.
+                if t.reconciled_journal_entry_id:
+                    journal_service.void_entry(db, t.reconciled_journal_entry_id,
+                        reason=f"apply_feedback override: Gaurav ruled {res['account_code']} (was {t.coa_account_code})")
+                _was = t.coa_account_code
+                t.status = TransactionStatus.NEEDS_REVIEW
+                t.reconciled_journal_entry_id = None
+                db.flush()
+                transaction_service.resolve_needs_review(
+                    db, txn_id, account_code=res["account_code"],
+                    counterparty_id=res.get("counterparty_id"), resolved_by="apply_feedback")
+                print(f"  txn {txn_id}: OVERRIDE {_was or '?'} -> {res['account_code']}")
+                applied += 1
+        db.commit()
+        print(f"resolutions: {applied} applied, {skipped} already handled by rules/defaults")
+
+
+def cmd_run_schedules(args):
+    """The scheduled-postings engine for a history year (DA-13).
+
+    The categorization engine turns BANK TRANSACTIONS into journals; this one turns SCHEDULES
+    into journals — they are siblings and, until now, separate toolchains. Running a year is not
+    finished until both have run, so the year pass carries this too.
+
+    as_of = 31 Dec of the year, so it posts only months that had ARRIVED by the year end and
+    never charges ahead. Re-running is safe: every pass is idempotent on its own cursor.
+    """
+    from src.services.amortization_service import amortization_service
+    ent_ids = [int(x) for x in args.entity_ids.split(",")] if args.entity_ids else None
+    as_of = date(args.year, 12, 31)
+    with db_session() as db:
+        r = amortization_service.run_all(db, as_of_date=as_of, entity_ids=ent_ids)
+    reg = r["registered"]
+    print(f"[schedules] as_of={as_of}  registered={reg.get('registered', reg)}  "
+          f"adjustments={r['adjustments'].get('adjusted', r['adjustments'])}")
+    print(f"[schedules] asset charges={r['assets'].get('months_posted')}  "
+          f"prepaid releases={r['prepaids'].get('months_posted')}  "
+          f"TOTAL={r['total_months_posted']}")
+    for e in r["errors"]:
+        print(f"  ERROR schedule {e.get('schedule_id')}: {e.get('error')}")
+    print("NOTE: these journals are DRAFT — post them with the year's other journals, or the "
+          "year is not in a terminal state (INSP-3).")
+
+
+def cmd_stage_events(args):
+    """Stage the economic-events lane for a whole year (POL-124 ruling 4): stage_month for each
+    entity x month. STAGED rows only — projection/posting comes at the year's posting step."""
+    from src.services.economic_events.service import economic_event_service
+    ent_ids = [int(x) for x in args.entity_ids.split(",")]
+    with db_session() as db:
+        for ent in ent_ids:
+            for m in range(1, 13):
+                period = date(args.year, m, 1)
+                r = economic_event_service.stage_month(db, ent, period)
+                n = len(r["staged"])
+                errs = len(r.get("query_errors") or [])
+                if n or errs:
+                    print(f"  entity {ent} {period:%Y-%m}: {n} staged"
+                          + (f", {errs} view errors" if errs else ""))
+        db.commit()
+
+
+def cmd_load_own_accounts(args):
+    """Seed finance_stripe_own_accounts from OUR_CONNECT_ACCOUNTS.csv (idempotent upsert).
+    Mapping (ENT-7/ENT-8): RMS/Flex+/caretaker -> the market's Stripe Connect bank account;
+    held-funds -> the market's Customer Held Funds account. TEST/ADMIN/UNKNOWN rows load
+    with NO bank mapping and import_payouts=false (visible, never imported)."""
+    import csv as _csv
+    BA = {("SG", "connect"): 20, ("SG", "held"): 1657, ("AU", "connect"): 22, ("AU", "held"): 1658}
+    with db_session() as db, open(args.csv) as f:
+        n = 0
+        for r in _csv.DictReader(f):
+            cat = r["Category"].strip()
+            mkt = r["Market"].strip()
+            group = ("held" if "held-funds" in cat.lower() or "deposit" in cat.lower()
+                     else "connect" if cat in ("RMS", "Flex+", "caretaker") else None)
+            ba_id = BA.get((mkt, group)) if group else None
+            db.execute(text("""
+                INSERT INTO finance_stripe_own_accounts
+                  (stripe_account_id, market, email, category, finance_bank_account_id, import_payouts, notes)
+                VALUES (:id, :mkt, :email, :cat, :ba, :imp, :notes)
+                ON CONFLICT (stripe_account_id) DO UPDATE SET
+                  market=:mkt, email=:email, category=:cat, finance_bank_account_id=:ba,
+                  import_payouts=:imp, updated_at=now()"""),
+                {"id": r["Stripe acct id"].strip(), "mkt": mkt, "email": r["Email"].strip(),
+                 "cat": cat, "ba": ba_id, "imp": ba_id is not None,
+                 "notes": f"seeded from OUR_CONNECT_ACCOUNTS.csv (created {r['Created']})"})
+            n += 1
+        db.commit()
+        importable = db.execute(text(
+            "SELECT market, finance_bank_account_id, count(*) FROM finance_stripe_own_accounts "
+            "WHERE import_payouts GROUP BY 1,2 ORDER BY 1,2")).fetchall()
+    print(f"{n} accounts upserted; importable groups: {[tuple(r) for r in importable]}")
+
+
+def cmd_import_payouts(args):
+    """History backfill: import BOTH payout lanes for a whole year, month by month
+    (explicit periods — the sync button's 90-day default never reaches history).
+    Platform lane AND own-account lane must both land BEFORE the engine runs the
+    year's bank accounts: the bank-side Stripe guessing rules are deactivated
+    (2026-08-16), so arrivals only book by PAIRING against imported lines."""
+    from src.services.economic_events.service import economic_event_service
+    ent_ids = [int(x) for x in args.entity_ids.split(",")]
+    with db_session() as db:
+        for ent in ent_ids:
+            for m in range(1, 13):
+                p = economic_event_service.import_payout_lines(db, ent, date(args.year, m, 1))
+                o = economic_event_service.import_own_account_payout_lines(
+                    db, ent, date(args.year, m, 1))
+                if p["lines"] or o["lines"]:
+                    print(f"  entity {ent} {args.year}-{m:02d}: platform {p['lines']} lines "
+                          f"({p['created']} new) · own-accounts {o['lines']} lines ({o['created']} new)")
+        db.commit()
+
+
+def cmd_pair_stripe_payouts(args):
+    """Identity pairing for Stripe sweeps (official pipeline step, replaces the one-off script):
+    every unmatched imported payout line (platform or own-account) finds its bank arrival by
+    abs-amount within ±5 days on the entity's statement accounts, books ONE transfer JE
+    Dr <arrival bank> / Cr <source pocket>, marks both MATCHED. Handles variable payout
+    destinations (2019: platform settled to BOTH OCBC accounts) that fixed-target rules can't."""
+    from datetime import datetime as _dt, timedelta, UTC as _UTC
+    from src.services.journal_service import journal_service
+    from src.models.transaction import FinanceTransaction, TransactionStatus
+    from src.models.bank_account import FinanceBankAccount
+    y0, y1 = year_window(args.year)
+    ent_ids = [int(x) for x in args.entity_ids.split(",")]
+    with db_session() as db:
+        lines = (db.query(FinanceTransaction)
+                 .join(FinanceBankAccount, FinanceBankAccount.id == FinanceTransaction.bank_account_id)
+                 .filter(FinanceTransaction.source.in_(["stripe_payout_import", "stripe_own_payout_import"]),
+                         FinanceTransaction.status.in_([TransactionStatus.IMPORTED, TransactionStatus.PENDING,
+                                                        TransactionStatus.AWAITING_MATCH]),
+                         FinanceTransaction.transaction_date.between(y0, y1),
+                         FinanceBankAccount.entity_id.in_(ent_ids)).all())
+        stmt_bas = {ba.id: ba for ba in db.query(FinanceBankAccount)
+                    .filter(FinanceBankAccount.entity_id.in_(ent_ids),
+                            FinanceBankAccount.bank_name != "Stripe",
+                            FinanceBankAccount.coa_account_code.isnot(None)).all()}
+        paired = unpaired = 0
+        for line in lines:
+            pocket_ba = db.get(FinanceBankAccount, line.bank_account_id)
+            amt = abs(float(line.amount))
+            cands = (db.query(FinanceTransaction)
+                     .filter(FinanceTransaction.bank_account_id.in_(list(stmt_bas)),
+                             FinanceTransaction.status.in_([TransactionStatus.IMPORTED, TransactionStatus.PENDING]),
+                             FinanceTransaction.amount > 0,
+                             FinanceTransaction.transaction_date.between(
+                                 line.transaction_date - timedelta(days=5),
+                                 line.transaction_date + timedelta(days=10))).all())
+            match = [c for c in cands if abs(abs(float(c.amount)) - amt) <= 0.005]
+            if not match:
+                unpaired += 1
+                print(f"  line {line.id} ({amt:.2f} {line.transaction_date}): NO arrival — left for review")
+                continue
+            # several same-amount arrivals in the window (e.g. four S$500 deposit sweeps in one
+            # December): assign the NEAREST-dated one; candidates already claimed by earlier
+            # lines are MATCHED and fell out of the query, so greedy-by-date is one-to-one.
+            match.sort(key=lambda c: (abs((c.transaction_date - line.transaction_date).days), c.id))
+            bk = match[0]
+            bank_ba = stmt_bas[bk.bank_account_id]
+            je = journal_service.create(
+                db=db, entity_id=bank_ba.entity_id, entry_date=bk.transaction_date,
+                description=f"Stripe sweep {pocket_ba.account_name} -> {bank_ba.account_name} "
+                            f"(identity-paired: txn {line.id} <-> {bk.id})",
+                lines=[{"account_code": bank_ba.coa_account_code, "debit_amount": amt, "credit_amount": 0.0},
+                       {"account_code": pocket_ba.coa_account_code, "debit_amount": 0.0, "credit_amount": amt}])
+            je.source = "categorization_engine"
+            db.flush()
+            now = _dt.now(_UTC)
+            for t, logic in ((line, "transfer_rule"), (bk, "transfer_pairing")):
+                t.status = TransactionStatus.MATCHED
+                t.reconciled_journal_entry_id = je.id
+                t.matched_at = now
+                t.categorized_by_logic = logic
+            paired += 1
+        db.commit()
+        print(f"paired {paired}, unpaired {unpaired}")
+
+
+def gather_events(db, year, ent_ids):
+    return [dict(zip(("entity", "period", "event_type", "amount", "ccy", "status"), r))
+            for r in db.execute(text("""
+        SELECT e.name, ev.period, ev.event_type, round(ev.amount::numeric,2), ev.currency, ev.status
+        FROM finance_economic_events ev JOIN finance_entities e ON e.id = ev.entity_id
+        WHERE ev.entity_id = ANY(:ents) AND ev.period BETWEEN :y0 AND :y1
+        ORDER BY ev.entity_id, ev.period, ev.event_type"""),
+        {"ents": ent_ids, "y0": date(year, 1, 1), "y1": date(year, 12, 31)}).fetchall()]
+
+
 def gather_scorecard(db, year, ba_ids):
     y0, y1 = year_window(year)
     p = {"ba": ba_ids, "y0": y0, "y1": y1}
@@ -142,6 +422,10 @@ def cmd_scorecard(args):
     with db_session() as db:
         header, coa_names, txns = gather_scorecard(db, args.year, ba_ids)
         inv = gather_check(db, args.year, ba_ids)
+        ent_ids = [r[0] for r in db.execute(text(
+            "SELECT DISTINCT entity_id FROM finance_bank_accounts WHERE id = ANY(:ba)"),
+            {"ba": ba_ids}).fetchall()]
+        events = gather_events(db, args.year, ent_ids)
     e = html.escape
 
     def coa_label(code):
@@ -218,6 +502,16 @@ then click <b>Export my feedback</b> (top right) and send me the file — I appl
 A ⚠ means the year isn't fully booked yet at that date (usually the unresolved rows below).</p>
 <table><thead><tr><th>account</th><th>month-end</th><th>bank statement</th><th>our books</th><th>difference</th><th></th></tr></thead>
 <tbody>{inv_rows}</tbody></table>
+<h2>Economic events staged for {args.year} (accrual lane — ClickHouse)</h2>
+<p class=note>These are the platform-derived monthly aggregates (revenue, host costs, Stripe activity) staged
+for the same year, per POL-124 ruling 4 — a year only closes when both lanes are booked. STAGED = awaiting
+your sign-off before projection/posting. Stripe cash accounts get their history from THIS lane; no bank
+statements exist for them pre-2026.</p>
+{('<table><thead><tr><th>entity</th><th>month</th><th>event type</th><th>amount</th><th>ccy</th><th>status</th></tr></thead><tbody>'
+  + ''.join(f"<tr><td>{e(r['entity'])}</td><td>{r['period']:%Y-%m}</td><td>{e(r['event_type'])}</td>"
+            f"<td class=n>{format(float(r['amount']), ',.2f')}</td><td>{e(r['ccy'])}</td><td>{e(r['status'])}</td></tr>"
+            for r in events)
+  + '</tbody></table>') if events else '<p class=note><b>None staged.</b> Run the stage-events step, or ClickHouse has no data for this year/entity.</p>'}
 <h2>Every transaction ({len(txns)}) — booked account, AI recommendation, and your verdict</h2>
 <div id=filters style="margin:8px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px">
  <input id=fsearch placeholder="search description / counterparty / account…" size=34 oninput=applyF()>
@@ -282,6 +576,9 @@ function exportFb() {{
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--allow-prod", metavar="PASSPHRASE",
+                    help="Arm ONE write command against production. Requires the literal "
+                         "passphrase RUN-ON-PROD-2019 and an interactive PROCEED confirmation.")
     sub = ap.add_subparsers(dest="cmd", required=True)
     for name, fn in (("run", cmd_run), ("check", cmd_check), ("scorecard", cmd_scorecard)):
         s = sub.add_parser(name)
@@ -292,13 +589,49 @@ def main():
         if name == "scorecard":
             s.add_argument("--out", required=True)
         s.set_defaults(fn=fn)
+    s = sub.add_parser("apply-feedback")
+    s.add_argument("--file", required=True)
+    s.add_argument("--config-only", action="store_true")
+    s.set_defaults(fn=cmd_apply_feedback)
+    s = sub.add_parser("stage-events")
+    s.add_argument("--year", type=int, required=True)
+    s.add_argument("--entity-ids", required=True)
+    s.set_defaults(fn=cmd_stage_events)
+    s = sub.add_parser("run-schedules")
+    s.add_argument("--year", type=int, required=True)
+    s.add_argument("--entity-ids")
+    s.set_defaults(fn=cmd_run_schedules)
+    s = sub.add_parser("load-own-accounts")
+    s.add_argument("--csv", default="documentation/wip/OUR_CONNECT_ACCOUNTS.csv")
+    s.set_defaults(fn=cmd_load_own_accounts)
+    s = sub.add_parser("import-payouts")
+    s.add_argument("--year", type=int, required=True)
+    s.add_argument("--entity-ids", required=True)
+    s.set_defaults(fn=cmd_import_payouts)
+    s = sub.add_parser("pair-stripe-payouts")
+    s.add_argument("--year", type=int, required=True)
+    s.add_argument("--entity-ids", required=True)
+    s.set_defaults(fn=cmd_pair_stripe_payouts)
     args = ap.parse_args()
     url = os.getenv("DATABASE_URL", "")
     tgt = "LOCAL-CLONE" if ("localhost" in url or "127.0.0.1" in url) else "PROD"
     print(f"[history_runner] target={tgt}")
-    if args.cmd == "run" and tgt == "PROD":
-        print("REFUSING: shadow runs happen on the CLONE (POL-124/VR-1c). Set DATABASE_URL to finance_local.")
-        return
+    if args.cmd in ("run", "apply-feedback", "stage-events", "load-own-accounts", "import-payouts",
+                    "pair-stripe-payouts", "run-schedules") and tgt == "PROD":
+        # Deliberate prod arming (PROD_RUNBOOK_2019): the default is REFUSE. A single invocation
+        # can be armed with --allow-prod plus the literal passphrase, so arming is a conscious act
+        # that cannot happen by a stray `source .env` or a copy-pasted command.
+        if not getattr(args, "allow_prod", None):
+            print("REFUSING: shadow work happens on the CLONE (POL-124/VR-1c). Point DATABASE_URL "
+                  "at the dated clone, or arm this single run with --allow-prod RUN-ON-PROD-2019.")
+            return
+        if args.allow_prod != "RUN-ON-PROD-2019":
+            print(f"REFUSING: --allow-prod passphrase mismatch (got {args.allow_prod!r}).")
+            return
+        print(f"\n*** ARMED FOR PRODUCTION *** command={args.cmd}  db={url.split('@')[-1][:60]}")
+        if input("Type PROCEED to run this ONE command against production: ").strip() != "PROCEED":
+            print("Aborted — nothing ran.")
+            return
     args.fn(args)
 
 

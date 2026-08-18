@@ -136,7 +136,169 @@
 ## 2. What's Pending
 
 ### 2.0c ★ PREVIOUS-YEARS RECONCILIATION (2019–2025) — THE MAMMOTH (Gaurav, 2026-08-15)
-Rulings locked in POL-124; spec `wip/HISTORY_RECON_PIPELINE.md`. Year-at-a-time (chronological), engine+economic-events per year, agent lanes, running-balance tripwire, HTML scorecard → Gaurav feedback → post → re-park → jurisdictional year close. **HARNESS BUILT + SHAKEDOWN RUN (2026-08-15):** `wip/history_recon/history_runner.py` (run/check/scorecard; refuses `run` on prod; lifts POL-28 only inside the bounded batch). First shadow year: Ventures Wise (ba 8/9/10) × 2025 on the CLONE — **48/65 auto-categorized, 0 errors; 17 open = the Wise conversion/top-up inflow legs (no Ventures transfer corridors yet — first feedback item)**. Discovery: these accounts are pass-through movers (gross $100k+ legs, tiny net), not dormant. Month-end invariant table quantifies the gap until the 17 resolve. **SCORECARD v2 (Gaurav feedback, 2026-08-15):** header carries entity + bank accounts explicitly; per-txn table shows booked COA (code+NAME), counterparty, AI recommendation (COA name @ confidence + reasoning); EVERY row has a verdict dropdown + correction input; "Export my feedback" button downloads `scorecard_feedback_<year>.json` — Gaurav annotates in the HTML, sends the file back, feedback is applied (rules/counterparties/corpus), year re-runs. Balance section in plain language. **START = 2019 per Gaurav (not 2025).** **2019 SHADOW RUN DONE (clone, SG OCBC ba1+ba18):** 377/388 auto-booked, 0 errors; **OCBC 3001 ties EXACTLY at every 2019 month-end (first green account-year)**; OCBC Main diverges from Aug (−1,297 Jun–Jul then ~15k–32k) = the 11 unresolved + review targets for Gaurav's pass. Scorecard sent: `wip/history_recon/scorecard_2019_sg_ocbc.html`. **★ 2019 SG = FIRST GREEN YEAR (2026-08-15).** Gaurav's feedback JSON (10 verdicts, `wip/history_recon/scorecard_feedback_2019.json`) applied via `resolve_needs_review`: 4 AI-confirms (6400/6701/6402/7001) · Winata/ter-Horst $15k → 2405 Director loan (+alias on cp 268) · 2 Vernika-labelled inflows → 2405 (Gaurav ruling) · Upwork → 6103 + default set ("Upwork is always Marketing asset creation") · MAYBANK cheque → NEW account 7003 Other Income - Miscellaneous (created, clone) · $15,573 JPMorgan inflow = RETURN of the Nov-29 Journey Horizon TT (bounced via correspondent, re-sent Dec-26) → Cr 1710. Mid-loop rule fixes also landed: Google Ads rule 384→6100, director-loan rules 385/386 (counterparty-conditioned, POL-125), rules 239/240 ENT-5 fee-only fix + insurer rules 372/373 counterparty-conditioned (DQ-102). **Month-end invariants: 0.00 at ALL 14 month-ends, both accounts (OCBC Main + OCBC 3001).** Feedback loop proven end-to-end (HTML → JSON → rules/aliases/defaults/resolutions → green). NEXT: 2020 SG (same accounts + Wise SGD once it starts), then year-by-year; prod apply waits until Gaurav signs the year(s).
+Rulings locked in POL-124; spec `wip/HISTORY_RECON_PIPELINE.md`. Year-at-a-time (chronological), engine+economic-events per year, agent lanes, running-balance tripwire, HTML scorecard → Gaurav feedback → post → re-park → jurisdictional year close. **HARNESS BUILT + SHAKEDOWN RUN (2026-08-15):** `wip/history_recon/history_runner.py` (run/check/scorecard; refuses `run` on prod; lifts POL-28 only inside the bounded batch). First shadow year: Ventures Wise (ba 8/9/10) × 2025 on the CLONE — **48/65 auto-categorized, 0 errors; 17 open = the Wise conversion/top-up inflow legs (no Ventures transfer corridors yet — first feedback item)**. Discovery: these accounts are pass-through movers (gross $100k+ legs, tiny net), not dormant. Month-end invariant table quantifies the gap until the 17 resolve. **SCORECARD v2 (Gaurav feedback, 2026-08-15):** header carries entity + bank accounts explicitly; per-txn table shows booked COA (code+NAME), counterparty, AI recommendation (COA name @ confidence + reasoning); EVERY row has a verdict dropdown + correction input; "Export my feedback" button downloads `scorecard_feedback_<year>.json` — Gaurav annotates in the HTML, sends the file back, feedback is applied (rules/counterparties/corpus), year re-runs. Balance section in plain language. **START = 2019 per Gaurav (not 2025).** **2019 SHADOW RUN DONE (clone, SG OCBC ba1+ba18):** 377/388 auto-booked, 0 errors; **OCBC 3001 ties EXACTLY at every 2019 month-end (first green account-year)**; OCBC Main diverges from Aug (−1,297 Jun–Jul then ~15k–32k) = the 11 unresolved + review targets for Gaurav's pass. Scorecard sent: `wip/history_recon/scorecard_2019_sg_ocbc.html`. **★ 2019 SG = FIRST GREEN YEAR (2026-08-15).** Gaurav's feedback JSON (10 verdicts, `wip/history_recon/scorecard_feedback_2019.json`) applied via `resolve_needs_review`: 4 AI-confirms (6400/6701/6402/7001) · Winata/ter-Horst $15k → 2405 Director loan (+alias on cp 268) · 2 Vernika-labelled inflows → 2405 (Gaurav ruling) · Upwork → 6103 + default set ("Upwork is always Marketing asset creation") · MAYBANK cheque → NEW account 7003 Other Income - Miscellaneous (created, clone) · $15,573 JPMorgan inflow = RETURN of the Nov-29 Journey Horizon TT (bounced via correspondent, re-sent Dec-26) → Cr 1710. Mid-loop rule fixes also landed: Google Ads rule 384→6100, director-loan rules 385/386 (counterparty-conditioned, POL-125), rules 239/240 ENT-5 fee-only fix + insurer rules 372/373 counterparty-conditioned (DQ-102). **Month-end invariants: 0.00 at ALL 14 month-ends, both accounts (OCBC Main + OCBC 3001).** Feedback loop proven end-to-end (HTML → JSON → rules/aliases/defaults/resolutions → green). NEXT: 2020 SG (same accounts + Wise SGD once it starts), then year-by-year; prod apply waits until Gaurav signs the year(s). **★ 2019 RE-VALIDATED ON THE NEW ENGINE (2026-08-16, clone `finance_clone_20260816`):** fresh prod clone (row-verified: 7,131 JEs / 60,486 txns; alembic 072 single head — payout migrations already on prod) · runner gained `apply-feedback` (replays `feedback_resolutions_<year>.json`: config before engine, resolutions after) + `stage-events` (economic-events lane per entity×month; scorecard events section) · engine re-run: 380/388 booked + 8 replayed rulings, **0.00 at all 14 month-ends** · POL-125 matcher fix shipped (counterparty rules fall back to the RESOLVED counterparty name when the raw CSV name is blank — a Tokio Marine txn had silently missed the insurer rule) · 55 economic events staged for 2019 (entity 2, Jun–Dec = ClickHouse data start) · **Stripe pre-2026: ZERO bank statements exist — Stripe history books ENTIRELY via the events lane; its gate is events-vs-Stripe-reports, not the statement tripwire.** Scorecard: `wip/history_recon/scorecard_2019_rerun_20260816.html` (browser-verified). Branch `260816_history_recon`. **★ OWN-ACCOUNT PAYOUT IMPORTER BUILT + REHEARSED (2026-08-16, Gaurav-approved design):** migration 073 `finance_stripe_own_accounts` registry (127 accounts seeded from `OUR_CONNECT_ACCOUNTS.csv`; 111 importable: SG 95→Connect ba20 + 2→Held-Funds ba1657, AU 13→ba22 + 1→ba1658) · `import_own_account_payout_lines` (payout rows leaving OUR connect/deposit accounts → txns on the MAPPED pocket; wired into the sync button; runner `import-payouts` for history) · `_target_has_no_statement_feed` now dynamic (imported feed ⇒ pairing, no standalone double-book) · sweep corridor rules 387/388 (clone) make the imported line the KNOWING side: Dr 1000 OCBC / Cr the true pocket, bank arrival pairs Phase 0 — replaces blind bank-text guessing (2019 find: five deposit sweeps had credited 1018 Connect instead of 1021 Held Funds; voided + re-paired on clone, month-ends still 0.00). DEPLOY CHECKLIST: migration 073 + code → prod at merge; re-seed registry + corridor rules on prod (config, VR-1c supervised); AU corridor rules when AU years start; Gaurav to rule the 6 ADMIN/review + 1 UNKNOWN registry rows. **Bank-side Stripe GUESSING rules 30/214/270/336 DEACTIVATED (clone, 2026-08-16, Gaurav):** all Stripe arrivals now book ONLY by Phase-0 pairing against imported payout lines (rules 35/335/387/388 = the knowing Stripe side); `import-payouts` backfills BOTH lanes per history year BEFORE the engine. Deactivations re-apply to prod with the rest of the config. **★ SENTINEL-DATE INCIDENT closed on PROD (2026-08-16, Gaurav-supervised):** 21 backlog invoices (Jul-31 import, blank dates → 1900-01-01) were batch-approved+posted by the Aug-04 'system' job, polluting every as-of figure (retained-earnings wedge Gaurav spotted). PROD repair executed: je_audit trigger upgraded (REDATE events now audited — was status-only), before-image backup table, 6 JEs re-dated from corrected invoices + 15 invoices dated from their settled payment, self-verified 0 sentinels + 21 REDATE audit rows. Guard shipped: approve/submit/raise refuse missing/pre-2016 invoice dates (no state advance at all). Inspector: INSP-6 patrols sentinel dates; INSP-7 placeholder = AU invoice-GST design (pending Gaurav). FOLLOW-UP: **108 unposted invoices still carry 1900 dates** (no JEs, no pollution; the guard now holds them until dated) — need a dating pass. Also: the new approve flow posts with NULL posting_user — stamp the actor. **★ PREPAID RELEASE ENGINE MISSING (found 2026-08-17, Gaurav-directed):** 169 amortization schedules park into 1300 Prepayments (prod balance S$1,358,796.63) with entries_posted=0 EVERYWHERE — the release half was never built; P&L overstated 2023-2026 (due-in-2024 ~S$322k, due-in-2025 ~S$818k by schedule math). 56 schedules carry GROSS (GST-incl) spread totals vs NET parked (S$80,365.43 over-release exposure — fix totals BEFORE any engine runs). INSP-9 now gates every year pass on this. Task #1 tracks the build (engine + catch-up + Kaveesh on restated periods + 2410/1710-target oddities). **★ ASSET D&A ENGINE — DRAFT BUILT ON CLONE (2026-08-17, Gaurav-directed):** data model = `finance_coa_amortization_policies` (rulebook; 1 DRAFT policy: 1710→1810/7400, 36mo straight-line, PENDING Gaurav+Kaveesh ruling on lives/threshold/in-service convention) + `finance_asset_schedules` (register; 2 assets from the 2019 1710 TTs) + `finance_asset_journal_links` (NEW table: asset ↔ capitalization/adjustment/depreciation/disposal JEs) + `wip/history_recon/asset_engine.py` (scan = auto-register on posting into policy-covered accounts, credit = adjustment/disposal with prospective recompute; depreciate = monthly DRAFT JEs; show = register+trail; prod-refusing). 2019 demo: both TT capitalizations auto-registered, the JPMorgan refund auto-handled as an adjustment (base 16,042.15→468.93/DQ, monthly recomputed), one Dec-2019 charge S$13.03 DRAFT (JE 12800). **Placement ruled (POL-151):** D&A = OPERATING expense above the line (COGS for delivery assets); 7400 recategorized Op Ex/'Depreciation & Amortisation' (clone; prod at config apply; clone-only DDL to fold into a migration: asset_schedules.transaction_id NULLable + the links table). UI: the Accounting module's 'Amortization' tab is a 46-line placeholder — the register/policies screen builds there. **CLEANED TO ONE MECHANISM (Gaurav directive, 2026-08-17):** the NATIVE subsystem (amortization_service + routes + models, trigger wired in approve()) is THE mechanism. Pickle's parallel draft engine DELETED (asset_engine.py removed; its entire clone footprint reverted: demo assets, links table, draft policy, the S$13.03 draft JE; transaction_id NOT NULL restored). Planned changes go INTO the native service, never beside it: (1) asset↔JE link-trail table, (2) credit-side adjustment/disposal handling, (3) a history-year backfill that CALLS check_and_create_schedule for finalized-year txns (they bypass approve()), (4) BFF proxies + real Amortization tab over the existing endpoints, (5) policy seeding after Gaurav+Kaveesh rule lives/threshold. Prepaid release engine (Task #1) unchanged and still missing. DA-7/DA-8 in KNOWLEDGE record the discovery; POL-151 placement stands. **★ 2019 DETERMINISM PROVEN (2026-08-16):** full virgin reset (403 txns, all shadow JEs deleted) then the FINAL recipe in ONE untouched pass — `pair-stripe-payouts` (15/15, nearest-date disambiguation) → engine (366 booked, 0 errors) → `apply-feedback` (8 applied; NEWEST-verdict-wins override semantics: a ruling that fails to apply re-books, never skips) → **0.00 × 14 month-ends, 0 open txns, Dirk-Jan ×5 on 2405, 88182→6700, 88450→1710.** The recipe is what runs on prod at sign-off; no hand steps exist. Also fixed en route: 4 Dirk-Jan loans-in (S$36.5k) had sat in 4025 revenue via the blank-name defect (booked pre-matcher-fix); process rule added — mid-year engine fix ⇒ full-year re-sweep.
+
+
+### 2.0g PERIOD LOCK (entity × month) — spec + step series (Gaurav, 2026-08-17)
+
+**The promise:** a closed period REFUSES new journals. The ledger enforces it, not discipline.
+Grain = **entity × month** (never year; a "locked year" is just 12 locked months).
+Unlock = **ADMIN ONLY**, explicit, reason-required, logged. Lock/unlock available in the UI.
+
+**Why the sweep matters:** journals are written from 25 call sites via `journal_service.create`,
+PLUS 2 bypassers that build `FinanceJournalEntry` directly (`economic_events/service.py` projection,
+`stripe_sync/sync_service.py` legacy), PLUS raw SQL (tonight's sentinel re-dating proved this path is
+real). So the gate must be BOTH: a service check (friendly error, catches 27 code paths) AND a DB
+trigger (catches everything including raw SQL and future code) — same belt-and-braces as the duplicate
+work (app gate + partial unique index).
+
+**Order of operations is permanent:** RUN the D&A/prepaid cycle → verify with the inspector → LOCK.
+Locking first would refuse the catch-up charges that legitimately date into that month (DA-4).
+
+| # | Step | Detail |
+|---|------|--------|
+| PL-1 | **Table + migration** | `finance_period_locks`: entity_id, period (1st of month), status(locked/open), locked_by/at, unlocked_by/at, unlock_reason, evidence jsonb (inspector exception count + tripwire at close). Unique (entity_id, period). |
+| PL-2 | **Service gate** | `period_lock_service.assert_open(db, entity_id, entry_date)` → raises ConflictError naming the period and who locked it. Called at the top of `journal_service.create`. |
+| PL-3 | **Sweep the bypassers** | Add the same assert to `economic_events/service.py` projection and `stripe_sync/sync_service.py`; ban new direct instantiation in review. |
+| PL-4 | **DB trigger backstop** | BEFORE INSERT/UPDATE on `finance_journal_entries`: refuse if (entity_id, month(entry_date)) is locked. Catches raw SQL and anything future. Mirrors the `je_audit` trigger pattern. |
+| PL-5 | **Routes** | GET /periods (status grid), POST /periods/lock (gated: inspector clean or explicitly accepted), POST /periods/unlock (**admin only**, reason required). |
+| PL-6 | **BFF proxies** | finance.ledger read for the grid; **admin** for unlock; write for lock. |
+| PL-7 | **UI** | A Periods panel: entity × month grid, lock/unlock per cell, who/when/reason on hover, and the close checklist (cycle run? inspector clean?) shown before the lock button enables. |
+| PL-8 | **Inspector tie-in** | INSP-12: a journal dated into a locked period (defence-in-depth if a path ever slips), and "year has unlocked months" surfaced at year close. |
+| PL-9 | **Test on clone** | Lock a month → every writer refused (service, projection, raw SQL) → unlock as admin with reason → writes succeed → audit trail shows both events. |
+| PL-10 | **2019 close** | Lock the **7 active months** (Jun–Dec 2019; Jan–May has no activity) for entity 2 = Drive lah Singapore. That is what makes "2019 is locked" a fact rather than a statement. |
+
+### 2.0h SPREAD CHAIN — every entry door registers (DA-15/DA-16, Gaurav 2026-08-18)
+
+> Mechanism doc: `wip/SPREAD_ENGINE.md`. Rules: KNOWLEDGE § DA-1..DA-16.
+
+Clone-verified 2026-08-18 on `finance_clone_20260816`; nothing run against production.
+
+| ID | Item | State |
+|----|------|-------|
+| SC-1 | Migration **075**: `finance_asset_schedules.transaction_id` nullable — a bank transaction is evidence, not a requirement | ✅ applied on clone; prod pending with the 073/074 batch |
+| SC-2 | `register_from_journal`: registers capitalized spend off a journal alone, idempotent on journal_entry_id, refuses the engine's own postings | ✅ |
+| SC-3 | Door A: invoice approval now registers the asset inline when the account is policy-covered | ✅ |
+| SC-4 | Catch-up sweep accepts bank-less spend | ✅ — registered the **6 real stranded invoice assets**, S$19,802.28 |
+| SC-5 | **DA-16 bug**: `source NOT IN (...)` is NULL for NULL source, so the sweep skipped every MANUAL journal. Fixed with an explicit `IS NULL` arm | ✅ found by the new test, not in production |
+| SC-6 | Prepaid door guard: `journal_service.create` refuses a direct debit into 1300 unless `prepaid_ok=True` (invoice route only) | ✅ |
+| SC-7 | `unscheduled_prepaids` detector reported in every `run_all`; INSP-13 covers both shapes | ✅ |
+| SC-8 | Test suite `wip/history_recon/test_spread_chain_watertight.py` — 8 cases, 10 assertions, self-cleaning, clone-only guard | ✅ **10/10 pass**, 0 leftover rows |
+| SC-9 | Catch-up posted **125 charges** across 2024–2025 and stopped cleanly at the Jan-2026 period lock, cursors intact at 20–22/36 | ✅ correct behaviour |
+| SC-10 | 2019 unchanged by all of it — bank check 0.00 × 14, inspector identical (21 exceptions, same rules) | ✅ |
+| SC-11 | Regression check: pytest `test_amortization`/`test_journal_entries` show the SAME 35 pre-existing SQLite errors with my changes stashed; mypy 149 vs a 150 baseline | ✅ no regression |
+| SC-12 | 2024 INSP-13 was 6 exceptions, now **0** | ✅ |
+| C19-9 | **Config pack** `wip/history_recon/config_pack.py` — the settings the engines cannot derive (6 accounts, 6 policies, rules 387/388, deactivate 30/214/270/336, 2 templates). Idempotent, `--check` read-only, before-image table, prod refused without passphrase + PROCEED | ✅ 2026-08-18 — reports **0 changes** against the signed-off 0816 clone (proves parity) and **21** against prod; applied to a prod-state clone and re-ran as a no-op; policies/accounts/rule-states hash-identical to 0816 |
+| SC-13 | Manual JE route registers the asset **inline on creation** (not at the next sweep). Deliberately in the ROUTE, not in `journal_service.create`: the engine's own postings set `source` AFTER create, so a service-level hook would register a depreciation charge as a fresh asset | ✅ 2026-08-18, test case added — **11/11 pass** |
+
+### 2.0j ✅ 2019 IS CLOSED AND LOCKED ON PRODUCTION (2026-08-18)
+
+Executed foreground, Gaurav present and approving each armed step (CLAUDE.md Rule 8).
+Backup first: `~/Downloads/finance_prod_backup/PROD_finance_20260818_1023.sql` (51 MB, 45 finance
+tables) + `PROD_extra_20260818_1023.sql` (10 non-finance tables). Baseline before: 7,131 journals,
+14,671 lines, 60,486 txns, alembic 072.
+
+| Step | Result on production |
+|---|---|
+| Migrations 072→**076** | ✅ own-accounts registry, period locks + trigger, nullable register link, prepaid release link |
+| Config pack | ✅ **24 changes** (7 accounts, 3 re-categorizations, 6 policies, 2 rules, 4 deactivations, 2 templates); before-image `config_pack_before_20260818_1024` |
+| Own-accounts registry | ✅ 127 |
+| Feedback config | ✅ 4 rules updated, 3 inserted, alias, vendor default |
+| **Config parity vs signed-off clone** | ✅ rules, accounts, policies, templates, own-accounts ALL match |
+| Import + pair | ✅ 15 lines, 15 paired, 0 unpaired |
+| Categorization engine | ✅ 364 categorized, 9 to review, **0 errors** |
+| Replay the 10 rulings | ✅ 10 applied (txn 88448 was an override to the same account), 1 already handled |
+| Economic events | ✅ 56 staged, 56 projected, 0 errors |
+| Spread engine (as-of 2019-12-31) | ✅ 2 assets registered, 1 adjustment, **1 charge S$445.62**; DA-17 refused the AU gross/net schedules as designed |
+| Bank vs ledger | ✅ **0.00 × 14** |
+| **Gaurav's gate** | ✅ POST approved 2026-08-18 |
+| Post + reconcile | ✅ **389 journals posted, 403 txns reconciled**; INSP-3 → 0; trial balance UNCHANGED by posting |
+| Lock Jun–Dec | ✅ 7 months locked by gauravs@drivelah.sg; a write into Jul-2019 was **REFUSED on production** |
+
+**Final state:** 445 live journals · **S$510,579.16** of 2019 debits · 56 events posted · 403
+transactions reconciled · **0 drafts, 0 open transactions** · 7 months locked.
+
+**The production trial balance is IDENTICAL to the rehearsal across all 34 accounts, to the cent.**
+
+Residual: 8 inspector exceptions, none 2019-scoped — INSP-2 the S$122.50 Reserve (accepted),
+INSP-5 Host Payables S$17,709.15 (accepted), INSP-9 the 56 AU gross/net schedules (DA-17, deferred
+to the AU year passes), INSP-11 the GT Insurance pair (recovery, not a void), INSP-12 the 4 route
+conflicts (2023+, ruling deferred to those years).
+
+### 2.0i 2019 REHEARSAL on a fresh prod clone — GREEN (2026-08-18)
+
+Clone `finance_clone_20260818_0954` (prod copy: alembic 072, 7,131 journals, 60,486 txns,
+0 policies — all matching live prod at the moment of the dump). Reference for comparison:
+`finance_clone_20260816` — note this is now a DEVELOPMENT database (two days of later work,
+8 asset schedules vs 2, 197 charges vs 1), trustworthy for 2019 only.
+
+| # | Step | Result |
+|---|------|--------|
+| R-0 | Clone + verify it IS prod | ✅ four counters identical to live |
+| R-1 | Migrations 073→**076** | ✅ |
+| R-2 | Config pack | ✅ 21 changes + **3 re-categorizations the parity check caught** |
+| R-3 | Own-accounts registry | ✅ 127 upserted |
+| R-4 | Feedback config | ✅ 4 rules updated, 3 inserted, alias, vendor default |
+| R-5 | **Config parity vs 0816** | ✅ rules, accounts, policies, templates, own-accounts ALL match |
+| R-6 | Import Stripe payout lines | ✅ 15 |
+| R-7 | Pair | ✅ 15 paired, 0 unpaired |
+| R-8 | Categorization engine | ✅ 363 categorized, 10 to review, 0 errors |
+| R-9 | Replay the 10 rulings | ✅ 10 applied, 1 already handled by rules |
+| R-10 | Stage + project economic events | ✅ 56 staged, 56 projected, 0 errors |
+| R-11 | Spread engine as-of 2019-12-31 | ✅ 1 charge (S$445.62); DA-17 refused the 4 gross/net schedules as designed |
+| R-12 | Bank vs ledger | ✅ **0.00 × 14** |
+| R-13 | Post + reconcile | ✅ 389 journals posted, 403 txns reconciled; INSP-3 → 0; numbers unmoved |
+| R-14 | Lock Jun–Dec | ✅ 7 months; a test write into Jul-2019 was REFUSED |
+| R-15 | **2019 trial balance vs 0816** | ✅ **IDENTICAL — 34 accounts, every cent** |
+
+**The 445-vs-468 journal gap was explained, not waved away:** the 0816 clone carries 23 extra
+2019 journals worth S$55,030.18, ALL of them `VOID` — scars from the mid-run repairs (Stripe
+pocket guesses, the blank-counterparty director-loan defect). Excluding voids both clones show
+**445 journals / S$510,579.16 debits**. The rehearsal reproduces 2019 exactly AND cleanly,
+because the config was right before the first journal was written.
+
+Residual inspector exceptions (8) are all known and accepted: INSP-2 the S$122.50 Reserve
+(C19-5), INSP-5 the Host Payables gap (C19-4), INSP-9 the 56 AU gross/net schedules (DA-17,
+deferred to the AU year passes), INSP-11 the GT Insurance pair, INSP-12 the 4 route conflicts
+(2023+, awaiting ruling). **Nothing 2019-scoped is open.**
+
+Also found by the rehearsal: **migration 076** — `source_prepaid_schedule_id` existed only as a
+hand-added column on the 0816 clone, so a fresh prod clone died with UndefinedColumn on the
+first journal. And the clone recipe now pulls 10 non-finance tables (users, tasks, hr_*,
+payment_channel, counterparty_bank_account, payout_channel_registration, stripe_sync_runs) —
+without them the model and the clone are out of sync.
+
+**2019 close — position as of 2026-08-17 EOD.** Runbook: `wip/history_recon/2019/PROD_RUNBOOK_2019.md`
+(now turnkey: 8 phases, every command carries the prod-arming prefix). Scorecard:
+`wip/history_recon/2019/scorecard_2019_20260817.html`.
+
+| ID | Item | State |
+|----|------|-------|
+| C19-1 | Clone still green — bank vs ledger 0.00 × 14 (Jun–Dec), 468 journals, entity 2 | ✅ verified 2026-08-17 |
+| C19-2 | Prod-arming flag `--allow-prod RUN-ON-PROD-2019` + interactive PROCEED | ✅ BUILT, all 4 states proven 2026-08-17 |
+| C19-3 | Inspector re-run against the RIGHT entity (2, not 1) with `--resolutions` so already-ruled txns aren't re-asked | ✅ 2026-08-17 — INSP-1/4/6/8/9 all 0 |
+| C19-4 | **2120 Host Payables S$17,709.15 on the debit side** — paid hosts 53,767.75 vs earnings booked 36,058.60, gap concentrated Nov–Dec | ✅ **ACCEPTED as-is** (Gaurav, 2026-08-18) — 2019 closes with the gap recorded, not resolved |
+| C19-5 | 1023 Stripe Connect Reserve S$122.50, no source-of-truth feed | ✅ **ACCEPTED with a note** (Gaurav, 2026-08-18) — immaterial, no feed to wire before close |
+| C19-6 | One DRAFT amortization journal (2019-12-01, Dr 7400 / Cr 1810, S$445.62, charge 1/36) must be POSTED or INSP-3 fails | mechanical, in runbook Phase 8 |
+| C19-7 | ~~Prod at alembic 072~~ → **076 applied on production 2026-08-18** | ✅ done |
+| C19-8 | Merge + deploy the 3 branches (finance-api `260816_history_recon`, admin-bff + admincontrols `260817_amortization_tab`) — needed for the Period Locks UI, not for the booking path | pending |
+
+### 2.0f D&A + Prepaid Release — task list (Gaurav, 2026-08-17; ONE mechanism = the native amortization_service)
+
+| # | Task | State | Unblocks / blocked by |
+|---|------|-------|----------------------|
+| DA-T1 | **Policy rulings** (Gaurav+Kaveesh): useful lives per class (draft 1710→36mo), capitalization threshold, in-service convention, DQ-111 (S$468.93 residue: expense vs amortize) | ⛔ AWAITING GAURAV+KAVEESH | blocks DA-T7 |
+| DA-T2 | **Fix 56 prepaid schedule totals** gross(GST-incl)→net-parked (was S$80,365.43 over-release exposure; root: invoice branch stores functional GROSS while 1300 parks NET) | ✅ CLONE done 2026-08-17 (56 corrected, 0 mismatches, backup table `repair_sched_totals_backup_20260817`; schedules now sum 1,365,883.42 = net). PROD at DA-T11. Source verified CONSISTENT for new invoices: under POL-121 both the 1300 parking AND the schedule store GROSS (GST recovered at payment against the expense), so gross-gross matches by construction — only the 56 OLD-style (GST-split-at-approval) rows were mismatched, now fixed | blocks DA-T3 run |
+| DA-T3 | **Build the prepaid RELEASE engine** into the native /run family: monthly Dr expense / Cr 1300 Prepayments per finance_amortization_schedules, idempotent cursor, catch-up mode | pending | blocked by DA-T2 |
+| DA-T4 | **Catch-up releases 2023–2026** year-by-year inside each year pass (due-2024 ~S$322k, due-2025 ~S$818k; 1300 holds S$1.36M); Kaveesh on restated/filed periods | pending | blocked by DA-T3 |
+| DA-T5 | **Port draft enhancements INTO amortization_service**: asset↔JE link-trail table (proper migration; decide transaction_id nullability) + credit-side adjustment/disposal handling with prospective recompute | pending | — |
+| DA-T6 | **History-year backfill**: finalized years bypass approve(), so run check_and_create_schedule over each finalized year's reconciled txns (runner step, calls the NATIVE service) | pending | blocked by DA-T7 |
+| DA-T7 | **Seed policies + first clone run**: insert ruled policies, backfill 2019 (the two 1710 TTs), /run to 2019-12-31, verify vs P&L + inspector | pending | blocked by DA-T1 |
+| DA-T8 | **UI: real Amortization tab** (replace the 46-line placeholder): policies table, asset register with child-JE drill-down, prepaid schedules due-vs-released; BFF proxies over the EXISTING endpoints | pending | — |
+| DA-T9 | **INSP-10**: asset-class balances (15xx/17xx) without policy/register coverage = exception; wire INSP-9+10 into every year gate | pending | — |
+| DA-T10 | **Review the 4 odd prepaid schedules** (DA-14 route conflict): #127 Valletta S$1,193.07, #129 Valletta S$2,065.28, #136 Eventila S$415.37 all releasing into 1710 Technology Development (ASSET); #147 FIN-NOR S$6,228.24 releasing into 2410 Convertible Notes (LIABILITY). Guards now BUILT and clone-verified 2026-08-17 — invoice gate ignores a service period on a non-P&L account, `run_prepaids` refuses these 4, INSP-12 flags them, registration excludes `prepaid_release` so a release can't be registered as a new asset | ⏳ awaiting ruling | Gaurav: re-code to an expense account, or cancel the schedule and let the register amortize |
+| DA-T11 | **Prod apply pack**: link-trail migration + engines + ruled policies + corrected schedules, supervised (VR-1c), inspector green before+after | pending | blocked by all above |
+
 
 ### 2.0e ★ INVOICE POSTING BACKLOG — IMMEDIATE ACTIONS (Gaurav ruling, 2026-08-15: "at approval, the invoice posts, PERIOD")
 Prod P&L only contains PAID invoices; approval leaves the bill JE in DRAFT and paired invoices have NO JE at all. Full backlog (prod, all-time): **66 approved w/ draft JEs ($246,360: $116,934 dated 2026 + $129,426 pre-2026) · 97 paired w/ NO journal ($424,536: $75,136 2026 + $349,400 pre-2026) · 6 partially_paid stragglers ($30,656)** — ≈ **$670k of captured-but-unposted expense**, of which ~$192k belongs in the H1-2026 P&L.

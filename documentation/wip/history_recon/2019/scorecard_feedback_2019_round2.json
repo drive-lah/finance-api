@@ -1,0 +1,51 @@
+{
+ "year": 2019,
+ "bank_account_ids": [
+  1,
+  18,
+  1657,
+  19
+ ],
+ "feedback": [
+  {
+   "txn": 88110,
+   "verdict": "OK",
+   "input": ""
+  },
+  {
+   "txn": 88182,
+   "verdict": "Wrong COA",
+   "input": "Technology"
+  },
+  {
+   "txn": 88207,
+   "verdict": "OK",
+   "input": ""
+  },
+  {
+   "txn": 88221,
+   "verdict": "OK",
+   "input": ""
+  },
+  {
+   "txn": 88323,
+   "verdict": "OK",
+   "input": ""
+  },
+  {
+   "txn": 88368,
+   "verdict": "OK",
+   "input": ""
+  },
+  {
+   "txn": 88446,
+   "verdict": "OK",
+   "input": ""
+  },
+  {
+   "txn": 88450,
+   "verdict": "Other",
+   "input": "This is most likely a refund because this got cancelled. Check"
+  }
+ ]
+}

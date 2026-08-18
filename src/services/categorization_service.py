@@ -1780,9 +1780,16 @@ Return only the JSON object, no explanation."""
             if not _text_matches(transaction.transaction_type, rule.transaction_type_operator, rule.transaction_type_value):
                 return False
 
-        # 6. Counterparty name (from raw bank CSV)
+        # 6. Counterparty name — POL-125: rules see the RESOLVED identity. The raw CSV name is
+        # primary; when it's blank but enrichment linked a counterparty_id, match against the
+        # resolved counterparty's canonical name (2019 re-shakedown find: Tokio Marine txn with
+        # counterparty_id set + blank name silently missed the insurer rule).
         if rule.counterparty_operator is not None and rule.counterparty_value is not None:
-            if not _text_matches(transaction.counterparty_name, rule.counterparty_operator, rule.counterparty_value):
+            _cp_name = transaction.counterparty_name
+            if not _cp_name and transaction.counterparty_id and cp_map:
+                _cp = cp_map.get(transaction.counterparty_id)
+                _cp_name = _cp.name if _cp is not None else None
+            if not _text_matches(_cp_name, rule.counterparty_operator, rule.counterparty_value):
                 return False
 
         # 7. Currency
@@ -2182,10 +2189,18 @@ Return only the JSON object, no explanation."""
         in aggregate at the Stripe-sync tie-out instead (Gaurav, 2026-07-25).
         Transfers into these targets complete as MATCHED standalone — the second
         statement line does not exist by design.
+
+        DYNAMIC since the own-account payout importer (Gaurav, 2026-08-16): once a
+        Connect/Held-Funds account HAS imported lines (stripe_own_payout_import), it
+        has a real feed and pairing applies — standalone-matching would double-book.
         """
         ba = db.get(FinanceBankAccount, target_ba_id)
-        return bool(ba and ba.bank_name == "Stripe"
-                    and "connect" in (ba.account_name or "").lower())
+        if not (ba and ba.bank_name == "Stripe"
+                and "connect" in (ba.account_name or "").lower()):
+            return False
+        has_feed = db.query(FinanceTransaction.id).filter(
+            FinanceTransaction.bank_account_id == target_ba_id).limit(1).scalar()
+        return not has_feed
 
     # ------------------------------------------------------------------
     # Journal entry creation

@@ -44,3 +44,13 @@ Stripe (two-lane replay) — repeated per year.
 
 **Monitoring:** every batch writes a scorecard row (account, period, counts, verdict mix, invariants,
 agent sign-offs, human sign-off) — the recon dashboard; nothing finalizes without green gates.
+
+## Process rule — mid-year engine fixes force a full-year re-sweep (Gaurav defect find, 2026-08-16)
+
+An engine/rule fix landed MID-YEAR-PASS applies only to txns still open at fix time; everything already
+booked under the old behavior stays wrong silently (the four Dirk-Jan loans-in sat in 4025 Incidentals
+Revenue via the catch-all rule because the blank-counterparty-name defect bypassed rule 385, and only the
+two still-open stragglers got the fixed matcher). RULE: after ANY engine or rule-infrastructure fix during
+a year pass, re-sweep the WHOLE year for the defect class (query for victims, void + re-run through the
+fixed engine) BEFORE regenerating the scorecard. A verdict Gaurav already gave (rules 385/386) that fails
+to apply is a DEFECT, not feedback to re-collect.

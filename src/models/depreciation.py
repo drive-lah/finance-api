@@ -97,12 +97,14 @@ class FinanceAssetSchedule(Base):
         ForeignKey("finance_coa_amortization_policies.id", ondelete="RESTRICT"),
         nullable=False,
     )
-    transaction_id: Mapped[int] = mapped_column(
+    transaction_id: Mapped[Optional[int]] = mapped_column(
         Integer,
         ForeignKey("finance_transactions.id", ondelete="RESTRICT"),
-        nullable=False,
+        nullable=True,
         unique=True,
-        comment="The bank transaction that triggered this schedule",
+        comment="The bank transaction that triggered this schedule, when there was one. NULL for "
+                "journal-born assets — invoice approvals and manual journals carry no bank line, "
+                "and refusing them meant that spend never depreciated (DA-15).",
     )
     journal_entry_id: Mapped[Optional[int]] = mapped_column(
         Integer,

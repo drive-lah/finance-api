@@ -1,0 +1,39 @@
+{
+ "year": 2019,
+ "entity_ids": [
+  2
+ ],
+ "exceptions": [
+  {
+   "rule": "INSP-1",
+   "severity": "HIGH",
+   "txn": 88207,
+   "date": "2019-08-19",
+   "amount": 608.8,
+   "counterparty": "",
+   "description": "MAYBANK SG LTD CHQ455741 CHEQUE DEPOSIT",
+   "booked_to": "7003 Other Income - Miscellaneous",
+   "route": "needs_review_resolution",
+   "question": "Incoming money credited to a REVENUE account \u2014 genuine customer receipt, or a transfer/loan/refund wearing a revenue costume?"
+  },
+  {
+   "rule": "INSP-2",
+   "severity": "HIGH",
+   "account": "1023 Stripe Connect Reserve",
+   "book_balance": -122.5,
+   "truth": null,
+   "truth_source": "Stripe balance transactions",
+   "diff": null,
+   "question": "Ledger carries a balance but no source-of-truth is available for this account \u2014 how do we verify it?"
+  },
+  {
+   "rule": "INSP-5",
+   "severity": "MEDIUM",
+   "account": "2120 Host Payables",
+   "account_type": "LIABILITY",
+   "normal_balance": "CREDIT",
+   "balance": 17709.15,
+   "question": "LIABILITY account sits 17,709.15 AGAINST its natural CREDIT side \u2014 double-booking, missing lane, or timing?"
+  }
+ ]
+}

@@ -147,7 +147,8 @@ class JournalService:
         lines: list[dict[str, Any]],
         reference_number: Optional[str] = None,
         created_by: Optional[str] = None,
-        status: JournalEntryStatus = JournalEntryStatus.DRAFT
+        status: JournalEntryStatus = JournalEntryStatus.DRAFT,
+        prepaid_ok: bool = False
     ) -> FinanceJournalEntry:
         """
         Create a new journal entry with validation.
@@ -169,6 +170,28 @@ class JournalService:
             ValueError: If validation fails
         """
         # Validate entity exists
+        # PERIOD LOCK (STATUS 2.0g, Gaurav 2026-08-17): a closed entity-month refuses new
+        # journals. This is the friendly gate across every caller; the DB trigger (migration
+        # 074) is the backstop for raw SQL and anything that skips this service.
+        from src.services.period_lock_service import period_lock_service
+        period_lock_service.assert_open(db, entity_id, entry_date)
+
+        # DA-15 (Gaurav 2026-08-18): a debit into Prepayments must arrive WITH its release
+        # schedule. The engine can register a stranded asset (the policy supplies the useful
+        # life) but it cannot invent a service period, so an unscheduled prepaid debit would
+        # park forever and never reach the P&L. Only the invoice route and the engine itself
+        # pass prepaid_ok=True; everything else is refused here, at the door.
+        from src.services.amortization_service import PREPAID_ACCOUNT_CODE as _PREPAID
+        if not prepaid_ok:
+            for _ld in lines:
+                if (_ld.get("account_code") == _PREPAID
+                        and float(_ld.get("debit_amount") or 0) > 0):
+                    raise ValueError(
+                        f"Cannot debit {_PREPAID} Prepayments directly: a prepayment needs a "
+                        f"service period so it can be released month by month, and only an "
+                        f"invoice carries one. Book this through the invoice route with a "
+                        f"service period, or charge it to an expense account outright.")
+
         if not self.validate_entity_exists(db, entity_id):
             raise ValueError(f"Entity with ID {entity_id} does not exist")
         

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Finance Flows 1–4 — Test Plan</title>
+<style>
+  body{font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:920px;margin:24px auto;padding:0 20px;color:#1f2937}
+  h1{font-size:22px} h2{font-size:17px;margin-top:26px;border-bottom:2px solid #e5e7eb;padding-bottom:6px}
+  .env{background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:12px 16px;font-size:14px}
+  .env code{background:#fff;padding:1px 5px;border-radius:4px;border:1px solid #ddd}
+  .tc{border:1px solid #e5e7eb;border-radius:8px;padding:12px 16px;margin:12px 0;background:#fff}
+  .tc h3{margin:0 0 6px;font-size:15px}
+  .tc .steps{margin:6px 0} .tc .exp{color:#065f46;background:#ecfdf5;border-radius:6px;padding:6px 10px;margin:6px 0;font-size:14px}
+  .res label{font-size:13px;color:#6b7280}
+  .res textarea{width:100%;min-height:44px;border:1px solid #d1d5db;border-radius:6px;padding:6px;font:14px sans-serif;box-sizing:border-box}
+  .pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;background:#eef2ff;color:#4338ca;margin-left:6px}
+  ol{padding-left:20px} .k{font-family:ui-monospace,monospace;background:#f3f4f6;padding:1px 5px;border-radius:4px}
+  #status{position:fixed;top:10px;right:14px;background:#111827;color:#fff;font-size:12px;padding:5px 12px;border-radius:999px;opacity:0;transition:opacity .3s}
+  #banner{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:8px;padding:8px 14px;font-size:13px;margin:10px 0;display:none}
+</style>
+</head>
+<body>
+<div id="status">saved ✓</div>
+<h1>Finance Flows 1–4 — Test Plan</h1>
+<div id="banner">⚠ Auto-save sink not reachable on :4545 — notes kept in this browser only. Tell Pickle to start the sink, then reload.</div>
+<p>Local DB (never prod). <b>Type freely — every keystroke auto-saves to disk.</b> Log in at <a href="http://localhost:5173">localhost:5173</a> with <span class="k">gauravs@drivelah.sg</span> + any password.</p>
+<div class="env"><b>Seeded:</b> COA <b>6701</b> → approver = you (1-step, needs intercom); COA <b>5021</b> → 2-step (needs trip + intercom); vendor <b>Acme Software Pty Ltd</b>; onboarded approvers Gaurav / Dirk-Jan / Zilla.</div>
+
+<h2>Flow 1 · COA config — approver is a strict dropdown <span class="pill">Finance Settings</span></h2>
+<div class="tc">
+<div class="steps">Finance → Accounting → <b>Settings</b>. Edit any row → open the <b>Approver 1</b> field.</div>
+<div class="exp">Expected: it's a <b>dropdown of onboarded employees</b> (Gaurav / Dirk-Jan / Zilla) — <b>no free typing</b>. Header stays visible while scrolling. Save persists; history (clock) shows the change.</div>
+<div class="res"><label>Result</label><textarea data-id="f1"></textarea></div>
+</div>
+
+<h2>Flow 2 · Raise a vendor invoice <span class="pill">Requests → Raise</span></h2>
+<div class="tc">
+<h3>2a. Anchor gate</h3>
+<div class="steps">Requests → <b>Raise a request</b>. Pick Entity=SG, Vendor=Acme, COA=<b>6701</b>, amount=1200, a date. The COA needs an intercom ticket → try submitting <b>without</b> it.</div>
+<div class="exp">Expected: the <b>Intercom ticket</b> field appears (required, red *), and "Raise invoice" is disabled until you fill it.</div>
+<div class="res"><label>Result</label><textarea data-id="f2a"></textarea></div>
+</div>
+<div class="tc">
+<h3>2b. Raise + reference + routing</h3>
+<div class="steps">Fill the intercom ticket (e.g. <span class="k">94099654</span>) → <b>Raise invoice</b>.</div>
+<div class="exp">Expected: green confirm showing a <b>DL-INV-…</b> reference and "sent for approval to <b>gauravs@drivelah.sg</b>" (the COA's approver).</div>
+<div class="res"><label>Result</label><textarea data-id="f2b"></textarea></div>
+</div>
+
+<h2>Flow 3 · Request a new vendor <span class="pill">Requests → Raise</span></h2>
+<div class="tc">
+<div class="steps">In the Raise form, Vendor → <b>“+ Request a new vendor…”</b> → type a name (e.g. "Test Vendor Co"), COA=<b>6300</b> (no anchors), amount=500, a date → Raise.</div>
+<div class="exp">Expected: confirm says it went to <b>finance for new-vendor approval</b>. Then go to your <b>task inbox</b> → there's an <b>“Approve new vendor — Test Vendor Co”</b> task. Approving it should activate the vendor and push the held invoice into the approval queue.</div>
+<div class="res"><label>Result</label><textarea data-id="f3"></textarea></div>
+</div>
+
+<h2>Flow 4 · Approve an invoice in the task inbox <span class="pill">Tasks</span></h2>
+<div class="tc">
+<h3>4a. 1-step (COA 6701 → you)</h3>
+<div class="steps">Open your <b>task inbox</b>. Find the <b>“Approve invoice — Acme…”</b> task from Flow 2 (it has the AI card). Click <b>Approve</b>.</div>
+<div class="exp">Expected: the task closes (single-step COA → fully approved). No separate "Approvals" tab exists — approvals live here in the task inbox.</div>
+<div class="res"><label>Result</label><textarea data-id="f4a"></textarea></div>
+</div>
+<div class="tc">
+<h3>4b. 2-step (COA 5021)</h3>
+<div class="steps">Raise an invoice on COA <b>5021</b> (needs trip + intercom; e.g. trip <span class="k">TA123</span>, ticket <span class="k">94099654</span>). It routes to the first approver; on their <b>Approve</b>, the task should <b>stay open and move to the second approver</b> — not post yet.</div>
+<div class="exp">Expected: after the first approve, the invoice is still pending (second sign-off outstanding), not paid/posted.</div>
+<div class="res"><label>Result</label><textarea data-id="f4b"></textarea></div>
+</div>
+
+<script>
+const SINK='http://localhost:4545';
+const areas=[...document.querySelectorAll('textarea[data-id]')];
+const statusEl=document.getElementById('status'), banner=document.getElementById('banner');
+let t; function collect(){const o={};areas.forEach(a=>o[a.dataset.id]=a.value);return o;}
+function flash(){statusEl.style.opacity=1;clearTimeout(t);t=setTimeout(()=>statusEl.style.opacity=0,900);}
+async function save(){try{const r=await fetch(SINK+'/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(collect())});if(r.ok){flash();banner.style.display='none';}}catch(e){banner.style.display='block';}}
+async function load(){try{const r=await fetch(SINK+'/load');if(r.ok){const d=await r.json();areas.forEach(a=>{if(d[a.dataset.id]!=null)a.value=d[a.dataset.id];});}}catch(e){banner.style.display='block';}}
+let deb;areas.forEach(a=>a.addEventListener('input',()=>{clearTimeout(deb);deb=setTimeout(save,400);}));
+load();
+</script>
+</body>
+</html>

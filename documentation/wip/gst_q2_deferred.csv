@@ -1,0 +1,50 @@
+kind,doc,date,counterparty,status,coa,total,paid,deferred_gst
+1355 input (open bill),INV0000308939,2025-12-31,CDC Fleet,approved,5060,27063.20,0.00,2460.29
+1355 input (open bill),INV0000296628,2025-11-30,CDC Fleet,approved,5060,26460.00,0.00,2405.45
+1355 input (open bill),INV0000296627,2025-10-31,CDC Fleet,approved,5060,25799.20,0.00,2345.38
+1355 input (open bill),INV0000266338,2025-09-30,CDC Fleet,partially_paid,5060,25034.00,25000.00,3.09
+1355 input (open bill),2549974,2026-04-30,Australian Financial Complaints Authority,approved,5025,17258.90,0.00,1568.99
+1355 input (open bill),INV-3190741,2026-05-08,Thinxtra,approved,5030,16551.36,0.00,1504.67
+1355 input (open bill),INV-3190768,2026-06-10,Thinxtra,approved,5030,15142.05,0.00,1376.55
+1355 input (open bill),R208694,2026-05-04,CAR-TREK AUSTRALIA PTY LTD,approved,5032,8207.27,0.00,746.12
+1355 input (open bill),R209914,2026-06-01,CAR-TREK AUSTRALIA PTY LTD,approved,5032,8180.05,0.00,743.64
+1355 input (open bill),404381103145,2025-12-31,Experian Australia Operations Pty Ltd,approved,6701,7925.78,0.00,720.52
+1355 input (open bill),404381103912,2026-01-31,Experian Australia Operations Pty Ltd,approved,6701,7582.58,0.00,689.32
+1355 input (open bill),404381104716,2026-02-28,Experian Australia Operations Pty Ltd,approved,6701,6631.62,0.00,602.88
+1355 input (open bill),2541495,2025-10-31,Australian Financial Complaints Authority,approved,5025,5096.08,0.00,463.28
+1355 input (open bill),404381105632,2026-03-31,Experian Australia Operations Pty Ltd,approved,6701,4690.40,0.00,426.40
+1355 input (open bill),51506,2025-05-10,Nova Smash Repairs,approved,5032,4438.04,0.00,403.46
+1355 input (open bill),FTI1100002984,2025-08-31,RACQ,approved,5033,4137.05,0.00,376.10
+1355 input (open bill),2544043,2025-12-31,Australian Financial Complaints Authority,approved,5025,3898.72,0.00,354.43
+1355 input (open bill),404381108244,2026-06-30,Experian Australia Operations Pty Ltd,approved,6701,3692.98,0.00,335.72
+1355 input (open bill),2543115,2025-11-30,Australian Financial Complaints Authority,approved,5025,3596.34,0.00,326.94
+1355 input (open bill),2507,2025-04-24,1 Key Locksmiths,approved,5054,3500.00,0.00,318.19
+1355 input (open bill),404381107338,2026-05-31,Experian Australia Operations Pty Ltd,approved,6701,2717.00,0.00,247.00
+1355 input (open bill),2539027,2025-09-30,Australian Financial Complaints Authority,approved,5025,2548.04,0.00,231.64
+1355 input (open bill),30046376,2025-04-30,Bird & Bird,approved,6501,2493.70,0.00,226.70
+1355 input (open bill),8561,2026-03-31,SMD Lawyers Pty Ltd,approved,6501,2420.00,0.00,220.00
+1355 input (open bill),51996,2025-08-19,Nova Smash Repairs,approved,5032,2295.15,0.00,208.65
+1355 input (open bill),30046367,2025-04-30,Bird & Bird,approved,6501,1925.00,0.00,175.00
+1355 input (open bill),INV-01288,2026-05-25,Stephen Inner West Smash Repairs Pty Ltd,approved,5032,1595.00,0.00,145.00
+1355 input (open bill),INV-01290,2026-05-29,Stephen Inner West Smash Repairs Pty Ltd,approved,5032,1400.00,0.00,127.27
+1355 input (open bill),DM026,2026-06-29,NORMAN CHAN,approved,5001,1364.00,0.00,124.00
+1355 input (open bill),19139,2024-12-10,NCIS,partially_paid,5032,1348.00,1343.00,0.45
+1355 input (open bill),181,2025-07-09,MELBOURNE PRESTIGE CENTRE,partially_paid,5032,1210.00,1200.00,0.91
+1355 input (open bill),INV-01294,2026-06-26,Stephen Inner West Smash Repairs Pty Ltd,approved,5032,1100.00,0.00,100.00
+1355 input (open bill),DM025,2026-06-25,NORMAN CHAN,approved,5001,1023.00,0.00,93.00
+1355 input (open bill),DM024,2026-06-18,NORMAN CHAN,approved,5001,924.00,0.00,84.00
+1355 input (open bill),00000107,2024-12-03,Connect Repair Logistics,approved,5032,908.60,0.00,82.60
+1355 input (open bill),FTI1100003599,2025-09-30,RACQ,approved,5033,759.01,0.00,69.00
+1355 input (open bill),AAU195396,2026-01-29,Autorola,partially_paid,5032,717.31,717.30,0.00
+1355 input (open bill),00000382,2025-08-05,Bris Towing,approved,5033,660.00,0.00,60.00
+1355 input (open bill),INV-00002444,2025-12-31,Watterson,approved,6501,438.90,0.00,39.90
+1355 input (open bill),INV-01292,2026-06-18,Stephen Inner West Smash Repairs Pty Ltd,approved,5032,385.00,0.00,35.00
+1355 input (open bill),4046421,2026-05-28,Focussed Assessing Pty Ltd,partially_paid,5034,330.00,220.00,10.00
+1355 input (open bill),AU-MRKV035079E0,2026-02-03,Pack & Send,approved,5066,330.00,0.00,30.00
+1355 input (open bill),00256489,2024-11-22,SHEENGROUP TOWING PTY LTD,approved,5033,280.00,0.00,25.45
+1355 input (open bill),4053881,2026-06-25,Focussed Assessing Pty Ltd,approved,5034,220.00,0.00,20.00
+1355 input (open bill),4039504,2026-05-05,Focussed Assessing Pty Ltd,approved,5034,220.00,0.00,20.00
+1355 input (open bill),8615,2026-04-30,SMD Lawyers Pty Ltd,approved,6501,220.00,0.00,20.00
+1355 input (open bill),1SR2TA,2025-03-07,Focussed Assessing Pty Ltd,approved,5034,220.00,0.00,20.00
+1355 input (open bill),3105117,2025-04-03,Focussed Assessing Pty Ltd,approved,5034,165.00,0.00,15.00
+2505 output (open AR balance),1200 Trade Receivables,2026-06-30,(uncollected invoiced revenue),open,1200,542760.74,0.00,49341.89

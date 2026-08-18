@@ -1,0 +1,1038 @@
+gst_account,bucket,in_bas,date,ref,counterparty,contra_or_coa,amount,gst,status,reason
+(none),REALIZED,no,2026-04-01,JE3272,CIRCLECI.COM,6701 Technology - Software Subscriptions,109.28,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-01,JE3273,,6600 Bank Fees,3.82,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-01,JE3274,OMNITAS.DEV,6701 Technology - Software Subscriptions,11.63,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-01,JE3275,,6600 Bank Fees,0.41,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-01,JE4922,Amplitude,6701 Technology - Software Subscriptions,810.65,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-01,JE8087,,5010 Payment Processing Fees,12250.11,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-01,JE8094,,2110 Customer Deposits Payable,8500.00,0.00,EXCLUDED,deposit — not a supply; no GST until forfeited
+(none),REALIZED,no,2026-04-01,JE8099,,5011 Stripe Platform Adjustments,214.51,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-01,JE8100,,2110 Customer Deposits Payable,8550.00,0.00,EXCLUDED,deposit — not a supply; no GST until forfeited
+(none),REALIZED,no,2026-04-01,JE8101,,2110 Customer Deposits Payable,915.00,0.00,EXCLUDED,deposit — not a supply; no GST until forfeited
+(none),REALIZED,no,2026-04-01,JE8102,,2110 Customer Deposits Payable,915.00,0.00,EXCLUDED,deposit — not a supply; no GST until forfeited
+(none),REALIZED,no,2026-04-02,JE3276,SQ *STOCK MARKET KITCHEN,6402 Entertainment,5.89,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-02,JE3277,POST GORDON,5065 Cost of Device - Courier/Shipping,9.37,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-02,JE4923,Hetzner,6700 Technology - Infrastructure,55.81,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-02,JE4924,ANTHROPIC,6701 Technology - Software Subscriptions,31.97,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-03,JE4925,MICROSOFT,6701 Technology - Software Subscriptions,1.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-03,JE5688,,6012 Employee Claims - Transport,40.07,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-04,JE4927,ANTHROPIC,6701 Technology - Software Subscriptions,32.93,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-04,JE4928,Perplexity,6700 Technology - Infrastructure,80.06,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-04,JE4929,ANTHROPIC,6701 Technology - Software Subscriptions,32.15,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-04,JE4930,Perplexity,6700 Technology - Infrastructure,80.06,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-05,JE4931,ANTHROPIC,6701 Technology - Software Subscriptions,32.23,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-05,JE4932,Perplexity,6700 Technology - Infrastructure,80.06,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-05,JE4933,ANTHROPIC,6701 Technology - Software Subscriptions,32.13,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-05,JE5656,,6701 Technology - Software Subscriptions,26.63,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-06,JE4934,Craig Anthony Letters,6000 Salaries & Wages,225.56,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-06,JE4935,ANTHROPIC,6701 Technology - Software Subscriptions,32.22,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-07,JE4936,Synthesia,6700 Technology - Infrastructure,46.28,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-07,JE4937,ANTHROPIC,6701 Technology - Software Subscriptions,31.82,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-08,JE3279,Twilio,6700 Technology - Infrastructure,1787.37,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-08,JE3280,,6600 Bank Fees,62.56,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-08,JE3281,RENDER.COM,6700 Technology - Infrastructure,155.65,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-08,JE3282,,6600 Bank Fees,5.45,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-08,JE3283,NEWS PTY LIMITED,6100 Marketing - Digital Advertising,40.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-08,JE3284,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,9.72,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-08,JE3740,,6400 Travel - Tickets,60.16,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-08,JE4938,ANTHROPIC,6701 Technology - Software Subscriptions,31.38,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-09,JE3285,POST GORDON,5065 Cost of Device - Courier/Shipping,13.51,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-09,JE3286,,6702 Technology - Platform Testing,40.00,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-09,JE3287,Heroku,6700 Technology - Infrastructure,34.87,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-09,JE3288,,6600 Bank Fees,1.22,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-09,JE4940,ANTHROPIC,6701 Technology - Software Subscriptions,39.19,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-09,JE4941,ANTHROPIC,6701 Technology - Software Subscriptions,31.43,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-09,JE5630,CreditLine NetBank BPAY,6310 Office Equipment,327.50,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-10,JE3290,SQ *STOCK MARKET KITCHEN,6402 Entertainment,5.89,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-10,JE3291,Didi Mobility,6702 Technology - Platform Testing,7.07,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-10,JE3292,,6600 Bank Fees,0.25,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-10,JE3293,Didi Mobility,6702 Technology - Platform Testing,3.18,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-10,JE3294,,6600 Bank Fees,0.11,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-10,JE3742,Dirk-Jan Ter Horst,2405 Related-Party / Director Loans,15000.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-10,JE4944,Fireflies.ai,6700 Technology - Infrastructure,82.42,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-10,JE10525,Mova Automotive Pte Ltd,8210 8210,3645.48,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-10,JE10531,Mova Automotive Pte Ltd,8210 8210,2831.93,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-11,JE3295,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,2.62,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-12,JE3296,Income Insurance Limited,5035 Cost of Insurance - Trip Premium,228.35,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-12,JE3744,,6600 Bank Fees,12.99,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-13,JE3745,Dirk-Jan Ter Horst,2405 Related-Party / Director Loans,485000.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-13,JE4945,ANTHROPIC,6701 Technology - Software Subscriptions,31.38,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-13,JE4946,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,1.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-13,JE4947,Vigneshsuran So Dhevan,6000 Salaries & Wages,939.14,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-13,JE4948,ANTHROPIC,6701 Technology - Software Subscriptions,156.80,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-13,JE4949,CURSOR (AI Powered IDE),6701 Technology - Software Subscriptions,228.29,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-13,JE4950,STARBUCKS,6401 Travel - Meals,26.46,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-13,JE4951,,6400 Travel - Tickets,5.49,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-13,JE5840,,6400 Travel - Tickets,55.24,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-13,JE5845,,6400 Travel - Tickets,40.88,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-14,JE3299,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,9.65,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-14,JE3300,LOVABLE,6701 Technology - Software Subscriptions,35.46,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-14,JE3301,,6600 Bank Fees,1.24,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-14,JE3303,SQ *STOCK MARKET KITCHEN,6402 Entertainment,5.89,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-14,JE3304,SQ *STOCK MARKET KITCHEN,6402 Entertainment,5.89,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-14,JE3305,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,11.58,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-14,JE3306,Dirk-Jan Ter Horst,6000 Salaries & Wages,20000.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-14,JE4281,CURSOR (AI Powered IDE),6701 Technology - Software Subscriptions,207.99,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-14,JE4952,Comfort City Cab,6012 Employee Claims - Transport,9.98,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-14,JE4953,STARBUCKS,6401 Travel - Meals,10.87,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-14,JE4954,,6400 Travel - Tickets,5.59,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-14,JE5812,Gaurav Singhal,6003 Directors Salary,20000.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-14,JE5851,,6401 Travel - Meals,37.67,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-14,JE5873,,6402 Entertainment,7.74,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-15,JE3307,,6600 Bank Fees,0.11,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE3308,,6600 Bank Fees,0.42,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE3309,RIGHTWORKS,6701 Technology - Software Subscriptions,55.31,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-15,JE3310,,6600 Bank Fees,1.94,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE3311,OPENAI (ChatGPT Subscription),6701 Technology - Software Subscriptions,105.12,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-15,JE3312,,6600 Bank Fees,3.68,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4242,Drive Lah Pte. Ltd.,8210 8210,50000.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4955,Sentry,6701 Technology - Software Subscriptions,69.27,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-15,JE4956,ATO direct,2500 GST Payable (Output Tax),13546.18,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4957,Lai Mei T,6000 Salaries & Wages,1750.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4958,Maria Fonseca Dimaandal,5063 Customer Support - Salary,630.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4959,Jen Reyes,5063 Customer Support - Salary,612.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4960,Edgardo Buenaventura,5063 Customer Support - Salary,341.69,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4961,DOMINADOR GAMIT,5063 Customer Support - Salary,840.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4962,Ralph Efrenson Eronga,5063 Customer Support - Salary,630.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4963,Trixie trixie,5063 Customer Support - Salary,770.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4964,Gem C. Rey-Hipolito,5063 Customer Support - Salary,630.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4965,Edelyn Reyes,5062 On-Ground Team - Expenses,630.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-15,JE4966,Gabriel John Limjoco,5063 Customer Support - Salary,630.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4967,Izzah Lorraine Carandang Dela Cruz,5063 Customer Support - Salary,630.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4968,Myrna Lynne Alcala,5063 Customer Support - Salary,630.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4969,Alexcess Libiran Car,5062 On-Ground Team - Expenses,1176.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-15,JE4970,Rosemarie Timbol Basilio,5063 Customer Support - Salary,630.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4971,Annabelle Gayda Luching,5063 Customer Support - Salary,840.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4972,Evelyn Chua Aquino,5063 Customer Support - Salary,630.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4973,Melvin Verona Magro,5063 Customer Support - Salary,630.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4974,Rheazel Martinez Adolfo,5063 Customer Support - Salary,630.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4975,Xyron Bunquin Manongsong,5063 Customer Support - Salary,630.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4976,Jennilyn Palacol Labajos,5063 Customer Support - Salary,630.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4977,Mary Rose Bernal Yap,5063 Customer Support - Salary,630.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4978,Ernie Javines Biason,5063 Customer Support - Salary,630.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4979,Patrick Leonard Mojica,5063 Customer Support - Salary,622.21,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4980,Emmanuel Jacobo,5063 Customer Support - Salary,630.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4981,Julie Ann Macuha Cenedoza,5063 Customer Support - Salary,630.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4982,Godielou Petipet Quero,5063 Customer Support - Salary,630.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4983,Rose Ann Ferrer Naredo,5063 Customer Support - Salary,630.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4984,Zilla Marie,5063 Customer Support - Salary,840.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4988,Trixie trixie,5063 Customer Support - Salary,465.64,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4989,Melvin Verona Magro,5063 Customer Support - Salary,401.21,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4990,Maria Fonseca Dimaandal,5063 Customer Support - Salary,390.65,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4991,Edelyn Reyes,5062 On-Ground Team - Expenses,202.15,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-15,JE4992,Emmanuel Jacobo,5063 Customer Support - Salary,231.43,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4993,Rheazel Martinez Adolfo,5063 Customer Support - Salary,102.67,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4994,Gem C. Rey-Hipolito,5063 Customer Support - Salary,61.71,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4995,Gabriel John Limjoco,5063 Customer Support - Salary,57.02,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4996,Godielou Petipet Quero,5063 Customer Support - Salary,53.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4997,Ralph Efrenson Eronga,5063 Customer Support - Salary,53.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4998,Mary Rose Bernal Yap,5063 Customer Support - Salary,47.68,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE4999,Xyron Bunquin Manongsong,5063 Customer Support - Salary,14.89,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE5000,Edgardo Buenaventura,5063 Customer Support - Salary,11.36,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE5001,DOMINADOR GAMIT,5063 Customer Support - Salary,6.68,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE5002,Izzah Lorraine Carandang Dela Cruz,5063 Customer Support - Salary,4.34,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE5003,Aman Yadav,6000 Salaries & Wages,2672.40,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE5004,,6702 Technology - Platform Testing,18.95,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-15,JE5006,,6702 Technology - Platform Testing,18.95,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-15,JE5007,,6702 Technology - Platform Testing,1.02,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-15,JE5008,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,7.28,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-15,JE5009,,6400 Travel - Tickets,5.76,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-15,JE5412,,6400 Travel - Tickets,6.64,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-15,JE5414,,6400 Travel - Tickets,6.62,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-15,JE5679,,6701 Technology - Software Subscriptions,7.01,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-15,JE5715,Riezel Basilio Villanueva,5063 Customer Support - Salary,770.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-15,JE5721,PRECISION CLEARING HOUSE,1520 Motor Vehicles,8857.76,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-15,JE5855,,6401 Travel - Meals,26.48,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-15,JE5864,,6013 Employee Claims - Office Supplies,12.59,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-15,JE5866,,6401 Travel - Meals,12.14,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-15,JE5880,,6402 Entertainment,3.26,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-15,JE5882,,6013 Employee Claims - Office Supplies,2.43,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-15,JE10537,Amazon Web Services,8210 8210,11672.77,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-16,JE3313,EDREAMS,6400 Travel - Tickets,11.99,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-16,JE3314,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,22.26,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-16,JE3315,Comfort City Cab,6012 Employee Claims - Transport,34.04,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-16,JE3316,,6600 Bank Fees,1.19,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-16,JE3317,,6600 Bank Fees,0.21,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-16,JE3318,ANGEL INVESTMENT TWICKENHAM,6700 Technology - Infrastructure,399.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-16,JE3319,VERCEL INC,6700 Technology - Infrastructure,28.36,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-16,JE3320,,6600 Bank Fees,0.99,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-16,JE5013,UBER *TRIP,6400 Travel - Tickets,16.38,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-16,JE5014,ANTHROPIC,6701 Technology - Software Subscriptions,30.76,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-16,JE5853,,6400 Travel - Tickets,30.01,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-16,JE5858,,6401 Travel - Meals,22.84,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-16,JE5862,,6400 Travel - Tickets,13.76,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-16,JE5877,,6402 Entertainment,5.90,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-16,JE10522,Amazon Web Services,8210 8210,11385.61,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-16,JE10573,Intercom,8210 8210,25524.54,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-17,JE3322,ANTHROPIC,6701 Technology - Software Subscriptions,116.85,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-18,JE3323,SUPABASE,6701 Technology - Software Subscriptions,99.11,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-18,JE3324,,6600 Bank Fees,3.47,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-18,JE3325,OPENAI (ChatGPT Subscription),6701 Technology - Software Subscriptions,28.11,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-18,JE3326,,6600 Bank Fees,0.98,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-18,JE5683,,6014 Employee Claims - Other,20.98,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-19,JE5015,ANTHROPIC,6701 Technology - Software Subscriptions,30.86,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-20,JE3327,,6400 Travel - Tickets,3.48,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-20,JE4245,Drive Lah Pte. Ltd.,8210 8210,10000.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-20,JE4246,Drive Lah Pte. Ltd.,8210 8210,2000.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-20,JE5689,,6012 Employee Claims - Transport,20.00,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-21,JE3328,,6600 Bank Fees,0.12,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-21,JE3330,SCOOT,6400 Travel - Tickets,281.76,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-21,JE5016,Jetstar,6400 Travel - Tickets,299.74,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-21,JE5017,Geraldine Austin,6000 Salaries & Wages,9614.24,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-22,JE3331,WISPR,6701 Technology - Software Subscriptions,20.99,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-22,JE3332,,6600 Bank Fees,0.73,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-22,JE3333,ELEVENLABS.IO,6701 Technology - Software Subscriptions,7.63,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-22,JE3334,,6600 Bank Fees,0.27,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-22,JE3335,ANTHROPIC,6701 Technology - Software Subscriptions,307.86,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-22,JE3336,,6600 Bank Fees,10.78,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-22,JE5018,ANTHROPIC,6701 Technology - Software Subscriptions,30.98,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-22,JE5019,ANTHROPIC,6701 Technology - Software Subscriptions,154.09,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-22,JE5020,,6702 Technology - Platform Testing,18.95,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-22,JE5021,,6702 Technology - Platform Testing,20.47,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-22,JE5703,Philhealthcare Inc,6004 Staff Health Insurance,5249.32,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-23,JE5024,Calendly,6701 Technology - Software Subscriptions,18.50,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-23,JE5025,ANTHROPIC,6701 Technology - Software Subscriptions,31.14,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-23,JE5415,,6701 Technology - Software Subscriptions,84.36,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-24,JE4249,Drive Lah Pte. Ltd.,8210 8210,1099.71,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-24,JE5026,Altimobility Corp,5030 Cost of Device Subscriptions,14132.02,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-25,JE3340,MICROSOFT,6701 Technology - Software Subscriptions,74.55,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-25,JE3341,,6600 Bank Fees,2.61,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-25,JE5027,ANTHROPIC,6701 Technology - Software Subscriptions,169.99,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-25,JE5843,,5060 Parking - RMS Fleet,42.00,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-26,JE5028,,6701 Technology - Software Subscriptions,416.90,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-26,JE5029,ANTHROPIC,6701 Technology - Software Subscriptions,77.12,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-27,JE3342,Dirk-Jan Ter Horst,6000 Salaries & Wages,14648.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE3343,TPG Internet,6700 Technology - Infrastructure,99.99,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-27,JE5032,Lai Mei T,6000 Salaries & Wages,1737.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5033,Maria Fonseca Dimaandal,5063 Customer Support - Salary,625.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5034,Jen Reyes,5063 Customer Support - Salary,608.12,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5035,Edgardo Buenaventura,5063 Customer Support - Salary,339.25,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5036,DOMINADOR GAMIT,5063 Customer Support - Salary,834.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5037,Ralph Efrenson Eronga,5063 Customer Support - Salary,625.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5038,Trixie trixie,5063 Customer Support - Salary,764.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5039,Gem C. Rey-Hipolito,5063 Customer Support - Salary,625.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5040,Edelyn Reyes,5062 On-Ground Team - Expenses,625.50,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-27,JE5041,Gabriel John Limjoco,5063 Customer Support - Salary,625.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5042,Izzah Lorraine Carandang Dela Cruz,5063 Customer Support - Salary,625.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5043,Myrna Lynne Alcala,5063 Customer Support - Salary,625.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5044,Alexcess Libiran Car,5062 On-Ground Team - Expenses,1167.60,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-27,JE5045,Rosemarie Timbol Basilio,5063 Customer Support - Salary,625.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5046,Annabelle Gayda Luching,5063 Customer Support - Salary,834.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5047,Evelyn Chua Aquino,5063 Customer Support - Salary,625.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5048,Melvin Verona Magro,5063 Customer Support - Salary,625.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5049,Rheazel Martinez Adolfo,5063 Customer Support - Salary,625.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5050,Xyron Bunquin Manongsong,5063 Customer Support - Salary,625.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5051,Jennilyn Palacol Labajos,5063 Customer Support - Salary,625.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5052,Mary Rose Bernal Yap,5063 Customer Support - Salary,625.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5053,Ernie Javines Biason,5063 Customer Support - Salary,625.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5054,Patrick Leonard Mojica,5063 Customer Support - Salary,593.61,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5055,Emmanuel Jacobo,5063 Customer Support - Salary,625.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5056,Julie Ann Macuha Cenedoza,5063 Customer Support - Salary,625.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5057,Godielou Petipet Quero,5063 Customer Support - Salary,625.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5058,Rose Ann Ferrer Naredo,5063 Customer Support - Salary,625.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5059,Craig Anthony Letters,6000 Salaries & Wages,2787.32,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5060,Matheus Johannes van der Kooi,5062 On-Ground Team - Expenses,5297.67,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-27,JE5061,Pyiee Thin Nwe,6000 Salaries & Wages,5624.73,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5062,Sagar Mahesh Prasad,6000 Salaries & Wages,622.48,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5063,Resya Satya Pradhana Harahap,6000 Salaries & Wages,5511.82,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5064,Yash Mimani,6000 Salaries & Wages,808.82,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5065,Naitik Padsala,6000 Salaries & Wages,2301.12,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5066,Aakash Chavda,6000 Salaries & Wages,4388.96,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5067,Vigneshsuran So Dhevan,6000 Salaries & Wages,2196.83,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5068,Bhalani Nimesh Himmatbhai,6000 Salaries & Wages,2638.23,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5069,Ankish Mody,6000 Salaries & Wages,3096.28,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5070,Sanjay Kumar,5061 On-Ground Team - Salary,5892.02,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5071,Aman Yadav,6000 Salaries & Wages,10142.47,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5072,Vigneshsuran So Dhevan,6000 Salaries & Wages,521.94,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5073,Rahul Moitra,6000 Salaries & Wages,2083.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5074,Thummanapally Tilak,6000 Salaries & Wages,219.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5075,ANTHROPIC,6701 Technology - Software Subscriptions,30.78,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-27,JE5076,,6702 Technology - Platform Testing,27.65,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-27,JE5078,Fireflies.ai,6700 Technology - Infrastructure,16.74,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-27,JE5716,Riezel Basilio Villanueva,5063 Customer Support - Salary,764.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-27,JE5813,Gaurav Singhal,6003 Directors Salary,14648.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-28,JE3344,Didi Mobility,6702 Technology - Platform Testing,3.10,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-28,JE3345,,6600 Bank Fees,0.11,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-28,JE3346,Trip.com,6400 Travel - Tickets,2.50,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-28,JE5079,Fireflies.ai,6700 Technology - Infrastructure,17.36,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-28,JE5080,Aman Yadav,6000 Salaries & Wages,14242.49,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-28,JE5081,Ankish Mody,6000 Salaries & Wages,1558.38,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-28,JE5082,Aakash Chavda,6000 Salaries & Wages,1854.64,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-28,JE5083,Bhalani Nimesh Himmatbhai,6000 Salaries & Wages,2227.12,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-28,JE5084,Yash Mimani,6000 Salaries & Wages,475.78,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-28,JE5085,Vigneshsuran So Dhevan,6000 Salaries & Wages,4.10,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-28,JE5086,ANTHROPIC,6701 Technology - Software Subscriptions,34.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-28,JE5087,ANTHROPIC,6701 Technology - Software Subscriptions,34.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-28,JE5088,ANTHROPIC,6701 Technology - Software Subscriptions,153.91,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-28,JE5090,Vigneshsuran So Dhevan,6000 Salaries & Wages,274.11,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-28,JE5091,ANTHROPIC,6701 Technology - Software Subscriptions,31.11,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-29,JE5092,Pyiee Thin Nwe,6000 Salaries & Wages,1120.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-29,JE5094,,6702 Technology - Platform Testing,14.85,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-29,JE5096,,6702 Technology - Platform Testing,14.85,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-29,JE5097,,6702 Technology - Platform Testing,27.65,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-29,JE5098,Comfort City Cab,6012 Employee Claims - Transport,33.13,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-29,JE5659,,6012 Employee Claims - Transport,25.13,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-29,JE5676,,6014 Employee Claims - Other,88.65,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-29,JE5684,,6014 Employee Claims - Other,41.99,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-30,JE3348,SafetyCulture,6701 Technology - Software Subscriptions,124.42,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-30,JE3349,,6600 Bank Fees,4.35,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-30,JE3350,NOTION LABS,6701 Technology - Software Subscriptions,257.05,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-30,JE3351,,6600 Bank Fees,9.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-30,JE3352,APIFY,6701 Technology - Software Subscriptions,95.14,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-30,JE3353,,6600 Bank Fees,3.33,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-30,JE4255,Drive Lah Pte. Ltd.,8210 8210,6917.34,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-30,JE5102,Apollo.io,6700 Technology - Infrastructure,82.97,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-30,JE5104,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,1.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-30,JE5105,ANTHROPIC,6701 Technology - Software Subscriptions,34.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-30,JE5106,Vigneshsuran So Dhevan,6000 Salaries & Wages,792.17,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-30,JE5107,ANTHROPIC,6701 Technology - Software Subscriptions,34.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-30,JE5108,ANTHROPIC,6701 Technology - Software Subscriptions,30.69,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-30,JE5109,,6400 Travel - Tickets,3.26,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-30,JE5110,Jetstar,6400 Travel - Tickets,29.52,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-30,JE5416,,6400 Travel - Tickets,30.00,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-04-30,JE5638,Anas Ashfaq,5062 On-Ground Team - Expenses,1646.18,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-30,JE5639,Vigneshsuran So Dhevan,6000 Salaries & Wages,4066.52,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-04-30,JE5640,Abdul Saaqib,5062 On-Ground Team - Expenses,1478.50,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-04-30,JE8859,Matheus Johannes van der Kooi,2303 Employee Claims Payable,2435.75,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-01,JE3356,POST GORDON,5065 Cost of Device - Courier/Shipping,15.60,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-01,JE5111,,6400 Travel - Tickets,5.19,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-01,JE5661,,6012 Employee Claims - Transport,9.13,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-01,JE5662,,6012 Employee Claims - Transport,19.29,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-01,JE8145,,5010 Payment Processing Fees,10390.69,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-01,JE8153,,2110 Customer Deposits Payable,10250.00,0.00,EXCLUDED,deposit — not a supply; no GST until forfeited
+(none),REALIZED,no,2026-05-01,JE8159,,2110 Customer Deposits Payable,9700.00,0.00,EXCLUDED,deposit — not a supply; no GST until forfeited
+(none),REALIZED,no,2026-05-01,JE8160,,2110 Customer Deposits Payable,741.00,0.00,EXCLUDED,deposit — not a supply; no GST until forfeited
+(none),REALIZED,no,2026-05-01,JE8161,,2110 Customer Deposits Payable,739.00,0.00,EXCLUDED,deposit — not a supply; no GST until forfeited
+(none),REALIZED,no,2026-05-02,JE3357,POST GORDON,5065 Cost of Device - Courier/Shipping,19.30,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-02,JE3358,OMNITAS.DEV,6701 Technology - Software Subscriptions,11.24,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-02,JE3359,,6600 Bank Fees,0.39,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-02,JE3360,CIRCLECI.COM,6701 Technology - Software Subscriptions,105.63,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-02,JE3361,,6600 Bank Fees,3.70,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-02,JE3756,,6402 Entertainment,6.07,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-02,JE5112,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,4.79,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-02,JE5113,Jetstar,6400 Travel - Tickets,12.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-02,JE5114,Jetstar,6400 Travel - Tickets,12.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-03,JE3758,,6402 Entertainment,115.00,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-03,JE5115,Amplitude,6701 Technology - Software Subscriptions,781.73,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-03,JE5116,ANTHROPIC,6701 Technology - Software Subscriptions,31.01,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-03,JE5117,CURSOR (AI Powered IDE),6701 Technology - Software Subscriptions,219.39,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-05,JE3362,NEWS PTY LIMITED,6100 Marketing - Digital Advertising,40.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-05,JE3364,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,9.72,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-05,JE3759,,6402 Entertainment,10.14,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-05,JE5118,ANTHROPIC,6701 Technology - Software Subscriptions,128.65,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-07,JE3365,POST GORDON,5065 Cost of Device - Courier/Shipping,17.37,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-07,JE3367,RENDER.COM,6700 Technology - Infrastructure,198.08,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-07,JE3368,,6600 Bank Fees,6.93,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-07,JE3761,,6400 Travel - Tickets,287.73,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-07,JE5121,Synthesia,6700 Technology - Infrastructure,44.16,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-08,JE5692,,6011 Employee Claims - Meals,50.80,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-08,JE5875,,5060 Parking - RMS Fleet,6.10,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-09,JE3370,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,19.30,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-09,JE3371,Heroku,6700 Technology - Infrastructure,33.64,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-09,JE3372,,6600 Bank Fees,1.18,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-09,JE3762,,6400 Travel - Tickets,7.91,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-09,JE3763,CreditLine NetBank BPAY,1500 Computer & Peripherals,327.50,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-10,JE5122,Apple,6700 Technology - Infrastructure,164.69,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-10,JE5123,ANTHROPIC,6701 Technology - Software Subscriptions,30.70,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-10,JE5124,Fireflies.ai,6700 Technology - Infrastructure,120.66,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-11,JE5417,,6400 Travel - Tickets,30.02,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-12,JE3373,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,22.26,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-12,JE3374,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,22.26,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-12,JE3766,,6400 Travel - Tickets,24.90,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-12,JE5129,ANTHROPIC,6701 Technology - Software Subscriptions,30.63,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-12,JE5832,,6402 Entertainment,74.10,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-12,JE8833,Craig Anthony Letters,2304 Salaries Payable,286.37,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-13,JE3375,SQ *STOCK MARKET KITCHEN,6402 Entertainment,6.10,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-13,JE3769,,6402 Entertainment,12.08,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-13,JE5130,ANTHROPIC,6701 Technology - Software Subscriptions,272.28,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-13,JE5131,CURSOR (AI Powered IDE),6701 Technology - Software Subscriptions,221.40,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-13,JE5132,ANTHROPIC,6701 Technology - Software Subscriptions,31.04,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-13,JE5418,,6400 Travel - Tickets,653.08,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-13,JE5861,,6402 Entertainment,14.20,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-14,JE3378,POST GORDON,5065 Cost of Device - Courier/Shipping,31.22,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-14,JE3379,LOVABLE,6701 Technology - Software Subscriptions,34.73,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-14,JE3380,,6600 Bank Fees,1.22,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-14,JE3771,,6402 Entertainment,12.13,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-14,JE3772,,6400 Travel - Tickets,66.28,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-14,JE3773,Dirk-Jan Ter Horst,2405 Related-Party / Director Loans,50000.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-14,JE10513,Amazon Web Services,8210 8210,11295.56,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-14,JE10516,Amazon Web Services,8210 8210,12309.72,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-14,JE10519,Amazon Web Services,8210 8210,10729.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-15,JE3382,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,11.58,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-15,JE3383,RIGHTWORKS,6701 Technology - Software Subscriptions,54.11,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-15,JE3384,,6600 Bank Fees,1.89,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-15,JE3385,OPENAI (ChatGPT Subscription),6701 Technology - Software Subscriptions,76.31,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-15,JE3386,,6600 Bank Fees,2.67,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-15,JE5141,Sentry,6701 Technology - Software Subscriptions,68.43,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-15,JE5142,ASIC,6500 Accounting & Bookkeeping Fees,329.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-15,JE5144,,6702 Technology - Platform Testing,14.25,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-15,JE5145,,6702 Technology - Platform Testing,21.30,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-15,JE5146,,6702 Technology - Platform Testing,14.85,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-15,JE5148,ANTHROPIC,6701 Technology - Software Subscriptions,155.34,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-15,JE5149,,6702 Technology - Platform Testing,5.63,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-15,JE5150,,6702 Technology - Platform Testing,44.06,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-15,JE5151,CURSOR (AI Powered IDE),6701 Technology - Software Subscriptions,189.49,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-15,JE5671,,6310 Office Equipment,297.00,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-16,JE3387,EDREAMS,6400 Travel - Tickets,11.99,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-16,JE3388,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,11.58,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-16,JE3389,ANGEL INVESTMENT TWICKENHAM,6700 Technology - Infrastructure,399.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-16,JE3390,VERCEL INC,6700 Technology - Infrastructure,27.75,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-16,JE3391,,6600 Bank Fees,0.97,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE3776,,6402 Entertainment,12.48,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-16,JE5152,Lai Mei T,6000 Salaries & Wages,1748.75,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5153,Maria Fonseca Dimaandal,5063 Customer Support - Salary,629.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5154,Jen Reyes,5063 Customer Support - Salary,839.40,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5155,Edgardo Buenaventura,5063 Customer Support - Salary,341.45,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5156,DOMINADOR GAMIT,5063 Customer Support - Salary,839.40,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5157,Ralph Efrenson Eronga,5063 Customer Support - Salary,629.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5158,Trixie trixie,5063 Customer Support - Salary,769.45,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5159,Gem C. Rey-Hipolito,5063 Customer Support - Salary,629.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5160,Edelyn Reyes,5062 On-Ground Team - Expenses,629.55,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-16,JE5161,Gabriel John Limjoco,5063 Customer Support - Salary,629.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5162,Izzah Lorraine Carandang Dela Cruz,5063 Customer Support - Salary,629.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5163,Myrna Lynne Alcala,5063 Customer Support - Salary,629.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5164,Alexcess Libiran Car,5062 On-Ground Team - Expenses,1175.16,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-16,JE5165,Rosemarie Timbol Basilio,5063 Customer Support - Salary,629.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5166,Annabelle Gayda Luching,5063 Customer Support - Salary,839.40,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5167,Evelyn Chua Aquino,5063 Customer Support - Salary,629.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5168,Melvin Verona Magro,5063 Customer Support - Salary,629.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5169,Rheazel Martinez Adolfo,5063 Customer Support - Salary,629.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5170,Xyron Bunquin Manongsong,5063 Customer Support - Salary,629.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5171,Jennilyn Palacol Labajos,5063 Customer Support - Salary,629.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5172,Mary Rose Bernal Yap,5063 Customer Support - Salary,629.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5173,Ernie Javines Biason,5063 Customer Support - Salary,629.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5174,Patrick Leonard Mojica,5063 Customer Support - Salary,629.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5175,Emmanuel Jacobo,5063 Customer Support - Salary,629.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5176,Julie Ann Macuha Cenedoza,5063 Customer Support - Salary,629.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5177,Godielou Petipet Quero,5063 Customer Support - Salary,629.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5178,Rose Ann Ferrer Naredo,5063 Customer Support - Salary,629.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5179,Zilla Marie,5063 Customer Support - Salary,839.40,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-16,JE5717,Riezel Basilio Villanueva,5063 Customer Support - Salary,769.45,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-18,JE3392,ZLR*Hills,6402 Entertainment,16.80,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-18,JE5859,,6401 Travel - Meals,21.50,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-19,JE3393,SUPABASE,6701 Technology - Software Subscriptions,108.76,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-19,JE3394,,6600 Bank Fees,3.81,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-19,JE3395,OPENAI (ChatGPT Subscription),6701 Technology - Software Subscriptions,28.02,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-19,JE3396,,6600 Bank Fees,0.98,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-19,JE3397,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,5.38,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-19,JE3398,ANTHROPIC,6701 Technology - Software Subscriptions,169.99,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-19,JE4262,Drive Lah Pte. Ltd.,8210 8210,11500.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-19,JE5818,,6401 Travel - Meals,324.82,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-19,JE5856,,6400 Travel - Tickets,25.61,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-19,JE5874,,6400 Travel - Tickets,6.40,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-20,JE5218,,6702 Technology - Platform Testing,14.85,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-21,JE3399,SQ *STOCK MARKET KITCHEN,6402 Entertainment,5.08,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-21,JE3400,SQ *STOCK MARKET KITCHEN,6402 Entertainment,5.89,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-21,JE3778,Dirk-Jan Ter Horst,2405 Related-Party / Director Loans,50000.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-21,JE5221,ANTHROPIC,6701 Technology - Software Subscriptions,31.11,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-21,JE5222,Emmanuel Jacobo,5063 Customer Support - Salary,420.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-21,JE5693,,6011 Employee Claims - Meals,25.38,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-22,JE3402,POST GORDON,5065 Cost of Device - Courier/Shipping,37.72,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-22,JE3403,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,22.26,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-22,JE3404,Didi Mobility,6702 Technology - Platform Testing,2.46,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-22,JE3405,,6600 Bank Fees,0.09,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-22,JE3406,ELEVENLABS.IO,6701 Technology - Software Subscriptions,7.70,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-22,JE3407,,6600 Bank Fees,0.27,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-22,JE3408,ANTHROPIC,6701 Technology - Software Subscriptions,310.87,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-22,JE3409,,6600 Bank Fees,10.88,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-22,JE5224,ANTHROPIC,6701 Technology - Software Subscriptions,31.03,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-23,JE3410,SQ *STOCK MARKET KITCHEN,6402 Entertainment,12.19,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-23,JE3411,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,11.58,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-23,JE5225,ANTHROPIC,6701 Technology - Software Subscriptions,31.34,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-23,JE5226,Calendly,6701 Technology - Software Subscriptions,18.57,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-23,JE5227,ANTHROPIC,6701 Technology - Software Subscriptions,30.94,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-23,JE5420,,6701 Technology - Software Subscriptions,84.39,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-23,JE5844,,6400 Travel - Tickets,41.60,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-24,JE5228,ANTHROPIC,6701 Technology - Software Subscriptions,31.22,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-24,JE5229,ANTHROPIC,6701 Technology - Software Subscriptions,31.16,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-25,JE5230,Didi Mobility,6400 Travel - Tickets,42.47,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-25,JE5231,Altimobility Corp,5030 Cost of Device Subscriptions,14060.83,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-25,JE5232,ANTHROPIC,6701 Technology - Software Subscriptions,31.32,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-25,JE5233,Fireflies.ai,6700 Technology - Infrastructure,27.95,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-25,JE5234,ANTHROPIC,6701 Technology - Software Subscriptions,30.96,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-25,JE5421,,6400 Travel - Tickets,134.33,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-25,JE5871,,5060 Parking - RMS Fleet,9.99,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-26,JE3412,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,11.58,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-26,JE3413,MICROSOFT,6701 Technology - Software Subscriptions,74.87,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-26,JE3414,,6600 Bank Fees,2.62,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-26,JE5235,ANTHROPIC,6701 Technology - Software Subscriptions,30.94,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-26,JE5236,ANTHROPIC,6701 Technology - Software Subscriptions,30.87,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-27,JE3415,TPG Internet,6700 Technology - Infrastructure,99.99,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-27,JE5238,Craig Anthony Letters,6000 Salaries & Wages,3357.55,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-27,JE5239,Resya Satya Pradhana Harahap,6000 Salaries & Wages,5441.05,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-27,JE5240,ANTHROPIC,6701 Technology - Software Subscriptions,31.05,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-27,JE5241,Matheus Johannes van der Kooi,5062 On-Ground Team - Expenses,5611.21,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-27,JE5242,Edgardo Buenaventura,5063 Customer Support - Salary,800.25,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-27,JE5243,Jetstar,6400 Travel - Tickets,349.81,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-27,JE5422,,5060 Parking - RMS Fleet,102.51,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-27,JE5872,,5060 Parking - RMS Fleet,9.50,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-27,JE5879,,5060 Parking - RMS Fleet,4.50,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-28,JE3416,SQ *STOCK MARKET KITCHEN,6402 Entertainment,6.10,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-28,JE3417,ANTHROPIC,6701 Technology - Software Subscriptions,69.57,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-28,JE3418,,6600 Bank Fees,2.43,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-28,JE3419,ANTHROPIC,6701 Technology - Software Subscriptions,69.57,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-28,JE3420,,6600 Bank Fees,2.43,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-28,JE5244,ANTHROPIC,6701 Technology - Software Subscriptions,34.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-28,JE5245,ANTHROPIC,6701 Technology - Software Subscriptions,31.08,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-29,JE3422,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,4.34,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-29,JE3423,SafetyCulture,6701 Technology - Software Subscriptions,163.04,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-29,JE3424,,6600 Bank Fees,5.71,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-29,JE4265,Drive Lah Pte. Ltd.,8210 8210,32000.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-29,JE5246,ANTHROPIC,6701 Technology - Software Subscriptions,31.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-29,JE5248,Matheus Johannes van der Kooi,5062 On-Ground Team - Expenses,5262.29,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-29,JE5841,,6400 Travel - Tickets,50.05,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-30,JE3426,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,10.76,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-30,JE3427,APIFY,6701 Technology - Software Subscriptions,54.77,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-30,JE3428,,6600 Bank Fees,1.92,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-30,JE3429,NOTION LABS,6701 Technology - Software Subscriptions,257.15,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-30,JE3430,,6600 Bank Fees,9.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-30,JE5249,Apollo.io,6700 Technology - Infrastructure,82.33,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-30,JE5250,ANTHROPIC,6701 Technology - Software Subscriptions,30.83,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-30,JE5842,,6400 Travel - Tickets,46.20,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-05-31,JE3431,Dirk-Jan Ter Horst,6000 Salaries & Wages,5000.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-31,JE3432,,6000 Salaries & Wages,5000.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-05-31,JE5251,Synthesia,6700 Technology - Infrastructure,21.21,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-31,JE5252,ANTHROPIC,6701 Technology - Software Subscriptions,34.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-05-31,JE5253,ANTHROPIC,6701 Technology - Software Subscriptions,31.22,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-01,JE3434,Jetstar,6400 Travel - Tickets,828.91,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-01,JE5254,CURSOR (AI Powered IDE),6701 Technology - Software Subscriptions,170.61,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-01,JE5256,ANTHROPIC,6701 Technology - Software Subscriptions,31.16,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-01,JE5257,Amplitude,6701 Technology - Software Subscriptions,787.57,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-01,JE5835,,6310 Office Equipment,65.42,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-01,JE8204,,5010 Payment Processing Fees,11069.91,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-01,JE8212,,2110 Customer Deposits Payable,10500.00,0.00,EXCLUDED,deposit — not a supply; no GST until forfeited
+(none),REALIZED,no,2026-06-01,JE8218,,2110 Customer Deposits Payable,12650.00,0.00,EXCLUDED,deposit — not a supply; no GST until forfeited
+(none),REALIZED,no,2026-06-01,JE8219,,2110 Customer Deposits Payable,950.00,0.00,EXCLUDED,deposit — not a supply; no GST until forfeited
+(none),REALIZED,no,2026-06-01,JE8220,,2110 Customer Deposits Payable,948.00,0.00,EXCLUDED,deposit — not a supply; no GST until forfeited
+(none),REALIZED,no,2026-06-02,JE3435,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,7.52,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-02,JE3436,NEWS PTY LIMITED,6100 Marketing - Digital Advertising,40.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-02,JE3437,OMNITAS.DEV,6701 Technology - Software Subscriptions,11.17,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-02,JE3438,,6600 Bank Fees,0.39,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-02,JE3439,CIRCLECI.COM,6701 Technology - Software Subscriptions,104.95,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-02,JE3440,,6600 Bank Fees,3.67,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-02,JE3441,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,9.71,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-02,JE5258,ANTHROPIC,6701 Technology - Software Subscriptions,31.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-02,JE5647,,6011 Employee Claims - Meals,30.45,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-02,JE5667,,6701 Technology - Software Subscriptions,25.67,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-02,JE5669,,6701 Technology - Software Subscriptions,288.28,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-02,JE5867,,6300 Office Rent,11.79,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-03,JE5260,ANTHROPIC,6701 Technology - Software Subscriptions,31.65,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-04,JE3442,SQ *STOCK MARKET KITCHEN,6402 Entertainment,11.79,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-04,JE3443,Didi Mobility,6400 Travel - Tickets,14.86,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-04,JE5261,ANTHROPIC,6701 Technology - Software Subscriptions,31.44,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-05,JE3446,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,10.76,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-05,JE4266,Drive Lah Pte. Ltd.,8210 8210,10000.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-05,JE5262,ANTHROPIC,6701 Technology - Software Subscriptions,31.65,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-05,JE5263,CURSOR (AI Powered IDE),6701 Technology - Software Subscriptions,169.46,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-05,JE5265,ANTHROPIC,6701 Technology - Software Subscriptions,169.99,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-05,JE5266,ANTHROPIC,6701 Technology - Software Subscriptions,31.63,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-06,JE3447,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,10.76,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-06,JE3448,Heroku,6700 Technology - Infrastructure,33.58,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-06,JE3449,,6600 Bank Fees,1.18,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-06,JE5673,,6014 Employee Claims - Other,7.78,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-07,JE3450,TPG Internet,6700 Technology - Infrastructure,70.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-07,JE5267,ANTHROPIC,6701 Technology - Software Subscriptions,31.53,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-07,JE5268,Synthesia,6700 Technology - Infrastructure,139.47,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-07,JE5269,SCOOT,6400 Travel - Tickets,713.68,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-07,JE5643,,6012 Employee Claims - Transport,85.83,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-08,JE5270,ANTHROPIC,6701 Technology - Software Subscriptions,31.47,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-08,JE5645,,6012 Employee Claims - Transport,71.55,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-08,JE5646,,6011 Employee Claims - Meals,5.55,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-08,JE5823,,6014 Employee Claims - Other,161.00,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-08,JE5825,,6400 Travel - Tickets,135.00,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-08,JE5865,,6400 Travel - Tickets,12.29,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-09,JE3451,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,24.12,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-09,JE3453,RENDER.COM,6700 Technology - Infrastructure,315.93,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-09,JE3454,,6600 Bank Fees,11.06,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-09,JE3455,TPG Internet,6700 Technology - Infrastructure,110.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-09,JE5271,LinkedIn,6701 Technology - Software Subscriptions,37.49,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-09,JE5275,ANTHROPIC,6701 Technology - Software Subscriptions,31.34,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-09,JE5276,ANTHROPIC,6701 Technology - Software Subscriptions,146.41,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-09,JE5277,,6702 Technology - Platform Testing,14.85,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-09,JE5278,,6400 Travel - Tickets,5.59,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-09,JE5423,,6400 Travel - Tickets,413.28,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-09,JE5631,CreditLine NetBank BPAY,6310 Office Equipment,327.50,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-09,JE5663,,6012 Employee Claims - Transport,22.42,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-09,JE5860,,6013 Employee Claims - Office Supplies,19.78,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-09,JE5876,,6013 Employee Claims - Office Supplies,5.97,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-10,JE3456,ANTHROPIC,6701 Technology - Software Subscriptions,140.70,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-10,JE3457,,6600 Bank Fees,4.92,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-10,JE5279,ANTHROPIC,6701 Technology - Software Subscriptions,31.51,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-10,JE5280,,6702 Technology - Platform Testing,14.85,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-10,JE5281,,6702 Technology - Platform Testing,2.81,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-10,JE5282,,6702 Technology - Platform Testing,14.85,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-10,JE5283,,6702 Technology - Platform Testing,14.85,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-10,JE5284,,6702 Technology - Platform Testing,1.02,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-10,JE5285,,6702 Technology - Platform Testing,14.85,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-10,JE5286,,6702 Technology - Platform Testing,1.02,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-10,JE5287,Fireflies.ai,6700 Technology - Infrastructure,124.80,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-10,JE5644,,6012 Employee Claims - Transport,92.87,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-10,JE5664,,6012 Employee Claims - Transport,44.70,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-10,JE5665,,6012 Employee Claims - Transport,22.04,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-10,JE5685,,6701 Technology - Software Subscriptions,57.13,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-10,JE5697,,6011 Employee Claims - Meals,189.42,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-10,JE5827,,5062 On-Ground Team - Expenses,115.21,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-10,JE5830,,6401 Travel - Meals,77.07,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-11,JE5288,ANTHROPIC,6701 Technology - Software Subscriptions,31.84,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-11,JE5289,,6702 Technology - Platform Testing,18.95,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-11,JE5290,,6702 Technology - Platform Testing,14.85,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-11,JE5666,,6012 Employee Claims - Transport,37.38,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-12,JE5291,Ralph E. Seronga,5063 Customer Support - Salary,9.43,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-12,JE5292,ANTHROPIC,6701 Technology - Software Subscriptions,31.39,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-12,JE5293,Perplexity,6700 Technology - Infrastructure,31.43,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-12,JE5294,,6400 Travel - Tickets,2.09,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-12,JE5668,,6401 Travel - Meals,37.19,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-13,JE3784,,6600 Bank Fees,5.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-13,JE5295,ANTHROPIC,6701 Technology - Software Subscriptions,31.33,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-13,JE5296,ANTHROPIC,6701 Technology - Software Subscriptions,340.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-13,JE5297,CURSOR (AI Powered IDE),6701 Technology - Software Subscriptions,155.79,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-14,JE5298,VERCEL INC,6700 Technology - Infrastructure,0.72,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-14,JE5300,VERCEL INC,6700 Technology - Infrastructure,31.05,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-14,JE5301,ANTHROPIC,6701 Technology - Software Subscriptions,31.50,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-15,JE5302,Sentry,6701 Technology - Software Subscriptions,69.54,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-15,JE5303,,6702 Technology - Platform Testing,18.43,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-15,JE5304,,6702 Technology - Platform Testing,9.22,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-15,JE5305,,6702 Technology - Platform Testing,18.43,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-15,JE5306,,6702 Technology - Platform Testing,6.14,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-15,JE5309,,6702 Technology - Platform Testing,1.02,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-15,JE5310,ANTHROPIC,6701 Technology - Software Subscriptions,169.99,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-15,JE5311,CURSOR (AI Powered IDE),6701 Technology - Software Subscriptions,163.63,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-15,JE5846,,6013 Employee Claims - Office Supplies,40.38,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-16,JE3468,EDREAMS,6400 Travel - Tickets,11.99,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-16,JE3469,RIGHTWORKS,6701 Technology - Software Subscriptions,55.56,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-16,JE3470,,6600 Bank Fees,1.94,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-16,JE3471,VERCEL INC,6700 Technology - Infrastructure,28.49,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-16,JE3472,,6600 Bank Fees,1.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-16,JE3473,ANGEL INVESTMENT TWICKENHAM,6700 Technology - Infrastructure,399.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-16,JE3474,OPENAI (ChatGPT Subscription),6701 Technology - Software Subscriptions,78.36,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-16,JE3475,,6600 Bank Fees,2.74,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-16,JE3476,LOVABLE,6701 Technology - Software Subscriptions,35.75,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-16,JE3477,,6600 Bank Fees,1.25,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-16,JE4267,Drive Lah Pte. Ltd.,8210 8210,25369.40,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-16,JE4268,Drive Lah Pte. Ltd.,8210 8210,500.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-16,JE5313,ANTHROPIC,6701 Technology - Software Subscriptions,31.29,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-16,JE5314,,6702 Technology - Platform Testing,14.23,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-16,JE5315,,6702 Technology - Platform Testing,5.63,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-16,JE5316,,6702 Technology - Platform Testing,11.27,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-16,JE5319,ANTHROPIC,6701 Technology - Software Subscriptions,62.78,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-16,JE5857,,6013 Employee Claims - Office Supplies,25.26,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-17,JE3478,ANTHROPIC,6701 Technology - Software Subscriptions,169.99,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-18,JE3479,POST GORDON,5065 Cost of Device - Courier/Shipping,22.30,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-18,JE3480,SUPABASE,6701 Technology - Software Subscriptions,161.63,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-18,JE3481,,6600 Bank Fees,5.66,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-18,JE3482,OPENAI (ChatGPT Subscription),6701 Technology - Software Subscriptions,28.43,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-18,JE3483,,6600 Bank Fees,1.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-18,JE5634,,6600 Bank Fees,6.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-19,JE5320,ANTHROPIC,6701 Technology - Software Subscriptions,63.17,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-19,JE5321,Superblog,6701 Technology - Software Subscriptions,411.75,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-20,JE3486,SQ *STOCK MARKET KITCHEN,6402 Entertainment,6.10,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-21,JE5686,,6012 Employee Claims - Transport,81.06,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-22,JE5323,ANTHROPIC,6701 Technology - Software Subscriptions,63.07,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-22,JE5836,,6400 Travel - Tickets,60.72,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-23,JE3487,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,8.10,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-23,JE3488,ANTHROPIC,6701 Technology - Software Subscriptions,314.87,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-23,JE3489,,6600 Bank Fees,11.02,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-23,JE3490,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,11.58,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-23,JE3491,ELEVENLABS.IO,6701 Technology - Software Subscriptions,7.80,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-23,JE3492,,6600 Bank Fees,0.27,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-23,JE3493,SQ *STOCK MARKET KITCHEN,6402 Entertainment,6.10,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-23,JE3494,SQ *STOCK MARKET KITCHEN,6402 Entertainment,19.90,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-23,JE3495,SQ *STOCK MARKET KITCHEN,6402 Entertainment,6.10,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-23,JE3786,Dirk-Jan Ter Horst,2405 Related-Party / Director Loans,141230.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-23,JE4271,Drive Lah Pte. Ltd.,8210 8210,6717.07,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-23,JE5324,,6702 Technology - Platform Testing,14.85,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-23,JE5325,Calendly,6701 Technology - Software Subscriptions,19.09,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-23,JE5327,Roobykon,1710 Technology Development,2903.65,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-23,JE5657,,6701 Technology - Software Subscriptions,87.04,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-23,JE10576,Onfido,8210 8210,8568.09,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-24,JE5328,ANTHROPIC,6701 Technology - Software Subscriptions,64.03,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-24,JE5329,Bunnings,5062 On-Ground Team - Expenses,87.11,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-24,JE5642,,6012 Employee Claims - Transport,50.11,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-24,JE5670,,6310 Office Equipment,158.00,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-24,JE5829,,6400 Travel - Tickets,83.45,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-25,JE3496,MICROSOFT,6701 Technology - Software Subscriptions,76.06,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-25,JE3497,,6600 Bank Fees,2.66,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-25,JE3498,Sanjay Kumar,6000 Salaries & Wages,10.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-25,JE3499,Jetstar,6400 Travel - Tickets,105.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-25,JE4273,Drive Lah Pte. Ltd.,8210 8210,3668.68,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-25,JE5330,ANTHROPIC,6701 Technology - Software Subscriptions,34.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-25,JE5331,Altimobility Corp,5030 Cost of Device Subscriptions,14616.88,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-25,JE5332,Fireflies.ai,6700 Technology - Infrastructure,29.02,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-25,JE5424,,6400 Travel - Tickets,30.14,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-26,JE3501,POST GORDON,5065 Cost of Device - Courier/Shipping,38.60,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-26,JE3502,TPG Internet,6700 Technology - Infrastructure,104.99,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-26,JE5339,ANTHROPIC,6701 Technology - Software Subscriptions,64.02,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-26,JE5425,The Hollard Insurance Company,5031 Cost of Insurance - Subscription Premium,5000.00,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-26,JE5641,,6012 Employee Claims - Transport,30.89,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-26,JE5675,,6014 Employee Claims - Other,30.03,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-26,JE5695,,6011 Employee Claims - Meals,5.68,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-27,JE5687,,6012 Employee Claims - Transport,71.26,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-28,JE4278,Edelyn Reyes,5062 On-Ground Team - Expenses,652.50,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-28,JE4279,Resya Satya Pradhana Harahap,6000 Salaries & Wages,4138.76,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5340,Lai Mei T,6000 Salaries & Wages,1812.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5341,Maria Fonseca Dimaandal,5063 Customer Support - Salary,652.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5342,Jen Reyes,5063 Customer Support - Salary,870.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5343,Edgardo Buenaventura,5063 Customer Support - Salary,353.90,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5344,DOMINADOR GAMIT,5063 Customer Support - Salary,870.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5345,Ralph Efrenson Eronga,5063 Customer Support - Salary,652.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5346,Trixie trixie,5063 Customer Support - Salary,797.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5347,Gem C. Rey-Hipolito,5063 Customer Support - Salary,652.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5348,Gabriel John Limjoco,5063 Customer Support - Salary,652.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5349,Izzah Lorraine Carandang Dela Cruz,5063 Customer Support - Salary,652.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5350,Myrna Lynne Alcala,5063 Customer Support - Salary,652.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5351,Rosemarie Timbol Basilio,5063 Customer Support - Salary,652.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5352,Annabelle Gayda Luching,5063 Customer Support - Salary,870.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5353,Evelyn Chua Aquino,5063 Customer Support - Salary,435.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5354,Melvin Verona Magro,5063 Customer Support - Salary,652.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5355,Rheazel Martinez Adolfo,5063 Customer Support - Salary,652.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5356,Jennilyn Palacol Labajos,5063 Customer Support - Salary,652.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5357,Mary Rose Bernal Yap,5063 Customer Support - Salary,652.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5358,Ernie Javines Biason,5063 Customer Support - Salary,652.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5359,Patrick Leonard Mojica,5063 Customer Support - Salary,652.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5360,Emmanuel Jacobo,5063 Customer Support - Salary,652.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5361,Julie Ann Macuha Cenedoza,5063 Customer Support - Salary,652.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5362,Godielou Petipet Quero,5063 Customer Support - Salary,652.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5363,Rose Ann Ferrer Naredo,5063 Customer Support - Salary,652.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5364,Aman Yadav,6000 Salaries & Wages,9511.84,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5365,Sanjay Kumar,5061 On-Ground Team - Salary,5595.85,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5366,Ankish Mody,6000 Salaries & Wages,2883.13,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5367,Bhalani Nimesh Himmatbhai,6000 Salaries & Wages,2497.79,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5368,Vigneshsuran So Dhevan,6000 Salaries & Wages,2247.31,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5369,Aakash Chavda,6000 Salaries & Wages,4200.95,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5370,Naitik Padsala,6000 Salaries & Wages,2220.34,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5371,Yash Mimani,6000 Salaries & Wages,771.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5372,Vigneshsuran So Dhevan,6000 Salaries & Wages,507.26,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5373,Sagar Mahesh Prasad,6000 Salaries & Wages,645.12,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5374,Craig Anthony Letters,6000 Salaries & Wages,4138.76,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5375,Alexcess Libiran Car,5062 On-Ground Team - Expenses,893.20,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-28,JE5376,Rahul Moitra,6000 Salaries & Wages,2158.70,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5377,ANTHROPIC,6701 Technology - Software Subscriptions,34.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-28,JE5378,UBER *TRIP,6400 Travel - Tickets,138.11,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-28,JE5379,UBER *TRIP,6400 Travel - Tickets,53.29,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-28,JE5380,ANTHROPIC,6701 Technology - Software Subscriptions,64.15,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-28,JE5718,Riezel Basilio Villanueva,5063 Customer Support - Salary,797.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-28,JE5763,Mehul Kumar,6000 Salaries & Wages,1280.99,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-29,JE4277,Drive Lah Pte. Ltd.,8210 8210,20000.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-29,JE5381,Matheus Johannes van der Kooi,5062 On-Ground Team - Expenses,5611.21,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-29,JE5382,Zilla Marie,5063 Customer Support - Salary,870.00,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-29,JE5383,Ankish Mody,6000 Salaries & Wages,950.43,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-29,JE5384,Xyron Bunquin Manongsong,5063 Customer Support - Salary,652.50,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-30,JE3505,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,9.65,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-30,JE3506,APIFY,6701 Technology - Software Subscriptions,56.74,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-30,JE3507,,6600 Bank Fees,1.99,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-30,JE3508,NEWS PTY LIMITED,6100 Marketing - Digital Advertising,40.00,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-30,JE3509,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,9.14,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-30,JE3510,SafetyCulture,6701 Technology - Software Subscriptions,168.56,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-30,JE3511,,6600 Bank Fees,5.90,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-30,JE3512,TRANSPORTFORNSW TAP SYDNEY AU,6400 Travel - Tickets,9.72,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-30,JE3513,Didi Mobility,6702 Technology - Platform Testing,31.13,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+(none),REALIZED,no,2026-06-30,JE3514,,6600 Bank Fees,1.09,0.00,EXCLUDED,account not gst-applicable
+(none),REALIZED,no,2026-06-30,JE5387,Apollo.io,6700 Technology - Infrastructure,86.08,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-30,JE5388,ANTHROPIC,6701 Technology - Software Subscriptions,368.50,0.00,REVIEW,"direct expense, vendor not AU-registered — reverse-charge/review"
+(none),REALIZED,no,2026-06-30,JE5427,,5060 Parking - RMS Fleet,9.99,0.00,REVIEW,"direct expense, no counterparty — attach then decide"
+1350,REALIZED,yes,2026-04-01,JE3271,IPPY*WOTSO HOLDINGS,6300 Office Rent,1300.00,118.18,input,claimable input GST
+1350,REALIZED,yes,2026-04-01,JE8086,,2120 Host Payables,205663.84,18696.71,input,claimable input GST
+1350,REALIZED,yes,2026-04-08,JE3278,Intuit Quickbooks Sydney AU,6701 Technology - Software Subscriptions,59.99,5.45,input,claimable input GST
+1350,REALIZED,yes,2026-04-08,JE4939,Bombora,5001 Host Trip Earnings - RMS,8920.90,810.99,input,claimable input GST
+1350,REALIZED,yes,2026-04-10,JE5411,AUTOBODIES GOLD COAST,5032 Incidentals Payout - Workshop,4105.98,373.27,input,claimable input GST
+1350,REALIZED,yes,2026-04-12,JE5653,,5022 Incidentals Payout - Cleaning,27.41,2.49,input,claimable input GST
+1350,REALIZED,yes,2026-04-13,JE3298,Linkt Melbourne,5020 Incidentals Payout - Tolls,3141.24,285.57,input,claimable input GST
+1350,REALIZED,yes,2026-04-13,JE5648,,5022 Incidentals Payout - Cleaning,29.44,2.68,input,claimable input GST
+1350,REALIZED,yes,2026-04-14,JE3302,Intuit Quickbooks Sydney AU,6701 Technology - Software Subscriptions,84.00,7.64,input,claimable input GST
+1350,REALIZED,yes,2026-04-15,JE4985,Bombora,5001 Host Trip Earnings - RMS,450.00,40.91,input,claimable input GST
+1350,REALIZED,yes,2026-04-15,JE4986,Bombora,5001 Host Trip Earnings - RMS,2500.00,227.27,input,claimable input GST
+1350,REALIZED,yes,2026-04-15,JE5649,,5022 Incidentals Payout - Cleaning,29.44,2.68,input,claimable input GST
+1350,REALIZED,yes,2026-04-15,JE5766,FOCUSSED CLAIMS MANAGEMENT PTY LTD,5032 Incidentals Payout - Workshop,385.00,35.00,input,claimable input GST
+1350,REALIZED,yes,2026-04-15,JE5767,FOCUSSED CLAIMS MANAGEMENT PTY LTD,5032 Incidentals Payout - Workshop,350.00,31.82,input,claimable input GST
+1350,REALIZED,yes,2026-04-15,JE8899,Rohde Smash Repairs,2000 Trade & Other Payables,440.00,40.00,input,claimable input GST
+1350,REALIZED,yes,2026-04-15,JE9965,FOCUSSED CLAIMS MANAGEMENT PTY LTD,2000 Trade & Other Payables,385.00,35.00,input,claimable input GST
+1350,REALIZED,yes,2026-04-16,JE5794,Dagmar Jindrova,5025 Incidentals Payout - Other,60.21,5.47,input,claimable input GST
+1350,REALIZED,yes,2026-04-16,JE10059,UBER *TRIP,2000 Trade & Other Payables,19.55,1.78,input,claimable input GST
+1350,REALIZED,yes,2026-04-17,JE5650,,5022 Incidentals Payout - Cleaning,29.44,2.68,input,claimable input GST
+1350,REALIZED,yes,2026-04-20,JE5654,,5022 Incidentals Payout - Cleaning,29.44,2.68,input,claimable input GST
+1350,REALIZED,yes,2026-04-20,JE5655,,5022 Incidentals Payout - Cleaning,29.44,2.68,input,claimable input GST
+1350,REALIZED,yes,2026-04-21,JE5651,,5022 Incidentals Payout - Cleaning,29.44,2.68,input,claimable input GST
+1350,REALIZED,yes,2026-04-22,JE5788,Fiona Burnes,5025 Incidentals Payout - Other,102.00,9.27,input,claimable input GST
+1350,REALIZED,yes,2026-04-26,JE5652,,5022 Incidentals Payout - Cleaning,27.91,2.54,input,claimable input GST
+1350,REALIZED,yes,2026-04-27,JE8891,Stephen Inner West Smash Repairs Pty Ltd,2000 Trade & Other Payables,3801.60,345.60,input,claimable input GST
+1350,REALIZED,yes,2026-04-27,JE8909,Stephen Inner West Smash Repairs Pty Ltd,2000 Trade & Other Payables,1980.00,180.00,input,claimable input GST
+1350,REALIZED,yes,2026-04-28,JE8925,Thinxtra,2000 Trade & Other Payables,10742.20,976.56,input,claimable input GST
+1350,REALIZED,yes,2026-04-29,JE8917,Autorola,2000 Trade & Other Payables,717.30,65.21,input,claimable input GST
+1350,REALIZED,yes,2026-04-29,JE10807,Penguin Risk Solutions,2000 Trade & Other Payables,69472.07,6078.91,input,claimable input GST
+1350,REALIZED,yes,2026-04-30,JE8881,NORMAN CHAN,2000 Trade & Other Payables,1045.00,95.00,input,claimable input GST
+1350,REALIZED,yes,2026-04-30,JE8903,NORMAN CHAN,2000 Trade & Other Payables,198.00,18.00,input,claimable input GST
+1350,REALIZED,yes,2026-04-30,JE8961,CAR-TREK AUSTRALIA PTY LTD,2000 Trade & Other Payables,9659.49,878.14,input,claimable input GST
+1350,REALIZED,yes,2026-04-30,JE10245,SentriLock,2000 Trade & Other Payables,1365.89,124.17,input,claimable input GST
+1350,REALIZED,yes,2026-05-01,JE3355,IPPY*WOTSO HOLDINGS,6300 Office Rent,1366.00,124.18,input,claimable input GST
+1350,REALIZED,yes,2026-05-01,JE8144,,2120 Host Payables,224792.20,20435.65,input,claimable input GST
+1350,REALIZED,yes,2026-05-04,JE5806,Thallula Segura,5025 Incidentals Payout - Other,26.54,2.41,input,claimable input GST
+1350,REALIZED,yes,2026-05-05,JE3363,,5001 Host Trip Earnings - RMS,18.18,1.65,input,claimable input GST
+1350,REALIZED,yes,2026-05-06,JE3760,,5022 Incidentals Payout - Cleaning,8.09,0.74,input,claimable input GST
+1350,REALIZED,yes,2026-05-06,JE5789,Vickie Locke,5025 Incidentals Payout - Other,36.00,3.27,input,claimable input GST
+1350,REALIZED,yes,2026-05-06,JE10235,SentriLock,2000 Trade & Other Payables,1284.81,116.80,input,claimable input GST
+1350,REALIZED,yes,2026-05-06,JE10247,SentriLock,2000 Trade & Other Payables,1371.42,124.67,input,claimable input GST
+1350,REALIZED,yes,2026-05-07,JE3366,Intuit Quickbooks Sydney AU,6701 Technology - Software Subscriptions,59.99,5.45,input,claimable input GST
+1350,REALIZED,yes,2026-05-11,JE5125,Bombora,5001 Host Trip Earnings - RMS,12811.49,1164.68,input,claimable input GST
+1350,REALIZED,yes,2026-05-11,JE5126,Wash and Go,5022 Incidentals Payout - Cleaning,29.44,2.68,input,claimable input GST
+1350,REALIZED,yes,2026-05-11,JE5790,Vickie Locke,5025 Incidentals Payout - Other,60.00,5.45,input,claimable input GST
+1350,REALIZED,yes,2026-05-12,JE5128,Wash and Go,5022 Incidentals Payout - Cleaning,29.44,2.68,input,claimable input GST
+1350,REALIZED,yes,2026-05-13,JE3376,Intuit Quickbooks Sydney AU,6701 Technology - Software Subscriptions,84.00,7.64,input,claimable input GST
+1350,REALIZED,yes,2026-05-13,JE3377,Linkt Melbourne,5020 Incidentals Payout - Tolls,4114.64,374.06,input,claimable input GST
+1350,REALIZED,yes,2026-05-14,JE5137,Cycle and Carriage,5001 Host Trip Earnings - RMS,10869.56,988.14,input,claimable input GST
+1350,REALIZED,yes,2026-05-14,JE5138,Jonkers Smash Repairs P/L,5032 Incidentals Payout - Workshop,3149.01,286.27,input,claimable input GST
+1350,REALIZED,yes,2026-05-14,JE8849,Stephen Inner West Smash Repairs Pty Ltd,2000 Trade & Other Payables,3000.00,272.73,input,claimable input GST
+1350,REALIZED,yes,2026-05-14,JE8851,Stephen Inner West Smash Repairs Pty Ltd,2000 Trade & Other Payables,2748.00,249.82,input,claimable input GST
+1350,REALIZED,yes,2026-05-14,JE10063,CDC Fleet,2000 Trade & Other Payables,25000.00,2275.82,input,claimable input GST
+1350,REALIZED,yes,2026-05-15,JE5143,CDC Fleet,5060 Parking - RMS Fleet,454.40,41.31,input,claimable input GST
+1350,REALIZED,yes,2026-05-18,JE5180,Wash and Go,5022 Incidentals Payout - Cleaning,29.44,2.68,input,claimable input GST
+1350,REALIZED,yes,2026-05-18,JE5181,Wash and Go,5022 Incidentals Payout - Cleaning,29.44,2.68,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE5182,IWG AUSTRALIA,6300 Office Rent,2.00,0.18,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE5184,IWG AUSTRALIA,6300 Office Rent,50.59,4.60,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE5185,IWG AUSTRALIA,6300 Office Rent,311.85,28.35,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE5186,IWG AUSTRALIA,6300 Office Rent,50.59,4.60,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE5187,IWG AUSTRALIA,6300 Office Rent,311.85,28.35,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE5217,Ken Morley Smash Repairs,5032 Incidentals Payout - Workshop,338.80,30.80,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8825,Autorola,2000 Trade & Other Payables,386.75,35.16,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8827,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,330.00,30.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8829,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,165.00,15.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8835,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,220.00,20.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8837,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,220.00,20.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8839,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,220.00,20.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8841,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,165.00,15.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8843,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,330.00,30.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8845,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,330.00,30.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8853,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,330.00,30.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8857,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,165.00,15.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8865,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,330.00,30.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8867,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,165.00,15.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8875,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,330.00,30.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8879,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,220.00,20.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8889,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,82.50,7.50,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8897,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,330.00,30.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8901,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,330.00,30.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8905,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,330.00,30.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8927,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,165.00,15.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8935,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,165.00,15.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8941,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,165.00,15.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE8951,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,165.00,15.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE9027,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,110.00,10.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE10041,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,220.00,20.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE10119,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,165.00,15.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE10121,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,330.00,30.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE10659,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,220.00,20.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-19,JE10811,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,330.00,30.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-21,JE5419,AUTO TOW SERVICES,5033 Incidentals Payout - Towing,1025.12,93.19,input,claimable input GST
+1350,REALIZED,yes,2026-05-21,JE5755,Anthony Austin Sellars,5032 Incidentals Payout - Workshop,2431.61,221.06,input,claimable input GST
+1350,REALIZED,yes,2026-05-21,JE5761,Godray PTY LTD,5025 Incidentals Payout - Other,1469.60,133.60,input,claimable input GST
+1350,REALIZED,yes,2026-05-21,JE10099,JustCo,2000 Trade & Other Payables,11000.00,1000.00,input,claimable input GST
+1350,REALIZED,yes,2026-05-22,JE8887,Thinxtra,2000 Trade & Other Payables,11502.10,1045.65,input,claimable input GST
+1350,REALIZED,yes,2026-05-27,JE5237,Wash and Go,5022 Incidentals Payout - Cleaning,29.44,2.68,input,claimable input GST
+1350,REALIZED,yes,2026-05-27,JE5792,Antonio Marconato Neto,5025 Incidentals Payout - Other,84.97,7.72,input,claimable input GST
+1350,REALIZED,yes,2026-05-29,JE9225,CDC Fleet,2000 Trade & Other Payables,26451.20,2404.65,input,claimable input GST
+1350,REALIZED,yes,2026-06-01,JE3433,IPPY*WOTSO HOLDINGS,6300 Office Rent,1300.00,118.18,input,claimable input GST
+1350,REALIZED,yes,2026-06-01,JE5255,Wash and Go,5022 Incidentals Payout - Cleaning,29.44,2.68,input,claimable input GST
+1350,REALIZED,yes,2026-06-01,JE8203,,2120 Host Payables,221310.57,20119.14,input,claimable input GST
+1350,REALIZED,yes,2026-06-03,JE5259,Wash and Go,5022 Incidentals Payout - Cleaning,27.41,2.49,input,claimable input GST
+1350,REALIZED,yes,2026-06-05,JE10127,Thinxtra,2000 Trade & Other Payables,12939.22,1176.29,input,claimable input GST
+1350,REALIZED,yes,2026-06-09,JE3452,Intuit Quickbooks Sydney AU,6701 Technology - Software Subscriptions,59.99,5.45,input,claimable input GST
+1350,REALIZED,yes,2026-06-09,JE5272,Wash and Go,5022 Incidentals Payout - Cleaning,29.44,2.68,input,claimable input GST
+1350,REALIZED,yes,2026-06-09,JE5273,IWG AUSTRALIA,6300 Office Rent,2.00,0.18,input,claimable input GST
+1350,REALIZED,yes,2026-06-11,JE5781,Edward Clarke,5025 Incidentals Payout - Other,208.14,18.92,input,claimable input GST
+1350,REALIZED,yes,2026-06-12,JE3459,IWG AUSTRALIA,6300 Office Rent,339.57,30.87,input,claimable input GST
+1350,REALIZED,yes,2026-06-12,JE3460,IWG AUSTRALIA,6300 Office Rent,51.98,4.73,input,claimable input GST
+1350,REALIZED,yes,2026-06-12,JE3461,IWG AUSTRALIA,6300 Office Rent,51.98,4.73,input,claimable input GST
+1350,REALIZED,yes,2026-06-12,JE3462,IWG AUSTRALIA,6300 Office Rent,339.57,30.87,input,claimable input GST
+1350,REALIZED,yes,2026-06-12,JE3463,IWG AUSTRALIA,6300 Office Rent,51.98,4.73,input,claimable input GST
+1350,REALIZED,yes,2026-06-12,JE3464,Linkt Melbourne,5020 Incidentals Payout - Tolls,3296.05,299.64,input,claimable input GST
+1350,REALIZED,yes,2026-06-13,JE3466,Intuit Quickbooks Sydney AU,6701 Technology - Software Subscriptions,84.00,7.64,input,claimable input GST
+1350,REALIZED,yes,2026-06-16,JE5808,Mark Willingham,5025 Incidentals Payout - Other,21.97,2.00,input,claimable input GST
+1350,REALIZED,yes,2026-06-16,JE9227,CDC Fleet,2000 Trade & Other Payables,25600.00,2314.04,input,claimable input GST
+1350,REALIZED,yes,2026-06-19,JE3485,Linkt Melbourne,5020 Incidentals Payout - Tolls,3296.05,299.64,input,claimable input GST
+1350,REALIZED,yes,2026-06-20,JE8801,Experian Australia Operations Pty Ltd,2000 Trade & Other Payables,3532.10,321.10,input,claimable input GST
+1350,REALIZED,yes,2026-06-25,JE8919,Autorola,2000 Trade & Other Payables,173.75,15.80,input,claimable input GST
+1350,REALIZED,yes,2026-06-26,JE5719,AUTO & GENERAL SERVICES PTY LTD,5032 Incidentals Payout - Workshop,5775.51,525.05,input,claimable input GST
+1350,REALIZED,yes,2026-06-26,JE5720,AUTO & GENERAL SERVICES PTY LTD,5032 Incidentals Payout - Workshop,3097.18,281.56,input,claimable input GST
+1350,REALIZED,yes,2026-06-26,JE8813,MACKTOW PTY LTD,2000 Trade & Other Payables,1153.10,104.82,input,claimable input GST
+1350,REALIZED,yes,2026-06-26,JE8815,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,220.00,20.00,input,claimable input GST
+1350,REALIZED,yes,2026-06-26,JE8817,Stephen Inner West Smash Repairs Pty Ltd,2000 Trade & Other Payables,930.00,84.55,input,claimable input GST
+1350,REALIZED,yes,2026-06-26,JE8819,Stephen Inner West Smash Repairs Pty Ltd,2000 Trade & Other Payables,580.00,52.73,input,claimable input GST
+1350,REALIZED,yes,2026-06-26,JE8885,CAR-TREK AUSTRALIA PTY LTD,2000 Trade & Other Payables,14294.12,1299.47,input,claimable input GST
+1350,REALIZED,yes,2026-06-26,JE10055,Focussed Assessing Pty Ltd,2000 Trade & Other Payables,220.00,20.00,input,claimable input GST
+1350,REALIZED,yes,2026-06-26,JE10083,Stephen Inner West Smash Repairs Pty Ltd,2000 Trade & Other Payables,3080.00,280.00,input,claimable input GST
+1350,REALIZED,yes,2026-06-26,JE10903,Allianz,2000 Trade & Other Payables,4650.72,422.79,input,claimable input GST
+1350,REALIZED,yes,2026-06-27,JE5426,AUTO TOW SERVICES,5033 Incidentals Payout - Towing,646.36,58.76,input,claimable input GST
+1350,REALIZED,yes,2026-06-29,JE5385,Bombora,5001 Host Trip Earnings - RMS,10450.31,950.03,input,claimable input GST
+1350,REALIZED,yes,2026-06-29,JE5386,Bombora,5001 Host Trip Earnings - RMS,9118.46,828.95,input,claimable input GST
+1350,REALIZED,yes,2026-06-30,JE5796,Holly Corbett,5025 Incidentals Payout - Other,56.14,5.10,input,claimable input GST
+1355,DEFERRED,no,2025-12-31,INV0000308939,CDC Fleet,5060,27063.20,2460.29,approved,1355 input (open bill)
+1355,DEFERRED,no,2025-11-30,INV0000296628,CDC Fleet,5060,26460.00,2405.45,approved,1355 input (open bill)
+1355,DEFERRED,no,2025-10-31,INV0000296627,CDC Fleet,5060,25799.20,2345.38,approved,1355 input (open bill)
+1355,DEFERRED,no,2025-09-30,INV0000266338,CDC Fleet,5060,25034.00,3.09,partially_paid,1355 input (open bill)
+1355,DEFERRED,no,2026-04-30,2549974,Australian Financial Complaints Authority,5025,17258.90,1568.99,approved,1355 input (open bill)
+1355,DEFERRED,no,2026-05-08,INV-3190741,Thinxtra,5030,16551.36,1504.67,approved,1355 input (open bill)
+1355,DEFERRED,no,2026-06-10,INV-3190768,Thinxtra,5030,15142.05,1376.55,approved,1355 input (open bill)
+1355,DEFERRED,no,2026-05-04,R208694,CAR-TREK AUSTRALIA PTY LTD,5032,8207.27,746.12,approved,1355 input (open bill)
+1355,DEFERRED,no,2026-06-01,R209914,CAR-TREK AUSTRALIA PTY LTD,5032,8180.05,743.64,approved,1355 input (open bill)
+1355,DEFERRED,no,2025-12-31,404381103145,Experian Australia Operations Pty Ltd,6701,7925.78,720.52,approved,1355 input (open bill)
+1355,DEFERRED,no,2026-01-31,404381103912,Experian Australia Operations Pty Ltd,6701,7582.58,689.32,approved,1355 input (open bill)
+1355,DEFERRED,no,2026-02-28,404381104716,Experian Australia Operations Pty Ltd,6701,6631.62,602.88,approved,1355 input (open bill)
+1355,DEFERRED,no,2025-10-31,2541495,Australian Financial Complaints Authority,5025,5096.08,463.28,approved,1355 input (open bill)
+1355,DEFERRED,no,2026-03-31,404381105632,Experian Australia Operations Pty Ltd,6701,4690.40,426.40,approved,1355 input (open bill)
+1355,DEFERRED,no,2025-05-10,51506,Nova Smash Repairs,5032,4438.04,403.46,approved,1355 input (open bill)
+1355,DEFERRED,no,2025-08-31,FTI1100002984,RACQ,5033,4137.05,376.10,approved,1355 input (open bill)
+1355,DEFERRED,no,2025-12-31,2544043,Australian Financial Complaints Authority,5025,3898.72,354.43,approved,1355 input (open bill)
+1355,DEFERRED,no,2026-06-30,404381108244,Experian Australia Operations Pty Ltd,6701,3692.98,335.72,approved,1355 input (open bill)
+1355,DEFERRED,no,2025-11-30,2543115,Australian Financial Complaints Authority,5025,3596.34,326.94,approved,1355 input (open bill)
+1355,DEFERRED,no,2025-04-24,2507,1 Key Locksmiths,5054,3500.00,318.19,approved,1355 input (open bill)
+1355,DEFERRED,no,2026-05-31,404381107338,Experian Australia Operations Pty Ltd,6701,2717.00,247.00,approved,1355 input (open bill)
+1355,DEFERRED,no,2025-09-30,2539027,Australian Financial Complaints Authority,5025,2548.04,231.64,approved,1355 input (open bill)
+1355,DEFERRED,no,2025-04-30,30046376,Bird & Bird,6501,2493.70,226.70,approved,1355 input (open bill)
+1355,DEFERRED,no,2026-03-31,8561,SMD Lawyers Pty Ltd,6501,2420.00,220.00,approved,1355 input (open bill)
+1355,DEFERRED,no,2025-08-19,51996,Nova Smash Repairs,5032,2295.15,208.65,approved,1355 input (open bill)
+1355,DEFERRED,no,2025-04-30,30046367,Bird & Bird,6501,1925.00,175.00,approved,1355 input (open bill)
+1355,DEFERRED,no,2026-05-25,INV-01288,Stephen Inner West Smash Repairs Pty Ltd,5032,1595.00,145.00,approved,1355 input (open bill)
+1355,DEFERRED,no,2026-05-29,INV-01290,Stephen Inner West Smash Repairs Pty Ltd,5032,1400.00,127.27,approved,1355 input (open bill)
+1355,DEFERRED,no,2026-06-29,DM026,NORMAN CHAN,5001,1364.00,124.00,approved,1355 input (open bill)
+1355,DEFERRED,no,2024-12-10,19139,NCIS,5032,1348.00,0.45,partially_paid,1355 input (open bill)
+1355,DEFERRED,no,2025-07-09,181,MELBOURNE PRESTIGE CENTRE,5032,1210.00,0.91,partially_paid,1355 input (open bill)
+1355,DEFERRED,no,2026-06-26,INV-01294,Stephen Inner West Smash Repairs Pty Ltd,5032,1100.00,100.00,approved,1355 input (open bill)
+1355,DEFERRED,no,2026-06-25,DM025,NORMAN CHAN,5001,1023.00,93.00,approved,1355 input (open bill)
+1355,DEFERRED,no,2026-06-18,DM024,NORMAN CHAN,5001,924.00,84.00,approved,1355 input (open bill)
+1355,DEFERRED,no,2024-12-03,00000107,Connect Repair Logistics,5032,908.60,82.60,approved,1355 input (open bill)
+1355,DEFERRED,no,2025-09-30,FTI1100003599,RACQ,5033,759.01,69.00,approved,1355 input (open bill)
+1355,DEFERRED,no,2026-01-29,AAU195396,Autorola,5032,717.31,0.00,partially_paid,1355 input (open bill)
+1355,DEFERRED,no,2025-08-05,00000382,Bris Towing,5033,660.00,60.00,approved,1355 input (open bill)
+1355,DEFERRED,no,2025-12-31,INV-00002444,Watterson,6501,438.90,39.90,approved,1355 input (open bill)
+1355,DEFERRED,no,2026-06-18,INV-01292,Stephen Inner West Smash Repairs Pty Ltd,5032,385.00,35.00,approved,1355 input (open bill)
+1355,DEFERRED,no,2026-05-28,4046421,Focussed Assessing Pty Ltd,5034,330.00,10.00,partially_paid,1355 input (open bill)
+1355,DEFERRED,no,2026-02-03,AU-MRKV035079E0,Pack & Send,5066,330.00,30.00,approved,1355 input (open bill)
+1355,DEFERRED,no,2024-11-22,00256489,SHEENGROUP TOWING PTY LTD,5033,280.00,25.45,approved,1355 input (open bill)
+1355,DEFERRED,no,2026-06-25,4053881,Focussed Assessing Pty Ltd,5034,220.00,20.00,approved,1355 input (open bill)
+1355,DEFERRED,no,2026-05-05,4039504,Focussed Assessing Pty Ltd,5034,220.00,20.00,approved,1355 input (open bill)
+1355,DEFERRED,no,2026-04-30,8615,SMD Lawyers Pty Ltd,6501,220.00,20.00,approved,1355 input (open bill)
+1355,DEFERRED,no,2025-03-07,1SR2TA,Focussed Assessing Pty Ltd,5034,220.00,20.00,approved,1355 input (open bill)
+1355,DEFERRED,no,2025-04-03,3105117,Focussed Assessing Pty Ltd,5034,165.00,15.00,approved,1355 input (open bill)
+2500,REALIZED,yes,2026-04-01,JE8048,,4000 GBV - P2P,14420.50,1310.95,output,output GST on revenue
+2500,REALIZED,yes,2026-04-01,JE8071,,5054 Refunds - Device Subscription,1133.26,-103.02,output_reversal,refund/chargeback reduces output GST
+2500,REALIZED,yes,2026-04-01,JE8072,,5055 Refunds - Insurance Subscription,319.78,-29.07,output_reversal,refund/chargeback reduces output GST
+2500,REALIZED,yes,2026-04-01,JE8074,,5037 Cost of Fuel Refund to Guest,274.20,-24.93,output_reversal,refund/chargeback reduces output GST
+2500,REALIZED,yes,2026-04-01,JE8077,,2100 Deferred Trip Revenue,251791.28,22890.12,output,output GST on revenue
+2500,REALIZED,yes,2026-04-01,JE8078,,1200 Trade Receivables,46207.27,4200.66,output,output GST on revenue
+2500,REALIZED,yes,2026-04-01,JE8079,,1200 Trade Receivables,51463.48,4678.50,output,output GST on revenue
+2500,REALIZED,yes,2026-04-01,JE8080,,1200 Trade Receivables,5244.46,476.77,output,output GST on revenue
+2500,REALIZED,yes,2026-04-01,JE8088,,5052 Refunds - Trip,55349.93,-5031.81,output_reversal,refund/chargeback reduces output GST
+2500,REALIZED,yes,2026-04-01,JE8089,,5053 Refunds - Incidentals,2839.86,-258.17,output_reversal,refund/chargeback reduces output GST
+2500,REALIZED,yes,2026-04-01,JE8093,,5051 Chargebacks,5981.42,-543.77,output_reversal,refund/chargeback reduces output GST
+2500,REALIZED,yes,2026-04-01,JE8103,,4025 Incidentals Revenue - Other,2467.95,224.36,output,output GST on revenue
+2500,REALIZED,yes,2026-04-02,JE5815,FCM Pty Ltd,5034 Incidentals Payout - Assessor,900.00,81.82,output,output GST on revenue
+2500,REALIZED,yes,2026-04-03,JE4926,MICROSOFT,6701 Technology - Software Subscriptions,1.00,0.09,output,output GST on revenue
+2500,REALIZED,yes,2026-04-07,JE5587,,4025 Incidentals Revenue - Other,194.00,17.64,output,output GST on revenue
+2500,REALIZED,yes,2026-04-07,JE5588,,4025 Incidentals Revenue - Other,10.00,0.91,output,output GST on revenue
+2500,REALIZED,yes,2026-04-10,JE3289,CROWDER C S,4025 Incidentals Revenue - Other,30.00,2.73,output,output GST on revenue
+2500,REALIZED,yes,2026-04-10,JE5590,,4025 Incidentals Revenue - Other,10.00,0.91,output,output GST on revenue
+2500,REALIZED,yes,2026-04-12,JE3297,Insuret,4030 Insurance Recoveries,195.45,17.77,output,output GST on revenue
+2500,REALIZED,yes,2026-04-12,JE5589,,4025 Incidentals Revenue - Other,30.00,2.73,output,output GST on revenue
+2500,REALIZED,yes,2026-04-15,JE5005,,6702 Technology - Platform Testing,18.95,1.72,output,output GST on revenue
+2500,REALIZED,yes,2026-04-15,JE5680,,6701 Technology - Software Subscriptions,7.01,0.64,output,output GST on revenue
+2500,REALIZED,yes,2026-04-17,JE3321,CROWDER C S,4025 Incidentals Revenue - Other,30.00,2.73,output,output GST on revenue
+2500,REALIZED,yes,2026-04-20,JE5592,,4025 Incidentals Revenue - Other,194.00,17.64,output,output GST on revenue
+2500,REALIZED,yes,2026-04-21,JE3329,Focussed Assessing Pty Ltd,5034 Incidentals Payout - Assessor,770.00,70.00,output,output GST on revenue
+2500,REALIZED,yes,2026-04-21,JE5595,,4025 Incidentals Revenue - Other,20.00,1.82,output,output GST on revenue
+2500,REALIZED,yes,2026-04-21,JE5596,,4025 Incidentals Revenue - Other,184.50,16.77,output,output GST on revenue
+2500,REALIZED,yes,2026-04-22,JE3337,Insuret,4030 Insurance Recoveries,5000.00,454.55,output,output GST on revenue
+2500,REALIZED,yes,2026-04-22,JE5022,,6702 Technology - Platform Testing,18.95,1.72,output,output GST on revenue
+2500,REALIZED,yes,2026-04-22,JE5023,,6702 Technology - Platform Testing,20.47,1.86,output,output GST on revenue
+2500,REALIZED,yes,2026-04-24,JE3338,CROWDER C S,4025 Incidentals Revenue - Other,30.00,2.73,output,output GST on revenue
+2500,REALIZED,yes,2026-04-24,JE3339,FIN-NOR HOLDINGS,4025 Incidentals Revenue - Other,10.00,0.91,output,output GST on revenue
+2500,REALIZED,yes,2026-04-24,JE5597,,4025 Incidentals Revenue - Other,20.00,1.82,output,output GST on revenue
+2500,REALIZED,yes,2026-04-24,JE5598,,4025 Incidentals Revenue - Other,93.69,8.52,output,output GST on revenue
+2500,REALIZED,yes,2026-04-25,JE5599,,4025 Incidentals Revenue - Other,10.00,0.91,output,output GST on revenue
+2500,REALIZED,yes,2026-04-27,JE5077,,6702 Technology - Platform Testing,27.65,2.51,output,output GST on revenue
+2500,REALIZED,yes,2026-04-27,JE5583,,4025 Incidentals Revenue - Other,184.50,16.77,output,output GST on revenue
+2500,REALIZED,yes,2026-04-28,JE3347,SPICA DELORINO,4025 Incidentals Revenue - Other,102.00,9.27,output,output GST on revenue
+2500,REALIZED,yes,2026-04-29,JE5095,,6702 Technology - Platform Testing,14.85,1.35,output,output GST on revenue
+2500,REALIZED,yes,2026-04-30,JE5600,,4025 Incidentals Revenue - Other,113.56,10.32,output,output GST on revenue
+2500,REALIZED,yes,2026-04-30,JE5660,,6012 Employee Claims - Transport,4.36,0.40,output,output GST on revenue
+2500,REALIZED,yes,2026-05-01,JE3354,CROWDER C S,4025 Incidentals Revenue - Other,30.00,2.73,output,output GST on revenue
+2500,REALIZED,yes,2026-05-01,JE5601,,4025 Incidentals Revenue - Other,194.00,17.64,output,output GST on revenue
+2500,REALIZED,yes,2026-05-01,JE8104,,4000 GBV - P2P,10557.21,959.75,output,output GST on revenue
+2500,REALIZED,yes,2026-05-01,JE8127,,5054 Refunds - Device Subscription,1284.00,-116.73,output_reversal,refund/chargeback reduces output GST
+2500,REALIZED,yes,2026-05-01,JE8128,,5055 Refunds - Insurance Subscription,1690.00,-153.64,output_reversal,refund/chargeback reduces output GST
+2500,REALIZED,yes,2026-05-01,JE8130,,5037 Cost of Fuel Refund to Guest,220.37,-20.03,output_reversal,refund/chargeback reduces output GST
+2500,REALIZED,yes,2026-05-01,JE8133,,2100 Deferred Trip Revenue,232974.94,21179.54,output,output GST on revenue
+2500,REALIZED,yes,2026-05-01,JE8134,,1200 Trade Receivables,33330.18,3030.02,output,output GST on revenue
+2500,REALIZED,yes,2026-05-01,JE8135,,1200 Trade Receivables,42578.65,3870.79,output,output GST on revenue
+2500,REALIZED,yes,2026-05-01,JE8136,,1200 Trade Receivables,5014.26,455.84,output,output GST on revenue
+2500,REALIZED,yes,2026-05-01,JE8146,,5052 Refunds - Trip,42463.59,-3860.33,output_reversal,refund/chargeback reduces output GST
+2500,REALIZED,yes,2026-05-01,JE8147,,5053 Refunds - Incidentals,4908.15,-446.20,output_reversal,refund/chargeback reduces output GST
+2500,REALIZED,yes,2026-05-01,JE8152,,5051 Chargebacks,21144.87,-1922.26,output_reversal,refund/chargeback reduces output GST
+2500,REALIZED,yes,2026-05-01,JE8158,,5011 Stripe Platform Adjustments,485.42,44.13,output,output GST on revenue
+2500,REALIZED,yes,2026-05-01,JE8162,,4025 Incidentals Revenue - Other,368.86,33.53,output,output GST on revenue
+2500,REALIZED,yes,2026-05-04,JE5602,,4025 Incidentals Revenue - Other,184.50,16.77,output,output GST on revenue
+2500,REALIZED,yes,2026-05-07,JE5591,,4025 Incidentals Revenue - Other,10.00,0.91,output,output GST on revenue
+2500,REALIZED,yes,2026-05-07,JE5603,,4025 Incidentals Revenue - Other,19.32,1.76,output,output GST on revenue
+2500,REALIZED,yes,2026-05-07,JE5604,,4025 Incidentals Revenue - Other,30.00,2.73,output,output GST on revenue
+2500,REALIZED,yes,2026-05-08,JE3369,CROWDER C S,4025 Incidentals Revenue - Other,30.00,2.73,output,output GST on revenue
+2500,REALIZED,yes,2026-05-08,JE5605,,4025 Incidentals Revenue - Other,36.89,3.35,output,output GST on revenue
+2500,REALIZED,yes,2026-05-10,JE5606,,4025 Incidentals Revenue - Other,500.00,45.45,output,output GST on revenue
+2500,REALIZED,yes,2026-05-12,JE5585,,4025 Incidentals Revenue - Other,60.00,5.45,output,output GST on revenue
+2500,REALIZED,yes,2026-05-12,JE5593,,4025 Incidentals Revenue - Other,17.55,1.60,output,output GST on revenue
+2500,REALIZED,yes,2026-05-12,JE5607,,4025 Incidentals Revenue - Other,254.50,23.14,output,output GST on revenue
+2500,REALIZED,yes,2026-05-13,JE3770,,7001 Other Income - Cash Rebate,653.08,59.37,output,output GST on revenue
+2500,REALIZED,yes,2026-05-14,JE5608,,4025 Incidentals Revenue - Other,20.00,1.82,output,output GST on revenue
+2500,REALIZED,yes,2026-05-15,JE3381,CROWDER C S,4025 Incidentals Revenue - Other,30.00,2.73,output,output GST on revenue
+2500,REALIZED,yes,2026-05-15,JE5147,,6702 Technology - Platform Testing,21.30,1.94,output,output GST on revenue
+2500,REALIZED,yes,2026-05-15,JE5594,,4025 Incidentals Revenue - Other,194.00,17.64,output,output GST on revenue
+2500,REALIZED,yes,2026-05-15,JE5609,,4025 Incidentals Revenue - Other,15.13,1.38,output,output GST on revenue
+2500,REALIZED,yes,2026-05-15,JE5610,,4025 Incidentals Revenue - Other,20.00,1.82,output,output GST on revenue
+2500,REALIZED,yes,2026-05-19,JE5183,IWG AUSTRALIA,6300 Office Rent,2.00,0.18,output,output GST on revenue
+2500,REALIZED,yes,2026-05-20,JE5219,,6702 Technology - Platform Testing,14.85,1.35,output,output GST on revenue
+2500,REALIZED,yes,2026-05-22,JE3401,CROWDER C S,4025 Incidentals Revenue - Other,30.00,2.73,output,output GST on revenue
+2500,REALIZED,yes,2026-05-22,JE5611,,4025 Incidentals Revenue - Other,10.00,0.91,output,output GST on revenue
+2500,REALIZED,yes,2026-05-23,JE5613,,4025 Incidentals Revenue - Other,500.00,45.45,output,output GST on revenue
+2500,REALIZED,yes,2026-05-26,JE5612,,4025 Incidentals Revenue - Other,254.50,23.14,output,output GST on revenue
+2500,REALIZED,yes,2026-05-26,JE5614,,4025 Incidentals Revenue - Other,17.15,1.56,output,output GST on revenue
+2500,REALIZED,yes,2026-05-28,JE5615,,4025 Incidentals Revenue - Other,40.00,3.64,output,output GST on revenue
+2500,REALIZED,yes,2026-05-28,JE5616,,4025 Incidentals Revenue - Other,14.68,1.33,output,output GST on revenue
+2500,REALIZED,yes,2026-05-28,JE5617,,4025 Incidentals Revenue - Other,15.06,1.37,output,output GST on revenue
+2500,REALIZED,yes,2026-05-29,JE3421,CROWDER C S,4025 Incidentals Revenue - Other,30.00,2.73,output,output GST on revenue
+2500,REALIZED,yes,2026-05-29,JE3425,GT Insurance,4030 Insurance Recoveries,2727.27,247.93,output,output GST on revenue
+2500,REALIZED,yes,2026-05-29,JE5618,,4025 Incidentals Revenue - Other,194.00,17.64,output,output GST on revenue
+2500,REALIZED,yes,2026-06-01,JE8163,,4000 GBV - P2P,13568.88,1233.53,output,output GST on revenue
+2500,REALIZED,yes,2026-06-01,JE8186,,5054 Refunds - Device Subscription,798.34,-72.58,output_reversal,refund/chargeback reduces output GST
+2500,REALIZED,yes,2026-06-01,JE8187,,5055 Refunds - Insurance Subscription,790.00,-71.82,output_reversal,refund/chargeback reduces output GST
+2500,REALIZED,yes,2026-06-01,JE8189,,5037 Cost of Fuel Refund to Guest,138.00,-12.55,output_reversal,refund/chargeback reduces output GST
+2500,REALIZED,yes,2026-06-01,JE8192,,2100 Deferred Trip Revenue,230677.22,20970.66,output,output GST on revenue
+2500,REALIZED,yes,2026-06-01,JE8193,,1200 Trade Receivables,37039.56,3367.23,output,output GST on revenue
+2500,REALIZED,yes,2026-06-01,JE8194,,1200 Trade Receivables,34583.51,3143.96,output,output GST on revenue
+2500,REALIZED,yes,2026-06-01,JE8195,,1200 Trade Receivables,7711.26,701.02,output,output GST on revenue
+2500,REALIZED,yes,2026-06-01,JE8205,,5052 Refunds - Trip,49242.52,-4476.59,output_reversal,refund/chargeback reduces output GST
+2500,REALIZED,yes,2026-06-01,JE8206,,5053 Refunds - Incidentals,6622.31,-602.03,output_reversal,refund/chargeback reduces output GST
+2500,REALIZED,yes,2026-06-01,JE8211,,5051 Chargebacks,19280.51,-1752.77,output_reversal,refund/chargeback reduces output GST
+2500,REALIZED,yes,2026-06-01,JE8217,,5011 Stripe Platform Adjustments,5520.93,501.90,output,output GST on revenue
+2500,REALIZED,yes,2026-06-01,JE8221,,4025 Incidentals Revenue - Other,1235.76,112.34,output,output GST on revenue
+2500,REALIZED,yes,2026-06-02,JE5816,Autorola,5032 Incidentals Payout - Workshop,500.00,45.45,output,output GST on revenue
+2500,REALIZED,yes,2026-06-02,JE5834,,7001 Other Income - Cash Rebate,66.00,6.00,output,output GST on revenue
+2500,REALIZED,yes,2026-06-04,JE3444,MEEGAN KING,4025 Incidentals Revenue - Other,77.00,7.00,output,output GST on revenue
+2500,REALIZED,yes,2026-06-04,JE5619,,4025 Incidentals Revenue - Other,60.00,5.45,output,output GST on revenue
+2500,REALIZED,yes,2026-06-05,JE3445,CROWDER C S,4025 Incidentals Revenue - Other,30.00,2.73,output,output GST on revenue
+2500,REALIZED,yes,2026-06-05,JE5620,,4025 Incidentals Revenue - Other,30.00,2.73,output,output GST on revenue
+2500,REALIZED,yes,2026-06-09,JE5274,IWG AUSTRALIA,6300 Office Rent,2.00,0.18,output,output GST on revenue
+2500,REALIZED,yes,2026-06-12,JE3458,CROWDER C S,4025 Incidentals Revenue - Other,30.00,2.73,output,output GST on revenue
+2500,REALIZED,yes,2026-06-12,JE3465,Jetstar,6400 Travel - Tickets,449.00,40.82,output,output GST on revenue
+2500,REALIZED,yes,2026-06-12,JE5621,,4025 Incidentals Revenue - Other,194.00,17.64,output,output GST on revenue
+2500,REALIZED,yes,2026-06-13,JE3467,Linkt Melbourne,5020 Incidentals Payout - Tolls,3296.05,299.64,output,output GST on revenue
+2500,REALIZED,yes,2026-06-14,JE5299,VERCEL INC,6700 Technology - Infrastructure,0.72,0.07,output,output GST on revenue
+2500,REALIZED,yes,2026-06-15,JE5307,,6702 Technology - Platform Testing,6.14,0.56,output,output GST on revenue
+2500,REALIZED,yes,2026-06-15,JE5308,,6702 Technology - Platform Testing,18.43,1.68,output,output GST on revenue
+2500,REALIZED,yes,2026-06-16,JE5317,,6702 Technology - Platform Testing,14.85,1.35,output,output GST on revenue
+2500,REALIZED,yes,2026-06-16,JE5318,,6702 Technology - Platform Testing,18.95,1.72,output,output GST on revenue
+2500,REALIZED,yes,2026-06-19,JE3484,CROWDER C S,4025 Incidentals Revenue - Other,30.00,2.73,output,output GST on revenue
+2500,REALIZED,yes,2026-06-24,JE5622,,4025 Incidentals Revenue - Other,94.20,8.56,output,output GST on revenue
+2500,REALIZED,yes,2026-06-26,JE3500,CROWDER C S,4025 Incidentals Revenue - Other,30.00,2.73,output,output GST on revenue
+2500,REALIZED,yes,2026-06-27,JE5623,,4025 Incidentals Revenue - Other,194.00,17.64,output,output GST on revenue
+2500,REALIZED,yes,2026-06-28,JE3503,UBER *TRIP,6400 Travel - Tickets,138.00,12.55,output,output GST on revenue
+2500,REALIZED,yes,2026-06-28,JE3504,UBER *TRIP,6400 Travel - Tickets,54.00,4.91,output,output GST on revenue
+2500,REALIZED,yes,2026-06-29,JE5581,,4025 Incidentals Revenue - Other,20.00,1.82,output,output GST on revenue
+2500,REALIZED,yes,2026-06-30,JE5624,,4025 Incidentals Revenue - Other,1000.00,90.91,output,output GST on revenue
+2505,DEFERRED,no,2026-06-30,1200 Trade Receivables,(uncollected invoiced revenue),1200,542760.74,49341.89,open,2505 output (open AR balance)

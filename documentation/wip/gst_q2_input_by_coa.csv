@@ -1,0 +1,41 @@
+coa,account,gst_applicable,total_cash_out,taken_for_gst,gst_claimed_1_11,excl_no_counterparty,excl_vendor_not_registered,excl_gst_free_account
+UNMAPPED,(unknown),False,876110.0,0,0.0,0,0,876110.0
+6000,Salaries & Wages,False,181945.35,0,0.0,0,0,181945.35
+5030,Cost of Device Subscriptions,True,82015.37,35183.52,3198.5,0,46831.85,0
+8210,IC - Singapore (AU books),True,80402.8,0,0.0,80402.8,0,0
+5060,Parking - RMS Fleet,True,77690.19,77505.6,7045.96,184.59,0,0
+5063,Customer Support - Salary,False,70913.74,0,0.0,0,0,70913.74
+5035,Cost of Insurance - Trip Premium,True,69700.42,69472.07,6315.64,0,228.35,0
+5032,Incidentals Payout - Workshop,True,68286.51,68286.51,6207.86,0,0,0
+6700,Technology - Infrastructure,True,63164.23,0,0.0,0,63164.23,0
+5001,Host Trip Earnings - RMS,True,56381.9,56381.9,5125.63,0,0,0
+6701,Technology - Software Subscriptions,True,53161.78,3532.1,321.1,1077.41,48552.27,0
+5062,On-Ground Team - Expenses,True,34696.79,0,0.0,115.21,34581.58,0
+6003,Directors Salary,False,34648.0,0,0.0,0,0,34648.0
+6300,Office Rent,True,16541.75,11000.0,1000.0,11.79,5529.96,0
+5020,Incidentals Payout - Tolls,True,13847.98,13847.98,1258.91,0,0,0
+2500,GST Payable (Output Tax),False,13546.18,0,0.0,0,0,13546.18
+5061,On-Ground Team - Salary,False,11487.87,0,0.0,0,0,11487.87
+1520,Motor Vehicles,True,8857.76,0,0.0,0,8857.76,0
+5034,Incidentals Payout - Assessor,True,7287.5,7287.5,662.5,0,0,0
+6400,Travel - Tickets,True,5687.86,0,0.0,2388.75,3299.11,0
+6004,Staff Health Insurance,True,5249.32,0,0.0,0,5249.32,0
+5031,Cost of Insurance - Subscription Premium,True,5000.0,0,0.0,5000.0,0,0
+5036,Cost of Insurance - Excess/Deductible,True,4650.72,0,0.0,0,4650.72,0
+1710,Technology Development,True,2903.65,0,0.0,0,2903.65,0
+5033,Incidentals Payout - Towing,True,2824.58,2824.58,256.78,0,0,0
+5025,Incidentals Payout - Other,True,2125.57,2125.57,193.23,0,0,0
+6310,Office Equipment,True,1175.42,0,0.0,520.42,655.0,0
+6012,Employee Claims - Transport,True,800.88,0,0.0,723.73,77.15,0
+6401,Travel - Meals,True,597.04,0,0.0,559.71,37.33,0
+6702,Technology - Platform Testing,True,577.34,0,0.0,577.34,0,0
+5022,Incidentals Payout - Cleaning,True,473.54,473.54,43.05,0,0,0
+6402,Entertainment,True,398.81,0,0.0,273.1,125.71,0
+6014,Employee Claims - Other,True,350.43,0,0.0,350.43,0,0
+6500,Accounting & Bookkeeping Fees,True,329.0,0,0.0,0,329.0,0
+1500,Computer & Peripherals,True,327.5,0,0.0,0,327.5,0
+6011,Employee Claims - Meals,True,307.28,0,0.0,307.28,0,0
+6600,Bank Fees,True,260.17,0,0.0,260.17,0,0
+5065,Cost of Device - Courier/Shipping,True,204.99,0,0.0,0,204.99,0
+6100,Marketing - Digital Advertising,True,160.0,0,0.0,0,160.0,0
+6013,Employee Claims - Office Supplies,True,106.41,0,0.0,106.41,0,0

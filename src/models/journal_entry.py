@@ -81,6 +81,12 @@ class FinanceJournalEntry(Base):
         nullable=True,
         comment="Asset schedule that generated this periodic depreciation/amortization JE",
     )
+    source_prepaid_schedule_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("finance_amortization_schedules.id", ondelete="SET NULL"),
+        nullable=True,
+        comment="Prepaid (invoice) schedule that generated this monthly release JE (Gaurav 2026-08-17)",
+    )
     source: Mapped[Optional[str]] = mapped_column(
         String(50),
         nullable=True,

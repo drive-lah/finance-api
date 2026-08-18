@@ -151,6 +151,7 @@ def sync():
                 "query_errors": st["query_errors"],
             })
         payouts = economic_event_service.import_payout_lines(db, entity_id, None)
+        own_payouts = economic_event_service.import_own_account_payout_lines(db, entity_id, None)
 
     total_staged = sum(m["staged"] for m in months)
     total_mismatch = sum(len(m["mismatches"]) for m in months)
@@ -159,6 +160,7 @@ def sync():
         "date_from": d_from.isoformat(), "date_to": d_to.isoformat(),
         "months": months,
         "payouts": payouts,
+        "own_account_payouts": own_payouts,
         "summary": {"months": len(months), "events_staged": total_staged,
                     "mismatches": total_mismatch},
         "note": "Events STAGED only (not posted). Run POST /project per month to post.",

@@ -83,6 +83,8 @@ def create_app(config=None):
     app.register_blueprint(approval_rules_bp)
     app.register_blueprint(hr_bp)
     app.register_blueprint(amortization_bp)
+    from src.routes.periods import periods_bp
+    app.register_blueprint(periods_bp)
     app.register_blueprint(hr_onboarding_bp)
     app.register_blueprint(hr_offboarding_bp)
     app.register_blueprint(jobs_bp)

@@ -1,0 +1,152 @@
+{
+  "description": "Accounts Inspection knowledge base (Gaurav, 2026-08-16). Each rule = a deterministic anomaly check the inspector runs after every year pass / before every scorecard. Exceptions go to Gaurav; every ruling he makes on an exception sharpens a rule or adds one. Append-only ids.",
+  "candidates": {
+    "note": "Standing backlog (Gaurav 2026-08-17: 'we should keep looking for things to add — the common pitfalls, so it can always scan the year for that'). A candidate graduates to a rule once it is deterministic and has a clear question for Gaurav. Add one every time a real defect is found by hand: anything caught by a human is a rule the inspector was missing.",
+    "items": [
+      "Round-number and repeated-amount clusters — the signature of a manual plug or a double-keyed payment.",
+      "Same vendor + same amount within N days across DIFFERENT invoice numbers (duplicate payment that L2 dedup cannot see).",
+      "An expense account that carries a balance in every other year but is empty this year — a whole category silently unbooked.",
+      "Year-on-year swing beyond a threshold on any P&L line, unexplained — catches a mis-mapped rule dumping into the wrong account.",
+      "Journals with no counterparty on a counterparty-conditioned account (POL-125's blind spot: the rule needs the name AND the id).",
+      "Bank-fee and FX-loss accounts holding a credit (natural-sign oddity already in INSP-5, but per-account thresholds tuned by history).",
+      "Payments knocked off against an invoice whose amount differs by more than rounding — silent under/over-settlement.",
+      "Any account that appears in the trial balance but in NO report section (INSP-4 covers coverage; extend to entity-specific accounts).",
+      "Intercompany accounts that do not net to zero across entities at year-close.",
+      "Journals posted by a source that no longer exists in code (orphaned engine tags) — dead paths still writing.",
+      "GST/tax accounts moving in a period where the entity is not registered (POL-87's inverse).",
+      "A closed period with journals dated inside it created AFTER the lock timestamp (proof the guard was bypassed)."
+    ]
+  },
+  "rules": [
+    {
+      "id": "INSP-1",
+      "name": "Incoming bank money booked as revenue",
+      "severity": "HIGH",
+      "enabled": true,
+      "rationale": "Gaurav 2026-08-16: incoming transfers (especially large ones) mis-booked as revenue is the classic failure mode. Proven the same day: S$36,500 of Dirk-Jan director loans sat in 4025 Incidentals Revenue - Other via a catch-all rule.",
+      "params": {
+        "min_amount": 500,
+        "note": "Flags every incoming statement-account txn whose journal credits a REVENUE account, with booking route + counterparty for judgment. Legitimate customer receipts will appear — the judgment pass clears them; repeated legit patterns earn allowlist entries here.",
+        "allowlist_counterparty_contains": []
+      }
+    },
+    {
+      "id": "INSP-2",
+      "name": "Book balance vs source-of-truth balance, every account",
+      "severity": "HIGH",
+      "enabled": true,
+      "rationale": "Gaurav 2026-08-16: our books must tie to the bank's truth per account. Statement accounts tie to the statement running balance; Stripe pockets tie to Stripe's own balance-transaction sums (platform table for Platform; connected-accounts table filtered to the own-accounts registry for Connect/Held-Funds).",
+      "params": {
+        "tolerance": 0.02,
+        "note": "First live catch: 1017 Bank - Stripe Platform end-2019 ledger 9,564.46 vs Stripe truth 7,151.96 (gap 2,412.50, under decomposition)."
+      }
+    },
+    {
+      "id": "INSP-3",
+      "name": "Finalized year: EVERYTHING in terminal state",
+      "severity": "HIGH",
+      "enabled": true,
+      "rationale": "Gaurav 2026-08-16 (broadened same day): a finalized year means every object finished its lifecycle — journals POSTED (or VOIDED), bank transactions RECONCILED (MATCHED is only the system's best guess; the year sign-off IS the human approval), economic events POSTED, internally-paid register payouts in a terminal state (posted/cancelled/failed). Drafts in a closed year also vanish from posted-basis reports (the FY2019 'missing salaries' confusion).",
+      "params": {
+        "finalized_years": [
+          2019
+        ]
+      }
+    },
+    {
+      "id": "INSP-4",
+      "name": "Report coverage: every account represented, statements consistent",
+      "severity": "HIGH",
+      "enabled": true,
+      "rationale": "Gaurav 2026-08-16: are the report builders covering ALL accounts — assets, liabilities, equity, every section? Deterministic form: (a) every journal line's account exists in the COA with a known type (an unknown/missing type silently drops from every report); (b) the balance-sheet equation holds: assets = liabilities + equity + cumulative P&L; (c) period P&L net equals the P&L accounts' movement in the trial balance.",
+      "params": {
+        "tolerance": 0.02
+      }
+    },
+    {
+      "id": "INSP-5",
+      "name": "Oddity scan: balances against their natural sign",
+      "severity": "MEDIUM",
+      "enabled": true,
+      "rationale": "Gaurav 2026-08-16: 'what looks odd' on the statements — e.g. host payables NEGATIVE. Deterministic core: any account whose closing balance contradicts its normal_balance (asset in credit, liability/revenue in debit) beyond tolerance is an exception for judgment. The LLM layer reasons over each flag.",
+      "params": {
+        "min_abs": 50
+      }
+    },
+    {
+      "id": "INSP-6",
+      "name": "Sentinel / impossible journal dates",
+      "severity": "HIGH",
+      "enabled": true,
+      "rationale": "Gaurav's retained-earnings question, 2026-08-16: 21 invoice-approval journals (S$33,410.91 of expense) sit at entry_date 1900-01-01 because the invoices carry a sentinel invoice_date. They pollute EVERY as-of computation — retained earnings, balance-sheet liabilities, any cumulative P&L — while correctly-windowed period reports exclude them, so the statements silently disagree with each other.",
+      "params": {
+        "epoch": "2016-01-01"
+      }
+    },
+    {
+      "id": "INSP-7",
+      "name": "AU GST handling on invoice postings (PLACEHOLDER — design pending)",
+      "severity": "MEDIUM",
+      "enabled": false,
+      "rationale": "Gaurav 2026-08-16: a batch of invoices was posted earlier (and more will post in subsequent years) alongside GST approvals — but GST approvals on invoices are no longer done. A dedicated AU GST-handling piece is coming; until it lands, the inspector must remember that posted-invoice GST treatment for AU is an OPEN design area to check, not an assumption. Discussion pending with Gaurav.",
+      "params": {
+        "note": "enable once the AU invoice-GST design is ruled"
+      }
+    },
+    {
+      "id": "INSP-8",
+      "name": "Foreign-currency handling: everything converted to the entity's functional currency",
+      "severity": "HIGH",
+      "enabled": true,
+      "rationale": "Gaurav 2026-08-16: every journal amount in an entity's books must be the entity's FUNCTIONAL currency; nothing may pass through 1:1 unconverted (POL-25/26/141/142 lineage — the transfer/allocation blocks once booked raw native as functional). Two deterministic teeth: (a) a foreign-currency transaction whose functional booking exactly equals its native amount (implied rate 1.0 for a non-same currency) is a 1:1 suspect; (b) journal lines carrying a foreign currency tag but missing native_amount or fx_rate metadata break the native-side ledger and its tie-outs.",
+      "params": {
+        "min_abs": 20
+      }
+    },
+    {
+      "id": "INSP-9",
+      "name": "Prepaid amortization: every spread invoice's releases posted for the year",
+      "severity": "HIGH",
+      "enabled": true,
+      "rationale": "Gaurav 2026-08-17: 169 invoice-linked amortization schedules park expenses into 1300 Prepayments but NO release engine ever existed — S$1.36M parked, zero released, P&L overstated since 2023. The inspector must check, for every inspected year, each schedule with release months falling in that year: due releases must be POSTED. Also flags schedules whose spread total mismatches the parked (net) amount (56 gross-vs-net defects found 2026-08-17 — releasing gross from a net asset would drive 1300 negative). Fixed year by year as part of each year pass.",
+      "params": {}
+    },
+    {
+      "id": "INSP-11",
+      "name": "No duplicate invoices alive in the system",
+      "severity": "HIGH",
+      "enabled": true,
+      "rationale": "Gaurav 2026-08-17: we cannot have duplicate invoices in the system. Two live catches the same day: 3 AFCA re-ingest dupes + an 8-row sweep (incl. a S$64,323.21 Penguin duplicate in reconcile) — all same vendor + same invoice number + same amount as a live original, born from re-ingests and portal re-downloads (DQ-112: regenerated PDFs defeat byte-hash dedup). The upload-time guards (semantic block at extract + create) prevent NEW ones; this rule catches any that slip in through ingests, backfills, or edits.",
+      "params": {
+        "note": "flags non-void/rejected invoices sharing vendor+number+amount with an earlier live invoice"
+      }
+    },
+    {
+      "id": "INSP-10",
+      "name": "D&A integrity: nothing capitalized escapes aging, nothing ages wrongly",
+      "severity": "HIGH",
+      "enabled": true,
+      "rationale": "Gaurav 2026-08-17: the year-close dangers for depreciation/amortisation/prepaids, folded into ONE readable gate (six checks): (a) an asset-class balance with NO policy — capitalized cost that will never age, silent understatement forever; (b) a policy-covered account holding a balance with NO register row (the history-year trap: finalized years bypass approve() so auto-registration never fires); (c) the cycle unrun for the closing year — months with no charge; (d) a large single-month charge to an account that usually spreads (the blank-service-period trap: a multi-month bill expensed in one hit); (e) a prepaid whose period has ENDED but whose balance hasn't (a release failed silently); (f) accumulated depreciation EXCEEDING cost, or a disposed asset still charging — arithmetic proof of double-charging.",
+      "params": {
+        "single_month_charge_threshold": 5000,
+        "spread_ratio": 0.5
+      }
+    },
+    {
+      "id": "INSP-12",
+      "name": "Route conflict: a cost cannot be both prepaid and capitalized",
+      "severity": "HIGH",
+      "enabled": true,
+      "rationale": "Gaurav 2026-08-17 (DA-14): the chosen account decides the route, and a service period only means something on the expense side of the fork. Prepaid = the cost has not become an expense YET (park in 1300 Prepayments, release monthly into the P&L). Capitalized = it is already an asset (park in the asset account, amortize by policy through the register). A schedule releasing into a non-P&L account asks the system to run both: the money shuffles between two assets and never reaches the P&L, while the register separately ages it — profit is overstated and the same cost risks being charged twice. Four live schedules did exactly this (3 releasing into 1710 Technology Development, 1 into 2410 Convertible Notes). The invoice gate now ignores a service period on a non-expense account and the release engine refuses these, so this rule catches history and anything written around the services.",
+      "params": {}
+    },
+    {
+      "id": "INSP-13",
+      "name": "Spend parked on the balance sheet but never scheduled",
+      "severity": "HIGH",
+      "enabled": true,
+      "rationale": "Gaurav 2026-08-18: both routes into a schedule run off an APPROVAL — the invoice approval creates the prepaid spread, and the registrar picks up capitalized spend that has a bank transaction behind it. A MANUAL journal has neither, so the cost parks on the balance sheet and nothing ever ages it: expense understated forever, profit overstated forever, and no one notices because the balance sheet still balances. Two shapes: (a) a debit into a policy-covered asset account with no register row for that journal — note the register requires a bank transaction today (transaction_id is NOT NULL), so a manual journal cannot be registered AT ALL, it is only reported; (b) a debit into 1300 Prepayments with no release schedule behind it. INSP-10(b) cannot see either: it only fires when a policy has ZERO register rows, so one unscheduled journal among many scheduled ones is invisible to it.",
+      "params": {}
+    }
+  ]
+}

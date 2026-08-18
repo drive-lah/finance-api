@@ -1,0 +1,8 @@
+8787|2|2025-01-01|POSTED|JE #2: Trip revenue accrual - Jan 2025 ($528,731.72)
+8788|2|2025-01-01|POSTED|JE #6: Subscriptions invoiced - Jan 2025 ($14,945.77)
+8789|2|2025-01-01|POSTED|JE #15: Host superhost bonus - Jan 2025 ($34,902.11)
+8790|2|2025-01-01|POSTED|JE #21: Subscription refunds - Jan 2025 ($-463.22)
+8791|2|2025-01-01|POSTED|JE #25: Direct incidentals (no AR) - Jan 2025 ($529,379.38)
+8792|2|2020-01-01|POSTED|JE #2: Trip revenue accrual - Jan 2020 ($79,807.06)
+8793|2|2020-01-01|POSTED|JE #15: Host superhost bonus - Jan 2020 ($1,680.00)
+8794|2|2020-01-01|POSTED|JE #25: Direct incidentals (no AR) - Jan 2020 ($70,745.83)

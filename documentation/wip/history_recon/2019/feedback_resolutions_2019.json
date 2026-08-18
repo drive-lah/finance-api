@@ -1,0 +1,174 @@
+{
+  "year": 2019,
+  "source_feedback": "scorecard_feedback_2019.json",
+  "note": "Structured replay of Gaurav's 10 verdicts (2026-08-15) + the config artifacts their application created. Extracted from the signed-off finance_local clone state. apply-feedback CONFIG runs BEFORE the engine (rules catch what they can); RESOLUTIONS run AFTER (only txns still in NEEDS_REVIEW).",
+  "config": {
+    "rules_update": [
+      {
+        "id": 239,
+        "name": "OCBC bank charges (fee lines only, ENT-5 fixed 2026-08-15)",
+        "direction": "OUTGOING",
+        "amount_operator": "LESS_THAN",
+        "amount_value": 100.0,
+        "description_operator": "CONTAINS",
+        "description_value": "GIRO CHARGES|FAST CHARGES|SERVICE CHARGE|FALL BELOW|ANNUAL FEE|LEDGER FEE",
+        "contra_account_code": "6600"
+      },
+      {
+        "id": 240,
+        "name": "AU bank charges (fee lines only, ENT-5 fixed 2026-08-15)",
+        "direction": "OUTGOING",
+        "amount_operator": "LESS_THAN",
+        "amount_value": 100.0,
+        "description_operator": "CONTAINS",
+        "description_value": "GIRO CHARGES|FAST CHARGES|SERVICE CHARGE|FALL BELOW|ANNUAL FEE|LEDGER FEE",
+        "contra_account_code": "6600"
+      },
+      {
+        "id": 372,
+        "description_operator": null,
+        "description_value": null,
+        "counterparty_operator": "CONTAINS",
+        "counterparty_value": "Tokio Marine|INCOME INSURANCE|Hollard Insurance|GT Insurance|ALLIANZ|DEFT INSURANCE"
+      },
+      {
+        "id": 373,
+        "description_operator": null,
+        "description_value": null,
+        "counterparty_operator": "CONTAINS",
+        "counterparty_value": "Tokio Marine|INCOME INSURANCE|Hollard Insurance|GT Insurance|ALLIANZ|DEFT INSURANCE"
+      }
+    ],
+    "rules_insert": [
+      {
+        "id": 384,
+        "name": "Google Ads -> Marketing Digital Advertising",
+        "priority": 10,
+        "status": "ACTIVE",
+        "direction": "OUTGOING",
+        "description_operator": "CONTAINS",
+        "description_value": "GOOGLE*ADS",
+        "contra_account_code": "6100",
+        "category": "EXPENSE"
+      },
+      {
+        "id": 385,
+        "name": "Director loan in - Dirk-Jan ter Horst",
+        "priority": 3,
+        "status": "ACTIVE",
+        "direction": "INCOMING",
+        "counterparty_operator": "CONTAINS",
+        "counterparty_value": "Ter Horst",
+        "contra_account_code": "2405",
+        "category": "DEPOSIT"
+      },
+      {
+        "id": 386,
+        "name": "Director loan in - Gaurav Singhal",
+        "priority": 3,
+        "status": "ACTIVE",
+        "direction": "INCOMING",
+        "counterparty_operator": "CONTAINS",
+        "counterparty_value": "Gaurav Singhal",
+        "contra_account_code": "2405",
+        "category": "DEPOSIT"
+      }
+    ],
+    "ensure_accounts": [
+      {
+        "code": "7003",
+        "name": "Other Income - Miscellaneous",
+        "account_type": "REVENUE",
+        "category": "Other Income",
+        "description": "Misc income (Gaurav scorecard ruling 2026-08-15; first use: 2019 MAYBANK cheque deposit)"
+      }
+    ],
+    "add_aliases": [
+      {
+        "counterparty_id": 268,
+        "alias": "WINATA E/V TER HORS"
+      }
+    ],
+    "set_defaults": [
+      {
+        "counterparty_id": 464,
+        "default_account_code": "6103",
+        "note": "Upwork is always Marketing asset creation (Gaurav, 2026-08-15)"
+      }
+    ]
+  },
+  "resolutions": [
+    {
+      "txn": 88110,
+      "account_code": "6400"
+    },
+    {
+      "txn": 88182,
+      "account_code": "6701"
+    },
+    {
+      "txn": 88207,
+      "account_code": "7003"
+    },
+    {
+      "txn": 88214,
+      "account_code": "2405",
+      "counterparty_id": 268
+    },
+    {
+      "txn": 88221,
+      "account_code": "2405",
+      "counterparty_id": 260
+    },
+    {
+      "txn": 88263,
+      "account_code": "2405",
+      "counterparty_id": 260
+    },
+    {
+      "txn": 88323,
+      "account_code": "6402"
+    },
+    {
+      "txn": 88368,
+      "account_code": "7001"
+    },
+    {
+      "txn": 88446,
+      "account_code": "6103",
+      "counterparty_id": 464
+    },
+    {
+      "txn": 88450,
+      "account_code": "1710",
+      "counterparty_id": 561,
+      "note": "JPMorgan inflow = RETURN of Nov-29 Journey Horizon TT (bounced, re-sent Dec-26) -> Cr 1710"
+    }
+  ],
+  "round2": {
+    "source_feedback": "scorecard_feedback_2019_round2.json",
+    "date": "2026-08-16",
+    "resolutions": [
+      {
+        "txn": 88182,
+        "account_code": "6700",
+        "note": "Gaurav: 'Technology' \u2014 WHBSOFT PayPal charge moved 6701 Software Subscriptions -> 6700 Technology - Infrastructure (flagged: 6700 chosen as closest to the bare word; redirect if 6702 meant)"
+      },
+      {
+        "txn": 88450,
+        "action": "confirmed_no_change",
+        "note": "Gaurav: 'likely a refund, got cancelled \u2014 check'. VERIFIED: Nov-29 TT out S$16,042.15 Dr 1710 -> bounced -> Dec-24 JPMorgan return S$15,573.22 Cr 1710 (this txn) -> Dec-26 re-sent S$15,887.38 Dr 1710. The booking already treats it as the cancelled TT's refund against the same asset. Residual ~S$469 of FX/fees sits in 1710 (tiny, 2019 \u2014 left)."
+      },
+      {
+        "txn": 88448,
+        "account_code": "7001",
+        "note": "S$14 ccy-conversion revaluation credit \u2014 AI booked 7001 on the final scorecard, Gaurav reviewed without objection (implicit OK); pinned as a resolution because AI was nondeterministic across runs (7100 first run, 7001 second, open on clean replay)"
+      }
+    ]
+  },
+  "round3": {
+    "source_feedback": "scorecard_feedback_2019_round3.json",
+    "date": "2026-08-16",
+    "result": "ALL-OK x8 \u2014 Gaurav sign-off on the one-shot recipe state; no corrections"
+  }
+}
