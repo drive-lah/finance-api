@@ -191,6 +191,40 @@ Clone-verified 2026-08-18 on `finance_clone_20260816`; nothing run against produ
 | C19-9 | **Config pack** `wip/history_recon/config_pack.py` — the settings the engines cannot derive (6 accounts, 6 policies, rules 387/388, deactivate 30/214/270/336, 2 templates). Idempotent, `--check` read-only, before-image table, prod refused without passphrase + PROCEED | ✅ 2026-08-18 — reports **0 changes** against the signed-off 0816 clone (proves parity) and **21** against prod; applied to a prod-state clone and re-ran as a no-op; policies/accounts/rule-states hash-identical to 0816 |
 | SC-13 | Manual JE route registers the asset **inline on creation** (not at the next sweep). Deliberately in the ROUTE, not in `journal_service.create`: the engine's own postings set `source` AFTER create, so a service-level hook would register a depreciation charge as a fresh asset | ✅ 2026-08-18, test case added — **11/11 pass** |
 
+### 2.0j ✅ 2019 IS CLOSED AND LOCKED ON PRODUCTION (2026-08-18)
+
+Executed foreground, Gaurav present and approving each armed step (CLAUDE.md Rule 8).
+Backup first: `~/Downloads/finance_prod_backup/PROD_finance_20260818_1023.sql` (51 MB, 45 finance
+tables) + `PROD_extra_20260818_1023.sql` (10 non-finance tables). Baseline before: 7,131 journals,
+14,671 lines, 60,486 txns, alembic 072.
+
+| Step | Result on production |
+|---|---|
+| Migrations 072→**076** | ✅ own-accounts registry, period locks + trigger, nullable register link, prepaid release link |
+| Config pack | ✅ **24 changes** (7 accounts, 3 re-categorizations, 6 policies, 2 rules, 4 deactivations, 2 templates); before-image `config_pack_before_20260818_1024` |
+| Own-accounts registry | ✅ 127 |
+| Feedback config | ✅ 4 rules updated, 3 inserted, alias, vendor default |
+| **Config parity vs signed-off clone** | ✅ rules, accounts, policies, templates, own-accounts ALL match |
+| Import + pair | ✅ 15 lines, 15 paired, 0 unpaired |
+| Categorization engine | ✅ 364 categorized, 9 to review, **0 errors** |
+| Replay the 10 rulings | ✅ 10 applied (txn 88448 was an override to the same account), 1 already handled |
+| Economic events | ✅ 56 staged, 56 projected, 0 errors |
+| Spread engine (as-of 2019-12-31) | ✅ 2 assets registered, 1 adjustment, **1 charge S$445.62**; DA-17 refused the AU gross/net schedules as designed |
+| Bank vs ledger | ✅ **0.00 × 14** |
+| **Gaurav's gate** | ✅ POST approved 2026-08-18 |
+| Post + reconcile | ✅ **389 journals posted, 403 txns reconciled**; INSP-3 → 0; trial balance UNCHANGED by posting |
+| Lock Jun–Dec | ✅ 7 months locked by gauravs@drivelah.sg; a write into Jul-2019 was **REFUSED on production** |
+
+**Final state:** 445 live journals · **S$510,579.16** of 2019 debits · 56 events posted · 403
+transactions reconciled · **0 drafts, 0 open transactions** · 7 months locked.
+
+**The production trial balance is IDENTICAL to the rehearsal across all 34 accounts, to the cent.**
+
+Residual: 8 inspector exceptions, none 2019-scoped — INSP-2 the S$122.50 Reserve (accepted),
+INSP-5 Host Payables S$17,709.15 (accepted), INSP-9 the 56 AU gross/net schedules (DA-17, deferred
+to the AU year passes), INSP-11 the GT Insurance pair (recovery, not a void), INSP-12 the 4 route
+conflicts (2023+, ruling deferred to those years).
+
 ### 2.0i 2019 REHEARSAL on a fresh prod clone — GREEN (2026-08-18)
 
 Clone `finance_clone_20260818_0954` (prod copy: alembic 072, 7,131 journals, 60,486 txns,
@@ -246,7 +280,7 @@ without them the model and the clone are out of sync.
 | C19-4 | **2120 Host Payables S$17,709.15 on the debit side** — paid hosts 53,767.75 vs earnings booked 36,058.60, gap concentrated Nov–Dec | ✅ **ACCEPTED as-is** (Gaurav, 2026-08-18) — 2019 closes with the gap recorded, not resolved |
 | C19-5 | 1023 Stripe Connect Reserve S$122.50, no source-of-truth feed | ✅ **ACCEPTED with a note** (Gaurav, 2026-08-18) — immaterial, no feed to wire before close |
 | C19-6 | One DRAFT amortization journal (2019-12-01, Dr 7400 / Cr 1810, S$445.62, charge 1/36) must be POSTED or INSP-3 fails | mechanical, in runbook Phase 8 |
-| C19-7 | Prod is at alembic **072** — the run applies 073 + 074 (period locks); prod has **0** journals for 2019 | ready |
+| C19-7 | ~~Prod at alembic 072~~ → **076 applied on production 2026-08-18** | ✅ done |
 | C19-8 | Merge + deploy the 3 branches (finance-api `260816_history_recon`, admin-bff + admincontrols `260817_amortization_tab`) — needed for the Period Locks UI, not for the booking path | pending |
 
 ### 2.0f D&A + Prepaid Release — task list (Gaurav, 2026-08-17; ONE mechanism = the native amortization_service)
