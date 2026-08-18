@@ -4,6 +4,66 @@
 > **FOREGROUND, SUPERVISED (Gaurav present), VR-1c discipline throughout.** Nothing copies from the
 > clone — prod re-derives everything and must pass the same gates. Est. 30–45 min supervised.
 
+## THE PROVEN SEQUENCE (rehearsed end-to-end on finance_clone_20260818_0954, 2026-08-18)
+
+Every command below ran green on a fresh production clone and reproduced 2019 exactly: the trial
+balance matched the signed-off clone across all 34 accounts, to the cent. Run them in this order.
+`PYTHONPATH=$PWD`, and every writer carries `--allow-prod RUN-ON-PROD-2019` plus an interactive
+`PROCEED` when the target is production.
+
+```
+#  0  BACK UP FIRST  (read-only on prod)
+   pg_dump the 45 finance tables + the 10 non-finance ones to a dated file; record row counts.
+
+#  1  MIGRATIONS  072 -> 076
+   alembic upgrade head                    # 073 own-accounts, 074 period locks,
+                                           # 075 nullable register link, 076 prepaid release link
+
+#  2  CONFIG PACK  (21 inserts + 3 re-categorizations)
+   python documentation/wip/history_recon/config_pack.py --check     # look first
+   python documentation/wip/history_recon/config_pack.py --allow-prod RUN-ON-PROD-2019
+
+#  3  STRIPE OWN-ACCOUNTS REGISTRY  (127 rows)
+   python .../history_runner.py --allow-prod RUN-ON-PROD-2019 load-own-accounts
+
+#  4  FEEDBACK CONFIG  (4 rules updated, 3 inserted, account, alias, vendor default)
+   python .../history_runner.py --allow-prod RUN-ON-PROD-2019 \
+       apply-feedback --file .../2019/feedback_resolutions_2019.json --config-only
+
+#  5  CONFIG PARITY GATE  — compare rules/accounts/policies/templates/own-accounts against the
+   signed-off clone. ALL must match before a single journal is written.
+
+#  6  IMPORT + PAIR   (expect 15 lines, 15 paired, 0 unpaired)
+   ... import-payouts --year 2019 --entity-ids 2
+   ... pair-stripe-payouts --year 2019 --entity-ids 2
+
+#  7  CATEGORIZE      (expect ~363 categorized, ~10 to review, 0 errors)
+   ... run --year 2019 --bank-account-ids 1,18,1657,19
+
+#  8  REPLAY THE RULINGS  (expect 10 applied, 1 already handled)
+   ... apply-feedback --file .../2019/feedback_resolutions_2019.json
+
+#  9  ECONOMIC EVENTS  (expect 56 staged, then 56 projected, 0 errors)
+   ... stage-events --year 2019 --entity-ids 2      then project each month Jun..Dec
+
+# 10  SPREAD ENGINE   (expect exactly ONE 2019 journal: S$445.62 Dr 7400 / Cr 1810, dated 1 Dec)
+   ... run-schedules --year 2019 --entity-ids 2
+
+# 11  VERIFY BEFORE POSTING
+   ... check --year 2019 --bank-account-ids 1,18,1657,19        # expect 0.00 x 14
+   account_inspector.py --year 2019 --entity-ids 2 --resolutions .../feedback_resolutions_2019.json
+
+# 12  >>> GAURAV'S GATE <<<  read the scorecard, say POST
+
+# 13  POST + RECONCILE  (expect 389 journals posted, 403 txns reconciled; INSP-3 -> 0)
+# 14  RE-VERIFY         numbers must NOT move; check again 0.00 x 14
+# 15  LOCK Jun..Dec 2019 for entity 2, then prove it: a test write into 2019 must be REFUSED
+```
+
+**Expected end state:** 445 live journals, S$510,579.16 of 2019 debits, 56 events posted, 403
+transactions reconciled, 7 months locked, 8 inspector exceptions — all of them accepted, deferred,
+or 2023+ (none 2019-scoped).
+
 ## Safety architecture (what makes this safe)
 
 - **Additive-first ordering** — config and imports land before any journal is written; each phase is
