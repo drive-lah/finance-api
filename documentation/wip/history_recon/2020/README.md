@@ -7,8 +7,9 @@
 
 | | |
 |---|---|
-| Reference clone | `finance_clone_2019locked_20260818_1058` — production AFTER the 2019 close (445 journals, 7 months locked, alembic 076) |
-| Pre-close production | `~/Downloads/finance_prod_backup/PROD_finance_20260818_1023.sql` — the untouched dump from before the first write |
+| **WORKING clone** | `finance_clone_2019locked_20260818_1058` — production AFTER the 2019 close (445 journals, 7 months locked, alembic 076, 6 policies). **All 2020 work happens here.** |
+| **BACKUP clone** | `finance_clone_pre2019close_20260818_1023` — production BEFORE the close, with migrations 073–076 applied (0 journals for 2019, 0 locks, 0 policies). Rollback reference only; nothing runs against it. |
+| Raw dump behind the backup | `~/Downloads/finance_prod_backup/PROD_finance_20260818_1023.sql` (+ `_extra`) |
 | 2020 journals on production | **0** |
 | 2020 bank transactions | **2,041**, all entity 2 (Drive lah Singapore), all UNRECONCILED |
 | Date span | 2020-01-02 → 2020-12-31 |
