@@ -191,6 +191,20 @@ Clone-verified 2026-08-18 on `finance_clone_20260816`; nothing run against produ
 | C19-9 | **Config pack** `wip/history_recon/config_pack.py` — the settings the engines cannot derive (6 accounts, 6 policies, rules 387/388, deactivate 30/214/270/336, 2 templates). Idempotent, `--check` read-only, before-image table, prod refused without passphrase + PROCEED | ✅ 2026-08-18 — reports **0 changes** against the signed-off 0816 clone (proves parity) and **21** against prod; applied to a prod-state clone and re-ran as a no-op; policies/accounts/rule-states hash-identical to 0816 |
 | SC-13 | Manual JE route registers the asset **inline on creation** (not at the next sweep). Deliberately in the ROUTE, not in `journal_service.create`: the engine's own postings set `source` AFTER create, so a service-level hook would register a depreciation charge as a fresh asset | ✅ 2026-08-18, test case added — **11/11 pass** |
 
+### 2.0k 2020 RECON — opened 2026-08-18
+
+Workspace: `wip/history_recon/2020/README.md`. Branches `260818_recon_2020` cut from remote main
+in all three repos (finance-api, admin-bff, admincontrols — all three 2019 PRs merged: #32, #26, #75).
+
+| ID | Item | State |
+|----|------|-------|
+| Y20-1 | Reference clone `finance_clone_2019locked_20260818_1058` (production AFTER the 2019 close) | ✅ taken |
+| Y20-2 | Pre-close production preserved as `~/Downloads/finance_prod_backup/PROD_finance_20260818_1023.sql` | ✅ |
+| Y20-3 | 2020 starting position: **0 journals**, **2,041 unreconciled transactions**, 0 events staged | measured |
+| Y20-4 | Bank accounts in scope change: **1, 2, 7, 18** — 2020 introduces Wise USD and Wise SGD, which 2019 never touched (FX work, INSP-8 becomes load-bearing) | noted |
+| Y20-5 | Volume is **5.5×** 2019 (2,041 vs 373 transactions) — expect a materially longer feedback list | noted |
+| Y20-6 | Run the proven sequence with `--bank-account-ids 1,2,7,18`, 12 months of events, spread engine as-of 2020-12-31, lock 12 months | next |
+
 ### 2.0j ✅ 2019 IS CLOSED AND LOCKED ON PRODUCTION (2026-08-18)
 
 Executed foreground, Gaurav present and approving each armed step (CLAUDE.md Rule 8).

@@ -111,9 +111,14 @@ def list_invoices():
     )
     limit = min(request.args.get("limit", default=100, type=int), 500)
     offset = request.args.get("offset", default=0, type=int)
+    # Sorting (Gaurav 2026-08-18): invoice_date is the document's own date, uploaded_at is when
+    # it reached us. Unknown values fall back to the previous behaviour rather than erroring.
+    sort_by = request.args.get("sort_by", type=str)
+    sort_dir = request.args.get("sort_dir", type=str)
 
     with db_session() as db:
-        invoices = invoice_service.get_all(db, limit=limit, offset=offset, **filters)
+        invoices = invoice_service.get_all(db, limit=limit, offset=offset,
+                                           sort_by=sort_by, sort_dir=sort_dir, **filters)
         total = invoice_service.count_all(db, **filters)
         resp = jsonify([_invoice_dict(inv, db) for inv in invoices])
         resp.headers["X-Total-Count"] = str(total)
