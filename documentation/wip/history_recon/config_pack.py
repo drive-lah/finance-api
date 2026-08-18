@@ -8,6 +8,7 @@ extracted and made replayable.
 
 WHAT IT LANDS (everything the runner's `apply-feedback` does NOT cover):
   1. 6 accounts — four accumulated-depreciation, two depreciation expense
+  1b. 3 account re-categorizations (7300/7301/7400 out of "Other Expense" — POL-151)
   2. 6 amortization policies — a database with none of these depreciates NOTHING
   3. 2 categorization rules (387/388 Stripe sweep corridors)
   4. 4 rule deactivations (30/214/270/336 — the Stripe guessing rules superseded by the corridors)
@@ -57,6 +58,17 @@ ACCOUNTS = [
     ("7003", "Other Income - Miscellaneous", "REVENUE", "CREDIT", "Other Income", None),
 ]
 
+# Accounts that already EXIST but sit in the wrong P&L section. Prod files all three under
+# "Other Expense", which parks depreciation BELOW the line; POL-151 says D&A is an operating
+# expense, and delivery-fleet assets are a Cost of Sales. Insert-if-absent could never fix
+# these — the rows are there, just mis-filed. Caught by the config-parity check, 2026-08-18.
+ACCOUNT_RECATEGORIZE = [
+    # code,  category,             sub_category
+    ("7300", "Operating Expenses", "Depreciation & Amortisation"),
+    ("7301", "Cost of Sales",      "Depreciation & Amortisation"),
+    ("7400", "Operating Expenses", "Depreciation & Amortisation"),
+]
+
 # Gaurav owns these lives (DA-8/DA-12, locked 2026-08-17). Group-level (entity_id NULL).
 POLICIES = [
     # asset, accumulated, expense, months, type
@@ -102,8 +114,13 @@ def survey(db) -> dict:
         "SELECT id FROM finance_categorization_rules WHERE status = 'ACTIVE'")).fetchall()}
     have_tpl = {(r[0], r[1]) for r in db.execute(text(
         "SELECT event_type, entity_id FROM finance_je_templates")).fetchall()}
+    filed = {r[0]: (r[1], r[2]) for r in db.execute(text(
+        "SELECT code, category, sub_category FROM finance_accounts "
+        "WHERE entity_id IS NULL")).fetchall()}
     return {
         "accounts": [a for a in ACCOUNTS if a[0] not in have_acc],
+        "recategorize": [r for r in ACCOUNT_RECATEGORIZE
+                         if r[0] in filed and filed[r[0]] != (r[1], r[2])],
         "policies": [p for p in POLICIES if p[0] not in have_pol],
         "rules_insert": [r for r in RULES_INSERT if r["id"] not in have_rule],
         "rules_deactivate": [i for i in RULES_DEACTIVATE if i in active],
@@ -122,6 +139,8 @@ def report(gap: dict) -> int:
         for item in v:
             if k == "accounts":
                 print(f"      {item[0]} {item[1]}")
+            elif k == "recategorize":
+                print(f"      {item[0]} -> {item[1]} / {item[2]}")
             elif k == "policies":
                 print(f"      {item[0]} -> {item[4]} over {item[3]}mo, "
                       f"expense {item[2]}, contra {item[1]}")
@@ -150,6 +169,16 @@ def apply(db, gap: dict, stamp: str) -> None:
                                           status, category, sub_category, created_at, updated_at)
             VALUES (:c,:n,:t,:b,NULL,'ACTIVE',:cat,:sub,now(),now())"""),
             {"c": code, "n": name, "t": atype, "b": normal, "cat": category, "sub": sub})
+
+    for code, category, sub in gap["recategorize"]:
+        prev = db.execute(text("SELECT coalesce(category,'-')||' / '||coalesce(sub_category,'-') "
+                               "FROM finance_accounts WHERE code=:c AND entity_id IS NULL"),
+                          {"c": code}).scalar()
+        db.execute(text(f"INSERT INTO {before}(kind,identifier,before_state) "
+                        "VALUES ('recategorize',:i,:p)"), {"i": code, "p": prev})
+        db.execute(text("UPDATE finance_accounts SET category=:cat, sub_category=:sub, "
+                        "updated_at=now() WHERE code=:c AND entity_id IS NULL"),
+                   {"cat": category, "sub": sub, "c": code})
 
     for asset, accum, expense, months, ptype in gap["policies"]:
         db.execute(text(f"INSERT INTO {before}(kind,identifier,before_state) "

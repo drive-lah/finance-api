@@ -191,6 +191,49 @@ Clone-verified 2026-08-18 on `finance_clone_20260816`; nothing run against produ
 | C19-9 | **Config pack** `wip/history_recon/config_pack.py` — the settings the engines cannot derive (6 accounts, 6 policies, rules 387/388, deactivate 30/214/270/336, 2 templates). Idempotent, `--check` read-only, before-image table, prod refused without passphrase + PROCEED | ✅ 2026-08-18 — reports **0 changes** against the signed-off 0816 clone (proves parity) and **21** against prod; applied to a prod-state clone and re-ran as a no-op; policies/accounts/rule-states hash-identical to 0816 |
 | SC-13 | Manual JE route registers the asset **inline on creation** (not at the next sweep). Deliberately in the ROUTE, not in `journal_service.create`: the engine's own postings set `source` AFTER create, so a service-level hook would register a depreciation charge as a fresh asset | ✅ 2026-08-18, test case added — **11/11 pass** |
 
+### 2.0i 2019 REHEARSAL on a fresh prod clone — GREEN (2026-08-18)
+
+Clone `finance_clone_20260818_0954` (prod copy: alembic 072, 7,131 journals, 60,486 txns,
+0 policies — all matching live prod at the moment of the dump). Reference for comparison:
+`finance_clone_20260816` — note this is now a DEVELOPMENT database (two days of later work,
+8 asset schedules vs 2, 197 charges vs 1), trustworthy for 2019 only.
+
+| # | Step | Result |
+|---|------|--------|
+| R-0 | Clone + verify it IS prod | ✅ four counters identical to live |
+| R-1 | Migrations 073→**076** | ✅ |
+| R-2 | Config pack | ✅ 21 changes + **3 re-categorizations the parity check caught** |
+| R-3 | Own-accounts registry | ✅ 127 upserted |
+| R-4 | Feedback config | ✅ 4 rules updated, 3 inserted, alias, vendor default |
+| R-5 | **Config parity vs 0816** | ✅ rules, accounts, policies, templates, own-accounts ALL match |
+| R-6 | Import Stripe payout lines | ✅ 15 |
+| R-7 | Pair | ✅ 15 paired, 0 unpaired |
+| R-8 | Categorization engine | ✅ 363 categorized, 10 to review, 0 errors |
+| R-9 | Replay the 10 rulings | ✅ 10 applied, 1 already handled by rules |
+| R-10 | Stage + project economic events | ✅ 56 staged, 56 projected, 0 errors |
+| R-11 | Spread engine as-of 2019-12-31 | ✅ 1 charge (S$445.62); DA-17 refused the 4 gross/net schedules as designed |
+| R-12 | Bank vs ledger | ✅ **0.00 × 14** |
+| R-13 | Post + reconcile | ✅ 389 journals posted, 403 txns reconciled; INSP-3 → 0; numbers unmoved |
+| R-14 | Lock Jun–Dec | ✅ 7 months; a test write into Jul-2019 was REFUSED |
+| R-15 | **2019 trial balance vs 0816** | ✅ **IDENTICAL — 34 accounts, every cent** |
+
+**The 445-vs-468 journal gap was explained, not waved away:** the 0816 clone carries 23 extra
+2019 journals worth S$55,030.18, ALL of them `VOID` — scars from the mid-run repairs (Stripe
+pocket guesses, the blank-counterparty director-loan defect). Excluding voids both clones show
+**445 journals / S$510,579.16 debits**. The rehearsal reproduces 2019 exactly AND cleanly,
+because the config was right before the first journal was written.
+
+Residual inspector exceptions (8) are all known and accepted: INSP-2 the S$122.50 Reserve
+(C19-5), INSP-5 the Host Payables gap (C19-4), INSP-9 the 56 AU gross/net schedules (DA-17,
+deferred to the AU year passes), INSP-11 the GT Insurance pair, INSP-12 the 4 route conflicts
+(2023+, awaiting ruling). **Nothing 2019-scoped is open.**
+
+Also found by the rehearsal: **migration 076** — `source_prepaid_schedule_id` existed only as a
+hand-added column on the 0816 clone, so a fresh prod clone died with UndefinedColumn on the
+first journal. And the clone recipe now pulls 10 non-finance tables (users, tasks, hr_*,
+payment_channel, counterparty_bank_account, payout_channel_registration, stripe_sync_runs) —
+without them the model and the clone are out of sync.
+
 **2019 close — position as of 2026-08-17 EOD.** Runbook: `wip/history_recon/2019/PROD_RUNBOOK_2019.md`
 (now turnkey: 8 phases, every command carries the prod-arming prefix). Scorecard:
 `wip/history_recon/2019/scorecard_2019_20260817.html`.
