@@ -1,0 +1,113 @@
+tenant,code,default_payer,default_receiver,pricing_account_token,category_id,coa_account_code,coa_account_name,gst_treatment,confidence,basis
+AU,line-item/units,GUEST,HOST,USER_RECEIVABLE,,4000,GBV - P2P,NON_REGISTERED_HOST,MEDIUM,host supply pass-through (POL-36); host typically not GST-registered
+AU,line-item/provider-commission,HOST,DRIVELAH,HOST_COMMISSION_REVENUE,,5000,Host Payouts - P2P,STANDARD,HIGH,DL commission = our taxable supply (POL-36); nets against host payout in gross COA model
+AU,line-item/protection-fee,GUEST,DRIVELAH,PLATFORM_REVENUE,,4000,GBV - P2P,STANDARD,HIGH,DL fee revenue (POL-36)
+AU,line-item/excess-reduction,GUEST,DRIVELAH,PLATFORM_REVENUE,,4000,GBV - P2P,STANDARD,HIGH,DL fee revenue (POL-36)
+AU,line-item/excess-reduction2,GUEST,DRIVELAH,PLATFORM_REVENUE,,4000,GBV - P2P,STANDARD,HIGH,DL fee revenue (POL-36)
+AU,line-item/mileage-package,GUEST,DRIVELAH,PLATFORM_REVENUE,,4000,GBV - P2P,STANDARD,HIGH,DL fee revenue (POL-36)
+AU,line-item/mileage-package-dl-share,HOST,DRIVELAH,HOST_COMMISSION_REVENUE,,5000,Host Payouts - P2P,STANDARD,HIGH,DL commission slice (POL-36)
+AU,line-item/delivery,GUEST,HOST,USER_RECEIVABLE,,4000,GBV - P2P,NON_REGISTERED_HOST,MEDIUM,host supply pass-through (POL-36)
+AU,line-item/delivery-commission,HOST,DRIVELAH,HOST_COMMISSION_REVENUE,,5000,Host Payouts - P2P,STANDARD,HIGH,DL commission slice (POL-36)
+AU,line-item/fuel-protection,GUEST,DRIVELAH,PLATFORM_REVENUE,,4000,GBV - P2P,STANDARD,HIGH,DL fee revenue (POL-36)
+AU,line-item/fuel-inclusion-dl-share,HOST,DRIVELAH,HOST_COMMISSION_REVENUE,,5000,Host Payouts - P2P,STANDARD,HIGH,DL commission slice (POL-36)
+AU,line-item/customer-commission,GUEST,DRIVELAH,PLATFORM_REVENUE,,4000,GBV - P2P,STANDARD,HIGH,DL booking fee = our supply (POL-36)
+AU,line-item/young-customer-commission,GUEST,DRIVELAH,PLATFORM_REVENUE,,4000,GBV - P2P,STANDARD,HIGH,DL surcharge revenue (POL-36)
+AU,line-item/processing-fee,GUEST,DRIVELAH,PROVIDER_FEE_EXPENSE,,4000,GBV - P2P,STANDARD,MEDIUM,fee charged by DL to guest = our supply; processor cost sits in 5010 Payment Processing Fees
+AU,line-item/amendment-fee,GUEST,DRIVELAH,PLATFORM_REVENUE,,4025,Incidentals Revenue - Other,STANDARD,HIGH,DL admin fee (POL-36)
+AU,line-item/deposit,GUEST,DRIVELAH,DEPOSIT_LIABILITY,,2110,Customer Deposits Held,OUT_OF_SCOPE,HIGH,security deposit hold; balance-sheet; no supply (POL-37 excludes 2110 from gross)
+AU,line-item/unpaid-due,GUEST,DRIVELAH,USER_RECEIVABLE,,1200,Trade Receivables,OUT_OF_SCOPE,MEDIUM,collection of an existing receivable; GST fired on the original lines
+AU,line-item/long-term-discount,HOST,GUEST,PLATFORM_REVENUE,,5050,Monthly Discounts,NON_REGISTERED_HOST,LOW,host-borne discount reduces host-supply consideration
+AU,line-item/new-car-discount,DRIVELAH,GUEST,PLATFORM_REVENUE,,5050,Monthly Discounts,STANDARD,LOW,DL-borne discount reduces taxable consideration of a mixed basket
+AU,line-item/promotion-discount,DRIVELAH,GUEST,PLATFORM_REVENUE,,5050,Monthly Discounts,STANDARD,LOW,DL-borne promo discount; reduces taxable consideration
+AU,line-item/customer-promo,DRIVELAH,GUEST,PLATFORM_REVENUE,,5050,Monthly Discounts,STANDARD,LOW,promo code (Voucherify); DL-borne contra-revenue
+AU,line-item/promo-applied,DRIVELAH,GUEST,PLATFORM_REVENUE,,5050,Monthly Discounts,OUT_OF_SCOPE,HIGH,DEPRECATED alias; never emitted (seed isActive=false)
+AU,line-item/credits-applied,DRIVELAH,GUEST,CREDIT_LIABILITY,,2010,Other Payables,OUT_OF_SCOPE,MEDIUM,credit redemption settles via liability; GST on the underlying lines; GAP - no dedicated credit-liability account in COA v2
+AU,line-item/premium-processing-fee-discount,DRIVELAH,GUEST,PLATFORM_REVENUE,,5050,Monthly Discounts,STANDARD,MEDIUM,offsets the STANDARD processing fee
+AU,line-item/excess-mileage-charge,GUEST,HOST,USER_RECEIVABLE,10,4024,Incidentals Revenue - Excess Mileage,NON_REGISTERED_HOST,MEDIUM,host pass-through; 0% on host slice per POL-38 provisional; DL slice taxed via incident-commission
+AU,line-item/late-return-charge,GUEST,HOST,USER_RECEIVABLE,11,4025,Incidentals Revenue - Other,NON_REGISTERED_HOST,MEDIUM,host pass-through (POL-38 provisional)
+AU,line-item/fuel-charge,GUEST,HOST,USER_RECEIVABLE,14,4023,Incidentals Revenue - Fuel,NON_REGISTERED_HOST,MEDIUM,host pass-through (POL-38 provisional)
+AU,line-item/distance-charge,GUEST,HOST,USER_RECEIVABLE,10,4024,Incidentals Revenue - Excess Mileage,NON_REGISTERED_HOST,MEDIUM,per-km host pass-through (POL-38 provisional)
+AU,line-item/damage-charge,GUEST,HOST,USER_RECEIVABLE,3,4021,Incidentals Revenue - Damage,NON_REGISTERED_HOST,LOW,host pass-through; damages-vs-supply nuance flagged in companion doc
+AU,line-item/damage-recovery,INSURER,DRIVELAH,THIRD_PARTY_RECEIVABLE,3,4030,Insurance Recoveries,OUT_OF_SCOPE,MEDIUM,insurance claim settlement; not consideration for a supply
+AU,line-item/damage-commission,HOST,DRIVELAH,HOST_COMMISSION_REVENUE,3,4021,Incidentals Revenue - Damage,STANDARD,HIGH,DL commission slice (POL-36/POL-38)
+AU,line-item/damage-compensation,DRIVELAH,GUEST,REFUNDS_EXPENSE,3,5053,Refunds - Incidentals,OUT_OF_SCOPE,MEDIUM,compensation payment; not a supply by DL
+AU,line-item/cleanliness-charge,GUEST,HOST,USER_RECEIVABLE,13,4022,Incidentals Revenue - Cleaning,NON_REGISTERED_HOST,LOW,host pass-through (POL-38 provisional); cleaning-provider variant flagged in companion doc
+AU,line-item/tolls-charge,GUEST,HOST,USER_RECEIVABLE,12,4020,Incidentals Revenue - Tolls,NON_REGISTERED_HOST,MEDIUM,host pass-through of tolls (POL-38 provisional)
+AU,line-item/wear-and-tear-charge,GUEST,HOST,USER_RECEIVABLE,,4025,Incidentals Revenue - Other,NON_REGISTERED_HOST,MEDIUM,host pass-through (POL-38 provisional)
+AU,line-item/infringement-charge,GUEST,HOST,USER_RECEIVABLE,,4025,Incidentals Revenue - Other,OUT_OF_SCOPE,MEDIUM,reimbursement of statutory fines; fines carry no GST
+AU,line-item/car-rules-charge,GUEST,HOST,USER_RECEIVABLE,,4025,Incidentals Revenue - Other,NON_REGISTERED_HOST,MEDIUM,host pass-through (POL-38 provisional)
+AU,line-item/key-related-charge,GUEST,HOST,USER_RECEIVABLE,,4025,Incidentals Revenue - Other,NON_REGISTERED_HOST,MEDIUM,host pass-through (POL-38 provisional)
+AU,line-item/car-stolen-charge,GUEST,HOST,USER_RECEIVABLE,,4025,Incidentals Revenue - Other,NON_REGISTERED_HOST,LOW,host pass-through; damages-vs-supply nuance flagged
+AU,line-item/guest-incapacitated-charge,GUEST,HOST,USER_RECEIVABLE,,4025,Incidentals Revenue - Other,NON_REGISTERED_HOST,LOW,host pass-through (POL-38 provisional)
+AU,line-item/guest-injury-charge,GUEST,HOST,USER_RECEIVABLE,,4025,Incidentals Revenue - Other,NON_REGISTERED_HOST,LOW,host pass-through (POL-38 provisional)
+AU,line-item/car-immobilised-charge,GUEST,HOST,USER_RECEIVABLE,,4025,Incidentals Revenue - Other,NON_REGISTERED_HOST,LOW,host pass-through (POL-38 provisional)
+AU,line-item/mechanical-issue-charge,HOST,GUEST,REFUNDS_EXPENSE,,5053,Refunds - Incidentals,OUT_OF_SCOPE,MEDIUM,host-fault compensation to guest; not a supply
+AU,line-item/car-functional-issue-charge,HOST,GUEST,REFUNDS_EXPENSE,,5053,Refunds - Incidentals,OUT_OF_SCOPE,MEDIUM,host-fault compensation to guest; not a supply
+AU,line-item/car-access-issue-charge,HOST,GUEST,REFUNDS_EXPENSE,,5053,Refunds - Incidentals,OUT_OF_SCOPE,MEDIUM,host-fault compensation to guest; not a supply
+AU,line-item/host-cancellation-penalty,HOST,DRIVELAH,PLATFORM_REVENUE,,4025,Incidentals Revenue - Other,STANDARD,LOW,cancellation fees generally taxable in AU; penalty-vs-damages nuance flagged
+AU,line-item/incident-commission,HOST,DRIVELAH,HOST_COMMISSION_REVENUE,,4025,Incidentals Revenue - Other,STANDARD,HIGH,DL commission slice on incidents (POL-36/POL-38)
+AU,line-item/incident-refund,DRIVELAH,GUEST,REFUNDS_EXPENSE,,5053,Refunds - Incidentals,OUT_OF_SCOPE,MEDIUM,refund of consideration; GST effect handled on cash by the GST engine refund ruling
+AU,line-item/charge-third-party,INSURER,DRIVELAH,THIRD_PARTY_RECEIVABLE,,4030,Insurance Recoveries,OUT_OF_SCOPE,MEDIUM,insurer recovery; insurance settlement not a supply
+AU,line-item/pay-third-party,DRIVELAH,THIRD_PARTY,THIRD_PARTY_PAYABLE,,5025,Incidentals Payout - Other,OUT_OF_SCOPE,MEDIUM,DL expense to third party; input GST claimed by finance bank lane not pricing
+AU,line-item/roadside-charge,DRIVELAH,THIRD_PARTY,THIRD_PARTY_PAYABLE,,5033,Incidentals Payout - Towing,OUT_OF_SCOPE,MEDIUM,DL expense; input GST via finance bank lane
+AU,line-item/repossession-charge,DRIVELAH,THIRD_PARTY,THIRD_PARTY_PAYABLE,,5025,Incidentals Payout - Other,OUT_OF_SCOPE,MEDIUM,DL expense; input GST via finance bank lane
+AU,line-item/incident-custom,GUEST,HOST,USER_RECEIVABLE,,4025,Incidentals Revenue - Other,NON_REGISTERED_HOST,LOW,generic operator-supplied incident; default to host pass-through
+AU,line-item/cancellation-refund,DRIVELAH,GUEST,REFUNDS_EXPENSE,,5052,Refunds - Trip,OUT_OF_SCOPE,MEDIUM,D10 per-charge reversals inherit the reversed code's treatment; standalone code carries none
+AU,line-item/host-penalty,HOST,DRIVELAH,PLATFORM_REVENUE,,4025,Incidentals Revenue - Other,STANDARD,LOW,host-fault cancellation penalty to DL; cancellation fees generally taxable in AU
+AU,line-item/guest-credit,HOST,GUEST,CREDIT_LIABILITY,,2010,Other Payables,OUT_OF_SCOPE,MEDIUM,credit issuance creates a liability; GST on redemption's underlying lines; GAP - no credit-liability account in COA v2
+SG,line-item/units,GUEST,HOST,USER_RECEIVABLE,,4000,GBV - P2P,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/provider-commission,HOST,DRIVELAH,HOST_COMMISSION_REVENUE,,5000,Host Payouts - P2P,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/protection-fee,GUEST,DRIVELAH,PLATFORM_REVENUE,,4000,GBV - P2P,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/excess-reduction,GUEST,DRIVELAH,PLATFORM_REVENUE,,4000,GBV - P2P,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/excess-reduction2,GUEST,DRIVELAH,PLATFORM_REVENUE,,4000,GBV - P2P,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/mileage-package,GUEST,DRIVELAH,PLATFORM_REVENUE,,4000,GBV - P2P,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/mileage-package-dl-share,HOST,DRIVELAH,HOST_COMMISSION_REVENUE,,5000,Host Payouts - P2P,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/delivery,GUEST,HOST,USER_RECEIVABLE,,4000,GBV - P2P,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/delivery-commission,HOST,DRIVELAH,HOST_COMMISSION_REVENUE,,5000,Host Payouts - P2P,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/fuel-protection,GUEST,DRIVELAH,PLATFORM_REVENUE,,4000,GBV - P2P,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/fuel-inclusion-dl-share,HOST,DRIVELAH,HOST_COMMISSION_REVENUE,,5000,Host Payouts - P2P,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/customer-commission,GUEST,DRIVELAH,PLATFORM_REVENUE,,4000,GBV - P2P,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/young-customer-commission,GUEST,DRIVELAH,PLATFORM_REVENUE,,4000,GBV - P2P,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/processing-fee,GUEST,DRIVELAH,PROVIDER_FEE_EXPENSE,,4000,GBV - P2P,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/amendment-fee,GUEST,DRIVELAH,PLATFORM_REVENUE,,4025,Incidentals Revenue - Other,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/deposit,GUEST,DRIVELAH,DEPOSIT_LIABILITY,,2110,Customer Deposits Held,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/unpaid-due,GUEST,DRIVELAH,USER_RECEIVABLE,,1200,Trade Receivables,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/long-term-discount,HOST,GUEST,PLATFORM_REVENUE,,5050,Monthly Discounts,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/new-car-discount,DRIVELAH,GUEST,PLATFORM_REVENUE,,5050,Monthly Discounts,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/promotion-discount,DRIVELAH,GUEST,PLATFORM_REVENUE,,5050,Monthly Discounts,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/customer-promo,DRIVELAH,GUEST,PLATFORM_REVENUE,,5050,Monthly Discounts,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/promo-applied,DRIVELAH,GUEST,PLATFORM_REVENUE,,5050,Monthly Discounts,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/credits-applied,DRIVELAH,GUEST,CREDIT_LIABILITY,,2010,Other Payables,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/premium-processing-fee-discount,DRIVELAH,GUEST,PLATFORM_REVENUE,,5050,Monthly Discounts,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/excess-mileage-charge,GUEST,HOST,USER_RECEIVABLE,10,4024,Incidentals Revenue - Excess Mileage,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/late-return-charge,GUEST,HOST,USER_RECEIVABLE,11,4025,Incidentals Revenue - Other,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/fuel-charge,GUEST,HOST,USER_RECEIVABLE,14,4023,Incidentals Revenue - Fuel,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/distance-charge,GUEST,HOST,USER_RECEIVABLE,10,4024,Incidentals Revenue - Excess Mileage,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/damage-charge,GUEST,HOST,USER_RECEIVABLE,3,4021,Incidentals Revenue - Damage,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/damage-recovery,INSURER,DRIVELAH,THIRD_PARTY_RECEIVABLE,3,4030,Insurance Recoveries,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/damage-commission,HOST,DRIVELAH,HOST_COMMISSION_REVENUE,3,4021,Incidentals Revenue - Damage,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/damage-compensation,DRIVELAH,GUEST,REFUNDS_EXPENSE,3,5053,Refunds - Incidentals,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/cleanliness-charge,GUEST,HOST,USER_RECEIVABLE,13,4022,Incidentals Revenue - Cleaning,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/tolls-charge,GUEST,HOST,USER_RECEIVABLE,12,4020,Incidentals Revenue - Tolls,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/wear-and-tear-charge,GUEST,HOST,USER_RECEIVABLE,,4025,Incidentals Revenue - Other,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/infringement-charge,GUEST,HOST,USER_RECEIVABLE,,4025,Incidentals Revenue - Other,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/car-rules-charge,GUEST,HOST,USER_RECEIVABLE,,4025,Incidentals Revenue - Other,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/key-related-charge,GUEST,HOST,USER_RECEIVABLE,,4025,Incidentals Revenue - Other,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/car-stolen-charge,GUEST,HOST,USER_RECEIVABLE,,4025,Incidentals Revenue - Other,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/guest-incapacitated-charge,GUEST,HOST,USER_RECEIVABLE,,4025,Incidentals Revenue - Other,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/guest-injury-charge,GUEST,HOST,USER_RECEIVABLE,,4025,Incidentals Revenue - Other,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/car-immobilised-charge,GUEST,HOST,USER_RECEIVABLE,,4025,Incidentals Revenue - Other,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/mechanical-issue-charge,HOST,GUEST,REFUNDS_EXPENSE,,5053,Refunds - Incidentals,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/car-functional-issue-charge,HOST,GUEST,REFUNDS_EXPENSE,,5053,Refunds - Incidentals,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/car-access-issue-charge,HOST,GUEST,REFUNDS_EXPENSE,,5053,Refunds - Incidentals,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/host-cancellation-penalty,HOST,DRIVELAH,PLATFORM_REVENUE,,4025,Incidentals Revenue - Other,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/incident-commission,HOST,DRIVELAH,HOST_COMMISSION_REVENUE,,4025,Incidentals Revenue - Other,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/incident-refund,DRIVELAH,GUEST,REFUNDS_EXPENSE,,5053,Refunds - Incidentals,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/charge-third-party,INSURER,DRIVELAH,THIRD_PARTY_RECEIVABLE,,4030,Insurance Recoveries,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/pay-third-party,DRIVELAH,THIRD_PARTY,THIRD_PARTY_PAYABLE,,5025,Incidentals Payout - Other,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/roadside-charge,DRIVELAH,THIRD_PARTY,THIRD_PARTY_PAYABLE,,5033,Incidentals Payout - Towing,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/repossession-charge,DRIVELAH,THIRD_PARTY,THIRD_PARTY_PAYABLE,,5025,Incidentals Payout - Other,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/incident-custom,GUEST,HOST,USER_RECEIVABLE,,4025,Incidentals Revenue - Other,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/cancellation-refund,DRIVELAH,GUEST,REFUNDS_EXPENSE,,5052,Refunds - Trip,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/host-penalty,HOST,DRIVELAH,PLATFORM_REVENUE,,4025,Incidentals Revenue - Other,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
+SG,line-item/guest-credit,HOST,GUEST,CREDIT_LIABILITY,,2010,Other Payables,OUT_OF_SCOPE,HIGH,SG entities not GST-registered (GST_ENGINE.md S0 Step 1; POL-44); no GST on any line
