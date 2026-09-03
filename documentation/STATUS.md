@@ -2,9 +2,9 @@
 
 # Status — finance-api
 
-**Last updated:** 2026-08-02
-**2026-08-02:** Revenue+cost re-architecture POSTED LIVE 100% (AUD-12/RA-10 cutover done, Gaurav confirm). Stripe Connect recon PARKED (openings sound; connect closings under-captured — see ▶ Stripe Connect PARKED). **New mega-workstream opened: §2.7 Vendor Payment Reconciliation** (per-vendor Statement of Account / true outstanding).
-**Overall:** Multi-entity (SG + AU) double-entry accounting platform. The **Capture → Classify → Record** core is strong and green; the **last mile** — financial reports (P&L / Balance Sheet / Business-Line Margin), period close, consolidation — is the thin, mostly-unbuilt part. We're ~75% an ingestion engine, ~25% an accounting system. **Active workstream:** the **previous-years reconciliation (2019–2025)** — Stage-1 prep (S-1..S-5 counterparties/rules/corpus) DONE + applied to live (2026-07-24); **Stage-2 execution structure now LOCKED = POL-124 / §2.0c / `wip/HISTORY_RECON_PIPELINE.md`** (year-at-a-time, engine+economic-events, agent lanes, HTML scorecard, re-park, jurisdictional closes).
+**Last updated:** 2026-09-04
+**2026-09-04:** STATUS refreshed against code + prod (it had drifted ~3 weeks behind git). **§0 TEAM LAUNCH added — the canonical launch to-do list (Gaurav's 7 items + verified gaps), priority: host/guest payout execution.** Since the last update: payout/payroll module MERGED + deployed (PRs #28/#29; fin-api/bff/admincontrols); **B8 approval engine LIVE on prod** (170 invoice-approval tasks flowed); **new-vendor approval flow LIVE** (pending-vendor + finance task); HR onboarding 54/78 done; 2019 recon CLOSED + LOCKED on prod (08-18); 2020 recon pass-1 run (scorecard pending walk); 1D-102 GST/category seed merged (PR #34).
+**Overall:** Multi-entity (SG + AU) double-entry accounting platform. The **Capture → Classify → Record** core is strong and green; **team-facing operations (uploads, approvals, tasks, claims, payouts) are live on prod** — §0 tracks the residue to full team launch. The last mile — reports hardening, period close, consolidation — and the **previous-years reconciliation (2019 ✅ closed · 2020 in flight · 2021–2025 queued;** POL-124 / §2.0c / `wip/HISTORY_RECON_PIPELINE.md`) continue in parallel but are deliberately NOT launch-gating.
 
 **Verified ground truth (2026-07-31):** `pytest tests/ --ignore=tests/stripe_sync` = **637 pass / 8 fail** — the 8 are ALL `test_economic_events` (view-map seed missing: "no view map for trip_revenue_accrual"); **proven pre-existing** (fail identically on HEAD~1, untouched by this session). This session's modules green: categorization **138/0**, invoice **21/0**. **Committed locally at 41eb1fe, 2026-07-31** (branch `finance-system-2026-07-31`, unpushed). **DB migrations applied through 050** (`alembic current` == head). Canonical docs: STATUS (state) · IDEAL_STATE (vision) · KNOWLEDGE (business facts).
 
@@ -23,6 +23,28 @@
 **Cutover-left:** browser pixel-verify all tabs once Interceptor is set up; access grants for `finance.settings` (Gaurav/DJ/Zilla) at cutover; seed `finance_coa_config` + `finance_incident_coa_map` in-app; migrations 054-056 apply to prod (supervised) at merge.
 
 **Pointers:** ideal state + mental model → `IDEAL_STATE.md` (vision only; the *gap* + current state live here in STATUS) · deep architecture (archived) → `wip/SYSTEM_OVERVIEW.md` (§-refs below) · diagrams → `visuals/` (`ARCHITECTURE`, `CATEGORIZATION_ROUTES`, `JOURNAL_ENTRY_FLOWS`, `HR_PAYROLL_PROCESS_DIAGRAM`, `FINANCE_SYSTEM_STATE_VS_IDEAL`).
+
+---
+
+## 0. TEAM LAUNCH — canonical to-do (Gaurav + Pickle, 2026-09-04)
+
+> **THE list for handing the system to the team. Single source of truth for launch state — supersedes
+> the stale rows in §2.12 (B-series) and the Access-Modules M-series for launch purposes.**
+> Sequenced by priority (Gaurav: host/guest payout mechanisms are the most critical). Verified against
+> code on main + prod DB (read-only) 2026-09-04.
+
+| # | Item (Gaurav's list ref) | Verified current state | What's left to LAUNCH |
+|---|---|---|---|
+| L-1 | **Host/guest payout execution + invoice payment from the system** (G4) 🔴 MOST CRITICAL | Payout rail merged + armed (prod `finance_payouts`: 1 sent, 2 reconcile). Invoice AP payment entries live. But NO raise flow for guest/host payments (§2.11d deliberately deferred), and recipient mapping nearly empty (`payout_channel_registration` = 2 rows vs Zilla's 121-recipient tool, PM-5b) | (a) ingest Zilla's recipient mapping (chase the JSON or re-send tool); (b) build the guest/host payment-request raise flow (B11 bridge; create-vs-capture sub-call per §2.11d is OPEN — recommend CREATE via StripeDirectRail); (c) prove one supervised host payout + one guest refund end-to-end |
+| L-2 | **Approval system + queue** (G5) | ✅ LIVE — `approval_chain_service` + My Tasks on prod: 170 invoice-approval tasks (66 done/26 open), claims routed to managers | (a) Gaurav confirms the approver matrix + thresholds as configured (`finance_coa_config`); (b) M5 route-gate flip (backend still gates legacy flat `finance`); (c) approver explanation context = L-3(c) |
+| L-3 | **Team uploads invoices / payment requests / own claims + sees status clearly** (G1) | Invoice upload + claims: ✅ LIVE (own-scoped, audit-trailed). Requests/Track surface reads live status + who-it's-with for invoices+claims | (a) payment-request type into the raise + Track surfaces (rides L-1b); (b) status visibility walk with the team (pixel-verify tabs — Interceptor); (c) **approver context: Intercom/Sharetribe(TMS) interlinkage + brief** (B9 approval agent — trip_id/ticket enrich; needs TMS+Intercom read) |
+| L-4 | **New vendor approval process** (G2) | ✅ LIVE — vendor created pending/inactive → finance `vendor-approval` task (prod: 3 done/3 open); invoice held in DRAFT until vendor approved | Team walkthrough only; no build left |
+| L-5 | **Pending Retool items ported + status visible** (G3) | Unverified — no retool marker column on `finance_invoices`; porting state unknown | (a) inventory pending Retool payment-requests/invoices; (b) port them in with correct statuses; (c) confirm the FE Retool filters show them |
+| L-6 | **Auto-ingestion from finance@drivelah.sg, no junk drafts** (G6) | ⚠ BUILT BUT NOT ON MAIN — Penny mail-intake (doc-type classifier, dup-409, finance-team review tasks, prod penny schema) sits in 8 UNPUSHED commits on `260815_slack_agent` | (a) push branch, PR, review, merge, deploy; (b) verify the classifier's no-unnecessary-drafts gate on live mail; (c) intake-review tasks visible in My Tasks (15 open already on prod — reconcile source) |
+| L-7 | **Payroll works fully** (G7) | Engine + module merged (PRs #28/#29, statutory-gate fix in). `hr_employees` = 54/78; `finance_payroll_runs` = 0; comp/salary data largely blank | (a) onboard remaining ~24 staff + fill comp data (HR fill-list §2.11); (b) first supervised payroll run (pilot then full); (c) statutory payouts fan-out verified on the real run; (d) My Payslip surface (M4 payroll half) after first run |
+| L-8 | **Access hygiene closeout** | Matrix live since 08-05 (187 grant rows); payouts maker-checker at gate | M5 flip + drop legacy `finance` shim after L-2b verify; grant `finance.settings` to Gaurav/DJ/Zilla |
+
+**Suggested execution order:** L-1a → L-6a (merge while reviewing) → L-1b/c → L-5a/b → L-2a/b → L-7a/b → L-3b/walkthroughs → L-8 → L-3c/B9 (needs TMS+Intercom access, last).
 
 ---
 
@@ -79,6 +101,9 @@
 **Phase B — historical rebuild (2019 → 2025):** replay with the locked simplifications — payroll = direct expense (no historic runs, D2); AP legs only where invoices exist (≈Jul-25→Jun-26, D3); older = expense-on-payment; depreciation per D1; cross-check per year vs QB (reference, not truth — POL-21).
 
 ## ▶ Finance Access Modules — LOCKED PLAN (Gaurav, 2026-08-01)
+
+> **⚠ Launch-relevant residue now tracked in §0** (L-2b/L-8 = M5 flip; L-7d = M4 payslip half).
+> M2 access matrix went LIVE 2026-08-05 (precise finance.* grants, legacy wiped — see §2.12 B4).
 
 **Goal:** retire the single `finance` mega-module; gate the admin console per functional area + add row-level `own` scope so employees see only their own expenses/payslip. Spans **admin-bff** + **admincontrols** (NOT finance-api code). Canonical facts: DQ-72/73 (KNOWLEDGE). Live audit ground truth (queried 2026-08-01): 318 grant rows / 65 users / 13 live modules; only 3 modules route-enforced (`ai-agents`,`finance`,`user-mgmt`); FE finance tabs have ZERO gating today (all tabs show to all).
 
@@ -812,6 +837,10 @@ The host/guest payout-request bridge (RS-3b) is a **TEMPORARY** stand-in for wha
 
 ## 2.12 Finance Platform Buildout — SEQUENCED MASTER PLAN (Gaurav 2026-08-04)
 
+> **⚠ SUPERSEDED FOR LAUNCH by §0 (2026-09-04).** Several rows below are stale: B8 approval engine is
+> LIVE on prod (170 tasks flowed) · new-vendor flow LIVE · B12 rail has sent a real payout · EC-1 = 54/78.
+> §0 carries the verified current state; this section stays for the dependency rationale + history.
+
 Ties the 10 use cases (`wip/USE_CASE_MODULE_MAP.md`) + modules §2.8–2.11 into ONE dependency-ordered backlog. The spine is ACCESS SCOPE (own < read < write < admin), reusing the existing module-grant system. Priority 1 (Gaurav): **give access** — Phase A first. Deps in ().
 
 **Phase A — ACCESS FOUNDATION (priority 1; gates all; today-achievable)**
@@ -905,6 +934,9 @@ Gate: entity GST-registered (AU=0.10 / SG=null) AND account gst_applicable_<coun
 ---
 
 ## 2.15 PR-Review Action Set — 3 PRs (finance-api, admincontrols, admin-bff), pre-merge (Gaurav walkthrough 2026-08-14)
+
+> **✅ CLOSED — the payout-module PRs merged to main** (finance-api #28 + fix-round #29; branch
+> `260814_payout_module` fully absorbed, worktrees disposable). Kept for the finding-level record.
 
 All 16 findings walked one-by-one with Gaurav; each locked below. Merge the 3 PRs only after the LOCKED fixes land. PRs are MERGEABLE (admin-bff #23 conflict already resolved). Sources: the GST/BAS + reports work across the three repos.
 
