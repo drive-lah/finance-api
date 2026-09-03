@@ -1,6 +1,6 @@
 # GST Taxability + Category Map — DRAFT for operator approval (1D-232 Batch 1)
 
-**Status: DRAFT — NOT approved, NOT final, NOT handed to pricing.** Every `gst_treatment` value and
+**Status: SUPERSEDED BY RULINGS — D1 ruled 2026-09-03 (payout type ids, DEC-1D232-D1); 99 rows operator-approved, 13 PENDING-ACCOUNTANT-REVIEW. Current state: GST_CATEGORY_MAP_1D232.csv signoff column + tms-docs collation triage/rulings-1d.json.
 every `category_id`/account confirmation in the companion CSV is a money-path ruling that requires
 Gaurav's explicit sign-off before anything is committed to a seed or handed to tms-pricing-service
 (triage-1d-232.json Batch 1 operatorGate). Decision D1 (category namespace) is also unresolved —
