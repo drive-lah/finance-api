@@ -151,7 +151,15 @@ class IncidentPayoutService:
             raise BadRequestError("currency must be AUD or SGD")
         entity_id = payload.get("entity_id")
         if not entity_id:
-            raise BadRequestError("entity_id is required")
+            # Derive from the resolved user's market: au → the Australia entity, sg → Singapore.
+            from src.models.entity import FinanceEntity
+            _needle = "australia" if user.get("market") == "au" else "singapore"
+            ent = (db.query(FinanceEntity)
+                   .filter(FinanceEntity.name.ilike(f"%{_needle}%")).first())
+            if not ent:
+                raise BadRequestError(f"entity_id required (could not derive from market "
+                                      f"'{user.get('market')}')")
+            entity_id = ent.id
 
         role = "host" if req_type == "host_payout" else "guest"
         cp = self._platform_counterparty(db, user, role)
