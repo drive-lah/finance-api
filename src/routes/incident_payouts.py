@@ -16,7 +16,8 @@ POST /api/finance/incident-payouts/<id>/mark-executed {reference} → manual rai
 from flask import Blueprint, request, jsonify
 
 from src.database import db_session
-from src.services.incident_payout_service import incident_payout_service, INCIDENT_TYPES
+from src.services.incident_payout_service import incident_payout_service
+from src.services import ims_config_service
 from src.utils.errors import BadRequestError
 
 incident_payouts_bp = Blueprint("incident_payouts", __name__,
@@ -33,10 +34,10 @@ def _caller():
 
 @incident_payouts_bp.route("/types", methods=["GET"])
 def types():
-    return jsonify([
-        {"type_code": code, "label": label, "request_types": sorted(allowed),
-         "requires_trip_or_rego": needs_trip, "requires_ticket": needs_ticket}
-        for code, (label, allowed, needs_trip, needs_ticket) in INCIDENT_TYPES.items()])
+    """The LIVE incident-type catalog, read from IMS's ims_incidental_type_config (5-min cache).
+    `stale: true` means IMS was unreachable and this is the last good read."""
+    catalog, stale = ims_config_service.get_catalog()
+    return jsonify({"types": catalog, "stale": stale})
 
 
 @incident_payouts_bp.route("", methods=["POST"])

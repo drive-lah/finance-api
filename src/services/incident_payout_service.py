@@ -31,25 +31,9 @@ from src.models.vendor_payout import FinancePayout, FinancePayoutEvent, PayoutSt
 from src.models.counterparty import FinanceCounterparty
 from src.utils.errors import NotFoundError, BadRequestError, ConflictError
 
-# ── incident type catalog (IMS type_codes verbatim; per-type anchor requirements) ─────────────
-# Editable config table can supersede this; codes MUST stay IMS's real values (POL-114) so the
-# IMS event consumer reads the same vocabulary at cutover.
-INCIDENT_TYPES = {
-    # type_code: (label, allowed request types, requires_trip, requires_ticket)
-    "excess_mileage":            ("Excess mileage", {"host_payout"}, True, False),
-    "late_return":               ("Late return", {"host_payout"}, True, False),
-    "accident_damage":           ("Accident damage", {"host_payout", "guest_refund"}, True, True),
-    "damage":                    ("Damage (non-accident)", {"host_payout", "guest_refund"}, True, True),
-    "cleaning":                  ("Cleaning", {"host_payout", "guest_refund"}, True, False),
-    "tolls":                     ("Tolls", {"host_payout", "guest_refund"}, True, False),
-    "parking_fine":              ("Parking fine", {"host_payout", "guest_refund"}, True, True),
-    "traffic_fine":              ("Traffic fine", {"host_payout", "guest_refund"}, True, True),
-    "fuel_refund":               ("Fuel refund", {"host_payout", "guest_refund"}, True, False),
-    "host_cancellation_penalty": ("Host cancellation penalty", {"guest_refund"}, True, False),
-    "trip_refund":               ("Trip refund / adjustment", {"guest_refund"}, True, True),
-    "goodwill":                  ("Goodwill / service recovery", {"guest_refund"}, False, True),
-    "other":                     ("Other (explain in reason)", {"host_payout", "guest_refund"}, False, True),
-}
+# ── incident type catalog: LIVE from IMS's ims_incidental_type_config (Gaurav, 2026-09-04).
+# No hardcoded copy — src/services/ims_config_service.py reads the table (5-min cache, last-good
+# fallback). Grain is (type_code, sub_type_code), stored verbatim for cutover parity (POL-152).
 
 REQUEST_TYPES = {"host_payout", "guest_refund"}
 _METHOD = {"host_payout": "entry_sheet", "guest_refund": "stripe_refund"}
@@ -103,14 +87,20 @@ class IncidentPayoutService:
         req_type = payload.get("request_type")
         if req_type not in REQUEST_TYPES:
             raise BadRequestError("request_type must be host_payout or guest_refund")
+        from src.services import ims_config_service
         type_code = payload.get("incident_type_code")
-        spec = INCIDENT_TYPES.get(type_code)
+        sub_type_code = (payload.get("incident_sub_type_code") or "").strip() or None
+        spec = ims_config_service.lookup(type_code, sub_type_code)
         if not spec:
-            raise BadRequestError(f"Unknown incident_type_code '{type_code}'. "
-                                  f"Valid: {', '.join(sorted(INCIDENT_TYPES))}")
-        label, allowed, needs_trip, needs_ticket = spec
-        if req_type not in allowed:
-            raise BadRequestError(f"Incident type '{type_code}' does not allow {req_type}")
+            raise BadRequestError(f"Unknown incident type '{type_code}'"
+                                  + (f" / '{sub_type_code}'" if sub_type_code else "")
+                                  + " — not in the live IMS config")
+        label = spec["label"]
+        needs_trip = spec["requires_trip_or_rego"]
+        needs_ticket = spec["requires_ticket"]
+        if req_type not in spec["request_types"]:
+            raise BadRequestError(f"Incident type '{type_code}' does not allow {req_type} "
+                                  f"(IMS config allows: {', '.join(spec['request_types'])})")
 
         user_uuid = (payload.get("platform_user_id") or "").strip()
         if not user_uuid:
@@ -127,7 +117,7 @@ class IncidentPayoutService:
         if needs_ticket and not tickets:
             missing.append("intercom_ticket_ids")
         if missing:
-            raise ConflictError(f"Incident type '{type_code}' requires: {', '.join(missing)}")
+            raise ConflictError(f"Incident type '{label}' requires: {', '.join(missing)}")
 
         # HARD live validation — every provided anchor must resolve (2026-09-04 ruling).
         role_key = "host_id" if req_type == "host_payout" else "guest_id"
@@ -170,7 +160,8 @@ class IncidentPayoutService:
             method=_METHOD[req_type], amount=amount, currency=currency,
             state=PayoutState.PENDING_APPROVAL.value,
             requires_checker=True, is_dry_run=False,
-            incident_type_code=type_code, platform_user_id=user["user_id"],
+            incident_type_code=type_code, incident_sub_type_code=sub_type_code,
+            platform_user_id=user["user_id"],
             market=user.get("market"), trip_id=trip_id, intercom_ticket_ids=tickets,
             rego=rego, request_reason=payload.get("reason"),
             requested_by=str(raiser_user_id), requested_at=datetime.utcnow(),
