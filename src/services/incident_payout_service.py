@@ -154,6 +154,21 @@ class IncidentPayoutService:
         role = "host" if req_type == "host_payout" else "guest"
         cp = self._platform_counterparty(db, user, role)
 
+        # COA + approver routing (Gaurav 2026-09-04): the coa_config row that CLAIMS this incident
+        # type (incident_types coverage list) supplies the COA and the named approver. Unmapped →
+        # flat finance.payouts queue with an explicit flag; the raise itself never blocks.
+        from src.services import coa_config_service
+        coa_code = coa_config_service.coa_for_incident(db, type_code, sub_type_code)
+        approver_user_id = None
+        if coa_code:
+            route = coa_config_service.routing(db, coa_code, None)
+            approver = route.get("approver_1")
+            if approver:
+                from src.models.user import User
+                u = (db.query(User).filter(User.email.ilike(str(approver).strip())).first()
+                     or db.query(User).filter(User.name.ilike(str(approver).strip())).first())
+                approver_user_id = u.id if u else None
+
         p = FinancePayout(
             payable_type="incident", payable_id=None, invoice_id=None,
             counterparty_id=cp.id, entity_id=int(entity_id),
@@ -161,7 +176,7 @@ class IncidentPayoutService:
             state=PayoutState.PENDING_APPROVAL.value,
             requires_checker=True, is_dry_run=False,
             incident_type_code=type_code, incident_sub_type_code=sub_type_code,
-            platform_user_id=user["user_id"],
+            coa_code=coa_code, platform_user_id=user["user_id"],
             market=user.get("market"), trip_id=trip_id, intercom_ticket_ids=tickets,
             rego=rego, request_reason=payload.get("reason"),
             requested_by=str(raiser_user_id), requested_at=datetime.utcnow(),
@@ -178,14 +193,16 @@ class IncidentPayoutService:
                   f"{user.get('name') or user['user_id'][:8]} · {currency} {amount:,.2f}",
             summary=f"{label}" + (f" · trip {trip_id}" if trip_id else "")
                     + (f" · rego {rego}" if rego else "")
-                    + (f" · ticket {tickets}" if tickets else ""),
+                    + (f" · ticket {tickets}" if tickets else "")
+                    + ("" if coa_code else " · ⚠ UNMAPPED incident type — assign a COA in Finance Settings"),
             body={"payout_id": p.id, "request_type": req_type, "incident_type": type_code,
                   "amount": amount, "currency": currency, "market": user.get("market"),
                   "user": user.get("name"), "platform_user_id": user["user_id"],
                   "trip_id": trip_id, "tickets": tickets, "rego": rego,
                   "reason": payload.get("reason"), "entity_id": entity_id},
             amount=amount, currency=currency,
-            assignee_role="finance.payouts", created_by=str(raiser_user_id))
+            assignee_user_id=approver_user_id, assignee_role="finance.payouts",
+            created_by=str(raiser_user_id))
         return p
 
     # ── approve / reject (release gate; task-actioned) ───────────────────────

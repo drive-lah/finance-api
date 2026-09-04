@@ -153,6 +153,7 @@ class FinancePayout(Base):
     # the ClickHouse view lane owns the accounting meanwhile.
     incident_type_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
     incident_sub_type_code: Mapped[str | None] = mapped_column(String(100), nullable=True)  # mig 078
+    coa_code: Mapped[str | None] = mapped_column(String(20), nullable=True)  # derived via coa_config coverage (mig 079)
     platform_user_id: Mapped[str | None] = mapped_column(String(64), nullable=True)  # host/guest UUID
     market: Mapped[str | None] = mapped_column(String(2), nullable=True)             # au | sg
     trip_id: Mapped[str | None] = mapped_column(String(64), nullable=True)           # TA…/TS… code
@@ -192,6 +193,7 @@ class FinancePayout(Base):
             "journal_entry_id": self.journal_entry_id,
             "incident_type_code": self.incident_type_code,
             "incident_sub_type_code": self.incident_sub_type_code,
+            "coa_code": self.coa_code,
             "platform_user_id": self.platform_user_id, "market": self.market,
             "trip_id": self.trip_id, "intercom_ticket_ids": self.intercom_ticket_ids,
             "rego": self.rego, "request_reason": self.request_reason,

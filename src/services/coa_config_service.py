@@ -28,6 +28,8 @@ def _norm(value) -> Optional[str]:
         return "true" if value else "false"
     if isinstance(value, Decimal):
         return format(value, "f")
+    if isinstance(value, (list, tuple)):
+        return ",".join(str(v) for v in value) or None
     s = str(value).strip()
     return s or None
 
@@ -36,6 +38,10 @@ def _coerce(field: str, raw):
     """Coerce an incoming JSON value to the column's Python type."""
     if raw is None:
         return None
+    if field == "incident_types":
+        items = raw if isinstance(raw, (list, tuple)) else str(raw).replace(",", " ").split()
+        out = sorted({str(x).strip().lower() for x in items if str(x).strip()})
+        return out or None
     if field in ("auto_approve_ok", "needs_trip_id", "needs_intercom_id"):
         if isinstance(raw, bool):
             return raw
@@ -153,6 +159,17 @@ def upsert(db: Session, coa_code: str, fields: dict, changed_by: Optional[str] =
         raise ConflictError("Approver 2 must be a different person from Approver 1.")
 
     changes: list[tuple[str, Optional[str], Optional[str]]] = []
+    if "incident_types" in fields:
+        _new_pats = _coerce("incident_types", fields["incident_types"]) or []
+        if _new_pats:
+            others = db.execute(select(FinanceCoaConfig).where(
+                FinanceCoaConfig.coa_code != coa_code)).scalars().all()
+            claimed = {p: o.coa_code for o in others for p in (o.incident_types or [])}
+            clash = [f"{p} (already on COA {claimed[p]})" for p in _new_pats if p in claimed]
+            if clash:
+                from src.utils.errors import ConflictError
+                raise ConflictError("Incident type already mapped to another COA: " + "; ".join(clash))
+
     for field in FinanceCoaConfig.EDITABLE_FIELDS:
         if field not in fields:
             continue
@@ -251,3 +268,27 @@ def routing(db: Session, coa_code: str, amount_sgd: Optional[Decimal] = None) ->
         "approver_2": r.approver_2,
         "auto": False,
     }
+
+
+def coa_for_incident(db: Session, type_code: str, sub_type_code: Optional[str] = None) -> Optional[str]:
+    """Resolve an incident (type, sub_type) to the COA whose config row claims it.
+
+    Precedence: exact "type/sub" > wildcard "type/*" > bare "type". None = unmapped (caller
+    falls back to the flat finance.payouts queue with an unmapped flag — never blocks the raise).
+    """
+    t = (type_code or "").strip().lower()
+    sub = (sub_type_code or "").strip().lower() or None
+    if not t:
+        return None
+    exact = f"{t}/{sub}" if sub else None
+    wild = f"{t}/*"
+    best: tuple[int, Optional[str]] = (0, None)
+    for row in db.execute(select(FinanceCoaConfig)).scalars().all():
+        for p in (row.incident_types or []):
+            if exact and p == exact and best[0] < 3:
+                best = (3, row.coa_code)
+            elif p == wild and best[0] < 2:
+                best = (2, row.coa_code)
+            elif p == t and best[0] < 1:
+                best = (1, row.coa_code)
+    return best[1]
