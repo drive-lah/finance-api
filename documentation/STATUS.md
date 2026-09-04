@@ -969,6 +969,7 @@ All 16 findings walked one-by-one with Gaurav; each locked below. Merge the 3 PR
 
 | Decision | Resolution |
 |----------|-----------|
+| **`finance_approval_rules` DROPPED on prod** (Gaurav, 2026-09-04) | Verified dead twice over (0 rows AND its evaluator had zero call sites — Slack-era design superseded by `finance_coa_config`). Table dropped on prod; model + evaluator + CRUD routes deleted (`42dd6ce`). `finance_coa_config` is the ONE approval matrix — currently near-empty (1 row, no approvers), so invoice routing runs on the code fallback (1 step, no named approver, no auto-approve) until the matrix is populated (Gaurav to rule; feeds §0 L-2a and incident routing) |
 | **Payment-provider mental model** | Providers (Stripe, Grab, OCBC, Wise) = permanent bank/cash accounts; economic events (revenue/COGS) = swappable source (ClickHouse views now → TMS PGW ledger later); both post to one ledger. Frame as "provider ingestion + economic-event recognition," not "Stripe sync." (`IDEAL_STATE §1`) |
 | **Stripe source = existing ClickHouse views** | Read the battle-tested views via a thin adapter; do NOT re-home view logic into Python (v3.0 dropped). Patch the `code='2'` gap narrowly. |
 | **Source-adapter abstraction** | Deferred (YAGNI). Read views directly now; wrap behind a thin `EconomicEventSource` interface when the PGW ledger is real. `category_id` (finance-owned COA map, §4 F-1) keeps the swap cheap. |
