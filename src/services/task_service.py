@@ -208,6 +208,18 @@ class TaskService:
             return {"status": TaskStatus.DONE.value if action == "approve"
                     else TaskStatus.RETURNED.value}
 
+        if kind == "incident-payout" and sid is not None:
+            from src.services.incident_payout_service import incident_payout_service
+            if action == "approve":
+                incident_payout_service.approve(db, sid, caller, is_admin=is_admin)
+            elif action == "reject":
+                incident_payout_service.reject(db, sid, caller, notes or "rejected",
+                                               is_admin=is_admin)
+            else:
+                raise BadRequestError(f"Unknown action '{action}' for incident-payout task.")
+            return {"status": TaskStatus.DONE.value if action == "approve"
+                    else TaskStatus.RETURNED.value}
+
         if kind == "payout" and sid is not None:
             from src.services.payout_service import payout_service
             actor = {"user_id": str(caller), "role": "finance.payouts"}

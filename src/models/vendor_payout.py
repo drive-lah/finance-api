@@ -31,6 +31,15 @@ class PayoutState(str, enum.Enum):
     POSTED = "posted"               # terminal: txn paired + knock-off JE posted
     FAILED = "failed"
     CANCELLED = "cancelled"
+    # ── incident (host/guest) lane — document-machine vocabulary (Gaurav, 2026-09-04) ──
+    # payable_type='incident' rows use these so the team reads ONE vocabulary across invoices/
+    # claims/payroll/payouts. Vendor/claim/payroll payout rows keep the legacy states above.
+    PENDING_APPROVAL = "pending_approval"    # raised + anchors live-validated; at the release gate
+    APPROVED = "approved"                    # named approver acted; rail execution pending/retrying
+    PAYMENT_QUEUED = "payment_queued"        # host rail: in the payout entry sheet; monthly cycle pays
+    PAYMENT_INITIATED = "payment_initiated"  # guest rail: Stripe refund executed; money in transit
+    PAID = "paid"                            # settlement evidence arrived in data + paired (terminal)
+    REJECTED = "rejected"                    # approver declined (terminal)
 
 
 class FinancePayoutBankAccount(Base):
@@ -138,6 +147,21 @@ class FinancePayout(Base):
     journal_entry_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("finance_journal_entries.id"), nullable=True)
 
+    # ── incident (host/guest) request context — payable_type='incident' only (mig 077) ──
+    # IMS-shaped on purpose: type_code is IMS's incidental type verbatim, so cutover is a source
+    # swap. No JE hooks fire for these rows until IMS cutover (2026-09-04 no-double-count ruling);
+    # the ClickHouse view lane owns the accounting meanwhile.
+    incident_type_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    platform_user_id: Mapped[str | None] = mapped_column(String(64), nullable=True)  # host/guest UUID
+    market: Mapped[str | None] = mapped_column(String(2), nullable=True)             # au | sg
+    trip_id: Mapped[str | None] = mapped_column(String(64), nullable=True)           # TA…/TS… code
+    intercom_ticket_ids: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    rego: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    request_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    executed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)    # rail confirmed
+    rejected_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    rejection_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
     __table_args__ = (
@@ -165,6 +189,12 @@ class FinancePayout(Base):
             "settled_at": self.settled_at.isoformat() if self.settled_at else None,
             "transaction_id": self.transaction_id, "match_id": self.match_id,
             "journal_entry_id": self.journal_entry_id,
+            "incident_type_code": self.incident_type_code,
+            "platform_user_id": self.platform_user_id, "market": self.market,
+            "trip_id": self.trip_id, "intercom_ticket_ids": self.intercom_ticket_ids,
+            "rego": self.rego, "request_reason": self.request_reason,
+            "executed_at": self.executed_at.isoformat() if self.executed_at else None,
+            "rejected_by": self.rejected_by, "rejection_reason": self.rejection_reason,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 

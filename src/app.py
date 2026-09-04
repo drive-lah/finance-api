@@ -66,6 +66,7 @@ def create_app(config=None):
     from src.routes.requests import requests_bp
     from src.routes.enrichment import enrichment_bp
     from src.routes.approvals import approvals_bp
+    from src.routes.incident_payouts import incident_payouts_bp
     app.register_blueprint(entities_bp)
     app.register_blueprint(fx_rates_bp)
     app.register_blueprint(accounts_bp)
@@ -99,6 +100,7 @@ def create_app(config=None):
     app.register_blueprint(requests_bp)
     app.register_blueprint(enrichment_bp)
     app.register_blueprint(approvals_bp)
+    app.register_blueprint(incident_payouts_bp)
 
     # Health check endpoint
     @app.route('/health', methods=['GET'])
