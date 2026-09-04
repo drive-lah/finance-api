@@ -17,7 +17,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from src.models.invoice import FinanceInvoice, InvoiceStatus
-from src.models.contract import FinanceAmortizationSchedule, FinanceContract, FinanceApprovalRule
+from src.models.contract import FinanceAmortizationSchedule, FinanceContract
 from src.models.counterparty import FinanceCounterparty
 from src.models.schemas import InvoiceCreate, InvoiceUpdate
 from src.services.journal_service import journal_service
@@ -2623,54 +2623,6 @@ Rules:
                 "message": f"AI review could not be completed ({e}). Proceeding with manual review.",
                 "concerns": [],
             }
-
-    def _evaluate_approval_rules(
-        self, db: Session, invoice: FinanceInvoice
-    ) -> tuple[str, Optional[str]]:
-        """
-        Evaluate approval rules for this invoice.
-        Returns (new_status, approved_by_label).
-        """
-        rules = (
-            db.query(FinanceApprovalRule)
-            .filter(
-                FinanceApprovalRule.entity_id == invoice.entity_id,
-                FinanceApprovalRule.status == "active",
-            )
-            .order_by(FinanceApprovalRule.priority.asc())
-            .all()
-        )
-
-        amount = float(invoice.total_amount)
-
-        for rule in rules:
-            # Amount range check
-            if rule.amount_min is not None and amount < float(rule.amount_min):
-                continue
-            if rule.amount_max is not None and amount > float(rule.amount_max):
-                continue
-            # COA prefix check
-            if rule.coa_account_prefix and invoice.contra_account_code:
-                if not invoice.contra_account_code.startswith(rule.coa_account_prefix):
-                    continue
-            elif rule.coa_account_prefix and not invoice.contra_account_code:
-                continue
-            # Vendor type check
-            if rule.vendor_type and invoice.counterparty_id:
-                from src.models.counterparty import FinanceCounterparty
-                cp = db.get(FinanceCounterparty, invoice.counterparty_id)
-                if cp and cp.type != rule.vendor_type:
-                    continue
-
-            # Rule matched
-            if rule.action == "auto_approve":
-                return InvoiceStatus.APPROVED.value, f"auto:rule_{rule.id}"
-            else:
-                return InvoiceStatus.PENDING_APPROVAL.value, None
-
-        # No rule matched → require approval
-        return InvoiceStatus.PENDING_APPROVAL.value, None
-
 
 # Singleton instance
 invoice_service = InvoiceService()
