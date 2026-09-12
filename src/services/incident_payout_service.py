@@ -187,19 +187,34 @@ class IncidentPayoutService:
                     detail=f"{req_type} · {type_code} · {currency} {amount:,.2f} · "
                            f"{role} {user.get('name')} ({user['user_id'][:8]}…)")
 
+        # Approval Agent card — the SAME mechanism as invoice approvals (approval_card_service,
+        # Gaurav 2026-09-12: common across invoice/host/guest/claim). BEST-EFFORT: on any failure
+        # the task ships with the minimal body below; the raise is never blocked by enrichment.
+        card = None
+        try:
+            from src.services import approval_card_service
+            card = approval_card_service.build_card_body_for_payout(db, p, user.get("name"))
+        except Exception:
+            card = None
+
+        task_body = {"payout_id": p.id, "request_type": req_type, "incident_type": type_code,
+                     "amount": amount, "currency": currency, "market": user.get("market"),
+                     "user": user.get("name"), "platform_user_id": user["user_id"],
+                     "trip_id": trip_id, "tickets": tickets, "rego": rego,
+                     "reason": payload.get("reason"), "entity_id": entity_id}
+        if card:
+            task_body.update(card)   # same card keys the invoice approval card renders
+
         task_service.enqueue(
             db, type="incident-payout-approval", source_ref=f"incident-payout:{p.id}",
             title=f"Approve {('host payout' if role == 'host' else 'guest refund')} — "
                   f"{user.get('name') or user['user_id'][:8]} · {currency} {amount:,.2f}",
-            summary=f"{label}" + (f" · trip {trip_id}" if trip_id else "")
-                    + (f" · rego {rego}" if rego else "")
-                    + (f" · ticket {tickets}" if tickets else "")
+            summary=((card.get("summary") or "")[:200] if card and card.get("summary") else
+                     f"{label}" + (f" · trip {trip_id}" if trip_id else "")
+                     + (f" · rego {rego}" if rego else "")
+                     + (f" · ticket {tickets}" if tickets else ""))
                     + ("" if coa_code else " · ⚠ UNMAPPED incident type — assign a COA in Finance Settings"),
-            body={"payout_id": p.id, "request_type": req_type, "incident_type": type_code,
-                  "amount": amount, "currency": currency, "market": user.get("market"),
-                  "user": user.get("name"), "platform_user_id": user["user_id"],
-                  "trip_id": trip_id, "tickets": tickets, "rego": rego,
-                  "reason": payload.get("reason"), "entity_id": entity_id},
+            body=task_body,
             amount=amount, currency=currency,
             assignee_user_id=approver_user_id, assignee_role="finance.payouts",
             created_by=str(raiser_user_id))

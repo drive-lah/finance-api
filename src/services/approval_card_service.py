@@ -137,8 +137,9 @@ description + double-pay check. Never invent facts."""
 
 def _build_card(inv, anchors, tkt, trip, dp):
     ctx = json.dumps({
-        "INVOICE": {"vendor": inv["vendor"], "amount": inv["amount"], "currency": inv["currency"],
-                    "COA": inv["coa"], "entity": inv["entity"], "invoice_id": inv["id"]},
+        "PAYMENT": {"kind": inv.get("kind") or "invoice", "payee": inv["vendor"],
+                    "amount": inv["amount"], "currency": inv["currency"],
+                    "COA": inv["coa"], "entity": inv["entity"], "ref_id": inv["id"]},
         "REQUESTER": {"team": anchors.get("team"), "approved_by": anchors.get("approved_by"),
                       "description_verbatim": inv["descr"], "reason": anchors.get("reason")},
         "TICKET": tkt, "TRIP": trip, "DOUBLE_PAY_CHECK": dp}, indent=1, default=str)
@@ -148,6 +149,70 @@ def _build_card(inv, anchors, tkt, trip, dp):
         return json.loads(m.group(0)) if m else {"summary": raw, "risk_flags": [], "confidence": None}
     except Exception:
         return {"summary": raw, "risk_flags": [], "confidence": None}
+
+
+def _assemble_context(db, *, market, trip_ref, ticket_refs, rego, counterparty_id, amount):
+    """THE COMMON ENRICHMENT PIPELINE (Gaurav 2026-09-12: one mechanism for every payment-shaped
+    approval — invoice, host/guest incident payout, claim). Resolves tickets → trip (direct ref,
+    else via ticket, else rego fallback) → counterparty double-pay. Returns (tkt, tkt_cards, trip, dp)."""
+    tkts = enrichment_service.resolve_tickets(ticket_refs) if ticket_refs else []
+    tkt_cards = [c for c in (_ticket_ctx(t.get("ticket")) for t in tkts if t.get("found")) if c]
+    tkt = tkt_cards[0] if tkt_cards else (_ticket_ctx(ticket_refs) if ticket_refs else None)
+
+    trip = None
+    if trip_ref:
+        trip = _trip_ctx(trip_ref, market)               # direct: the entered TA/TS code (or UUID)
+    if not trip:
+        ref = tkt.get("trip_code") or tkt.get("trip_uuid") if tkt else None
+        trip = _trip_ctx(ref, market) if ref else None
+    if not trip and rego:                                # vehicle-level anchor (towing etc.)
+        g = enrichment_service.resolve_rego(rego)
+        if g.get("found"):
+            trip = {"vehicle": g.get("vehicle"), "host": g.get("host"),
+                    "host_email": g.get("host_email"), "guest": None, "window": None,
+                    "status": ("delisted vehicle" if g.get("delisted") else None),
+                    "rego": g.get("rego")}
+    dp = _double_pay(db, counterparty_id, amount)
+    return tkt, tkt_cards, trip, dp
+
+
+def build_card_body_for_payout(db, payout, user_name=None):
+    """Approval Agent card for a host/guest incident payout — SAME pipeline and card shape as the
+    invoice card (common mechanism), payout-flavoured refs. Returns body dict or None (caller
+    falls back; the task is never blocked)."""
+    try:
+        payee = user_name or (payout.platform_user_id or "")[:8]
+        market = payout.market or ("au" if int(payout.entity_id or 0) == 3 else "sg")
+        role = "host payout" if payout.method == "entry_sheet" else "guest refund"
+        descr = payout.request_reason or ""
+        anchors = {"team": None, "approved_by": None, "reason": descr}
+        tkt, tkt_cards, trip, dp = _assemble_context(
+            db, market=market, trip_ref=payout.trip_id, ticket_refs=payout.intercom_ticket_ids,
+            rego=payout.rego, counterparty_id=payout.counterparty_id, amount=payout.amount)
+        inv = {"kind": role, "vendor": payee, "amount": float(payout.amount or 0),
+               "currency": payout.currency, "coa": payout.coa_code,
+               "entity": "Drive lah Australia" if market == "au" else "Drive lah (SG)",
+               "id": payout.id,
+               "descr": f"{role} · {payout.incident_type_code}"
+                        + (f"/{payout.incident_sub_type_code}" if payout.incident_sub_type_code else "")
+                        + (f" — {descr}" if descr else "")}
+        card = _build_card(inv, anchors, tkt, trip, dp)
+        return {
+            "agent_version": "v2", "vendor": payee,
+            "counterparty_id": payout.counterparty_id,
+            "payout_id": payout.id,
+            "summary": card.get("summary"), "risk_flags": card.get("risk_flags") or [],
+            "confidence": card.get("confidence"),
+            "requester": {"name": None, "user_id": payout.requested_by, "email": None, "team": None},
+            "ticket": ({k: tkt.get(k) for k in ("ticket", "type", "state", "trip_code", "summary")}
+                       if tkt else None),
+            "tickets": [{k: c.get(k) for k in ("ticket", "type", "state")} for c in tkt_cards] or None,
+            "trip": trip, "double_pay": dp,
+        }
+    except Exception:
+        logger.warning("approval card build failed for payout %s",
+                       getattr(payout, "id", None), exc_info=True)
+        return None
 
 
 def build_card_body(db, invoice):
@@ -181,26 +246,11 @@ def build_card_body(db, invoice):
             pass
 
         ticket_src = meta_tickets or anchors.get("ticket")
-        tkts = enrichment_service.resolve_tickets(ticket_src) if ticket_src else []
-        # Summarise each resolved ticket (card-specific LLM step) via the existing _ticket_ctx path.
-        tkt_cards = [c for c in (_ticket_ctx(t.get("ticket")) for t in tkts if t.get("found")) if c]
-        tkt = tkt_cards[0] if tkt_cards else (_ticket_ctx(ticket_src) if ticket_src else None)
-
-        trip = None
-        if meta_trip:
-            trip = _trip_ctx(meta_trip, market)          # direct: the entered TA/TS code
-        if not trip:
-            ref = tkt.get("trip_code") or tkt.get("trip_uuid") if tkt else None
-            trip = _trip_ctx(ref, market) if ref else None
-        # Vehicle-level anchor (towing etc.): resolve the rego to vehicle/host when there's no trip.
-        if not trip and meta_rego:
-            g = enrichment_service.resolve_rego(meta_rego)
-            if g.get("found"):
-                trip = {"vehicle": g.get("vehicle"), "host": g.get("host"), "host_email": g.get("host_email"),
-                        "guest": None, "window": None, "status": ("delisted vehicle" if g.get("delisted") else None),
-                        "rego": g.get("rego")}
-        dp = _double_pay(db, invoice.counterparty_id, invoice.total_amount)
-        inv = {"vendor": vendor, "amount": float(invoice.total_amount or 0), "currency": invoice.currency,
+        tkt, tkt_cards, trip, dp = _assemble_context(
+            db, market=market, trip_ref=meta_trip, ticket_refs=ticket_src,
+            rego=meta_rego, counterparty_id=invoice.counterparty_id,
+            amount=invoice.total_amount)
+        inv = {"kind": "invoice", "vendor": vendor, "amount": float(invoice.total_amount or 0), "currency": invoice.currency,
                "coa": invoice.contra_account_code,
                "entity": "Drive lah Australia" if market == "au" else "Drive lah (SG)",
                "id": invoice.id, "descr": descr}
