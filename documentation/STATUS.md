@@ -40,6 +40,33 @@
 > suite could not collect). L-2a approver matrix: Gaurav ruled LET IT SIT on the fallback for now
 > (pool = the three `finance.payouts` admins; maker-checker enforced server-side).
 
+### §0.1 V1 LAUNCH — definition + tracker (Gaurav ruling, 2026-09-12)
+
+> **LAUNCH =** the team does ALL daily finance ops in the new system and the old rails retire:
+> (1) the whole invoice system, INCLUDING invoice payments executed via the system (through Wise,
+> never Wise directly); (2) host/guest payouts raised→approved→executed in the system; (3) one
+> approval mechanism (matrix parked on fallback by ruling); (4) proper team access; (5) payroll
+> fully via the system; (6) the TASK SYSTEM live — assignable tasks, team sees own queue, resolve
+> loop; (7) Retool payout system RETIRED. Auto-ingestion of finance emails is IN scope but its
+> shape needs a Gaurav discussion first (current classifier creates too many tasks). **V2 (not
+> launch): Slack agent for the team. RECON is a separate exercise — never launch-gating.**
+>
+> **Launch meeting: Tue 15 Sep morning. Master trainers: Zilla + Rahul** — everything below aims
+> at having THEM ready to train the team.
+
+| T# | V1 capability | State (2026-09-12) | Pending for Tue 15th |
+|---|---|---|---|
+| T-1 | Invoice system incl. approval cards | ✅ live on prod (B8, cards, vendor gate) | Trainer walkthrough material only |
+| T-2 | Invoice PAYMENT via system (Wise rail through system) | ❌ NOT BUILT — payments recorded, not executed from the system | Verify actual gap + decide: build now or manual-mark interim for launch (Gaurav call) |
+| T-3 | Host/guest payouts | ✅ built + common card (`173a9d6`), UNPUSHED | Push phrase → PR → deploy → migrations 077–079 supervised |
+| T-4 | Payout execution rails | ◐ approve→state machine done | Entry-sheet API handover (host); Stripe refund rail decision + wiring (guest) |
+| T-5 | Task system (assign / own queue / resolve) | ◐ My Tasks + queues exist; assignment/resolve loop unverified end-to-end | Pixel-verify assign→reassign→resolve with Zilla's account; fix gaps found |
+| T-6 | Auto-ingestion finance@ | ◐ built on branch; over-creates tasks | SCOPING DISCUSSION with Gaurav (what auto-ingests vs parks), then ship gated version |
+| T-7 | Team access (M5 flip, settings grants) | ◐ legacy flat gate still on | Flip + shim drop + grant settings to G/DJ/Zilla |
+| T-8 | Payroll via system | ◐ engine done; 54/78 onboarded | NOT Tue-gating: pilot run scheduled post-launch; trainers briefed on status |
+| T-9 | Retool payout retirement | ◐ pending L-5 port | Inventory + port pending Retool items w/ statuses; announce cutoff at the meeting |
+| T-10 | Trainer readiness (Zilla + Rahul) | ❌ | Walkthrough session before Tue: raise/approve/track on staging + cheat-sheet |
+
 | # | Item (Gaurav's list ref) | Verified current state | What's left to LAUNCH |
 |---|---|---|---|
 | L-1 | **Host/guest payout execution + invoice payment from the system** (G4) 🔴 MOST CRITICAL | **BACKEND BUILT 2026-09-04** (branch 20260904-gs-finance-launch): incident payout requests on `finance_payouts` (payable_type='incident'; NO new data model, NO JE hooks per the no-double-count ruling — view lane keeps the accounting until IMS cutover). SM (document vocabulary, Gaurav-ruled): host `pending_approval→approved→payment_queued→paid`, guest `…→payment_initiated→paid` (+rejected/cancelled); maker-checker always-on; approval≠execution (rail failures retry from approved); cancel method-gated (entry_sheet can cancel from payment_queued, stripe can't after initiated); `paid` = data-side pairing only. HARD live anchor validation at raise (TA/TS trip enforced — transaction ids rejected; customer-facing Intercom ticket; rego; host/guest UUID → name echo; POL-112 platform-user counterparty auto-created). Routes `/api/finance/incident-payouts/*`; task type `incident-payout-approval` in My Tasks. **Rehearsed E2E on clone 2019locked (11/11 checks: raise/maker-checker-block/approve/mark-executed/cancel-windows/fake-trip-block/tasks/events)** | ~~(a) BFF+FE wiring~~ ✅ 2026-09-04 (admin-bff `9d62336`: proxy block, raise/read on base finance.payment_requests + approve/execute on finance.payouts admin; admincontrols `052e3b3`: Raise cards + RaiseIncidentPayoutModal with live anchor echo, Track shows HP-/GP- rows via my-requests; both branches `20260904-gs-finance-launch`, tsc-clean, **✅ PIXEL-VERIFIED 2026-09-04** — full local stack (finance-api on clone + bff + FE) driven in real Chrome via Interceptor: 3 raise cards render · host modal live-echoes host name + trip context (green ✓s in screenshot) · submit → HP-19 pending_approval in Track with who-with=finance.payouts · approval task in queue · screenshots `~/Downloads/interceptor-capture-20260904-1050*.png`); (b) ENTRY_SHEET_API handover (Gaurav) → wire `_insert_entry_sheet` (mark-executed is the manual bridge meanwhile); (c) Stripe refund rail wiring (same seam); (d) migration 077 → prod (supervised) at merge; (e) settlement pairing → `paid` (data side); (f) PM-5b Zilla recipient mapping (still 2/121, vendor-payout lane) |
