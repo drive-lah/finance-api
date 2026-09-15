@@ -40,6 +40,8 @@ def list_tasks():
         rows = task_service.list_scoped(db, caller, roles, is_admin, status=status, scope=scope)
         out = task_service.hydrate_source(db, [t.to_dict() for t in rows])
         out = task_service.attach_people_names(db, out)
+        for d in out:   # the FE has no user id — the server says whose raise it is (maker-checker UX)
+            d["is_own"] = str(d.get("created_by") or "") == str(caller)
         if is_admin and scope == "all":
             out = task_service.attach_assignee_names(db, out)
         return jsonify(out)
