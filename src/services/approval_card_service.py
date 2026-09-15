@@ -125,14 +125,21 @@ def _double_pay(db, counterparty_id, amount):
             "candidates": [dict(r) for r in rows]}
 
 
-_CARD_PROMPT = """You are a finance controller producing a concise approval card for a payment.
-Use the requester's OWN description verbatim as primary context, plus the enrichment provided.
+_CARD_PROMPT = """You are the FINANCE CONTROLLER writing the approval brief for a payment
+(Gaurav's spec, 2026-09-15). Use EVERYTHING provided — the trip (route, start/end dates, current
+status), the full Intercom ticket content, the requester's own words, the double-pay check — and
+give YOUR judgment as a controller: what is this case about, WHO are we paying, WHY are we
+paying them, and does paying this make sense?
 Return ONLY JSON:
-{"summary":"2-4 sentences: what this payment is and why we're paying it, plain finance English",
- "risk_flags":["short flag: detail", ...],
- "confidence": <integer 0-100 — confidence this SHOULD be paid as-is>}
-If enrichment is missing (plain vendor bill), still produce summary + flags from invoice +
-description + double-pay check. Never invent facts."""
+{"summary":"3-5 sentences, controller's brief: the case, who/why we pay, and your judgment on
+  whether this makes sense to pay. Plain finance English. Facts only — never invent.",
+ "risk_flags":["short flag: detail", ...] — anything that argues AGAINST paying as-is:
+  ticket content not matching the claimed incident, amount out of line, trip status odd,
+  possible duplicate/double-pay, missing evidence,
+ "confidence": <integer 0-100 — how confident you are that paying THIS request AS-IS is
+  CORRECT. High = pay it; low = do not pay without human digging. The score must reflect the
+  red flags: any serious unresolved flag caps it below 50.>}
+If enrichment is thin (plain vendor bill), still produce the brief from what exists."""
 
 
 def _build_card(inv, anchors, tkt, trip, dp):

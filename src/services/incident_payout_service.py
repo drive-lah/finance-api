@@ -247,7 +247,8 @@ class IncidentPayoutService:
                      f"{label}" + (f" · trip {trip_id}" if trip_id else "")
                      + (f" · rego {rego}" if rego else "")
                      + (f" · ticket {tickets}" if tickets else ""))
-                    + ("" if coa_code else " · ⚠ UNMAPPED incident type — assign a COA in Finance Settings"),
+                    ,  # COA mapping deliberately NOT surfaced to the approver (Gaurav 2026-09-15):
+                       # interim accounting derives from the ClickHouse view lane, not coa_config.
             body=task_body,
             amount=amount, currency=currency,
             assignee_user_id=approver_user_id, assignee_role="finance.payouts",
