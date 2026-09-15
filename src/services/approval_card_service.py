@@ -75,6 +75,7 @@ def _ticket_ctx(ticket_no):
             max_tokens=450)
     tc = re.match(r"^T[AS]\d+$", str(r.get("trip_ref") or ""))
     return {"ticket": r.get("ticket"), "type": r.get("type"), "state": r.get("state"),
+            "intercom_url": r.get("intercom_url"),
             "trip_code": r.get("trip_ref") if tc else None,
             "trip_uuid": None if tc else r.get("trip_ref"),
             "summary": summary}
@@ -196,6 +197,28 @@ def build_card_body_for_payout(db, payout, user_name=None):
         tkt, tkt_cards, trip, dp = _assemble_context(
             db, market=market, trip_ref=payout.trip_id, ticket_refs=payout.intercom_ticket_ids,
             rego=payout.rego, counterparty_id=payout.counterparty_id, amount=payout.amount)
+        # open duplicates: other LIVE incident requests citing the same trip or ticket —
+        # the approver sees "2 other open requests on this trip" instead of finding out later.
+        dups = []
+        try:
+            conds = []
+            if payout.trip_id:
+                conds.append("trip_id = :trip")
+            if payout.intercom_ticket_ids:
+                conds.append("intercom_ticket_ids = :tick")
+            if conds:
+                rows = db.execute(text(
+                    "SELECT id, method, state, amount, currency FROM finance_payouts "
+                    "WHERE payable_type='incident' AND id != :pid "
+                    "AND state IN ('pending_approval','approved','payment_queued','payment_initiated') "
+                    "AND (" + " OR ".join(conds) + ") ORDER BY id DESC LIMIT 5"),
+                    {"pid": payout.id, "trip": payout.trip_id, "tick": payout.intercom_ticket_ids}
+                ).mappings().all()
+                dups = [{"id": r["id"], "state": r["state"],
+                         "amount": float(r["amount"]), "currency": r["currency"]} for r in rows]
+        except Exception:
+            logger.warning("open-duplicates check failed for payout %s", payout.id, exc_info=True)
+
         inv = {"kind": role, "vendor": payee, "amount": float(payout.amount or 0),
                "currency": payout.currency, "coa": payout.coa_code,
                "entity": "Drive lah Australia" if market == "au" else "Drive lah (SG)",
@@ -211,10 +234,13 @@ def build_card_body_for_payout(db, payout, user_name=None):
             "summary": card.get("summary"), "risk_flags": card.get("risk_flags") or [],
             "confidence": card.get("confidence"),
             "requester": {"name": None, "user_id": payout.requested_by, "email": None, "team": None},
-            "ticket": ({k: tkt.get(k) for k in ("ticket", "type", "state", "trip_code", "summary")}
+            "ticket": ({k: tkt.get(k) for k in ("ticket", "type", "state", "trip_code", "summary", "intercom_url")}
                        if tkt else None),
             "tickets": [{k: c.get(k) for k in ("ticket", "type", "state")} for c in tkt_cards] or None,
             "trip": trip, "double_pay": dp,
+            "open_duplicates": dups or None,
+            "attachments": (__import__("json").loads(payout.attachment_keys)
+                            if payout.attachment_keys else None),
         }
     except Exception:
         logger.warning("approval card build failed for payout %s",
@@ -270,7 +296,7 @@ def build_card_body(db, invoice):
             "summary": card.get("summary"), "risk_flags": card.get("risk_flags") or [],
             "confidence": card.get("confidence"),
             "requester": resolve_requester(db, anchors),
-            "ticket": ({k: tkt.get(k) for k in ("ticket", "type", "state", "trip_code", "summary")}
+            "ticket": ({k: tkt.get(k) for k in ("ticket", "type", "state", "trip_code", "summary", "intercom_url")}
                        if tkt else None),
             # All cited tickets (a payment can reference several), lightweight for the card list.
             "tickets": [{k: c.get(k) for k in ("ticket", "type", "state")} for c in tkt_cards] or None,

@@ -62,6 +62,21 @@ def upload_attachment():
     return jsonify({"s3_key": key, "filename": f.filename or "file"}), 200
 
 
+@incident_payouts_bp.route("/attachments/link", methods=["GET"])
+def attachment_link():
+    """Short-lived presigned URL for ONE payout attachment (?key=…). Key must live under the
+    incident-payouts prefix — nothing else in the bucket is reachable through this."""
+    _caller()
+    key = (request.args.get("key") or "").strip()
+    if not key.startswith("invoices/incident-payouts/"):
+        raise BadRequestError("not a payout attachment key")
+    from src.services.s3_service import s3_service
+    url = s3_service.get_presigned_url(key)
+    if not url:
+        return jsonify({"error": "storage not configured"}), 503
+    return jsonify({"url": url})
+
+
 @incident_payouts_bp.route("", methods=["POST"])
 def create():
     uid, _ = _caller()

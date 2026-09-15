@@ -227,7 +227,7 @@ def resolve_ticket(ticket_no: str, with_thread: bool = True) -> dict:
         return {"found": False, "input": ticket_no, "error": "not a ticket number"}
     import json
     parts_col = "toString(ticket_parts) parts" if with_thread else "'' parts"
-    cols = f"ticket_attributes, ticket_type, ticket_state, {parts_col}"
+    cols = f"id, ticket_attributes, ticket_type, ticket_state, {parts_col}"
     r = _ch.execute_single(f"SELECT {cols} FROM {_TICKET_FAST} WHERE ticket_id='{_esc(tid)}' LIMIT 1")
     if not r:  # rare: newer/Receivables ticket only in the slow mirror
         r = _ch.execute_single(
@@ -253,8 +253,11 @@ def resolve_ticket(ticket_no: str, with_thread: bool = True) -> dict:
     except (ValueError, TypeError, AttributeError):
         # re-review F9: malformed ticket_type JSON — keep the raw string, but don't hide it
         logging.getLogger(__name__).debug("ticket_type not parseable as JSON for ticket %s: %r", tid, tt)
+    app_id = __import__("os").environ.get("INTERCOM_APP_ID", "q8nq4c01")
     return {
         "found": True, "input": tid, "ticket": tid, "type": tt, "state": r.get("ticket_state"),
+        "intercom_url": (f"https://app.intercom.com/a/inbox/{app_id}/inbox/conversation/{r['id']}"
+                         if r.get("id") else None),
         "title": attrs.get("_default_title_"),
         "description": desc,
         "trip_ref": (tc.group(1) if tc else None)
