@@ -155,6 +155,14 @@ class IncidentPayoutService:
         user = enrichment_service.resolve_user(user_uuid)
         if user.get("found") is not True:
             raise ConflictError(f"{role_key}: could not resolve user (lookup unavailable?) — retry")
+        # host-first integrity (Gaurav 2026-09-15): when a HOST flow carries a trip, the trip
+        # must belong to that host — paying host A against host B's trip is always a mistake.
+        if trip_id and req_type.startswith("host_"):
+            t = enrichment_service.resolve_trip_any(trip_id, user.get("market"))
+            if t and t.get("found") and t.get("host_uuid") and t["host_uuid"] != user_uuid:
+                raise ConflictError(
+                    f"Trip {trip_id} belongs to host '{t.get('host') or t['host_uuid'][:8]}' — "
+                    f"not the host you entered. Check the trip ID or the host ID.")
 
         amount = payload.get("amount")
         try:
