@@ -236,7 +236,10 @@ def resolve_ticket(ticket_no: str, with_thread: bool = True) -> dict:
     if not r:
         return {"found": False, "input": tid, "ticket": tid, "error": "ticket not found"}
     attrs = json.loads(r.get("ticket_attributes") or "{}")
-    desc = attrs.get("_default_description_", "")
+    # `or ""` (not a .get default): the attribute can EXIST with an explicit null — .get's default
+    # only covers a missing key, and re.search(None) then crashes the whole validate call
+    # (ticket 131777893, 2026-09-15).
+    desc = attrs.get("_default_description_") or ""
     tc = re.search(r"Trip ID\s*:?\s*(T[AS]\d+)", desc)
     parts = json.loads(r.get("parts") or "{}").get("ticket_parts", [])
     thread = []
