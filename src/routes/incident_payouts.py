@@ -119,10 +119,11 @@ def reject(payout_id):
 
 @incident_payouts_bp.route("/<int:payout_id>/cancel", methods=["POST"])
 def cancel(payout_id):
-    uid, _ = _caller()
+    uid, is_admin = _caller()
     body = request.get_json(force=True) or {}
     with db_session() as db:
-        p = incident_payout_service.cancel(db, payout_id, uid, reason=body.get("reason"))
+        p = incident_payout_service.cancel(db, payout_id, uid, reason=body.get("reason"),
+                                           is_admin=is_admin)
         db.commit()
         return jsonify(p.to_dict())
 

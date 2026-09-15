@@ -424,8 +424,12 @@ class IncidentPayoutService:
             raise ConflictError(p.failure_reason)
 
     # ── cancel (method-gated window) ─────────────────────────────────────────
-    def cancel(self, db, payout_id, actor, reason=None) -> FinancePayout:
+    def cancel(self, db, payout_id, actor, reason=None, is_admin=False) -> FinancePayout:
         p = self._get(db, payout_id)
+        # Void rights (Gaurav 2026-09-15): the RAISER may void their own request; finance
+        # payouts admins may void any. Nobody else.
+        if not is_admin and str(actor) != (p.requested_by or ""):
+            raise BadRequestError("Only the raiser (or finance) can void this request.")
         cancellable = {PayoutState.PENDING_APPROVAL.value, PayoutState.APPROVED.value}
         if p.method == "entry_sheet":
             # cash hasn't moved until the monthly cycle — pulling from the sheet is allowed
