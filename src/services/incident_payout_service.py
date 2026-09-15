@@ -44,7 +44,10 @@ REQUEST_TYPES = {"host_payout", "host_charge", "guest_refund"}
 DIRECT_PAYOUT_TYPES = {"tolls", "fuel_refund", "late_return", "excess_mileage", "damage",
                        "cleanliness", "flexplus", "misc_payout", "distance", "duration"}
 DIRECT_CHARGE_TYPES = {"fuel_charge", "misc_charge"}
-_NON_TRIP_DIRECT = {"flexplus", "misc_payout", "misc_charge"}
+# V1 HARDCODED anchor rules (Gaurav 2026-09-15): ticket required for EVERY direct type,
+# charges included; trip required for everything except the contractual class (flexplus —
+# subscription/referral join this set if ever offered). V2 replaces this with per-type config.
+_NON_TRIP_DIRECT = {"flexplus"}
 # host_charge (Gaurav 2026-09-15): a NEGATIVE entry against the host on the same sheet rail —
 # own method value so state gating, refs and the card can tell it apart from a payout.
 _METHOD = {"host_payout": "entry_sheet", "host_charge": "entry_sheet_charge",
@@ -112,7 +115,7 @@ class IncidentPayoutService:
             type_code, sub_type_code = direct_type, None
             label = direct_type.replace("_", " ")
             needs_trip = direct_type not in _NON_TRIP_DIRECT
-            needs_ticket = False
+            needs_ticket = True   # V1: every direct raise carries a ticket (hardcoded)
         else:
             from src.services import ims_config_service
             type_code = payload.get("incident_type_code")

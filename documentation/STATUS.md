@@ -54,6 +54,11 @@
 > **Launch meeting: Tue 15 Sep morning. Master trainers: Zilla + Rahul** — everything below aims
 > at having THEM ready to train the team.
 
+> **2026-09-15 V1 SCOPE RULING (POL-157):** host payout/charge raise ships WITHOUT incident-type
+> mappings — direct sheet payoutType dropdown, ticket required for all types, trip for all but
+> flexplus, host-first + host↔trip ownership guard. V2 = incident-type mappings (COA per leg
+> POL-156, payoutType, per-type requirements, AI-recommended incident) via the config workbook.
+
 | T# | V1 capability | State (2026-09-12) | Pending for Tue 15th |
 |---|---|---|---|
 | T-1 | Invoice system incl. approval cards | ✅ live on prod (B8, cards, vendor gate) | Trainer walkthrough material only |
