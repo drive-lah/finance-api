@@ -25,11 +25,14 @@ error and the row stays `approved` (retryable) — or finance records a manual e
 sheet reference via mark_executed().
 """
 import os
+import logging
 from datetime import datetime
 
 from src.models.vendor_payout import FinancePayout, FinancePayoutEvent, PayoutState
 from src.models.counterparty import FinanceCounterparty
 from src.utils.errors import NotFoundError, BadRequestError, ConflictError
+
+logger = logging.getLogger(__name__)
 
 # ── incident type catalog: LIVE from IMS's ims_incidental_type_config (Gaurav, 2026-09-04).
 # No hardcoded copy — src/services/ims_config_service.py reads the table (5-min cache, last-good
@@ -318,6 +321,13 @@ class IncidentPayoutService:
                  + (f" · ticket {p.intercom_ticket_ids}" if p.intercom_ticket_ids else "")
                  + (f" · {p.request_reason}" if p.request_reason else ""))[:500]
 
+        # Dry-run gate (same pattern as the Wise rail's PAYOUT_DRY_RUN): default ON — no real
+        # sheet write until explicitly armed with INCIDENT_RAIL_DRY_RUN=0.
+        if os.environ.get("INCIDENT_RAIL_DRY_RUN", "1") != "0":
+            logger.info("DRY-RUN entry-sheet insert for HP-%s (%s %s %s)",
+                        p.id, p.incident_type_code, p.currency, p.amount)
+            return f"DRYRUN-SHEET-{p.id}"
+
         market = (p.market or "au").lower()
         cents = int(round(float(p.amount) * 100))   # sheet amounts are CENTS (dollars × 100)
         sheet_type = self._IMS_TO_SHEET.get(p.incident_type_code)
@@ -356,6 +366,11 @@ class IncidentPayoutService:
 
         if p.external_reference:           # already refunded (retry after a commit race)
             return p.external_reference
+        # Dry-run gate (same pattern as the Wise rail's PAYOUT_DRY_RUN): default ON — no real
+        # Stripe refund until explicitly armed with INCIDENT_RAIL_DRY_RUN=0.
+        if os.environ.get("INCIDENT_RAIL_DRY_RUN", "1") != "0":
+            logger.info("DRY-RUN Stripe refund for GP-%s (%s %s)", p.id, p.currency, p.amount)
+            return f"DRYRUN-REFUND-{p.id}"
         if not p.trip_id:
             p.failure_reason = ("guest refund needs the trip's original payment — no trip on this "
                                 "payout; refund manually in Stripe and use mark-executed")
