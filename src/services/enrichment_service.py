@@ -19,6 +19,8 @@ from typing import Optional
 
 from src.clients.clickhouse_client import ClickHouseClient
 
+logger = logging.getLogger(__name__)
+
 _ch = ClickHouseClient()
 
 # TA/TS + digits. Liberal on spacing/case in; strict on shape after normalisation.
@@ -81,6 +83,8 @@ def resolve_trip(raw_code: str) -> dict:
     return {
         "found": True, "input": code, "trip_code": code, "market": market,
         "trip_uuid": t["id"],
+        "host_uuid": t.get("providerId"), "guest_uuid": t.get("customerId"),
+        "listing_uuid": t.get("listingId"),
         "vehicle": lst.get("title") if lst else None,
         "host": host.get("n") if host else None, "host_email": host.get("email") if host else None,
         "guest": guest.get("n") if guest else None,
@@ -107,6 +111,8 @@ def _trip_from_row(t: dict, market: str, code: Optional[str]) -> dict:
         f"SELECT concat(firstName,' ',lastName) n FROM {_mkt(market)}_users WHERE id='{_esc(t['customerId'])}' LIMIT 1")
     return {
         "found": True, "input": code or t["id"], "trip_code": code, "market": market, "trip_uuid": t["id"],
+        "host_uuid": t.get("providerId"), "guest_uuid": t.get("customerId"),
+        "listing_uuid": t.get("listingId"),
         "vehicle": lst.get("title") if lst else None,
         "host": host.get("n") if host else None, "host_email": host.get("email") if host else None,
         "guest": guest.get("n") if guest else None,
@@ -141,6 +147,22 @@ def resolve_trip_any(ref: str, market: Optional[str] = None) -> Optional[dict]:
     if _extract_uuid(ref):
         return resolve_trip_uuid(ref, market)
     return {"found": False, "input": ref, "error": "unrecognised trip reference"}
+
+
+def trip_payment_intent(trip_ref: str, market: Optional[str] = None) -> Optional[str]:
+    """The Stripe payment intent (pi_…) of a trip's ORIGINAL payment — the guest-refund anchor.
+    Marketplace stores it on the transaction's protectedData.stripePaymentIntents.default.
+    Accepts a TA/TS code or a transaction UUID; None when the trip or its PI can't be found."""
+    t = resolve_trip_any(trip_ref, market)
+    if not t or not t.get("found") or not t.get("trip_uuid"):
+        return None
+    mk = t.get("market") or market or "au"
+    row = _ch.execute_single(
+        "SELECT JSONExtractString(protectedData, 'stripePaymentIntents', 'default', "
+        "'stripePaymentIntentId') pi "
+        f"FROM {_mkt(mk)}_transactions WHERE id='{_esc(t['trip_uuid'])}' LIMIT 1")
+    pi = (row or {}).get("pi") or None
+    return pi if pi and str(pi).startswith("pi_") else None
 
 
 # ── rego (listing registration) ───────────────────────────────────────────────
@@ -205,7 +227,7 @@ def resolve_ticket(ticket_no: str, with_thread: bool = True) -> dict:
         return {"found": False, "input": ticket_no, "error": "not a ticket number"}
     import json
     parts_col = "toString(ticket_parts) parts" if with_thread else "'' parts"
-    cols = f"ticket_attributes, ticket_type, ticket_state, {parts_col}"
+    cols = f"id, ticket_attributes, ticket_type, ticket_state, {parts_col}"
     r = _ch.execute_single(f"SELECT {cols} FROM {_TICKET_FAST} WHERE ticket_id='{_esc(tid)}' LIMIT 1")
     if not r:  # rare: newer/Receivables ticket only in the slow mirror
         r = _ch.execute_single(
@@ -214,7 +236,10 @@ def resolve_ticket(ticket_no: str, with_thread: bool = True) -> dict:
     if not r:
         return {"found": False, "input": tid, "ticket": tid, "error": "ticket not found"}
     attrs = json.loads(r.get("ticket_attributes") or "{}")
-    desc = attrs.get("_default_description_", "")
+    # `or ""` (not a .get default): the attribute can EXIST with an explicit null — .get's default
+    # only covers a missing key, and re.search(None) then crashes the whole validate call
+    # (ticket 131777893, 2026-09-15).
+    desc = attrs.get("_default_description_") or ""
     tc = re.search(r"Trip ID\s*:?\s*(T[AS]\d+)", desc)
     parts = json.loads(r.get("parts") or "{}").get("ticket_parts", [])
     thread = []
@@ -228,8 +253,11 @@ def resolve_ticket(ticket_no: str, with_thread: bool = True) -> dict:
     except (ValueError, TypeError, AttributeError):
         # re-review F9: malformed ticket_type JSON — keep the raw string, but don't hide it
         logging.getLogger(__name__).debug("ticket_type not parseable as JSON for ticket %s: %r", tid, tt)
+    app_id = __import__("os").environ.get("INTERCOM_APP_ID", "q8nq4c01")
     return {
         "found": True, "input": tid, "ticket": tid, "type": tt, "state": r.get("ticket_state"),
+        "intercom_url": (f"https://app.intercom.com/a/inbox/{app_id}/inbox/conversation/{r['id']}"
+                         if r.get("id") else None),
         "title": attrs.get("_default_title_"),
         "description": desc,
         "trip_ref": (tc.group(1) if tc else None)
@@ -251,8 +279,86 @@ def resolve_tickets(raw: str, with_thread: bool = True) -> list[dict]:
 
 
 # ── one-shot validation for the upload form ───────────────────────────────────
+# ── users (host / guest) ──────────────────────────────────────────────────────
+def resolve_user(user_id: str, market: Optional[str] = None) -> dict:
+    """Resolve a marketplace user UUID (host or guest) to name/email — the identity echo for the
+    host/guest payout Raise flow. User ids are NOT market-tagged, so try au then sg. The same id can
+    exist in both markets (shared Sharetribe history); first hit wins, market recorded on the result."""
+    uid = _extract_uuid(user_id)
+    if not uid:
+        return {"found": False, "input": user_id, "error": "not a user id (expected a UUID)"}
+    for mk in ([market] if market else ["au", "sg"]):
+        u = _ch.execute_single(
+            "SELECT id, concat(firstName,' ',lastName) n, email, banned, deleted "
+            f"FROM {_mkt(mk)}_users WHERE id='{_esc(uid)}' LIMIT 1")
+        if u:
+            return {
+                "found": True, "input": uid, "user_id": uid, "market": mk,
+                "name": (u.get("n") or "").strip() or None, "email": u.get("email"),
+                "banned": bool(int(u.get("banned") or 0)), "deleted": bool(int(u.get("deleted") or 0)),
+            }
+    return {"found": False, "input": uid, "error": "user not found"}
+
+
+def enforce_anchors(trip_id: Optional[str] = None, ticket_ids: Optional[str] = None,
+                    rego: Optional[str] = None, host_id: Optional[str] = None,
+                    guest_id: Optional[str] = None) -> list[str]:
+    """The HARD gate (Gaurav, 2026-09-04): every provided anchor must be well-formed AND resolve live.
+    Returns a list of human-readable failures (empty = pass). Distinct from validate_anchors (the
+    advisory form echo): this one is called at submit/raise and its failures BLOCK.
+
+    Rules: • trip = a TA…/TS… code for NEW entries — a transaction UUID is rejected with a pointed
+    message (historical UUID anchors already stored are grandfathered; they don't pass through here).
+    • ticket = the customer-facing Intercom display number (digits), must exist.
+    • rego / host / guest must exist. • Infrastructure failure (ClickHouse unreachable) fails OPEN
+    with a log — a replica outage must not stop the business; a definitive not-found fails CLOSED."""
+    failures: list[str] = []
+
+    def _guard(fn, *a, **kw):
+        try:
+            return fn(*a, **kw)
+        except Exception as e:  # lookup infra down → fail open, never invent a verdict
+            logger.warning("enforce_anchors: lookup unavailable (%s) — failing open", e)
+            return None
+
+    if trip_id and str(trip_id).strip():
+        if not normalize_trip_code(trip_id):
+            if _extract_uuid(trip_id):
+                failures.append("trip_id: enter the trip ID (TA…/TS… code), not the transaction ID")
+            else:
+                failures.append(f"trip_id: '{trip_id}' is not a trip code (expected TA…/TS… + digits)")
+        else:
+            t = _guard(resolve_trip, trip_id)
+            if t is not None and not t.get("found"):
+                failures.append(f"trip_id: {normalize_trip_code(trip_id)} not found")
+    if ticket_ids and str(ticket_ids).strip():
+        ids = split_ticket_ids(ticket_ids)
+        if not ids:
+            failures.append(f"ticket: '{ticket_ids}' is not a ticket number (use the customer-facing "
+                            "Intercom ticket number, digits only)")
+        else:
+            results = _guard(resolve_tickets, ticket_ids, with_thread=False)
+            for r in (results or []):
+                if not r.get("found"):
+                    failures.append(f"ticket: {r.get('ticket') or r.get('input')} not found in Intercom")
+    if rego and str(rego).strip():
+        g = _guard(resolve_rego, rego)
+        if g is not None and not g.get("found"):
+            failures.append(f"rego: {normalize_rego(rego)} not found on any listing")
+    if host_id and str(host_id).strip():
+        u = _guard(resolve_user, host_id)
+        if u is not None and not u.get("found"):
+            failures.append(f"host_id: {u.get('error', 'not found')}")
+    if guest_id and str(guest_id).strip():
+        u = _guard(resolve_user, guest_id)
+        if u is not None and not u.get("found"):
+            failures.append(f"guest_id: {u.get('error', 'not found')}")
+    return failures
+
+
 def validate_anchors(trip_id: Optional[str] = None, ticket_ids: Optional[str] = None,
-                     rego: Optional[str] = None) -> dict:
+                     rego: Optional[str] = None, host_id: Optional[str] = None,
+                     guest_id: Optional[str] = None) -> dict:
     """Catch-at-the-door check for the ratify form: resolve whatever anchors were entered and hand back
     a compact, display-ready verdict. Never raises — a miss is data, not an error. Trip and rego are
     ALTERNATIVES — a trip-specific cost gives a trip; a vehicle-level one (towing) gives a rego."""
@@ -261,6 +367,7 @@ def validate_anchors(trip_id: Optional[str] = None, ticket_ids: Optional[str] = 
         # Accept BOTH a TA/TS code (going forward) and a transaction UUID (the historical Retool anchor).
         t = resolve_trip_any(trip_id) or {"found": False}
         out["trip"] = {
+            "host_uuid": t.get("host_uuid"),   # trip-first raise: the host is derived from the trip
             "found": t.get("found", False),
             "trip_code": t.get("trip_code") or t.get("input"),
             "label": (f"{t.get('vehicle') or 'vehicle ?'} · host {t.get('host') or '?'} · "
@@ -284,4 +391,16 @@ def validate_anchors(trip_id: Optional[str] = None, ticket_ids: Optional[str] = 
              if r.get("found") else (r.get("error") or "not found")}
             for r in resolve_tickets(ticket_ids, with_thread=False)  # live form: skip heavy thread
         ]
+    for key, uid in (("host", host_id), ("guest", guest_id)):
+        if uid and str(uid).strip():
+            u = resolve_user(uid)
+            out[key] = {
+                "found": u.get("found", False),
+                "user_id": u.get("user_id") or u.get("input"),
+                "label": (f"{u.get('name') or 'name ?'} · {u.get('email') or ''}"
+                          + (" · ⚠ banned" if u.get("banned") else "")
+                          + (" · ⚠ deleted" if u.get("deleted") else "")).strip(" ·")
+                if u.get("found") else (u.get("error") or "not found"),
+                "market": u.get("market"),
+            }
     return out

@@ -12,7 +12,7 @@ from datetime import datetime, UTC
 from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy import String, DateTime, Integer, Numeric, Boolean, Text
+from sqlalchemy import JSON, String, DateTime, Integer, Numeric, Boolean, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.database import Base
@@ -30,6 +30,11 @@ class FinanceCoaConfig(Base):
     approver_2: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     second_approver_above_sgd: Mapped[Optional[Decimal]] = mapped_column(Numeric(15, 2), nullable=True)
     auto_approve_ok: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    # INCIDENT coverage (Gaurav 2026-09-04): which IMS incident types book to this COA.
+    # Entries: "type_code/sub_type_code", "type_code/*" (all sub-types), or bare "type_code".
+    # Routing + the future JE hook both read this; evidence requirements stay IMS-side.
+    incident_types: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
 
     # DOOR gate
     needs_trip_id: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
@@ -53,6 +58,7 @@ class FinanceCoaConfig(Base):
         "approver_2",
         "second_approver_above_sgd",
         "auto_approve_ok",
+        "incident_types",
         "needs_trip_id",
         "needs_intercom_id",
         "notes",
@@ -73,6 +79,7 @@ class FinanceCoaConfig(Base):
                 else None
             ),
             "auto_approve_ok": self.auto_approve_ok,
+            "incident_types": self.incident_types or [],
             "needs_trip_id": self.needs_trip_id,
             "needs_intercom_id": self.needs_intercom_id,
             "other_required": self.other_required,

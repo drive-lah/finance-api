@@ -83,60 +83,6 @@ class FinanceContract(Base):
         )
 
 
-class FinanceApprovalRule(Base):
-    """
-    Model representing an invoice approval routing rule.
-
-    Rules are evaluated in priority order to determine whether an
-    invoice should be auto-approved or routed to a human approver.
-    """
-    __tablename__ = "finance_approval_rules"
-
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    priority: Mapped[int] = mapped_column(Integer, default=100, server_default="100", nullable=False)
-    entity_id: Mapped[Optional[int]] = mapped_column(
-        Integer,
-        ForeignKey("finance_entities.id", ondelete="CASCADE"),
-        nullable=True,
-        comment="NULL = applies to all entities",
-    )
-    coa_account_prefix: Mapped[Optional[str]] = mapped_column(
-        String(10), nullable=True,
-        comment="e.g. '67' matches 67xx accounts",
-    )
-    amount_min: Mapped[Optional[float]] = mapped_column(Numeric(15, 2), nullable=True)
-    amount_max: Mapped[Optional[float]] = mapped_column(Numeric(15, 2), nullable=True)
-    vendor_type: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
-    action: Mapped[str] = mapped_column(
-        String(30), nullable=False,
-        comment="'auto_approve' or 'require_approval'",
-    )
-    approver_slack_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    approver_slack_channel: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    timeout_days: Mapped[int] = mapped_column(Integer, default=3, server_default="3", nullable=False)
-    escalation_slack_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    status: Mapped[str] = mapped_column(
-        String(20), default="active", server_default="active", nullable=False,
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, server_default="now()", nullable=False,
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False,
-    )
-
-    __table_args__ = (
-        Index("ix_finance_approval_rules_priority", "priority"),
-        Index("ix_finance_approval_rules_status", "status"),
-    )
-
-    def __repr__(self) -> str:
-        return (
-            f"<FinanceApprovalRule(id={self.id}, priority={self.priority}, "
-            f"action={self.action})>"
-        )
-
-
 class FinanceAmortizationSchedule(Base):
     """
     Model representing a prepaid expense amortization schedule.

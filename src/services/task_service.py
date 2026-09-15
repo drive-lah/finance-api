@@ -99,6 +99,30 @@ class TaskService:
                     body["invoice_number"] = inv.invoice_number
         return dicts
 
+    def attach_people_names(self, db, dicts: list[dict]) -> list[dict]:
+        """Resolve created_by (a user id or system string) → created_by_name, and
+        assignee_user_id → assignee_name, so no surface ever prints a raw id like 'by 9001'
+        (Gaurav 2026-09-15). System creators (invoice-submit, penny-mail-intake, …) pass
+        through unchanged."""
+        from src.models.user import User
+        ids = set()
+        for d in dicts:
+            cb = str(d.get("created_by") or "")
+            if cb.isdigit():
+                ids.add(int(cb))
+            if d.get("assignee_user_id"):
+                ids.add(int(d["assignee_user_id"]))
+        names = {}
+        if ids:
+            for u in db.query(User).filter(User.id.in_(ids)).all():
+                names[u.id] = u.name or u.email
+        for d in dicts:
+            cb = str(d.get("created_by") or "")
+            d["created_by_name"] = names.get(int(cb)) if cb.isdigit() else (cb or None)
+            if d.get("assignee_user_id") and not d.get("assignee_name"):
+                d["assignee_name"] = names.get(int(d["assignee_user_id"]))
+        return dicts
+
     def attach_assignee_names(self, db, dicts: list[dict]) -> list[dict]:
         """Resolve assignee_user_id → a display name (assignee_name) so the admin all-tasks
         view shows WHOSE queue each task sits in (Gaurav 2026-08-09). Role-only tasks keep
@@ -205,6 +229,18 @@ class TaskService:
                 claim_service.reject(db, sid, caller, is_admin, notes or "rejected")
             else:
                 raise BadRequestError(f"Unknown action '{action}' for claim task.")
+            return {"status": TaskStatus.DONE.value if action == "approve"
+                    else TaskStatus.RETURNED.value}
+
+        if kind == "incident-payout" and sid is not None:
+            from src.services.incident_payout_service import incident_payout_service
+            if action == "approve":
+                incident_payout_service.approve(db, sid, caller, is_admin=is_admin)
+            elif action == "reject":
+                incident_payout_service.reject(db, sid, caller, notes or "rejected",
+                                               is_admin=is_admin)
+            else:
+                raise BadRequestError(f"Unknown action '{action}' for incident-payout task.")
             return {"status": TaskStatus.DONE.value if action == "approve"
                     else TaskStatus.RETURNED.value}
 

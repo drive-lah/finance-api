@@ -74,6 +74,11 @@ class ClaimService:
         if c.status != ClaimStatus.DRAFT.value:
             raise ConflictError(f"Claim is {c.status}, not draft.")
         c.manager_user_id = self._manager_of(db, c.owner_user_id)
+        if not c.manager_user_id or str(c.manager_user_id) == str(c.owner_user_id):
+            # no manager on file (or self-managed) -> the shared default chain, skipping
+            # the claimant (Gaurav 2026-09-15)
+            from src.services import approval_routing
+            c.manager_user_id = approval_routing.default_assignee(db, c.owner_user_id)
         c.status = ClaimStatus.SUBMITTED.value
         c.submitted_at = datetime.utcnow()
         # enqueue an approval task for the manager (company-wide My Tasks queue)

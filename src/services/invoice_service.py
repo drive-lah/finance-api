@@ -17,7 +17,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from src.models.invoice import FinanceInvoice, InvoiceStatus
-from src.models.contract import FinanceAmortizationSchedule, FinanceContract, FinanceApprovalRule
+from src.models.contract import FinanceAmortizationSchedule, FinanceContract
 from src.models.counterparty import FinanceCounterparty
 from src.models.schemas import InvoiceCreate, InvoiceUpdate
 from src.services.journal_service import journal_service
@@ -2217,6 +2217,20 @@ class InvoiceService:
                 need.append("ticket number")
             if need:
                 reasons.append(f"COA {invoice.contra_account_code} requires: " + ", ".join(need))
+            # HARD anchor validation (Gaurav, 2026-09-04): captured anchors must be well-formed and
+            # resolve live — a typo'd trip/ticket/rego parks the invoice needs_fix HERE, not on the
+            # approver's card. Historical UUID trip anchors are grandfathered (enforce_anchors only
+            # rejects UUIDs entered as NEW trip ids; stored UUID anchors resolve via resolve_trip_any
+            # on the approval card as before).
+            if meta and (meta.trip_id or meta.intercom_ticket_id or meta.rego):
+                from src.services import enrichment_service
+                _tid = meta.trip_id
+                if _tid and enrichment_service._extract_uuid(_tid) and not enrichment_service.normalize_trip_code(_tid):
+                    _tid = None  # grandfathered historical transaction-UUID anchor — skip trip re-check
+                bad = enrichment_service.enforce_anchors(
+                    trip_id=_tid, ticket_ids=meta.intercom_ticket_id, rego=meta.rego)
+                if bad:
+                    reasons.append("Anchor validation failed — " + "; ".join(bad))
 
         # 4. Vendor must be finance-approved (POL-115 — no auto-activation). This is NOT a team-fix
         #    exception (needs_fix) — it's WAITING ON FINANCE. So the invoice STAYS IN DRAFT; when
@@ -2362,6 +2376,14 @@ class InvoiceService:
         if missing:
             raise ConflictError(f"COA {coa} requires: {', '.join(missing)}")
 
+        # HARD anchor validation (Gaurav, 2026-09-04): whatever anchors WERE entered must be
+        # well-formed and resolve live (TA/TS trip code — never a transaction id; the customer-facing
+        # Intercom ticket number; a real rego). Replica outage fails open inside enforce_anchors.
+        from src.services import enrichment_service
+        bad = enrichment_service.enforce_anchors(trip_id=trip_id, ticket_ids=ticket, rego=rego)
+        if bad:
+            raise ConflictError("Anchor validation failed — " + "; ".join(bad))
+
         # New vendor (Flow 3): create a PENDING counterparty (inactive + unverified) — never active —
         # so finance must approve it (POL-115). The invoice links to it and holds in draft.
         new_vendor = bool(payload.get("new_vendor"))
@@ -2488,6 +2510,11 @@ class InvoiceService:
             text("SELECT id FROM users WHERE lower(email) = :e"),
             {"e": str(approver_email).lower()},
         ).scalar()
+        if not approver_id:
+            # matrix named nobody -> default chain, skipping the uploader (Gaurav 2026-09-15,
+            # same rung as incident payouts/claims: approval_routing.default_assignee)
+            from src.services import approval_routing
+            approver_id = approval_routing.default_assignee(db, invoice.submitted_by)
         assignee_role = None if approver_id else "finance.invoices"
 
         # Approval Agent v2 card (POL-109) — ClickHouse-sourced enrichment + double-pay +
@@ -2601,54 +2628,6 @@ Rules:
                 "message": f"AI review could not be completed ({e}). Proceeding with manual review.",
                 "concerns": [],
             }
-
-    def _evaluate_approval_rules(
-        self, db: Session, invoice: FinanceInvoice
-    ) -> tuple[str, Optional[str]]:
-        """
-        Evaluate approval rules for this invoice.
-        Returns (new_status, approved_by_label).
-        """
-        rules = (
-            db.query(FinanceApprovalRule)
-            .filter(
-                FinanceApprovalRule.entity_id == invoice.entity_id,
-                FinanceApprovalRule.status == "active",
-            )
-            .order_by(FinanceApprovalRule.priority.asc())
-            .all()
-        )
-
-        amount = float(invoice.total_amount)
-
-        for rule in rules:
-            # Amount range check
-            if rule.amount_min is not None and amount < float(rule.amount_min):
-                continue
-            if rule.amount_max is not None and amount > float(rule.amount_max):
-                continue
-            # COA prefix check
-            if rule.coa_account_prefix and invoice.contra_account_code:
-                if not invoice.contra_account_code.startswith(rule.coa_account_prefix):
-                    continue
-            elif rule.coa_account_prefix and not invoice.contra_account_code:
-                continue
-            # Vendor type check
-            if rule.vendor_type and invoice.counterparty_id:
-                from src.models.counterparty import FinanceCounterparty
-                cp = db.get(FinanceCounterparty, invoice.counterparty_id)
-                if cp and cp.type != rule.vendor_type:
-                    continue
-
-            # Rule matched
-            if rule.action == "auto_approve":
-                return InvoiceStatus.APPROVED.value, f"auto:rule_{rule.id}"
-            else:
-                return InvoiceStatus.PENDING_APPROVAL.value, None
-
-        # No rule matched → require approval
-        return InvoiceStatus.PENDING_APPROVAL.value, None
-
 
 # Singleton instance
 invoice_service = InvoiceService()

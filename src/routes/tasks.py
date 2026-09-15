@@ -39,6 +39,7 @@ def list_tasks():
     with db_session() as db:
         rows = task_service.list_scoped(db, caller, roles, is_admin, status=status, scope=scope)
         out = task_service.hydrate_source(db, [t.to_dict() for t in rows])
+        out = task_service.attach_people_names(db, out)
         if is_admin and scope == "all":
             out = task_service.attach_assignee_names(db, out)
         return jsonify(out)

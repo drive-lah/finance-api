@@ -91,6 +91,35 @@ def my_requests(db: Session, identifier: Optional[str] = None, user_id: Optional
             "created_at": inv.created_at.isoformat() if getattr(inv, "created_at", None) else None,
         })
 
+    # ── Incident (host/guest) payout requests this user raised (POL-152) ──────
+    from src.models.vendor_payout import FinancePayout
+    ip_ids = [str(x) for x in {identifier, user_id} if x is not None]
+    ips: list[FinancePayout] = db.execute(
+        select(FinancePayout)
+        .where(FinancePayout.payable_type == "incident",
+               FinancePayout.requested_by.in_(ip_ids))
+        .order_by(FinancePayout.id.desc()).limit(300)
+    ).scalars().all() if ip_ids else []
+    ip_task = _open_task_map(db, [f"incident-payout:{p.id}" for p in ips])
+    names.update(_name_map(db, {t.assignee_user_id for t in ip_task.values() if t.assignee_user_id}))
+    for p in ips:
+        t = ip_task.get(f"incident-payout:{p.id}")
+        kind = {"entry_sheet": "host payout", "entry_sheet_charge": "host charge",
+                "stripe_refund": "guest refund"}.get(p.method, "payout")
+        out.append({
+            "type": kind,
+            "id": p.id,
+            "ref": f"{ {'entry_sheet': 'HP', 'entry_sheet_charge': 'HC', 'stripe_refund': 'GP'}.get(p.method, 'IP') }-{p.id}",
+            "title": f"{(p.incident_type_code or 'incident').replace('_', ' ')}"
+                     + (f" · trip {p.trip_id}" if p.trip_id else "")
+                     + (f" · {p.rego}" if p.rego else ""),
+            "amount": float(p.amount) if p.amount is not None else None,
+            "currency": p.currency,
+            "status": p.state,
+            "who_with": _who_with(t, names),
+            "created_at": p.created_at.isoformat() if p.created_at else None,
+        })
+
     for c in claims:
         t = claim_task.get(f"claim:{c.id}")
         out.append({
