@@ -415,11 +415,15 @@ class IncidentPayoutService:
                     listing_id=trip["listing_uuid"], trip_uuid=trip["trip_uuid"],
                     amount_cents=cents, currency=p.currency, payout_type=sheet_type,
                     description=descr)
-            # unmapped incident type, or trip not fully resolvable → host-level misc entry
+            # host-level entry: keep the real sheet type when it's a NON-TRIP sheet type
+            # (flexplus/misc/referral/subscription class); only trip-linked types missing their
+            # trip fall back to misc.
+            host_level_ok = {"flexplus", "misc_payout", "misc_charge", "referral", "subscription"}
+            pt = sheet_type if sheet_type in host_level_ok else (
+                "misc_charge" if is_charge else "misc_payout")
             return entry_sheet_client.add_host_entry(
                 market=market, host_id=p.platform_user_id, amount_cents=cents,
-                currency=p.currency,
-                payout_type=("misc_charge" if is_charge else "misc_payout"),
+                currency=p.currency, payout_type=pt,
                 description=descr, listing_id=(trip or {}).get("listing_uuid"))
         except entry_sheet_client.EntrySheetError as e:
             p.failure_reason = str(e)[:500]
