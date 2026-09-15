@@ -194,6 +194,12 @@ class IncidentPayoutService:
                 u = (db.query(User).filter(User.email.ilike(str(approver).strip())).first()
                      or db.query(User).filter(User.name.ilike(str(approver).strip())).first())
                 approver_user_id = u.id if u else None
+        if approver_user_id is None:
+            # No matrix approver -> ONE named person from the default chain, skipping the
+            # raiser (Gaurav 2026-09-15): anyone raises -> Zilla; Zilla raises -> Dirk-Jan.
+            # The role stays on the task as the permission gate underneath.
+            from src.services import approval_routing
+            approver_user_id = approval_routing.default_assignee(db, raiser_user_id)
 
         p = FinancePayout(
             payable_type="incident", payable_id=None, invoice_id=None,

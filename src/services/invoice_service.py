@@ -2510,6 +2510,11 @@ class InvoiceService:
             text("SELECT id FROM users WHERE lower(email) = :e"),
             {"e": str(approver_email).lower()},
         ).scalar()
+        if not approver_id:
+            # matrix named nobody -> default chain, skipping the uploader (Gaurav 2026-09-15,
+            # same rung as incident payouts/claims: approval_routing.default_assignee)
+            from src.services import approval_routing
+            approver_id = approval_routing.default_assignee(db, invoice.submitted_by)
         assignee_role = None if approver_id else "finance.invoices"
 
         # Approval Agent v2 card (POL-109) — ClickHouse-sourced enrichment + double-pay +
