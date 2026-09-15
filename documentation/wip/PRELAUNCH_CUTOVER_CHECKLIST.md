@@ -4,12 +4,12 @@
 > Launch = both tracks done. Owner G = Gaurav decision/phrase · P = Pickle · Z = Zilla · R = Rahul.
 
 ## A. Ship the code (blocks everything)
-- [ ] **G**: say the push phrase → P pushes 3 branches (finance-api / admin-bff / admincontrols, all `20260904-gs-finance-launch`)
-- [ ] **P**: PRs + review + merge + deploy (Render auto-deploy on main)
-- [ ] **G+P supervised**: apply migrations **077, 078, 079, 080** to prod (incident context · sub-type · COA coverage · attachments)
+- [x] **DONE 15/09**: pushed; PRs finance-api #35 · admin-bff #30 · admin-controls #79 — MERGED by Gaurav
+- [x] **DONE 15/09**: merged to main ×3; Render auto-deploy in flight
+- [x] **DONE 15/09 15:16**: migrations 077–080 applied to prod (alembic head 080; columns verified; backup prod_schema_backup_20260915_1516.sql)
 
 ## B. Prod environment/config (at deploy)
-- [ ] `IMS_CONFIG_DATABASE_URL` — PROD IMS database URL (psycopg2 form, `options=-csearch_path=incidentals_service`; local used the dev RDS)
+- [ ] `IMS_CONFIG_DATABASE_URL` — **RULED 15/09: point at the DEV IMS RDS for now** (no TMS prod DB exists yet; read-only, cached, last-good fallback; swap when TMS prod lands). Value handed to G for the Render dashboard.
 - [ ] `AWS_S3_BUCKET=drivelah-finance-invoices` (attachments; key already present)
 - [ ] `INTERCOM_APP_ID=q8nq4c01` (card deep links; defaulted in code, set for clarity)
 - [ ] Entry-sheet base URLs are baked (payout-prod.drivemate.au / payout-service.drivelah.sg), env-overridable — nothing to do unless overriding
