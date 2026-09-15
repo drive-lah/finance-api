@@ -1,89 +1,82 @@
-# The New Finance System — Starter Guide for Zilla & Rahul
+# The New Finance System — Guide for Zilla & Rahul
 
-Welcome! This is **Version 1** of our new finance system. From launch day, the team does all
-day-to-day finance work here — raising invoices, claims, host payouts and charges, guest
-refunds, and tracking all of it. One system, one queue, no more Retool for payments.
+This is our new finance module inside Admin Controls. From launch, ALL finance work happens
+here: invoices, employee claims, host payouts, host charges, guest refunds, and employee
+management. **We plan to retire Retool on Monday, 21 September** — after that, everything goes
+through this system only.
 
-*One honest note up front: some pieces (like how incidents are categorised) will get smarter
-soon, and parts of the incident flow will later move into TMS. Everything you learn here stays —
-the screens and the way of working don't change.*
-
----
-
-## What the system does
-
-**Raise a request** (Finance → Requests → Raise a request). Four cards:
-
-- **Vendor invoice** — upload the document; the system reads it automatically (vendor, amount,
-  date), you confirm, and it goes for approval. If the vendor is new, the invoice waits in draft
-  until finance approves the vendor — then it submits itself.
-- **Host payout** — pick what you're paying for (Tolls, Damage, Cleanliness, Fuel shortage,
-  Excess mileage, Late return, Flex+, Referral, Misc…), enter the Host ID and amount. For
-  anything trip-related you'll need the **Trip ID (TA…/TS…) and the Intercom ticket number** —
-  Flex+/Referral don't need either. The system checks everything live as you type: it shows you
-  the host's name, the trip's car and dates, the ticket's title. Green ticks = you've got the
-  right ones.
-- **Host charge** — billing a host (fuel charge / misc). Enter the amount as a normal positive
-  number; the system handles the rest.
-- **Guest refund** — pick the incident, enter the Guest ID, trip and ticket. On approval the
-  money goes back automatically to the exact card the guest paid with. You never handle bank
-  details.
-
-You can also **attach photos, quotes and receipts** to host/guest requests — please do, the
-approver sees them.
-
-**Track everything you raised** (Requests → Track): every request with its live status and WHO
-it's sitting with. Made a mistake? Hit **Void** on your own request while it's still open, then
-raise a fresh one. (Requests can't be edited after raising — void and re-raise, so the record
-stays clean.)
-
-**My Claims**: personal expense claims — file, your manager approves, finance pays.
-
-**My Tasks**: everything waiting on YOU. Approvals show a card with a plain-English summary of
-what the payment is about, a confidence score, and red flags if something doesn't add up (wrong
-ticket for the trip, possible duplicate, unexplained amount). The card does the homework; you
-make the call.
-
-**Golden rule built into the system**: whoever raises a request can never approve it — the
-system physically won't allow it, for anyone, including admins.
+*One thing to know: the host payout, host charge and guest refund screens are **temporary
+helpers**. Once our Trip Management System launches, those become automated and these screens
+retire. Everything else — invoices, claims, payments, tracking — is permanent and only grows.*
 
 ---
 
-## Zilla — Finance Lead
+## The blocks, very simply
 
-- **You are the approver for now.** Every payout, charge, refund and invoice approval lands in
-  YOUR My Tasks by name. Work the queue daily; the card gives you the story, links to the
-  Intercom ticket, the attachments, and flags. Approve, Reject (with reason), or Reassign (with
-  a note) — those are your three buttons.
-- If YOU raise something, it routes to Dirk-Jan automatically — the system never lets you
-  approve your own.
-- **This is temporary by design**: once we set up the approval matrix (who approves what, by
-  category and amount), approvals route to the right people and you step out of being the
-  default.
-- **New vendors**: you approve them before their invoices can move. Vendor bank accounts are a
-  separate, stricter step — and there's a working session coming to confirm the existing Wise
-  recipient list (about 120 entries to eyeball).
-- When something's paid outside the system in the transition, record it against the request
-  (mark-executed) so tracking stays truthful.
+**Invoices** — every vendor invoice gets added HERE, by everyone. Upload the document, the
+system reads it (vendor, amount, date), you confirm, it goes for approval. New vendors must be
+registered and approved by finance before their first invoice can move — the invoice waits in
+draft and submits itself the moment the vendor is approved.
 
-## Rahul — HR Lead
+**Invoice payments** — paid via Wise, but **from this console only**. Zilla makes the payment
+from inside the system; never directly in Wise. That's how every payment stays tracked,
+approved, and reconciled automatically.
 
-- **You own people-data truth**: employees, their details, compensation. The payroll run is only
-  ever as correct as this data — keeping it accurate IS the job.
-- ~24 staff still need their details completed before the first payroll run through the system;
-  that fill-list is the priority.
-- Claims from your team route to their manager (you, mostly) for approval before finance pays.
-- Payroll goes live as its own step shortly after launch: first a supervised pilot run, then
-  monthly as normal.
+**Employee claims** — personal expenses. File the claim, your manager approves, finance pays.
+You watch its status the whole way.
+
+**Host payouts & host charges** *(temporary until TMS)* — pick the payout type (tolls, damage,
+cleanliness, fuel, Flex+…), enter the Host ID and amount. Trip-related types need the Trip ID
+(TA…/TS…) and the Intercom ticket number; contractual ones (Flex+, referral) need neither.
+**On approval, the entry goes straight into the monthly payout sheet and gets paid in the
+monthly cycle.** Charges work the same, as negative entries.
+
+**Guest refunds** *(temporary until TMS)* — pick the incident, enter Guest ID, trip and ticket.
+On approval the money is refunded automatically to the exact card the guest paid with.
+
+**Employee management** — Rahul's block: employee records and compensation data, feeding
+payroll. Payroll itself goes live as its own step shortly after launch.
 
 ---
 
-## Playing around (please do!)
+## Approvals, permissions, tracking
 
-Until we flip the switch, the system runs in **rehearsal mode**: everything works — raising,
-approving, voiding, tracking — but **no real money moves anywhere**. Break things. Raise a fake
-host payout to a real host, approve each other's requests, void something, attach a photo, watch
-the card judge your fake request. Write down every question and everything that feels confusing:
-your questions shape the team training.
+- **Approval cards**: every request creates a card for the approver — a plain-English summary
+  of what the payment is about, the trip and ticket details, attachments, a confidence score,
+  and red flags if something doesn't add up. The card does the homework; the approver decides.
+- **For now, Zilla is the default approver for everything.** That changes before full team
+  launch, when we configure who approves what — then approvals route to the right person
+  automatically and Zilla steps out of the default seat.
+- **The one unbreakable rule**: whoever raises a request can never approve it. The system
+  refuses — for everyone, including admins. (If Zilla raises something, it routes to Dirk-Jan.)
+- **Permissions are scoped** — nobody sees everything. Everyone can raise requests and track
+  their own; approving, paying, and settings need the right role.
+- **Tracking**: Requests → Track shows everything YOU raised, its live status, and who it's
+  sitting with — including payment status after approval (host payouts show as queued in the
+  monthly sheet, then paid). Made a mistake? **Void** your own request while it's open and
+  raise a fresh one.
+
+---
+
+## Your mission this week (rehearsal mode — no real money moves)
+
+The system is live but in rehearsal: everything works end to end, **zero dollars move**. We
+want you to genuinely play — and feel free to pull in one more team member. Do at least:
+
+1. **Raise an employee claim** → watch it route for approval
+2. **Upload a vendor invoice** (any real PDF) → confirm the auto-extraction → send for approval
+3. **Try paying an approved invoice** from the console (it will simulate, not pay)
+4. **Raise a host payout** — use a real Host ID, a real TA trip and its ticket; watch the green
+   ticks appear as you type
+5. **Raise a host charge** and a **guest refund** the same way
+6. **Attach a photo or PDF** to one of them
+7. **Approve each other's requests** — look at the approval card: does the summary tell you
+   enough to decide? What's missing?
+8. **Try to approve your own** — see the system refuse
+9. **Void** one of your own requests
+10. Check **Track** — is it obvious where everything stands?
+
+Then tell Gaurav: what confused you, what's missing, what you'd change. Your questions become
+the team's training guide.
 
 *Version 1 · September 2026 · questions → Gaurav*
