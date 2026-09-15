@@ -39,6 +39,12 @@ logger = logging.getLogger(__name__)
 # fallback). Grain is (type_code, sub_type_code), stored verbatim for cutover parity (POL-152).
 
 REQUEST_TYPES = {"host_payout", "host_charge", "guest_refund"}
+# V1 direct sheet vocabulary (Retool parity). flexplus + misc are host-level (no trip needed);
+# everything else is trip-linked on the sheet.
+DIRECT_PAYOUT_TYPES = {"tolls", "fuel_refund", "late_return", "excess_mileage", "damage",
+                       "cleanliness", "flexplus", "misc_payout", "distance", "duration"}
+DIRECT_CHARGE_TYPES = {"fuel_charge", "misc_charge"}
+_NON_TRIP_DIRECT = {"flexplus", "misc_payout", "misc_charge"}
 # host_charge (Gaurav 2026-09-15): a NEGATIVE entry against the host on the same sheet rail —
 # own method value so state gating, refs and the card can tell it apart from a payout.
 _METHOD = {"host_payout": "entry_sheet", "host_charge": "entry_sheet_charge",
@@ -94,20 +100,34 @@ class IncidentPayoutService:
         req_type = payload.get("request_type")
         if req_type not in REQUEST_TYPES:
             raise BadRequestError("request_type must be host_payout, host_charge or guest_refund")
-        from src.services import ims_config_service
-        type_code = payload.get("incident_type_code")
-        sub_type_code = (payload.get("incident_sub_type_code") or "").strip() or None
-        spec = ims_config_service.lookup(type_code, sub_type_code)
-        if not spec:
-            raise BadRequestError(f"Unknown incident type '{type_code}'"
-                                  + (f" / '{sub_type_code}'" if sub_type_code else "")
-                                  + " — not in the live IMS config")
-        label = spec["label"]
-        needs_trip = spec["requires_trip_or_rego"]
-        needs_ticket = spec["requires_ticket"]
-        if req_type not in spec["request_types"]:
-            raise BadRequestError(f"Incident type '{type_code}' does not allow {req_type} "
-                                  f"(IMS config allows: {', '.join(spec['request_types'])})")
+
+        direct_type = (payload.get("payout_type") or "").strip() or None
+        if direct_type and req_type in ("host_payout", "host_charge"):
+            # V1 DIRECT MODE (Gaurav 2026-09-15): team picks the sheet payoutType straight —
+            # host payouts aren't all incidents (flexplus/referral/subscription-class), so no
+            # IMS gate here. Trip required for trip-linked sheet types; ticket always optional.
+            allowed = (DIRECT_PAYOUT_TYPES if req_type == "host_payout" else DIRECT_CHARGE_TYPES)
+            if direct_type not in allowed:
+                raise BadRequestError(f"payout_type must be one of: {', '.join(sorted(allowed))}")
+            type_code, sub_type_code = direct_type, None
+            label = direct_type.replace("_", " ")
+            needs_trip = direct_type not in _NON_TRIP_DIRECT
+            needs_ticket = False
+        else:
+            from src.services import ims_config_service
+            type_code = payload.get("incident_type_code")
+            sub_type_code = (payload.get("incident_sub_type_code") or "").strip() or None
+            spec = ims_config_service.lookup(type_code, sub_type_code)
+            if not spec:
+                raise BadRequestError(f"Unknown incident type '{type_code}'"
+                                      + (f" / '{sub_type_code}'" if sub_type_code else "")
+                                      + " — not in the live IMS config")
+            label = spec["label"]
+            needs_trip = spec["requires_trip_or_rego"]
+            needs_ticket = spec["requires_ticket"]
+            if req_type not in spec["request_types"]:
+                raise BadRequestError(f"Incident type '{type_code}' does not allow {req_type} "
+                                      f"(IMS config allows: {', '.join(spec['request_types'])})")
 
         user_uuid = (payload.get("platform_user_id") or "").strip()
         if not user_uuid:
@@ -329,12 +349,17 @@ class IncidentPayoutService:
     # misc_payout/…). Unmapped types ride misc_payout; the description always carries the IMS code
     # + HP ref for traceability, so nothing is ever silently untyped.
     _IMS_TO_SHEET = {
+        # IMS incident codes (V2 path)
         "damage": "damage", "accident_damage": "damage",
         "tolls": "tolls",
         "cleaning": "cleanliness",
         "excess_mileage": "excess_mileage",
         "fuel": "fuel_refund",
         "late_return": "late_return",
+        # V1 direct sheet types pass through verbatim
+        "cleanliness": "cleanliness", "fuel_refund": "fuel_refund",
+        "flexplus": "flexplus", "misc_payout": "misc_payout",
+        "distance": "distance", "duration": "duration",
     }
 
     def _insert_entry_sheet(self, p: FinancePayout) -> str:
@@ -372,7 +397,7 @@ class IncidentPayoutService:
         if is_charge:
             # charge vocabulary: fuel shortage billed to host → fuel_charge; everything else
             # rides misc_charge (the sheet's generic negative type)
-            sheet_type = "fuel_charge" if p.incident_type_code == "fuel" else None
+            sheet_type = "fuel_charge" if p.incident_type_code in ("fuel", "fuel_charge") else None
         else:
             sheet_type = self._IMS_TO_SHEET.get(p.incident_type_code)
 

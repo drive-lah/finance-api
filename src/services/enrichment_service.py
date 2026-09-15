@@ -367,6 +367,7 @@ def validate_anchors(trip_id: Optional[str] = None, ticket_ids: Optional[str] = 
         # Accept BOTH a TA/TS code (going forward) and a transaction UUID (the historical Retool anchor).
         t = resolve_trip_any(trip_id) or {"found": False}
         out["trip"] = {
+            "host_uuid": t.get("host_uuid"),   # trip-first raise: the host is derived from the trip
             "found": t.get("found", False),
             "trip_code": t.get("trip_code") or t.get("input"),
             "label": (f"{t.get('vehicle') or 'vehicle ?'} · host {t.get('host') or '?'} · "
