@@ -59,7 +59,7 @@
 | T-1 | Invoice system incl. approval cards | ✅ live on prod (B8, cards, vendor gate) | Trainer walkthrough material only |
 | T-2 | Invoice PAYMENT via system (Wise rail through system) | ✅ BUILT + live (`payout_service.py`, PRs #28/#29: invoice-anchored Wise payouts, claim payouts, maker-checker ≥S$1k, pair-on-import). Correction 2026-09-12 — earlier ❌ was wrong | ARM on prod: `PAYOUT_DRY_RUN=0` (defaults dry) + one supervised real payment as go-live check |
 | T-3 | Host/guest payout raise/approve | ✅ built + common card (`173a9d6`), UNPUSHED | Push phrase → PR → deploy → migrations 077–079 supervised |
-| T-4 | Host/guest payout EXECUTION rails — the ONLY two builds left | ❌ | HOST: entry-sheet API integration. GUEST: Stripe refund mechanism. Build now (pre-Tue) |
+| T-4 | Host/guest payout EXECUTION rails | ✅ BOTH BUILT (host `5d5d4b9` 09-12, guest `fe353e4` 09-15): host = entry-sheet `/add-payout-entry-v2` (IMS→payoutType map, sheet tripId = txn UUID, misc_payout fallback); guest = Stripe `/v1/refunds` against the trip's original PI (idempotency `finpayout-{id}`, live PI resolution verified). Both idempotent; failures leave row approved+retryable | Env to arm: ENTRY_SHEET_API_URL/_API_KEY/_SERVICE_ID (Gaurav to hand over) — Stripe keys already in .env |
 | T-5 | Task system (assign / own queue / resolve) | ◐ My Tasks + queues exist; assignment/resolve loop unverified end-to-end | Pixel-verify assign→reassign→resolve with Zilla's account; fix gaps found |
 | T-6 | Auto-ingestion finance@ | ◐ built on branch; over-creates tasks | SCOPING DISCUSSION with Gaurav (what auto-ingests vs parks), then ship gated version |
 | T-7 | Team access (M5 flip, settings grants) | ◐ legacy flat gate still on | Flip + shim drop + grant settings to G/DJ/Zilla |
