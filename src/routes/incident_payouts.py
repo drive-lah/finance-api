@@ -12,6 +12,8 @@ POST /api/finance/incident-payouts/<id>/reject      {reason}
 POST /api/finance/incident-payouts/<id>/cancel      {reason}   (method-gated window)
 POST /api/finance/incident-payouts/<id>/execute     → retry the rail after an execution failure
 POST /api/finance/incident-payouts/<id>/mark-executed {reference} → manual rail confirmation
+POST /api/finance/incident-payouts/attachments/upload  (multipart 'file') → {s3_key, filename}
+     — upload FIRST, then pass the keys in the raise payload's `attachments` list
 """
 from flask import Blueprint, request, jsonify
 
@@ -38,6 +40,26 @@ def types():
     `stale: true` means IMS was unreachable and this is the last good read."""
     catalog, stale = ims_config_service.get_catalog()
     return jsonify({"types": catalog, "stale": stale})
+
+
+@incident_payouts_bp.route("/attachments/upload", methods=["POST"])
+def upload_attachment():
+    """Store one supporting document (photo/quote/receipt) for a raise-in-progress.
+    Pure upload — nothing is linked until the raise payload carries the returned key."""
+    _caller()   # authenticated via BFF headers like every other route here
+    f = request.files.get("file")
+    if not f:
+        raise BadRequestError("multipart field 'file' is required")
+    data = f.read()
+    if not data:
+        raise BadRequestError("empty file")
+    if len(data) > 15 * 1024 * 1024:
+        raise BadRequestError("file too large (max 15MB)")
+    from src.services.s3_service import s3_service
+    key = s3_service.upload_incident_attachment(data, f.filename or "file")
+    if not key:
+        return jsonify({"error": "storage not configured or upload failed"}), 503
+    return jsonify({"s3_key": key, "filename": f.filename or "file"}), 200
 
 
 @incident_payouts_bp.route("", methods=["POST"])

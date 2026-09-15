@@ -165,6 +165,21 @@ class IncidentPayoutService:
         role = "host" if req_type == "host_payout" else "guest"
         cp = self._platform_counterparty(db, user, role)
 
+        # Supporting documents (Gaurav 2026-09-15): uploaded FIRST via /attachments/upload, keys
+        # passed here so the approver's task carries them from birth. Shape-validated only.
+        import json as _json
+        atts = payload.get("attachments") or []
+        if not isinstance(atts, list):
+            raise BadRequestError("attachments must be a list")
+        attachments = []
+        for a in atts[:20]:
+            if not isinstance(a, dict) or not (a.get("s3_key") or "").strip():
+                raise BadRequestError("each attachment needs an s3_key")
+            attachments.append({"s3_key": str(a["s3_key"])[:512],
+                                "filename": str(a.get("filename") or "file")[:255],
+                                "uploaded_by": str(raiser_user_id),
+                                "uploaded_at": datetime.utcnow().isoformat()})
+
         # COA + approver routing (Gaurav 2026-09-04): the coa_config row that CLAIMS this incident
         # type (incident_types coverage list) supplies the COA and the named approver. Unmapped →
         # flat finance.payouts queue with an explicit flag; the raise itself never blocks.
@@ -190,6 +205,7 @@ class IncidentPayoutService:
             coa_code=coa_code, platform_user_id=user["user_id"],
             market=user.get("market"), trip_id=trip_id, intercom_ticket_ids=tickets,
             rego=rego, request_reason=payload.get("reason"),
+            attachment_keys=_json.dumps(attachments) if attachments else None,
             requested_by=str(raiser_user_id), requested_at=datetime.utcnow(),
         )
         db.add(p)
@@ -212,7 +228,8 @@ class IncidentPayoutService:
                      "amount": amount, "currency": currency, "market": user.get("market"),
                      "user": user.get("name"), "platform_user_id": user["user_id"],
                      "trip_id": trip_id, "tickets": tickets, "rego": rego,
-                     "reason": payload.get("reason"), "entity_id": entity_id}
+                     "reason": payload.get("reason"), "entity_id": entity_id,
+                     "attachments": attachments}
         if card:
             task_body.update(card)   # same card keys the invoice approval card renders
 

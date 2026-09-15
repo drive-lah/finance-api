@@ -160,6 +160,8 @@ class FinancePayout(Base):
     intercom_ticket_ids: Mapped[str | None] = mapped_column(String(255), nullable=True)
     rego: Mapped[str | None] = mapped_column(String(32), nullable=True)
     request_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # JSON list of {s3_key, filename, uploaded_by, uploaded_at} — supporting docs (mig 080)
+    attachment_keys: Mapped[str | None] = mapped_column(Text, nullable=True)
     executed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)    # rail confirmed
     rejected_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
     rejection_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -197,6 +199,7 @@ class FinancePayout(Base):
             "platform_user_id": self.platform_user_id, "market": self.market,
             "trip_id": self.trip_id, "intercom_ticket_ids": self.intercom_ticket_ids,
             "rego": self.rego, "request_reason": self.request_reason,
+            "attachments": __import__("json").loads(self.attachment_keys) if self.attachment_keys else [],
             "executed_at": self.executed_at.isoformat() if self.executed_at else None,
             "rejected_by": self.rejected_by, "rejection_reason": self.rejection_reason,
             "created_at": self.created_at.isoformat() if self.created_at else None,

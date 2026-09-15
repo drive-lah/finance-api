@@ -51,6 +51,25 @@ class S3Service:
             and os.environ.get("AWS_SECRET_ACCESS_KEY")
         )
 
+    def upload_incident_attachment(self, file_bytes: bytes, filename: str) -> Optional[str]:
+        """Store a host/guest payout supporting document. Same bucket as invoices, its own
+        prefix so lifecycle rules can differ. Returns the S3 key or None."""
+        if not self.is_configured():
+            logger.warning("S3 not configured — attachment will not be stored")
+            return None
+        try:
+            date_prefix = datetime.utcnow().strftime("%Y/%m")
+            unique_id = uuid.uuid4().hex[:12]
+            safe = "".join(c if c.isalnum() or c in "-_." else "_" for c in (filename or "file"))
+            # nested under invoices/ because the finance-api-s3 IAM policy allows PutObject on
+            # invoices/* only (verified 2026-09-15); own top-level prefix needs an IAM change.
+            key = f"invoices/incident-payouts/{date_prefix}/{unique_id}_{safe}"
+            self._client().put_object(Bucket=self.bucket, Key=key, Body=file_bytes)
+            return key
+        except Exception as e:
+            logger.error(f"attachment upload failed: {e}")
+            return None
+
     def upload_invoice_pdf(
         self,
         file_bytes: bytes,
