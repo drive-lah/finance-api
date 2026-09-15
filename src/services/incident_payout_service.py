@@ -139,9 +139,17 @@ class IncidentPayoutService:
             raise BadRequestError("amount must be a number")
         if amount <= 0:
             raise BadRequestError("amount must be positive")
-        currency = (payload.get("currency") or "").upper()
-        if currency not in ("AUD", "SGD"):
-            raise BadRequestError("currency must be AUD or SGD")
+        # Currency is DERIVED from the resolved user's market, never chosen (Gaurav 2026-09-15):
+        # AU host/guest → AUD, SG → SGD. A client-sent mismatch is rejected, not silently fixed.
+        derived = {"au": "AUD", "sg": "SGD"}.get((user.get("market") or "").lower())
+        if not derived:
+            raise ConflictError(f"cannot derive currency: user market is "
+                                f"'{user.get('market')}' (expected au or sg)")
+        sent = (payload.get("currency") or "").upper()
+        if sent and sent != derived:
+            raise BadRequestError(f"currency is fixed by the user's market: "
+                                  f"{user.get('market')} → {derived} (got {sent})")
+        currency = derived
         entity_id = payload.get("entity_id")
         if not entity_id:
             # Derive from the resolved user's market: au → the Australia entity, sg → Singapore.
