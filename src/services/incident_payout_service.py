@@ -42,12 +42,13 @@ REQUEST_TYPES = {"host_payout", "host_charge", "guest_refund"}
 # V1 direct sheet vocabulary (Retool parity). flexplus + misc are host-level (no trip needed);
 # everything else is trip-linked on the sheet.
 DIRECT_PAYOUT_TYPES = {"tolls", "fuel_refund", "late_return", "excess_mileage", "damage",
-                       "cleanliness", "flexplus", "misc_payout", "distance", "duration"}
+                       "cleanliness", "flexplus", "referral", "misc_payout", "distance", "duration"}
 DIRECT_CHARGE_TYPES = {"fuel_charge", "misc_charge"}
-# V1 HARDCODED anchor rules (Gaurav 2026-09-15): ticket required for EVERY direct type,
-# charges included; trip required for everything except the contractual class (flexplus —
-# subscription/referral join this set if ever offered). V2 replaces this with per-type config.
-_NON_TRIP_DIRECT = {"flexplus"}
+# V1 HARDCODED anchor rules (Gaurav 2026-09-15, corrected): the CONTRACTUAL class
+# (flexplus/referral/subscription) needs NEITHER trip NOR ticket; every other type — charges
+# included — needs BOTH. V2 replaces this with per-type config.
+_CONTRACTUAL_DIRECT = {"flexplus", "referral", "subscription"}
+_NON_TRIP_DIRECT = _CONTRACTUAL_DIRECT
 # host_charge (Gaurav 2026-09-15): a NEGATIVE entry against the host on the same sheet rail —
 # own method value so state gating, refs and the card can tell it apart from a payout.
 _METHOD = {"host_payout": "entry_sheet", "host_charge": "entry_sheet_charge",
@@ -114,8 +115,8 @@ class IncidentPayoutService:
                 raise BadRequestError(f"payout_type must be one of: {', '.join(sorted(allowed))}")
             type_code, sub_type_code = direct_type, None
             label = direct_type.replace("_", " ")
-            needs_trip = direct_type not in _NON_TRIP_DIRECT
-            needs_ticket = True   # V1: every direct raise carries a ticket (hardcoded)
+            needs_trip = direct_type not in _CONTRACTUAL_DIRECT
+            needs_ticket = direct_type not in _CONTRACTUAL_DIRECT
         else:
             from src.services import ims_config_service
             type_code = payload.get("incident_type_code")
