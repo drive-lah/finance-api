@@ -191,7 +191,8 @@ def build_card_body_for_payout(db, payout, user_name=None):
     try:
         payee = user_name or (payout.platform_user_id or "")[:8]
         market = payout.market or ("au" if int(payout.entity_id or 0) == 3 else "sg")
-        role = "host payout" if payout.method == "entry_sheet" else "guest refund"
+        role = {"entry_sheet": "host payout", "entry_sheet_charge": "host charge",
+                "stripe_refund": "guest refund"}.get(payout.method, "payout")
         descr = payout.request_reason or ""
         anchors = {"team": None, "approved_by": None, "reason": descr}
         tkt, tkt_cards, trip, dp = _assemble_context(

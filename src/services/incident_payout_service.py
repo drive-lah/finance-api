@@ -38,9 +38,13 @@ logger = logging.getLogger(__name__)
 # No hardcoded copy — src/services/ims_config_service.py reads the table (5-min cache, last-good
 # fallback). Grain is (type_code, sub_type_code), stored verbatim for cutover parity (POL-152).
 
-REQUEST_TYPES = {"host_payout", "guest_refund"}
-_METHOD = {"host_payout": "entry_sheet", "guest_refund": "stripe_refund"}
+REQUEST_TYPES = {"host_payout", "host_charge", "guest_refund"}
+# host_charge (Gaurav 2026-09-15): a NEGATIVE entry against the host on the same sheet rail —
+# own method value so state gating, refs and the card can tell it apart from a payout.
+_METHOD = {"host_payout": "entry_sheet", "host_charge": "entry_sheet_charge",
+           "guest_refund": "stripe_refund"}
 _EXECUTED_STATE = {"entry_sheet": PayoutState.PAYMENT_QUEUED.value,
+                   "entry_sheet_charge": PayoutState.PAYMENT_QUEUED.value,
                    "stripe_refund": PayoutState.PAYMENT_INITIATED.value}
 
 
@@ -89,7 +93,7 @@ class IncidentPayoutService:
 
         req_type = payload.get("request_type")
         if req_type not in REQUEST_TYPES:
-            raise BadRequestError("request_type must be host_payout or guest_refund")
+            raise BadRequestError("request_type must be host_payout, host_charge or guest_refund")
         from src.services import ims_config_service
         type_code = payload.get("incident_type_code")
         sub_type_code = (payload.get("incident_sub_type_code") or "").strip() or None
@@ -123,7 +127,7 @@ class IncidentPayoutService:
             raise ConflictError(f"Incident type '{label}' requires: {', '.join(missing)}")
 
         # HARD live validation — every provided anchor must resolve (2026-09-04 ruling).
-        role_key = "host_id" if req_type == "host_payout" else "guest_id"
+        role_key = "host_id" if req_type.startswith("host_") else "guest_id"
         bad = enrichment_service.enforce_anchors(
             trip_id=trip_id, ticket_ids=tickets, rego=rego, **{role_key: user_uuid})
         if bad:
@@ -162,7 +166,7 @@ class IncidentPayoutService:
                                       f"'{user.get('market')}')")
             entity_id = ent.id
 
-        role = "host" if req_type == "host_payout" else "guest"
+        role = "host" if req_type.startswith("host_") else "guest"
         cp = self._platform_counterparty(db, user, role)
 
         # Supporting documents (Gaurav 2026-09-15): uploaded FIRST via /attachments/upload, keys
@@ -241,7 +245,7 @@ class IncidentPayoutService:
 
         task_service.enqueue(
             db, type="incident-payout-approval", source_ref=f"incident-payout:{p.id}",
-            title=f"Approve {('host payout' if role == 'host' else 'guest refund')} — "
+            title=f"Approve {({'host_payout': 'host payout', 'host_charge': 'host charge', 'guest_refund': 'guest refund'}[req_type])} — "
                   f"{user.get('name') or user['user_id'][:8]} · {currency} {amount:,.2f}",
             summary=((card.get("summary") or "")[:200] if card and card.get("summary") else
                      f"{label}" + (f" · trip {trip_id}" if trip_id else "")
@@ -291,8 +295,8 @@ class IncidentPayoutService:
         p = self._get(db, payout_id)
         if p.state != PayoutState.APPROVED.value:
             raise ConflictError(f"Payout is {p.state}, not approved.")
-        if p.method == "entry_sheet":
-            ref = self._insert_entry_sheet(p)  # raises ConflictError until the API is wired
+        if p.method.startswith("entry_sheet"):
+            ref = self._insert_entry_sheet(p)
         else:
             ref = self._execute_stripe_refund(p)
         _from = p.state
@@ -361,8 +365,16 @@ class IncidentPayoutService:
             return f"DRYRUN-SHEET-{p.id}"
 
         market = (p.market or "au").lower()
-        cents = int(round(float(p.amount) * 100))   # sheet amounts are CENTS (dollars × 100)
-        sheet_type = self._IMS_TO_SHEET.get(p.incident_type_code)
+        is_charge = p.method == "entry_sheet_charge"
+        # sheet amounts are CENTS; charges are NEGATIVE on the sheet (the row keeps the
+        # positive magnitude — sign is a rail concern, like cents are)
+        cents = int(round(float(p.amount) * 100)) * (-1 if is_charge else 1)
+        if is_charge:
+            # charge vocabulary: fuel shortage billed to host → fuel_charge; everything else
+            # rides misc_charge (the sheet's generic negative type)
+            sheet_type = "fuel_charge" if p.incident_type_code == "fuel" else None
+        else:
+            sheet_type = self._IMS_TO_SHEET.get(p.incident_type_code)
 
         trip = None
         if p.trip_id:
@@ -381,8 +393,9 @@ class IncidentPayoutService:
             # unmapped incident type, or trip not fully resolvable → host-level misc entry
             return entry_sheet_client.add_host_entry(
                 market=market, host_id=p.platform_user_id, amount_cents=cents,
-                currency=p.currency, payout_type="misc_payout", description=descr,
-                listing_id=(trip or {}).get("listing_uuid"))
+                currency=p.currency,
+                payout_type=("misc_charge" if is_charge else "misc_payout"),
+                description=descr, listing_id=(trip or {}).get("listing_uuid"))
         except entry_sheet_client.EntrySheetError as e:
             p.failure_reason = str(e)[:500]
             raise ConflictError(p.failure_reason)
@@ -432,7 +445,7 @@ class IncidentPayoutService:
         if not is_admin and str(actor) != (p.requested_by or ""):
             raise BadRequestError("Only the raiser (or finance) can void this request.")
         cancellable = {PayoutState.PENDING_APPROVAL.value, PayoutState.APPROVED.value}
-        if p.method == "entry_sheet":
+        if p.method.startswith("entry_sheet"):
             # cash hasn't moved until the monthly cycle — pulling from the sheet is allowed
             cancellable.add(PayoutState.PAYMENT_QUEUED.value)
         if p.state not in cancellable:

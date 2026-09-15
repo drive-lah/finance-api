@@ -104,11 +104,12 @@ def my_requests(db: Session, identifier: Optional[str] = None, user_id: Optional
     names.update(_name_map(db, {t.assignee_user_id for t in ip_task.values() if t.assignee_user_id}))
     for p in ips:
         t = ip_task.get(f"incident-payout:{p.id}")
-        kind = "host payout" if p.method == "entry_sheet" else "guest refund"
+        kind = {"entry_sheet": "host payout", "entry_sheet_charge": "host charge",
+                "stripe_refund": "guest refund"}.get(p.method, "payout")
         out.append({
             "type": kind,
             "id": p.id,
-            "ref": f"{'HP' if p.method == 'entry_sheet' else 'GP'}-{p.id}",
+            "ref": f"{ {'entry_sheet': 'HP', 'entry_sheet_charge': 'HC', 'stripe_refund': 'GP'}.get(p.method, 'IP') }-{p.id}",
             "title": f"{(p.incident_type_code or 'incident').replace('_', ' ')}"
                      + (f" · trip {p.trip_id}" if p.trip_id else "")
                      + (f" · {p.rego}" if p.rego else ""),

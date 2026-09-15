@@ -65,6 +65,8 @@ def _fetch_live() -> list[dict]:
         allowed = []
         if r["payout_host"]:
             allowed.append("host_payout")
+        if r["charge_host"]:
+            allowed.append("host_charge")
         if r["refund_guest"]:
             allowed.append("guest_refund")
         if not allowed:
