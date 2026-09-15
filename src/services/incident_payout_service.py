@@ -285,23 +285,27 @@ class IncidentPayoutService:
                     from_state=_from)
         return p
 
-    # IMS incident type_code → entry-sheet payoutType. Ancillary sheet types demand a real trip
-    # (transaction UUID) + guest UUID + description; anything unmapped (or missing its trip/guest)
-    # rides misc_payout, which the sheet accepts with a description alone — the description always
-    # carries the IMS code + HP ref for traceability, so nothing is ever silently untyped.
+    # IMS incident type_code → deployed entry-sheet payoutType (the v1 vocabulary the Retool
+    # finance tabs use — tolls/fuel_refund/late_return/excess_mileage/damage/cleanliness/flexplus/
+    # misc_payout/…). Unmapped types ride misc_payout; the description always carries the IMS code
+    # + HP ref for traceability, so nothing is ever silently untyped.
     _IMS_TO_SHEET = {
         "damage": "damage", "accident_damage": "damage",
         "tolls": "tolls",
         "cleaning": "cleanliness",
         "excess_mileage": "excess_mileage",
         "fuel": "fuel_refund",
+        "late_return": "late_return",
     }
 
     def _insert_entry_sheet(self, p: FinancePayout) -> str:
         """Execute a host payout by inserting into the payout entry sheet via the marketplace
-        payout-service `/add-payout-entry-v2` API (contract: src/clients/entry_sheet_client.py).
-        Idempotent guard: an already-recorded external_reference is returned, never re-sent.
-        Any failure raises ConflictError with the reason on the row (approved + retryable)."""
+        payout-service — the DEPLOYED v1 API the Retool finance tabs call (contract + prod bases:
+        src/clients/entry_sheet_client.py). AMOUNTS IN CENTS. Trip fully resolvable (uuid + guest
+        + listing) → trip-linked entry on /add-custom-payout-entry; otherwise a host-level entry
+        on /add-host-payout-entry as misc_payout. Idempotent guard: an already-recorded
+        external_reference is returned, never re-sent. Failure → ConflictError with the reason on
+        the row (approved + retryable)."""
         from src.clients import entry_sheet_client
         from src.services import enrichment_service
 
@@ -314,30 +318,29 @@ class IncidentPayoutService:
                  + (f" · ticket {p.intercom_ticket_ids}" if p.intercom_ticket_ids else "")
                  + (f" · {p.request_reason}" if p.request_reason else ""))[:500]
 
+        market = (p.market or "au").lower()
+        cents = int(round(float(p.amount) * 100))   # sheet amounts are CENTS (dollars × 100)
         sheet_type = self._IMS_TO_SHEET.get(p.incident_type_code)
-        trip_uuid = guest_uuid = None
+
+        trip = None
         if p.trip_id:
             t = enrichment_service.resolve_trip_any(p.trip_id, p.market)
-            if t and t.get("found"):
-                trip_uuid = t.get("trip_uuid")
-                guest_uuid = t.get("guest_uuid")
-
-        payload = {"hostId": p.platform_user_id,
-                   "payoutAmount": float(p.amount),
-                   "payoutCurrency": p.currency,
-                   "processName": "finance-api",
-                   "description": descr}
-        if sheet_type and trip_uuid and guest_uuid:
-            payload.update({"payoutType": sheet_type, "tripId": trip_uuid, "guestId": guest_uuid})
-        else:
-            # unmapped incident type, or trip/guest unresolvable → misc_payout (non-trip class);
-            # the sheet still inherits parent-trip data when tripId is present.
-            payload["payoutType"] = "misc_payout"
-            if trip_uuid:
-                payload["tripId"] = trip_uuid
+            if t and t.get("found") and t.get("trip_uuid") and t.get("guest_uuid") \
+                    and t.get("listing_uuid"):
+                trip = t
 
         try:
-            return entry_sheet_client.add_payout_entry(payload)
+            if sheet_type and trip:
+                return entry_sheet_client.add_trip_entry(
+                    market=market, guest_id=trip["guest_uuid"], host_id=p.platform_user_id,
+                    listing_id=trip["listing_uuid"], trip_uuid=trip["trip_uuid"],
+                    amount_cents=cents, currency=p.currency, payout_type=sheet_type,
+                    description=descr)
+            # unmapped incident type, or trip not fully resolvable → host-level misc entry
+            return entry_sheet_client.add_host_entry(
+                market=market, host_id=p.platform_user_id, amount_cents=cents,
+                currency=p.currency, payout_type="misc_payout", description=descr,
+                listing_id=(trip or {}).get("listing_uuid"))
         except entry_sheet_client.EntrySheetError as e:
             p.failure_reason = str(e)[:500]
             raise ConflictError(p.failure_reason)

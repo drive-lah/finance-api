@@ -84,6 +84,7 @@ def resolve_trip(raw_code: str) -> dict:
         "found": True, "input": code, "trip_code": code, "market": market,
         "trip_uuid": t["id"],
         "host_uuid": t.get("providerId"), "guest_uuid": t.get("customerId"),
+        "listing_uuid": t.get("listingId"),
         "vehicle": lst.get("title") if lst else None,
         "host": host.get("n") if host else None, "host_email": host.get("email") if host else None,
         "guest": guest.get("n") if guest else None,
@@ -111,6 +112,7 @@ def _trip_from_row(t: dict, market: str, code: Optional[str]) -> dict:
     return {
         "found": True, "input": code or t["id"], "trip_code": code, "market": market, "trip_uuid": t["id"],
         "host_uuid": t.get("providerId"), "guest_uuid": t.get("customerId"),
+        "listing_uuid": t.get("listingId"),
         "vehicle": lst.get("title") if lst else None,
         "host": host.get("n") if host else None, "host_email": host.get("email") if host else None,
         "guest": guest.get("n") if guest else None,
