@@ -53,6 +53,9 @@
 >
 > **Launch meeting: Tue 15 Sep morning. Master trainers: Zilla + Rahul** — everything below aims
 > at having THEM ready to train the team.
+> **THE MASTER PRE-LAUNCH LIST: `documentation/wip/PRELAUNCH_CUTOVER_CHECKLIST.md`** (sections
+> A–F: ship, prod config, gate arming, access hygiene, work-sessions, briefing). One-pager for
+> the leads: `documentation/wip/ONE_PAGER_ZILLA_RAHUL.pdf` (+.md source).
 
 > **2026-09-15 V1 SCOPE RULING (POL-157):** host payout/charge raise ships WITHOUT incident-type
 > mappings — direct sheet payoutType dropdown, ticket required for all types, trip for all but
