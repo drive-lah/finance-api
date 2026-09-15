@@ -147,6 +147,22 @@ def resolve_trip_any(ref: str, market: Optional[str] = None) -> Optional[dict]:
     return {"found": False, "input": ref, "error": "unrecognised trip reference"}
 
 
+def trip_payment_intent(trip_ref: str, market: Optional[str] = None) -> Optional[str]:
+    """The Stripe payment intent (pi_…) of a trip's ORIGINAL payment — the guest-refund anchor.
+    Marketplace stores it on the transaction's protectedData.stripePaymentIntents.default.
+    Accepts a TA/TS code or a transaction UUID; None when the trip or its PI can't be found."""
+    t = resolve_trip_any(trip_ref, market)
+    if not t or not t.get("found") or not t.get("trip_uuid"):
+        return None
+    mk = t.get("market") or market or "au"
+    row = _ch.execute_single(
+        "SELECT JSONExtractString(protectedData, 'stripePaymentIntents', 'default', "
+        "'stripePaymentIntentId') pi "
+        f"FROM {_mkt(mk)}_transactions WHERE id='{_esc(t['trip_uuid'])}' LIMIT 1")
+    pi = (row or {}).get("pi") or None
+    return pi if pi and str(pi).startswith("pi_") else None
+
+
 # ── rego (listing registration) ───────────────────────────────────────────────
 def normalize_rego(raw: str) -> Optional[str]:
     """Uppercase and strip ALL spaces — regos are entered inconsistently ('smh 7616g' == 'SMH7616G')."""

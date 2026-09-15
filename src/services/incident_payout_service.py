@@ -343,10 +343,36 @@ class IncidentPayoutService:
             raise ConflictError(p.failure_reason)
 
     def _execute_stripe_refund(self, p: FinancePayout) -> str:
-        """Adapter seam for the guest Stripe refund. Until wired, execution fails loudly and the
-        row stays approved; finance issues the refund in Stripe and records it via mark-executed."""
-        p.failure_reason = "Stripe refund rail not wired — issue in Stripe and use mark-executed"
-        raise ConflictError(p.failure_reason)
+        """Execute a guest refund back down the ORIGINAL trip payment: resolve the trip's Stripe
+        payment intent (protectedData.stripePaymentIntents.default) and create a refund against
+        it. Idempotency-Key = finpayout-{id}, so a retry can never double-refund. A trip without
+        a resolvable PI (or any Stripe rejection) leaves the row approved + retryable with the
+        reason recorded — finance can refund manually in Stripe and use mark-executed."""
+        from src.clients import stripe_refund_client
+        from src.services import enrichment_service
+
+        if p.external_reference:           # already refunded (retry after a commit race)
+            return p.external_reference
+        if not p.trip_id:
+            p.failure_reason = ("guest refund needs the trip's original payment — no trip on this "
+                                "payout; refund manually in Stripe and use mark-executed")
+            raise ConflictError(p.failure_reason)
+        pi = enrichment_service.trip_payment_intent(p.trip_id, p.market)
+        if not pi:
+            p.failure_reason = (f"no Stripe payment intent found for trip {p.trip_id} — refund "
+                                "manually in Stripe and use mark-executed")
+            raise ConflictError(p.failure_reason)
+        try:
+            return stripe_refund_client.create_refund(
+                payment_intent=pi, amount_cents=int(round(float(p.amount) * 100)),
+                market=(p.market or "au"), idempotency_key=f"finpayout-{p.id}",
+                metadata={"finance_payout": f"GP-{p.id}",
+                          "incident_type": p.incident_type_code or "",
+                          "trip": p.trip_id or "",
+                          "tickets": p.intercom_ticket_ids or ""})
+        except stripe_refund_client.StripeRefundError as e:
+            p.failure_reason = str(e)[:500]
+            raise ConflictError(p.failure_reason)
 
     # ── cancel (method-gated window) ─────────────────────────────────────────
     def cancel(self, db, payout_id, actor, reason=None) -> FinancePayout:
